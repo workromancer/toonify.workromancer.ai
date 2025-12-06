@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+sqlmodel
+asyncpg
+pydantic-settings
+python-multipart
+google-generativeai
+minio
+alembic
+psycopg2-binary
+pgvector
