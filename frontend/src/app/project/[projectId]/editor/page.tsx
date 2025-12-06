@@ -6,6 +6,10 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft, Play, Save } from 'lucide-react';
 import { useState } from 'react';
+import EpisodeList from '@/components/editor/EpisodeList';
+
+import CanvasArea from '@/components/editor/CanvasArea';
+import InspectorPanel from '@/components/editor/InspectorPanel';
 
 export default function EditorPage() {
     const { projectId } = useParams();
@@ -39,20 +43,7 @@ export default function EditorPage() {
                 <PanelGroup direction="horizontal">
                     {/* Left Sidebar: Navigation / Assets */}
                     <Panel defaultSize={20} minSize={15} maxSize={30} className="bg-gray-800 border-r border-gray-700">
-                        <div className="p-4">
-                            <h3 className="font-semibold mb-4 text-gray-300">Episodes</h3>
-                            <div className="space-y-2">
-                                <div className="p-3 bg-purple-900/30 border border-purple-500/50 rounded cursor-pointer">
-                                    <span className="text-sm font-medium text-purple-200">Episode 1</span>
-                                </div>
-                                <div className="p-3 hover:bg-gray-700 rounded cursor-pointer">
-                                    <span className="text-sm text-gray-400">Episode 2</span>
-                                </div>
-                                <Button variant="ghost" size="sm" className="w-full mt-2 text-gray-500 border border-dashed border-gray-600 hover:text-white hover:border-gray-500">
-                                    + Add Episode
-                                </Button>
-                            </div>
-                        </div>
+                        <EpisodeList />
                     </Panel>
 
                     <PanelResizeHandle className="w-1 bg-gray-700 hover:bg-purple-500 transition-colors" />
@@ -79,13 +70,11 @@ export default function EditorPage() {
                             </div>
 
                             {/* Content Area */}
-                            <div className="flex-1 bg-gray-950 flex items-center justify-center p-8 overflow-auto">
+                            <div className="flex-1 overflow-hidden relative">
                                 {activeSegment === 'canvas' ? (
-                                    <div className="w-[800px] h-[1200px] bg-white text-black shadow-2xl flex items-center justify-center">
-                                        <span className="text-gray-400 font-bold text-2xl">Comic Page Canvas</span>
-                                    </div>
+                                    <CanvasArea />
                                 ) : (
-                                    <div className="w-full h-full max-w-3xl bg-gray-900 p-8 border border-gray-700 text-gray-300 font-mono text-sm">
+                                    <div className="w-full h-full max-w-3xl bg-gray-900 p-8 border border-gray-700 text-gray-300 font-mono text-sm mx-auto my-4 overflow-auto">
                                         <p>EXT. CITY STREET - DAY</p>
                                         <p className="mt-4">The HERO looks up at the sky...</p>
                                     </div>
@@ -98,12 +87,7 @@ export default function EditorPage() {
 
                     {/* Right Sidebar: Inspector */}
                     <Panel defaultSize={20} minSize={15} maxSize={30} className="bg-gray-800 border-l border-gray-700">
-                        <div className="p-4">
-                            <h3 className="font-semibold mb-4 text-gray-300">Properties</h3>
-                            <div className="text-sm text-gray-500 italic">
-                                Select an element to view properties.
-                            </div>
-                        </div>
+                        <InspectorPanel />
                     </Panel>
                 </PanelGroup>
             </div>
