@@ -15,8 +15,10 @@ export interface CanvasElement {
 interface CanvasState {
     elements: CanvasElement[];
     selectedId: string | null;
+    activeCharacter: { name: string; tags: string[] } | null; // Added
     addElement: (type: CanvasElement['type']) => void;
     selectElement: (id: string | null) => void;
+    setActiveCharacter: (char: { name: string; tags: string[] } | null) => void; // Added
     updateElement: (id: string, updates: Partial<CanvasElement>) => void;
     updateSelectedElement: (updates: Partial<CanvasElement>) => void;
 }
@@ -27,6 +29,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
         { id: '1', type: 'panel', x: 50, y: 50, width: 300, height: 300, content: '', prompt: 'A futuristic city skyline' }
     ],
     selectedId: null,
+    activeCharacter: null, // Init
     addElement: (type) => {
         const newElement: CanvasElement = {
             id: uuidv4(),
@@ -41,6 +44,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
         set((state) => ({ elements: [...state.elements, newElement], selectedId: newElement.id }));
     },
     selectElement: (id) => set({ selectedId: id }),
+    setActiveCharacter: (char) => set({ activeCharacter: char }), // Added
     updateElement: (id, updates) => set((state) => ({
         elements: state.elements.map((el) => (el.id === id ? { ...el, ...updates } : el))
     })),

@@ -4,9 +4,10 @@ import { useParams } from 'next/navigation';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft, Play, Save } from 'lucide-react';
+import { ArrowLeft, Play, Save, Users, Clapperboard } from 'lucide-react';
 import { useState } from 'react';
 import EpisodeList from '@/components/editor/EpisodeList';
+import CharacterList from '@/components/editor/CharacterList';
 
 import CanvasArea from '@/components/editor/CanvasArea';
 import InspectorPanel from '@/components/editor/InspectorPanel';
@@ -14,6 +15,7 @@ import InspectorPanel from '@/components/editor/InspectorPanel';
 export default function EditorPage() {
     const { projectId } = useParams();
     const [activeSegment, setActiveSegment] = useState('canvas'); // canvas, script, storyboard
+    const [sidebarTab, setSidebarTab] = useState<'episodes' | 'characters'>('episodes');
 
     return (
         <div className="h-screen flex flex-col bg-gray-900 text-white overflow-hidden">
@@ -42,8 +44,25 @@ export default function EditorPage() {
             <div className="flex-1 overflow-hidden">
                 <PanelGroup direction="horizontal">
                     {/* Left Sidebar: Navigation / Assets */}
-                    <Panel defaultSize={20} minSize={15} maxSize={30} className="bg-gray-800 border-r border-gray-700">
-                        <EpisodeList />
+                    <Panel defaultSize={20} minSize={15} maxSize={30} className="bg-gray-800 border-r border-gray-700 flex flex-col">
+                        <div className="flex border-b border-gray-700">
+                            <button
+                                className={`flex-1 p-3 text-sm font-medium flex items-center justify-center gap-2 hover:bg-gray-700 transition-colors ${sidebarTab === 'episodes' ? 'text-purple-400 border-b-2 border-purple-500 bg-gray-700/50' : 'text-gray-400'}`}
+                                onClick={() => setSidebarTab('episodes')}
+                            >
+                                <Clapperboard size={16} /> Episodes
+                            </button>
+                            <button
+                                className={`flex-1 p-3 text-sm font-medium flex items-center justify-center gap-2 hover:bg-gray-700 transition-colors ${sidebarTab === 'characters' ? 'text-purple-400 border-b-2 border-purple-500 bg-gray-700/50' : 'text-gray-400'}`}
+                                onClick={() => setSidebarTab('characters')}
+                            >
+                                <Users size={16} /> Casting
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-hidden">
+                            {sidebarTab === 'episodes' ? <EpisodeList /> : <CharacterList />}
+                        </div>
                     </Panel>
 
                     <PanelResizeHandle className="w-1 bg-gray-700 hover:bg-purple-500 transition-colors" />
