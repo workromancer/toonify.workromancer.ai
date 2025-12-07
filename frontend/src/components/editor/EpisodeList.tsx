@@ -22,29 +22,38 @@ export default function EpisodeList() {
 
 
     const fetchEpisodes = async () => {
-        if (!projectId) return;
+        if (!projectId) {
+            setLoading(false);
+            return;
+        }
         try {
             setLoading(true);
             const res = await api.get(`/episodes/?project_id=${projectId}`);
             setEpisodes(res.data);
         } catch (err) {
-            console.error(err);
+            console.error("Fetch Episodes Error:", err);
         } finally {
             setLoading(false);
         }
     };
 
+    const [creating, setCreating] = useState(false);
+
     const createEpisode = async () => {
+        if (creating) return;
         try {
+            setCreating(true);
             const nextNumber = episodes.length > 0 ? episodes[episodes.length - 1].episode_order + 1 : 1;
             await api.post('/episodes/', {
                 title: `Episode ${nextNumber}`,
                 project_id: projectId,
                 episode_order: nextNumber
             });
-            fetchEpisodes();
+            await fetchEpisodes();
         } catch (err) {
             console.error("Failed to create episode", err);
+        } finally {
+            setCreating(false);
         }
     }
 
@@ -105,8 +114,14 @@ export default function EpisodeList() {
                     data-testid="add-episode-btn"
                     className="w-full text-gray-400 border border-dashed border-gray-600 hover:text-white hover:border-gray-500 hover:bg-gray-700"
                     onClick={createEpisode}
+                    disabled={creating}
                 >
-                    <Plus size={16} className="mr-2" /> Add Episode
+                    {creating ? (
+                        <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin mr-2" />
+                    ) : (
+                        <Plus size={16} className="mr-2" />
+                    )}
+                    {creating ? 'Creating...' : 'Add Episode'}
                 </Button>
             </div>
         </div >

@@ -21,7 +21,7 @@ export default function DashboardPage() {
 
     const fetchProjects = async () => {
         try {
-            setLoading(true); // Ensure loading state
+            if (projects.length === 0) setLoading(true);
             const res = await api.get('/projects/');
             setProjects(res.data);
         } catch (err) {

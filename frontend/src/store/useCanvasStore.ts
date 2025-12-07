@@ -15,16 +15,17 @@ export interface CanvasElement {
 interface CanvasState {
     elements: CanvasElement[];
     selectedId: string | null;
-    activeCharacter: { name: string; tags: string[] } | null;
+    activeCharacter: { name: string; tags: string[]; profile_image_url?: string } | null;
     activeEpisodeId: string | null;
     activeCutId: string | null; // Added
     addElement: (type: CanvasElement['type']) => void;
     selectElement: (id: string | null) => void;
-    setActiveCharacter: (char: { name: string; tags: string[] } | null) => void;
+    setActiveCharacter: (char: { name: string; tags: string[]; profile_image_url?: string } | null) => void;
     setActiveEpisode: (id: string | null) => void;
     setActiveCut: (id: string | null) => void; // Added
     updateElement: (id: string, updates: Partial<CanvasElement>) => void;
     updateSelectedElement: (updates: Partial<CanvasElement>) => void;
+    setElements: (elements: CanvasElement[]) => void; // Added
 }
 
 export const useCanvasStore = create<CanvasState>((set, get) => ({
@@ -63,5 +64,6 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
         set({
             elements: elements.map(el => el.id === selectedId ? { ...el, ...updates } : el)
         });
-    }
+    },
+    setElements: (elements) => set({ elements })
 }));

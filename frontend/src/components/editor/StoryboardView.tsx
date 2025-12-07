@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Plus, Image as ImageIcon, MessageSquare, Trash2, Clapperboard, Loader2, Wand2 } from 'lucide-react';
+import { Plus, Image as ImageIcon, MessageSquare, Trash2, Clapperboard, Loader2, Wand2, Sparkles } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
+import DirectorCutModal from './DirectorCutModal';
 
 interface StoryCut {
     id: string;
@@ -38,6 +39,7 @@ export default function StoryboardView({ onEditCut }: StoryboardViewProps) {
     const [directorOptions, setDirectorOptions] = useState<DirectorOption[]>([]);
     const [isSuggesting, setIsSuggesting] = useState(false);
     const [isRendering, setIsRendering] = useState<string | null>(null); // storing option ID being rendered
+    const [modifyingCut, setModifyingCut] = useState<StoryCut | null>(null); // For Director's Cut modal
 
     const fetchCuts = async () => {
         if (!activeEpisodeId) return;
@@ -175,6 +177,15 @@ export default function StoryboardView({ onEditCut }: StoryboardViewProps) {
                                     <div className="p-3 border-b border-gray-700 bg-gray-800/50 flex justify-between items-start">
                                         <p className="text-sm text-gray-300 italic">"{cut.script}"</p>
                                         <div className="flex gap-1">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-6 w-6 text-gray-400 hover:text-purple-400 hover:bg-gray-700"
+                                                title="Director's Cut (Refine)"
+                                                onClick={() => setModifyingCut(cut)}
+                                            >
+                                                <Sparkles size={14} />
+                                            </Button>
                                             <Button
                                                 variant="ghost"
                                                 size="icon"

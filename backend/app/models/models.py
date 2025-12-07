@@ -63,7 +63,7 @@ class Character(SQLModel, table=True):
     appearance_tags: List[str] = Field(sa_column=Column(JSON), default=[])
     default_mood: str
     consistency_seed: int
-    profile_image_url: Optional[str] = None
+    profile_image_url: Optional[str] = Field(default=None, sa_column=Column(Text))
     height_cm: Optional[int] = None
     body_type: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)

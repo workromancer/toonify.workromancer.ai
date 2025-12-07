@@ -58,9 +58,29 @@ export default function InspectorPanel() {
         return (
             <div className="p-4 space-y-6">
                 <h3 className="font-semibold mb-4 text-gray-300">Properties</h3>
-                <div className="text-sm text-gray-500 italic">
-                    Select an element to view properties.
-                </div>
+                {activeCharacter ? (
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-4">
+                            <div className="w-16 h-16 rounded-full bg-gray-700 overflow-hidden flex items-center justify-center border border-gray-600 shrink-0">
+                                {activeCharacter.profile_image_url ? (
+                                    <img src={activeCharacter.profile_image_url} alt={activeCharacter.name} className="w-full h-full object-cover" />
+                                ) : activeCharacter.name ? (
+                                    <span className="text-2xl font-bold text-gray-400">
+                                        {activeCharacter.name[0]}
+                                    </span>
+                                ) : null}
+                            </div>
+                            <div>
+                                <h4 className="text-lg font-bold text-white">{activeCharacter.name}</h4>
+                                <p className="text-sm text-gray-400">{activeCharacter.tags.join(', ')}</p>
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="text-sm text-gray-500 italic">
+                        Select an element or character to view properties.
+                    </div>
+                )}
             </div>
         );
     }

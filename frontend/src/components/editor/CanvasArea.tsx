@@ -1,12 +1,46 @@
 'use client';
 
+import { useEffect } from 'react'; // Added useEffect
 import { ZoomIn, ZoomOut, Move, Hand } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useCanvasStore } from '@/store/useCanvasStore';
+import { useCanvasStore, CanvasElement } from '@/store/useCanvasStore'; // Added CanvasElement
 import CanvasElementRenderer from '@/components/editor/CanvasElementRenderer';
+import api from '@/lib/api'; // Added api
 
 export default function CanvasArea() {
-    const { elements, selectedId, selectElement } = useCanvasStore();
+    const { elements, selectedId, selectElement, activeEpisodeId, setElements } = useCanvasStore(); // Added activeEpisode and setElements
+
+    useEffect(() => {
+        const fetchCuts = async () => {
+            if (!activeEpisodeId) return;
+            try {
+                const res = await api.get(`/cuts/?episode_id=${activeEpisodeId}`);
+                const cuts = res.data;
+
+                // Map cuts to Canvas Elements with vertical layout
+                const newElements: CanvasElement[] = cuts.map((cut: any, index: number) => ({
+                    id: cut.id, // Use cut ID as element ID for now to keep sync simple
+                    type: 'image',
+                    x: 100,
+                    y: 50 + (index * 820), // Vertical spacing: 800 height + 20 gap
+                    width: 600,
+                    height: 800, // Default webtoon panel height
+                    content: cut.image_path, // Image URL
+                    prompt: cut.script
+                })).filter((el: CanvasElement) => el.content); // Only show if image exists? Or show placeholder? Let's show only images for now.
+
+                if (newElements.length > 0) {
+                    setElements(newElements);
+                }
+            } catch (err) {
+                console.error("Failed to load cuts to canvas", err);
+            }
+        };
+
+        if (activeEpisodeId) {
+            fetchCuts();
+        }
+    }, [activeEpisodeId, setElements]);
 
     return (
         <div className="h-full flex flex-col relative" onClick={() => selectElement(null)}>
@@ -26,19 +60,19 @@ export default function CanvasArea() {
                     <ZoomOut size={16} />
                 </Button>
                 <div className="h-px bg-gray-700 my-1" />
-                <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 text-gray-300 hover:text-white" 
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-gray-300 hover:text-white"
                     title="Add Panel"
                     onClick={() => useCanvasStore.getState().addElement('panel')}
                 >
                     <div className="w-4 h-4 border-2 border-current rounded-sm" />
                 </Button>
-                <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 text-gray-300 hover:text-white" 
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-gray-300 hover:text-white"
                     title="Add Text"
                     onClick={() => useCanvasStore.getState().addElement('text')}
                 >
@@ -47,7 +81,7 @@ export default function CanvasArea() {
             </div>
 
             <div className="flex-1 bg-gray-950 flex items-center justify-center p-8 overflow-auto">
-                <div className="w-[800px] h-[1200px] bg-white text-black shadow-2xl relative"
+                <div className="w-[800px] h-[2000px] bg-white text-black shadow-2xl relative" // Increased height for scrolling
                     onClick={(e) => { e.stopPropagation(); selectElement(null); }}>
                     {elements.map((el) => (
                         <CanvasElementRenderer

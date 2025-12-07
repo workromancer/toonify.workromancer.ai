@@ -27,7 +27,10 @@ export default function NewProjectModal({ onProjectCreated }: NewProjectModalPro
     const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm();
     const router = useRouter();
 
+    const [error, setError] = useState('');
+
     const onSubmit = async (data: any) => {
+        setError('');
         try {
             await api.post('/projects/', {
                 title: data.title,
@@ -38,7 +41,7 @@ export default function NewProjectModal({ onProjectCreated }: NewProjectModalPro
             onProjectCreated();
         } catch (err) {
             console.error(err);
-            // Could add toast error here
+            setError('Failed to create project. Please try again.');
         }
     };
 
@@ -76,6 +79,12 @@ export default function NewProjectModal({ onProjectCreated }: NewProjectModalPro
                         </select>
                     </div>
 
+                    {error && (
+                        <div className="text-sm text-red-500 bg-red-900/20 border border-red-900 p-2 rounded">
+                            {error}
+                        </div>
+                    )}
+
                     <DialogFooter>
                         <Button type="submit" disabled={isSubmitting} className="bg-purple-600 hover:bg-purple-700">
                             {isSubmitting ? 'Creating...' : 'Create Project'}
@@ -83,6 +92,6 @@ export default function NewProjectModal({ onProjectCreated }: NewProjectModalPro
                     </DialogFooter>
                 </form>
             </DialogContent>
-        </Dialog>
+        </Dialog >
     );
 }

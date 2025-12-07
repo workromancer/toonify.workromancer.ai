@@ -67,7 +67,6 @@ def create_cut(
         script=cut_in.script,
         selected_layout=cut_in.selected_layout,
         aspect_ratio=cut_in.aspect_ratio,
-        aspect_ratio=cut_in.aspect_ratio,
         dialogues=cut_in.dialogues,
         image_path=cut_in.image_path
     )
