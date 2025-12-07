@@ -4,7 +4,6 @@ import { useParams } from 'next/navigation';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft, Play, Save, Users, Clapperboard } from 'lucide-react';
 import { useState } from 'react';
 import EpisodeList from '@/components/editor/EpisodeList';
 import CharacterList from '@/components/editor/CharacterList';
@@ -12,11 +11,44 @@ import CharacterList from '@/components/editor/CharacterList';
 import CanvasArea from '@/components/editor/CanvasArea';
 import InspectorPanel from '@/components/editor/InspectorPanel';
 import StoryboardView from '@/components/editor/StoryboardView';
+import { useCanvasStore } from '@/store/useCanvasStore';
+import api from '@/lib/api';
+import { ArrowLeft, Play, Save, Users, Clapperboard, Loader2 } from 'lucide-react';
 
 export default function EditorPage() {
     const { projectId } = useParams();
     const [activeSegment, setActiveSegment] = useState('storyboard'); // canvas, script, storyboard
     const [sidebarTab, setSidebarTab] = useState<'episodes' | 'characters'>('episodes');
+    const { activeEpisodeId } = useCanvasStore();
+    const [exporting, setExporting] = useState(false);
+
+    const handleExport = async () => {
+        if (!activeEpisodeId) {
+            alert("Select an episode to export.");
+            return;
+        }
+        try {
+            setExporting(true);
+            const response = await api.post(`/episodes/${activeEpisodeId}/export`, { format: 'webtoon' }, {
+                responseType: 'blob' // Important for file download
+            });
+
+            // Create Blob download link
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'webtoon_export.png'); // Filename fallback
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode?.removeChild(link);
+
+        } catch (err) {
+            console.error("Export failed", err);
+            alert("Failed to export episode.");
+        } finally {
+            setExporting(false);
+        }
+    };
 
     return (
         <div className="h-screen flex flex-col bg-gray-900 text-white overflow-hidden">
@@ -35,8 +67,18 @@ export default function EditorPage() {
                     <Button variant="secondary" size="sm">
                         <Save size={16} className="mr-2" /> Save
                     </Button>
-                    <Button className="bg-green-600 hover:bg-green-700" size="sm">
-                        <Play size={16} className="mr-2" /> Export
+                    <Button
+                        className="bg-green-600 hover:bg-green-700"
+                        size="sm"
+                        onClick={handleExport}
+                        disabled={exporting}
+                    >
+                        {exporting ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                            <Play size={16} className="mr-2" />
+                        )}
+                        Export
                     </Button>
                 </div>
             </header>

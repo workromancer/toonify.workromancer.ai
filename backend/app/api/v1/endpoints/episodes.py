@@ -94,3 +94,85 @@ def delete_episode(
     session.commit()
     from fastapi import Response
     return Response(status_code=204)
+
+@router.post("/{episode_id}/export")
+def export_episode(
+    *,
+    session: Session = Depends(deps.get_session),
+    episode_id: UUID,
+    format: str = "webtoon",
+    current_user_id: str = Depends(deps.get_current_user_id),
+):
+    """
+    Export episode as a stitched vertical image (Webtoon strip).
+    """
+    from fastapi.responses import StreamingResponse
+    from PIL import Image
+    import io
+    import base64
+    
+    # Fetch Episode & Cuts
+    episode = session.get(Episode, episode_id)
+    if not episode:
+        raise HTTPException(status_code=404, detail="Episode not found")
+        
+    statement = select(StoryCut).where(StoryCut.episode_id == episode_id).order_by(StoryCut.cut_order)
+    cuts = session.exec(statement).all()
+    
+    if not cuts:
+        raise HTTPException(status_code=400, detail="No cuts to export")
+
+    images = []
+    total_height = 0
+    max_width = 0
+    
+    # Process Images
+    for cut in cuts:
+        if cut.image_path and cut.image_path.startswith("data:image"):
+            try:
+                # Extract base64 info
+                header, encoded = cut.image_path.split(",", 1)
+                img_data = base64.b64decode(encoded)
+                img = Image.open(io.BytesIO(img_data))
+                img.load() # Force load to validate data
+                
+                # Normalize width (optional? let's stick to max found or 1024?)
+                # For webtoon, fixed width is standard. Let's force 1024 width?
+                # For MVP, just list them.
+                images.append(img)
+                total_height += img.height
+                max_width = max(max_width, img.width)
+            except Exception as e:
+                print(f"Failed to process image for cut {cut.id}: {e}")
+                
+    if not images:
+         raise HTTPException(status_code=400, detail="No valid images found in cuts")
+
+    # Create Canvas
+    # Add some spacing? 
+    spacing = 50
+    final_height = total_height + (len(images) - 1) * spacing
+    
+    # Default background white or black? Webtoons often white or dark mode?
+    # Let's use White for now.
+    canvas = Image.new('RGB', (max_width, final_height), (255, 255, 255))
+    
+    y_offset = 0
+    for img in images:
+        # Center image if smaller than max width?
+        x_offset = (max_width - img.width) // 2
+        canvas.paste(img, (x_offset, y_offset))
+        y_offset += img.height + spacing
+        
+    # Output
+    img_byte_arr = io.BytesIO()
+    canvas.save(img_byte_arr, format='PNG')
+    img_byte_arr.seek(0)
+    
+    filename = f"{episode.title.replace(' ', '_')}_export.png"
+    
+    return StreamingResponse(
+        img_byte_arr, 
+        media_type="image/png",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
