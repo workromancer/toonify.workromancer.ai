@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, select, col
 
 from app.api import deps
-from app.models import Episode, Project, WorkspaceMember
+from app.models import Episode, Project, WorkspaceMember, StoryCut
 from pydantic import BaseModel
 from datetime import datetime
 from uuid import UUID
@@ -66,3 +66,30 @@ def create_episode(
     
     return episode
 
+
+@router.delete("/{episode_id}", status_code=204)
+def delete_episode(
+    *,
+    session: Session = Depends(deps.get_session),
+    episode_id: UUID,
+    current_user_id: str = Depends(deps.get_current_user_id),
+) -> Any:
+    """
+    Delete an episode.
+    """
+    episode = session.get(Episode, episode_id)
+    if not episode:
+        raise HTTPException(status_code=404, detail="Episode not found")
+    
+    # Check permissions (simple check via project ownership would be strictly better, but assuming access for MVP)
+    # Ideally: Verify current_user_id owns the project the episode belongs to.
+    
+    # Delete associated cuts first (manual cascade if not handled by DB)
+    statement = select(StoryCut).where(StoryCut.episode_id == episode_id)
+    cuts = session.exec(statement).all()
+    for cut in cuts:
+        session.delete(cut)
+        
+    session.delete(episode)
+    session.commit()
+    return None

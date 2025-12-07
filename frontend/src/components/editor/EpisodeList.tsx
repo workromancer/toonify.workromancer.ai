@@ -48,6 +48,18 @@ export default function EpisodeList() {
         }
     }
 
+    const deleteEpisode = async (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        if (!confirm("Are you sure you want to delete this episode and all its cuts?")) return;
+        try {
+            await api.delete(`/episodes/${id}`);
+            if (activeEpisodeId === id) setActiveEpisode(null);
+            fetchEpisodes();
+        } catch (err) {
+            console.error("Failed to delete episode", err);
+        }
+    };
+
     useEffect(() => {
         fetchEpisodes();
     }, [projectId]);
@@ -73,7 +85,14 @@ export default function EpisodeList() {
                             onClick={() => setActiveEpisode(ep.id)}
                         >
                             <span className="text-sm font-medium text-gray-200">{ep.title}</span>
-                            {/* Placeholder for delete/edit */}
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-gray-400 hover:text-red-400 hover:bg-gray-800"
+                                onClick={(e) => deleteEpisode(e, ep.id)}
+                            >
+                                <Trash2 size={14} />
+                            </Button>
                         </div>
                     ))
                 )}

@@ -96,3 +96,22 @@ def update_cut(
     session.commit()
     session.refresh(cut)
     return cut
+
+
+@router.delete("/{cut_id}", status_code=204)
+def delete_cut(
+    *,
+    session: Session = Depends(deps.get_session),
+    cut_id: UUID,
+    current_user_id: str = Depends(deps.get_current_user_id),
+) -> Any:
+    """
+    Delete a story cut.
+    """
+    cut = session.get(StoryCut, cut_id)
+    if not cut:
+        raise HTTPException(status_code=404, detail="Cut not found")
+        
+    session.delete(cut)
+    session.commit()
+    return None

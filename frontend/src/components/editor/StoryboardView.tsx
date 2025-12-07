@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Plus, Image as ImageIcon, MessageSquare } from 'lucide-react';
+import { Plus, Image as ImageIcon, MessageSquare, Trash2 } from 'lucide-react';
 
 interface StoryCut {
     id: string;
@@ -52,6 +52,16 @@ export default function StoryboardView({ onEditCut }: StoryboardViewProps) {
         }
     };
 
+    const deleteCut = async (id: string) => {
+        if (!confirm("Delete this scene?")) return;
+        try {
+            await api.delete(`/cuts/${id}`);
+            fetchCuts();
+        } catch (err) {
+            console.error("Failed to delete cut", err);
+        }
+    };
+
     useEffect(() => {
         if (activeEpisodeId) {
             fetchCuts();
@@ -96,6 +106,14 @@ export default function StoryboardView({ onEditCut }: StoryboardViewProps) {
                                     <div className="flex gap-2">
                                         <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-400 hover:text-white">
                                             <MessageSquare size={14} />
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-6 w-6 text-gray-400 hover:text-red-400"
+                                            onClick={() => deleteCut(cut.id)}
+                                        >
+                                            <Trash2 size={14} />
                                         </Button>
                                     </div>
                                 </div>
