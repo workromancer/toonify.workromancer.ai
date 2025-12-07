@@ -75,21 +75,43 @@ def generate_scene_structure(
                 from app.models import StoryCut, Episode
                 target_embedding = ai_service.get_embedding(request.script)
                 
-                # Query similar cuts in this project
-                # Join StoryCut -> Episode -> Project to filter by project_id
+                # Query all cuts in this project that have embeddings
                 stmt = select(StoryCut).join(Episode).where(
                     Episode.project_id == project_uuid,
                     StoryCut.embedding.is_not(None)
-                ).order_by(StoryCut.embedding.cosine_distance(target_embedding)).limit(3)
+                )
                 
-                similar_cuts = session.exec(stmt).all()
+                all_cuts = session.exec(stmt).all()
                 
-                if similar_cuts:
+                if all_cuts:
+                    # Manual Cosine Similarity
+                    import math
+                    def cosine_similarity(v1, v2):
+                        if not v1 or not v2: return 0.0
+                        dot_product = sum(a * b for a, b in zip(v1, v2))
+                        norm_v1 = math.sqrt(sum(a * a for a in v1))
+                        norm_v2 = math.sqrt(sum(b * b for b in v2))
+                        if norm_v1 == 0 or norm_v2 == 0: return 0.0
+                        return dot_product / (norm_v1 * norm_v2)
+
+                    # Score cuts
+                    scored_cuts = []
+                    for cut in all_cuts:
+                        # embedding is stored as JSON list
+                        if cut.embedding:
+                            score = cosine_similarity(target_embedding, cut.embedding)
+                            scored_cuts.append((score, cut))
+                    
+                    # Sort descending
+                    scored_cuts.sort(key=lambda x: x[0], reverse=True)
+                    top_cuts = [c[1] for c in scored_cuts[:3]]
+
                     rag_parts = []
-                    for cut in similar_cuts:
+                    for cut in top_cuts:
                         rag_parts.append(f"- Script: {cut.script}\n  Visual: {cut.selected_layout}")
                     
-                    context_str += "SIMILAR PREVIOUS SCENES (For Visual Consistency):\n" + "\n".join(rag_parts)
+                    if rag_parts:
+                        context_str += "SIMILAR PREVIOUS SCENES (For Visual Consistency):\n" + "\n".join(rag_parts)
             except Exception as e:
                 print(f"RAG Retrieval warning: {e}")
 

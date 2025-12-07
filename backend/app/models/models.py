@@ -3,7 +3,7 @@ from uuid import UUID, uuid4
 from datetime import datetime
 from sqlmodel import Field, SQLModel, Relationship
 from sqlalchemy import Column, JSON, Text
-from pgvector.sqlalchemy import Vector
+# from pgvector.sqlalchemy import Vector # Disabled for compatibility
 
 # --- Associations ---
 class WorkspaceMember(SQLModel, table=True):
@@ -92,8 +92,8 @@ class StoryCut(SQLModel, table=True):
     image_path: Optional[str] = Field(default=None, sa_column=Column(Text))
     dialogues: List[dict] = Field(sa_column=Column(JSON), default=[]) # JSON List of {speaker, text}
     
-    # RAG Embedding (768 dimensions for Gemini Text Embedding)
-    embedding: List[float] = Field(sa_column=Column(Vector(768)), default=None)
+    # RAG Embedding (Stored as JSON array for compatibility)
+    embedding: List[float] = Field(sa_column=Column(JSON), default=None)
     
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
