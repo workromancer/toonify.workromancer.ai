@@ -61,6 +61,12 @@ def create_cut(
     """
     Create a new story cut.
     """
+    # Generate Embedding for RAG
+    from app.services.ai import ai_service
+    embedding = None
+    if cut_in.script:
+        embedding = ai_service.get_embedding(cut_in.script)
+
     cut = StoryCut(
         episode_id=cut_in.episode_id,
         cut_order=cut_in.cut_order,
@@ -68,7 +74,8 @@ def create_cut(
         selected_layout=cut_in.selected_layout,
         aspect_ratio=cut_in.aspect_ratio,
         dialogues=cut_in.dialogues,
-        image_path=cut_in.image_path
+        image_path=cut_in.image_path,
+        embedding=embedding
     )
     session.add(cut)
     session.commit()
@@ -91,6 +98,12 @@ def update_cut(
         raise HTTPException(status_code=404, detail="Cut not found")
         
     cut_data = cut_in.dict(exclude_unset=True)
+    
+    # Update Embedding if script changed
+    if "script" in cut_data:
+        from app.services.ai import ai_service
+        cut.embedding = ai_service.get_embedding(cut_data["script"])
+
     for key, value in cut_data.items():
         setattr(cut, key, value)
         

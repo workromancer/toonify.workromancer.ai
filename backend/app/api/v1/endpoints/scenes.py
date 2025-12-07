@@ -55,26 +55,45 @@ def generate_scene_structure(
     billing_service.deduct_credits(session, workspace_id, UUID(current_user_id), "director_suggestion")
 
     try:
-        # Fetch characters for consistency if project_id is provided
-        character_context = ""
+        # Context Gathering
+        context_str = ""
+        
+        # A. Character Context
         if request.project_id:
+            project_uuid = UUID(request.project_id)
             characters = session.exec(
-                select(Character).where(Character.project_id == UUID(request.project_id))
+                select(Character).where(Character.project_id == project_uuid)
             ).all()
             
             if characters:
-                context_parts = []
-                for char in characters:
-                        # Combine name, role, and appearance description
-                        # Handle list or string for appearance tags/desc if needed
-                        # Assuming appearance_tags is list of strings
-                        appearance_str = ", ".join(char.appearance_tags) if char.appearance_tags else "Standard look"
-                        desc = f"{char.name} (Mood: {char.default_mood}): {appearance_str}"
-                        context_parts.append(desc)
-                character_context = "Characters: " + "; ".join(context_parts)
-                # print(f"Injecting Character Context: {character_context}")
+                char_parts = [f"{c.name} ({c.default_mood}): {', '.join(c.appearance_tags)}" for c in characters]
+                context_str += "CHARACTERS:\n" + "\n".join(char_parts) + "\n\n"
 
-        options = ai_service.generate_direction_options(request.script, character_context)
+            # B. RAG - Scene Context (Visual Continuity)
+            # Find similar previous cuts to maintain visual tone
+            try:
+                from app.models import StoryCut, Episode
+                target_embedding = ai_service.get_embedding(request.script)
+                
+                # Query similar cuts in this project
+                # Join StoryCut -> Episode -> Project to filter by project_id
+                stmt = select(StoryCut).join(Episode).where(
+                    Episode.project_id == project_uuid,
+                    StoryCut.embedding.is_not(None)
+                ).order_by(StoryCut.embedding.cosine_distance(target_embedding)).limit(3)
+                
+                similar_cuts = session.exec(stmt).all()
+                
+                if similar_cuts:
+                    rag_parts = []
+                    for cut in similar_cuts:
+                        rag_parts.append(f"- Script: {cut.script}\n  Visual: {cut.selected_layout}")
+                    
+                    context_str += "SIMILAR PREVIOUS SCENES (For Visual Consistency):\n" + "\n".join(rag_parts)
+            except Exception as e:
+                print(f"RAG Retrieval warning: {e}")
+
+        options = ai_service.generate_direction_options(request.script, context_str)
         return options
     except HTTPException as he:
         raise he

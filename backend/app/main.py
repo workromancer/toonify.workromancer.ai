@@ -30,13 +30,19 @@ def root():
 def health_check():
     return {"status": "ok"}
 
-@app.on_event("startup")
-def on_startup():
-    from sqlmodel import Session, select, SQLModel
+    from sqlmodel import Session, select, SQLModel, text
     from app.api.deps import engine
     from app.models.models import User, Workspace, WorkspaceMember, ProjectTemplate
     from app.core.security import get_password_hash
     
+    # Enable pgvector extension
+    try:
+        with Session(engine) as session:
+            session.exec(text("CREATE EXTENSION IF NOT EXISTS vector"))
+            session.commit()
+    except Exception as e:
+        print(f"Warning: Could not enable pgvector extension: {e}")
+
     # Create tables if they don't exist
     SQLModel.metadata.create_all(engine)
     
