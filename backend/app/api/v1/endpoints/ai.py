@@ -1,7 +1,9 @@
 from typing import Any
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 from app.api import deps
+from app.services.ai import ai_service
+from app.services.storage import storage
 import time
 
 router = APIRouter()
@@ -16,37 +18,34 @@ class GenerateResponse(BaseModel):
     image_url: str
 
 @router.post("/generate", response_model=GenerateResponse)
-def generate_image(
+async def generate_image(
     *,
     request: GenerateRequest,
     current_user_id: str = Depends(deps.get_current_user_id),
 ) -> Any:
     """
-    Mock AI Generation. Returns a placeholder image based on keywords.
+    Generate image using Real AI (Gemini/Imagen) and store in MinIO.
     """
-    # Simulate processing time
-    time.sleep(1)
-    
-    # Simple logic to return different placeholders
-    keyword = "city"
-    if "character" in request.prompt.lower():
-        keyword = "person"
-    elif "nature" in request.prompt.lower():
-        keyword = "nature"
-    elif "fantasy" in request.prompt.lower():
-        keyword = "fantasy"
+    try:
+        # 1. Generate Image (Bytes)
+        # Note: This is a blocking call if not careful. For production, offload to Celery/ARQ.
+        # For prototype, we run it directly or in a thread. 
+        # Since AIService mock is CPU bound (PIL) or Network bound (API), 
+        # async handling depends on library. Fast API handles sync functions in threadpool.
         
-    # Use Unsplash Source for persistent randomish images
-    # Note: source.unsplash.com is deprecated/redirects, using images.unsplash.com with parameters
-    # Actually, plain unsplash source might be flaky. Let's use a reliable placeholder service or static realistic URLs.
-    
-    if keyword == "city":
-        image_url = "https://images.unsplash.com/photo-1449824913929-2b3a3e3dbf3d?w=800&q=80"
-    elif keyword == "person":
-        image_url = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&q=80"
-    elif keyword == "nature":
-        image_url = "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=800&q=80"
-    else:
-        image_url = f"https://images.unsplash.com/photo-1541963463532-d68292c34b19?w=800&q=80" # Default texture/abstract
+        # We'll use the service synchronously for now.
+        image_bytes = ai_service.generate_image(
+            prompt=request.prompt, 
+            width=request.width, 
+            height=request.height
+        )
+        
+        # 2. Upload to Storage
+        image_url = storage.upload_image(image_bytes, content_type="image/png")
+        
+        return GenerateResponse(image_url=image_url)
+        
+    except Exception as e:
+        print(f"Generation failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
-    return GenerateResponse(image_url=image_url)

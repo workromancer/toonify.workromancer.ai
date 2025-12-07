@@ -44,6 +44,9 @@ class Settings(BaseSettings):
 
     # AI
     GEMINI_API_KEY: str = ""
+    GOOGLE_CLOUD_PROJECT: str = "toonify-workromancer" # Default or env
+    GOOGLE_CLOUD_LOCATION: str = "global"
+
 
     class Config:
         case_sensitive = True
