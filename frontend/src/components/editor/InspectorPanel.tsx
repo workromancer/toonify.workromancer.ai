@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import { useCanvasStore } from '@/store/useCanvasStore';
 import api from '@/lib/api';
 
 export default function InspectorPanel() {
-    const { selectedId, elements, updateSelectedElement, activeCharacter } = useCanvasStore();
+    const { selectedId, elements, updateSelectedElement, activeCharacter, activeCutId } = useCanvasStore();
     const selectedElement = elements.find(el => el.id === selectedId);
     const [prompt, setPrompt] = useState('');
     const [generating, setGenerating] = useState(false);
@@ -26,13 +26,24 @@ export default function InspectorPanel() {
                 style_preset: "anime_webtoon"
             });
 
-            updateSelectedElement({ content: res.data.image_url, prompt });
+            const imageUrl = res.data.image_url;
+            updateSelectedElement({ content: imageUrl, prompt });
+
+            // If working on a cut, update the cut's image as well!
+            if (activeCutId) {
+                await api.put(`/cuts/${activeCutId}`, {
+                    image_path: imageUrl
+                });
+            }
         } catch (err) {
             console.error(err);
         } finally {
             setGenerating(false);
         }
     };
+
+    // Load active cut script if needed (future feature)
+    // useEffect(() => { ... }, [activeCutId]);
 
     const insertCharacterPrompt = () => {
         if (activeCharacter) {

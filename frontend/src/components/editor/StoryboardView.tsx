@@ -14,8 +14,12 @@ interface StoryCut {
     image_path?: string;
 }
 
-export default function StoryboardView() {
-    const { activeEpisodeId } = useCanvasStore();
+interface StoryboardViewProps {
+    onEditCut: () => void;
+}
+
+export default function StoryboardView({ onEditCut }: StoryboardViewProps) {
+    const { activeEpisodeId, setActiveCut } = useCanvasStore();
     const [cuts, setCuts] = useState<StoryCut[]>([]);
     const [loading, setLoading] = useState(false);
 
@@ -68,7 +72,7 @@ export default function StoryboardView() {
         <div className="h-full flex flex-col bg-gray-900 overflow-hidden">
             <div className="p-4 border-b border-gray-700 flex justify-between items-center bg-gray-800">
                 <h2 className="font-semibold text-white">Storyboard</h2>
-                <Button size="sm" onClick={createCut} className="bg-purple-600 hover:bg-purple-700">
+                <Button size="sm" onClick={createCut} data-testid="add-cut-btn" className="bg-purple-600 hover:bg-purple-700">
                     <Plus size={16} className="mr-2" /> Add Cut
                 </Button>
             </div>
@@ -80,7 +84,7 @@ export default function StoryboardView() {
                     <div className="text-gray-500 text-center italic mt-10">No cuts yet. Start adding scenes!</div>
                 ) : (
                     cuts.map((cut) => (
-                        <div key={cut.id} className="flex gap-4 items-start group">
+                        <div key={cut.id} data-testid={`cut-card-${cut.id}`} className="flex gap-4 items-start group">
                             <div className="w-12 pt-2 text-center text-gray-500 font-mono text-sm">
                                 #{cut.cut_order}
                             </div>
@@ -109,7 +113,15 @@ export default function StoryboardView() {
 
                                     {/* Edit Button Overlay */}
                                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                        <Button variant="secondary" size="sm">
+                                        <Button
+                                            variant="secondary"
+                                            size="sm"
+                                            data-testid={`edit-cut-btn-${cut.id}`}
+                                            onClick={() => {
+                                                setActiveCut(cut.id);
+                                                onEditCut();
+                                            }}
+                                        >
                                             Edit in Canvas
                                         </Button>
                                     </div>

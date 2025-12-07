@@ -48,12 +48,14 @@ export default function EditorPage() {
                     <Panel defaultSize={20} minSize={15} maxSize={30} className="bg-gray-800 border-r border-gray-700 flex flex-col">
                         <div className="flex border-b border-gray-700">
                             <button
+                                data-testid="tab-episodes"
                                 className={`flex-1 p-3 text-sm font-medium flex items-center justify-center gap-2 hover:bg-gray-700 transition-colors ${sidebarTab === 'episodes' ? 'text-purple-400 border-b-2 border-purple-500 bg-gray-700/50' : 'text-gray-400'}`}
                                 onClick={() => setSidebarTab('episodes')}
                             >
                                 <Clapperboard size={16} /> Episodes
                             </button>
                             <button
+                                data-testid="tab-casting"
                                 className={`flex-1 p-3 text-sm font-medium flex items-center justify-center gap-2 hover:bg-gray-700 transition-colors ${sidebarTab === 'characters' ? 'text-purple-400 border-b-2 border-purple-500 bg-gray-700/50' : 'text-gray-400'}`}
                                 onClick={() => setSidebarTab('characters')}
                             >
@@ -74,6 +76,7 @@ export default function EditorPage() {
                             {/* Toolbar */}
                             <div className="h-12 border-b border-gray-700 flex items-center px-4 gap-4 bg-gray-900/50">
                                 <Button
+                                    data-testid="view-storyboard-btn"
                                     variant={activeSegment === 'storyboard' ? 'secondary' : 'ghost'}
                                     size="sm"
                                     onClick={() => setActiveSegment('storyboard')}
@@ -81,6 +84,7 @@ export default function EditorPage() {
                                     Storyboard
                                 </Button>
                                 <Button
+                                    data-testid="view-canvas-btn"
                                     variant={activeSegment === 'canvas' ? 'secondary' : 'ghost'}
                                     size="sm"
                                     onClick={() => setActiveSegment('canvas')}
@@ -88,6 +92,7 @@ export default function EditorPage() {
                                     Canvas
                                 </Button>
                                 <Button
+                                    data-testid="view-script-btn"
                                     variant={activeSegment === 'script' ? 'secondary' : 'ghost'}
                                     size="sm"
                                     onClick={() => setActiveSegment('script')}
@@ -101,7 +106,7 @@ export default function EditorPage() {
                                 {activeSegment === 'canvas' ? (
                                     <CanvasArea />
                                 ) : activeSegment === 'storyboard' ? (
-                                    <StoryboardView />
+                                    <StoryboardView onEditCut={() => setActiveSegment('canvas')} />
                                 ) : (
                                     <div className="w-full h-full max-w-3xl bg-gray-900 p-8 border border-gray-700 text-gray-300 font-mono text-sm mx-auto my-4 overflow-auto">
                                         <p>EXT. CITY STREET - DAY</p>

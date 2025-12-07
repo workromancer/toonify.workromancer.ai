@@ -65,6 +65,7 @@ export default function EpisodeList() {
                     episodes.map((ep) => (
                         <div
                             key={ep.id}
+                            data-testid={`episode-item-${ep.id}`}
                             className={`p-3 border rounded cursor-pointer transition-colors group flex justify-between items-center ${activeEpisodeId === ep.id
                                 ? 'bg-purple-900/40 border-purple-500'
                                 : 'bg-gray-700/50 hover:bg-gray-700 border-transparent hover:border-gray-500'
@@ -82,12 +83,13 @@ export default function EpisodeList() {
                 <Button
                     variant="ghost"
                     size="sm"
+                    data-testid="add-episode-btn"
                     className="w-full text-gray-400 border border-dashed border-gray-600 hover:text-white hover:border-gray-500 hover:bg-gray-700"
                     onClick={createEpisode}
                 >
                     <Plus size={16} className="mr-2" /> Add Episode
                 </Button>
             </div>
-        </div>
+        </div >
     );
 }

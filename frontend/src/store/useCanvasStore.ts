@@ -16,11 +16,13 @@ interface CanvasState {
     elements: CanvasElement[];
     selectedId: string | null;
     activeCharacter: { name: string; tags: string[] } | null;
-    activeEpisodeId: string | null; // Added
+    activeEpisodeId: string | null;
+    activeCutId: string | null; // Added
     addElement: (type: CanvasElement['type']) => void;
     selectElement: (id: string | null) => void;
     setActiveCharacter: (char: { name: string; tags: string[] } | null) => void;
-    setActiveEpisode: (id: string | null) => void; // Added
+    setActiveEpisode: (id: string | null) => void;
+    setActiveCut: (id: string | null) => void; // Added
     updateElement: (id: string, updates: Partial<CanvasElement>) => void;
     updateSelectedElement: (updates: Partial<CanvasElement>) => void;
 }
@@ -32,7 +34,8 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     ],
     selectedId: null,
     activeCharacter: null,
-    activeEpisodeId: null, // Init
+    activeEpisodeId: null,
+    activeCutId: null, // Init
     addElement: (type) => {
         const newElement: CanvasElement = {
             id: uuidv4(),
@@ -48,7 +51,8 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     },
     selectElement: (id) => set({ selectedId: id }),
     setActiveCharacter: (char) => set({ activeCharacter: char }),
-    setActiveEpisode: (id) => set({ activeEpisodeId: id }), // Added
+    setActiveEpisode: (id) => set({ activeEpisodeId: id }),
+    setActiveCut: (id) => set({ activeCutId: id }), // Added
     updateElement: (id, updates) => set((state) => ({
         elements: state.elements.map((el) => (el.id === id ? { ...el, ...updates } : el))
     })),
