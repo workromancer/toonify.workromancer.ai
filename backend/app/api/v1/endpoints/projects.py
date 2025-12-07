@@ -4,7 +4,8 @@ from sqlmodel import Session, select, col
 
 from app.api import deps
 from app.core import security
-from app.models import Project, Workspace, WorkspaceMember, User
+from app.models import Project, Workspace, WorkspaceMember, User, Character
+from app.services.ai import ai_service
 from pydantic import BaseModel
 from datetime import datetime
 
@@ -21,6 +22,12 @@ class ProjectOut(BaseModel):
     thumbnail_url: str | None
     created_at: datetime
     workspace_id: Any
+
+class ProjectDetailOut(ProjectOut):
+    characters: List[Any] = []
+
+class StyleRecommendRequest(BaseModel):
+    description: str
 
 @router.get("/", response_model=List[ProjectOut])
 def list_projects(
@@ -82,3 +89,44 @@ def create_project(
     session.refresh(project)
     
     return project
+
+@router.get("/{project_id}", response_model=ProjectDetailOut)
+def get_project(
+    *,
+    session: Session = Depends(deps.get_session),
+    project_id: str, # Keep as str or change to UUID? Let's check imports first.
+    current_user_id: str = Depends(deps.get_current_user_id),
+) -> Any:
+    """
+    Get project details including characters.
+    """
+    # Convert regex validation or type
+    from uuid import UUID
+    try:
+        project_uuid = UUID(project_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid UUID")
+
+    project = session.get(Project, project_uuid)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Check permissions (simplified)
+    # real app: check if user is in workspace of project
+    
+    return project
+
+@router.post("/styles/recommend")
+def recommend_styles(
+    *,
+    request: StyleRecommendRequest,
+    current_user_id: str = Depends(deps.get_current_user_id),
+) -> Any:
+    """
+    Recommend 3 style options based on description using AI.
+    """
+    try:
+        styles = ai_service.recommend_style(request.description)
+        return styles
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

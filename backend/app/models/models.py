@@ -2,8 +2,7 @@ from typing import List, Optional
 from uuid import UUID, uuid4
 from datetime import datetime
 from sqlmodel import Field, SQLModel, Relationship
-from sqlalchemy import Column
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import Column, JSON
 
 # --- Associations ---
 class WorkspaceMember(SQLModel, table=True):
@@ -61,7 +60,7 @@ class Character(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     project_id: UUID = Field(foreign_key="project.id")
     name: str
-    appearance_tags: List[str] = Field(sa_column=Column(JSONB), default=[])
+    appearance_tags: List[str] = Field(sa_column=Column(JSON), default=[])
     default_mood: str
     consistency_seed: int
     profile_image_url: Optional[str] = None
@@ -90,7 +89,7 @@ class StoryCut(SQLModel, table=True):
     selected_layout: str
     aspect_ratio: str
     image_path: Optional[str] = None
-    dialogues: List[dict] = Field(sa_column=Column(JSONB), default=[]) # JSON List of {speaker, text}
+    dialogues: List[dict] = Field(sa_column=Column(JSON), default=[]) # JSON List of {speaker, text}
     # For RAG, pgvector would be used here, but for SQLModel we might need raw SQL or specific type
     # Skipping vector definition in model for now, handled via raw migration or dedicated table
     created_at: datetime = Field(default_factory=datetime.utcnow)

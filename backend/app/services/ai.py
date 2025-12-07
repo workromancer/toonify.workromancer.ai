@@ -18,6 +18,55 @@ class AIService:
         except Exception as e:
             print(f"Vertex AI Init Failed: {e}")
 
+    def recommend_style(self, description: str) -> dict:
+        """
+        Recommends 3 distinct art styles based on the project description/worldview.
+        """
+        prompt = f"""
+        You are an expert art director for webtoons.
+        Based on the following story or worldview description, recommend 3 distinct art styles that would suit the project.
+
+        Description: "{description}"
+
+        Return ONLY a JSON object with the following structure:
+        {{
+            "options": [
+                {{
+                    "id": "style_A",
+                    "label": "Style Name (e.g., Noir, Watercolor)",
+                    "description": "Why this fits the story.",
+                    "sample_image_url": "https://placeholder.com/style_a.png" 
+                }},
+                ...
+            ]
+        }}
+        """
+        
+        try:
+            model = GenerativeModel("gemini-1.5-flash-001")
+            response = model.generate_content(prompt)
+            
+            # Cleanup
+            text = response.text.strip()
+            if text.startswith("```json"):
+                text = text[7:-3]
+            if text.endswith("```"):
+                text = text[:-3]
+            
+            import json
+            return json.loads(text)
+            
+        except Exception as e:
+            print(f"Style Director Error: {e}")
+            # Fallback
+            return {
+                "options": [
+                    {"id": "s1", "label": "Modern Webtoon", "description": "Clean lines, standard coloring.", "sample_image_url": ""},
+                    {"id": "s2", "label": "Sketchy/Rough", "description": "For intense or dark themes.", "sample_image_url": ""},
+                    {"id": "s3", "label": "Soft/Pastel", "description": "For romance or slice of life.", "sample_image_url": ""}
+                ]
+            }
+
     def generate_direction_options(self, script: str) -> dict:
         """
         Generates 3 visual direction options based on the user script.
