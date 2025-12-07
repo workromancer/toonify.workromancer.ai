@@ -12,3 +12,6 @@ pgvector
 google-cloud-aiplatform>=1.38.0
 Pillow
 requests
+python-jose[cryptography]
+passlib[bcrypt]
+email-validator

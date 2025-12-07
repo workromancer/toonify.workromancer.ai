@@ -37,14 +37,15 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     activeEpisodeId: null,
     activeCutId: null, // Init
     addElement: (type) => {
+        const isText = type === 'text';
         const newElement: CanvasElement = {
             id: uuidv4(),
             type,
             x: 100,
             y: 100,
-            width: 200,
-            height: 200,
-            content: '',
+            width: isText ? 200 : 300,
+            height: isText ? 100 : 300,
+            content: isText ? 'Double click to edit' : '',
             prompt: ''
         };
         set((state) => ({ elements: [...state.elements, newElement], selectedId: newElement.id }));

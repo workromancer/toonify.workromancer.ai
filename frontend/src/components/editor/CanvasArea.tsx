@@ -12,18 +12,37 @@ export default function CanvasArea() {
         <div className="h-full flex flex-col relative" onClick={() => selectElement(null)}>
             {/* Canvas Toolbar overlay */}
             <div className="absolute top-4 left-4 z-10 flex flex-col gap-2 bg-gray-800/80 p-1 rounded-md backdrop-blur-sm border border-gray-700">
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-300 hover:text-white">
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-300 hover:text-white" title="Move">
                     <Move size={16} />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-300 hover:text-white">
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-300 hover:text-white" title="Hand Tool">
                     <Hand size={16} />
                 </Button>
                 <div className="h-px bg-gray-700 my-1" />
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-300 hover:text-white">
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-300 hover:text-white" title="Zoom In">
                     <ZoomIn size={16} />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-300 hover:text-white">
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-300 hover:text-white" title="Zoom Out">
                     <ZoomOut size={16} />
+                </Button>
+                <div className="h-px bg-gray-700 my-1" />
+                <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 text-gray-300 hover:text-white" 
+                    title="Add Panel"
+                    onClick={() => useCanvasStore.getState().addElement('panel')}
+                >
+                    <div className="w-4 h-4 border-2 border-current rounded-sm" />
+                </Button>
+                <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 text-gray-300 hover:text-white" 
+                    title="Add Text"
+                    onClick={() => useCanvasStore.getState().addElement('text')}
+                >
+                    <span className="font-serif font-bold text-lg leading-none">T</span>
                 </Button>
             </div>
 

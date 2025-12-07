@@ -67,7 +67,7 @@ def create_episode(
     return episode
 
 
-@router.delete("/{episode_id}", status_code=204)
+@router.delete("/{episode_id}")
 def delete_episode(
     *,
     session: Session = Depends(deps.get_session),
@@ -92,4 +92,5 @@ def delete_episode(
         
     session.delete(episode)
     session.commit()
-    return None
+    from fastapi import Response
+    return Response(status_code=204)

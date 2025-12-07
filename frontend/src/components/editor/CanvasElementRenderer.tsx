@@ -16,8 +16,10 @@ export default function CanvasElementRenderer({ element, isSelected, onSelect }:
     return (
         <div
             className={cn(
-                "absolute border-2 bg-white flex items-center justify-center overflow-hidden cursor-pointer transition-all",
-                isSelected ? "border-purple-500 shadow-xl z-20" : "border-gray-300 hover:border-gray-400 z-10"
+                "absolute flex items-center justify-center overflow-hidden cursor-pointer transition-all",
+                element.type === 'text' ? "bg-transparent" : "bg-white border-2",
+                isSelected ? "border-purple-500 shadow-xl z-20" : "border-gray-300 hover:border-gray-400 z-10",
+                element.type === 'text' && isSelected ? "border-2 border-dashed" : ""
             )}
             style={{
                 left: element.x,
@@ -30,7 +32,11 @@ export default function CanvasElementRenderer({ element, isSelected, onSelect }:
                 onSelect(element.id);
             }}
         >
-            {element.content ? (
+            {element.type === 'text' ? (
+                <div className="w-full h-full p-2 text-center flex items-center justify-center font-comic text-black leading-tight" contentEditable suppressContentEditableWarning>
+                    {element.content || "Double click to edit"}
+                </div>
+            ) : element.content ? (
                 <img src={element.content} alt="Generated" className="w-full h-full object-cover" />
             ) : (
                 <div className="flex flex-col items-center justify-center text-gray-400 p-4 text-center">
