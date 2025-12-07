@@ -9,7 +9,7 @@ import { useCanvasStore } from '@/store/useCanvasStore';
 import api from '@/lib/api';
 
 export default function InspectorPanel() {
-    const { selectedId, elements, updateSelectedElement } = useCanvasStore();
+    const { selectedId, elements, updateSelectedElement, activeCharacter } = useCanvasStore();
     const selectedElement = elements.find(el => el.id === selectedId);
     const [prompt, setPrompt] = useState('');
     const [generating, setGenerating] = useState(false);
@@ -31,6 +31,15 @@ export default function InspectorPanel() {
             console.error(err);
         } finally {
             setGenerating(false);
+        }
+    };
+
+    const insertCharacterPrompt = () => {
+        if (activeCharacter) {
+            setPrompt((prev) => {
+                const charPrompt = `(Character: ${activeCharacter.name}, ${activeCharacter.tags.join(', ')})`;
+                return prev ? `${prev}, ${charPrompt}` : charPrompt;
+            });
         }
     };
 
@@ -82,7 +91,14 @@ export default function InspectorPanel() {
                 <h3 className="font-semibold mb-4 text-gray-300">AI Generation</h3>
                 <div className="space-y-4">
                     <div className="grid w-full items-center gap-1.5">
-                        <Label htmlFor="prompt">Prompt</Label>
+                        <div className="flex justify-between items-center">
+                            <Label htmlFor="prompt">Prompt</Label>
+                            {activeCharacter && (
+                                <Button variant="link" size="sm" className="h-auto p-0 text-purple-400" onClick={insertCharacterPrompt}>
+                                    + {activeCharacter.name}
+                                </Button>
+                            )}
+                        </div>
                         <Input
                             id="prompt"
                             placeholder="Describe the scene..."
