@@ -51,10 +51,32 @@ export default function CharacterList() {
                         <div
                             key={char.id}
                             className={`p-3 border rounded cursor-pointer transition-colors group flex items-center gap-3 ${activeCharacter?.name === char.name
-                                    ? 'bg-purple-900/40 border-purple-500'
-                                    : 'bg-gray-700/50 hover:bg-gray-700 border-transparent hover:border-gray-500'
+                                ? 'bg-purple-900/40 border-purple-500'
+                                : 'bg-gray-700/50 hover:bg-gray-700 border-transparent hover:border-gray-500'
                                 }`}
                             onClick={() => setActiveCharacter({ name: char.name, tags: char.appearance_tags })}
                             title={char.appearance_tags.join(', ')}
                         >
-                            <div className="w-8 h-8 rounded-
+                            <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center overflow-hidden">
+                                {char.profile_image_url ? (
+                                    <img src={char.profile_image_url} alt={char.name} className="w-full h-full object-cover" />
+                                ) : (
+                                    <User size={16} className="text-gray-400" />
+                                )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <div className="text-sm font-medium text-gray-200 truncate group-hover:text-white">
+                                    {char.name}
+                                </div>
+                            </div>
+                        </div>
+                    ))
+                )}
+            </div>
+
+            <div className="p-4 border-t border-gray-700 bg-gray-900/50">
+                <CharacterCreateModal onCharacterCreated={fetchCharacters} />
+            </div>
+        </div>
+    );
+}

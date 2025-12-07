@@ -101,6 +101,7 @@ export default function InspectorPanel() {
                         </div>
                         <Input
                             id="prompt"
+                            data-testid="ai-prompt-input"
                             placeholder="Describe the scene..."
                             value={prompt}
                             onChange={(e) => setPrompt(e.target.value)}
@@ -108,6 +109,7 @@ export default function InspectorPanel() {
                     </div>
 
                     <Button
+                        data-testid="ai-generate-button"
                         className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90"
                         onClick={handleGenerate}
                         disabled={generating || !prompt}

@@ -43,6 +43,7 @@ export default function SignupPage() {
                         <label className="block mb-1 text-sm text-gray-400">Email</label>
                         <input
                             {...register('email')}
+                            data-testid="signup-email"
                             type="email"
                             className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-green-500"
                             required
@@ -52,12 +53,13 @@ export default function SignupPage() {
                         <label className="block mb-1 text-sm text-gray-400">Password</label>
                         <input
                             {...register('password')}
+                            data-testid="signup-password"
                             type="password"
                             className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-green-500"
                             required
                         />
                     </div>
-                    <Button type="submit" className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                    <Button type="submit" data-testid="signup-submit" className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
                         Create Workspace
                     </Button>
                 </form>
