@@ -1,0 +1,48 @@
+'use client';
+
+import { Edit, Eye, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
+export interface Character {
+    id?: string;
+    name: string;
+    mood?: string;
+    tags?: string[]; // Assuming tags might be an array of strings
+    imageUrl?: string;
+    // Add other fields as necessary from the backend response
+}
+
+export default function CharacterCard({ character }: { character: Character }) {
+    return (
+        <div className="group relative flex flex-col overflow-hidden rounded-xl bg-white dark:bg-[#1d1c27] transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-primary/20 border border-gray-200 dark:border-transparent">
+            <img className="h-48 w-full object-cover" alt={`Illustration of ${character.name}`} src={character.imageUrl || "https://placehold.co/400x300"} />
+            <div className="flex flex-1 flex-col p-4">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">{character.name}</h3>
+                <p className="text-sm text-gray-500 dark:text-[#a19db9]">Default Mood: {character.mood || 'Neutral'}</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                    {character.tags && character.tags.map((tag, index) => (
+                        <span key={index} className={`rounded-full px-2 py-1 text-xs font-medium ${index === 0 ? 'bg-primary/20 text-primary' : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-[#a19db9]'}`}>
+                            {tag}
+                        </span>
+                    ))}
+                    {!character.tags && (
+                         <span className="rounded-full px-2 py-1 text-xs font-medium bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-[#a19db9]">
+                            Protagonist
+                        </span>
+                    )}
+                </div>
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/60 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full bg-white/10 text-white hover:bg-white/20">
+                    <Edit size={20} />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full bg-white/10 text-white hover:bg-white/20">
+                    <Eye size={20} />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full bg-white/10 text-white hover:bg-red-500/50 hover:text-white">
+                    <Trash2 size={20} />
+                </Button>
+            </div>
+        </div>
+    );
+}

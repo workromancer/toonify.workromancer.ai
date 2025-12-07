@@ -15,7 +15,7 @@ interface Project {
 export default function ProjectCard({ project }: { project: Project }) {
     return (
         <div className="flex flex-col gap-3 group cursor-pointer">
-            <Link href={`/project/${project.id}/editor`} className="block">
+            <Link href={`/project/${project.id}`} className="block">
                 <div
                     className="w-full bg-center bg-no-repeat bg-cover rounded-xl aspect-[4/5] transition-transform group-hover:scale-[1.02] shadow-sm relative overflow-hidden bg-gray-200 dark:bg-gray-800"
                     style={{ backgroundImage: project.thumbnail_url ? `url("${project.thumbnail_url}")` : undefined }}
@@ -29,7 +29,7 @@ export default function ProjectCard({ project }: { project: Project }) {
                 </div>
             </Link>
             <div>
-                <Link href={`/project/${project.id}/editor`}>
+                <Link href={`/project/${project.id}`}>
                     <p className="text-gray-900 dark:text-white text-base font-medium leading-normal group-hover:text-primary transition-colors truncate">
                         {project.title}
                     </p>
