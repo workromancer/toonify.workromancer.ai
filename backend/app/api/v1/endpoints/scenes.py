@@ -7,7 +7,6 @@ from pydantic import BaseModel
 router = APIRouter()
 
 class SceneStructureRequest(BaseModel):
-class SceneStructureRequest(BaseModel):
     script: str
     project_id: str | None = None
 
