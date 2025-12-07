@@ -5,17 +5,21 @@ import { useParams } from 'next/navigation';
 import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Plus, Trash2 } from 'lucide-react';
+import { useCanvasStore } from '@/store/useCanvasStore';
+
 
 interface Episode {
     id: string;
     title: string;
-    episode_number: number;
+    episode_order: number;
 }
 
 export default function EpisodeList() {
     const { projectId } = useParams();
     const [episodes, setEpisodes] = useState<Episode[]>([]);
     const [loading, setLoading] = useState(true);
+    const { setActiveEpisode, activeEpisodeId } = useCanvasStore(); // Use store
+
 
     const fetchEpisodes = async () => {
         if (!projectId) return;
@@ -32,11 +36,11 @@ export default function EpisodeList() {
 
     const createEpisode = async () => {
         try {
-            const nextNumber = episodes.length > 0 ? episodes[episodes.length - 1].episode_number + 1 : 1;
+            const nextNumber = episodes.length > 0 ? episodes[episodes.length - 1].episode_order + 1 : 1;
             await api.post('/episodes/', {
                 title: `Episode ${nextNumber}`,
                 project_id: projectId,
-                episode_number: nextNumber
+                episode_order: nextNumber
             });
             fetchEpisodes();
         } catch (err) {
@@ -61,7 +65,11 @@ export default function EpisodeList() {
                     episodes.map((ep) => (
                         <div
                             key={ep.id}
-                            className="p-3 bg-gray-700/50 hover:bg-gray-700 border border-transparent hover:border-purple-500/50 rounded cursor-pointer transition-colors group flex justify-between items-center"
+                            className={`p-3 border rounded cursor-pointer transition-colors group flex justify-between items-center ${activeEpisodeId === ep.id
+                                ? 'bg-purple-900/40 border-purple-500'
+                                : 'bg-gray-700/50 hover:bg-gray-700 border-transparent hover:border-gray-500'
+                                }`}
+                            onClick={() => setActiveEpisode(ep.id)}
                         >
                             <span className="text-sm font-medium text-gray-200">{ep.title}</span>
                             {/* Placeholder for delete/edit */}

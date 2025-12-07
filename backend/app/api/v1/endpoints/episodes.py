@@ -10,18 +10,20 @@ from uuid import UUID
 
 router = APIRouter()
 
+
 class EpisodeCreate(BaseModel):
     title: str
     project_id: UUID
-    episode_number: int
+    episode_order: int
+    story_summary: str = ""
 
 class EpisodeOut(BaseModel):
     id: Any
     title: str
-    episode_number: int
+    episode_order: int
     project_id: Any
+    story_summary: str = ""
     created_at: datetime
-    # We can include script_content summary if needed, but keep light for list
 
 @router.get("/", response_model=List[EpisodeOut])
 def list_episodes(
@@ -38,11 +40,7 @@ def list_episodes(
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     
-    # Check if user is member of project's workspace
-    # (Simplified check: Owner or Member)
-    # Ideally should use a shared permission checker
-    
-    statement = select(Episode).where(Episode.project_id == project_id).order_by(Episode.episode_number)
+    statement = select(Episode).where(Episode.project_id == project_id).order_by(Episode.episode_order)
     episodes = session.exec(statement).all()
     return episodes
 
@@ -56,18 +54,15 @@ def create_episode(
     """
     Create a new episode in a project.
     """
-    # Verify access (skip complex permission logic for MVP speed, assume logged in is enough if they have ID)
-    # But strictly should check workspace membership.
-    
     episode = Episode(
         title=episode_in.title,
         project_id=episode_in.project_id,
-        episode_number=episode_in.episode_number,
-        script_content="", # Init empty
-        storyboard_data={} # Init empty
+        episode_order=episode_in.episode_order,
+        story_summary=episode_in.story_summary
     )
     session.add(episode)
     session.commit()
     session.refresh(episode)
     
     return episode
+

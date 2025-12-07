@@ -11,10 +11,11 @@ import CharacterList from '@/components/editor/CharacterList';
 
 import CanvasArea from '@/components/editor/CanvasArea';
 import InspectorPanel from '@/components/editor/InspectorPanel';
+import StoryboardView from '@/components/editor/StoryboardView';
 
 export default function EditorPage() {
     const { projectId } = useParams();
-    const [activeSegment, setActiveSegment] = useState('canvas'); // canvas, script, storyboard
+    const [activeSegment, setActiveSegment] = useState('storyboard'); // canvas, script, storyboard
     const [sidebarTab, setSidebarTab] = useState<'episodes' | 'characters'>('episodes');
 
     return (
@@ -73,11 +74,11 @@ export default function EditorPage() {
                             {/* Toolbar */}
                             <div className="h-12 border-b border-gray-700 flex items-center px-4 gap-4 bg-gray-900/50">
                                 <Button
-                                    variant={activeSegment === 'script' ? 'secondary' : 'ghost'}
+                                    variant={activeSegment === 'storyboard' ? 'secondary' : 'ghost'}
                                     size="sm"
-                                    onClick={() => setActiveSegment('script')}
+                                    onClick={() => setActiveSegment('storyboard')}
                                 >
-                                    Script
+                                    Storyboard
                                 </Button>
                                 <Button
                                     variant={activeSegment === 'canvas' ? 'secondary' : 'ghost'}
@@ -86,12 +87,21 @@ export default function EditorPage() {
                                 >
                                     Canvas
                                 </Button>
+                                <Button
+                                    variant={activeSegment === 'script' ? 'secondary' : 'ghost'}
+                                    size="sm"
+                                    onClick={() => setActiveSegment('script')}
+                                >
+                                    Script
+                                </Button>
                             </div>
 
                             {/* Content Area */}
                             <div className="flex-1 overflow-hidden relative">
                                 {activeSegment === 'canvas' ? (
                                     <CanvasArea />
+                                ) : activeSegment === 'storyboard' ? (
+                                    <StoryboardView />
                                 ) : (
                                     <div className="w-full h-full max-w-3xl bg-gray-900 p-8 border border-gray-700 text-gray-300 font-mono text-sm mx-auto my-4 overflow-auto">
                                         <p>EXT. CITY STREET - DAY</p>
