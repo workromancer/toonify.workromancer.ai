@@ -28,3 +28,37 @@ def root():
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
+
+@app.on_event("startup")
+def on_startup():
+    from sqlmodel import Session, select
+    from app.api.deps import engine
+    from app.models.models import User, Workspace, WorkspaceMember
+    from app.core.security import get_password_hash
+    
+    try:
+        with Session(engine) as session:
+            user = session.exec(select(User).where(User.email == "test@example.com")).first()
+            if not user:
+                print("Seeding test user...")
+                hashed_pw = get_password_hash("password")
+                user = User(email="test@example.com", password_hash=hashed_pw)
+                session.add(user)
+                session.commit()
+                session.refresh(user)
+                
+                # Create default workspace
+                workspace = Workspace(name="Test Workspace", owner_id=user.id)
+                session.add(workspace)
+                session.commit()
+                session.refresh(workspace)
+                
+                # Link member
+                member = WorkspaceMember(workspace_id=workspace.id, user_id=user.id, role="owner")
+                session.add(member)
+                session.commit()
+                print("Test user seeded: test@example.com / password")
+            else:
+                print("Test user already exists.")
+    except Exception as e:
+        print(f"Seeding failed: {e}")

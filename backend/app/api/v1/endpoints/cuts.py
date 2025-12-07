@@ -16,6 +16,7 @@ class StoryCutCreate(BaseModel):
     selected_layout: str = "single"
     aspect_ratio: str = "1:1"
     dialogues: List[dict] = []
+    image_path: Optional[str] = None
 
 class StoryCutUpdate(BaseModel):
     script: Optional[str] = None
@@ -66,7 +67,9 @@ def create_cut(
         script=cut_in.script,
         selected_layout=cut_in.selected_layout,
         aspect_ratio=cut_in.aspect_ratio,
-        dialogues=cut_in.dialogues
+        aspect_ratio=cut_in.aspect_ratio,
+        dialogues=cut_in.dialogues,
+        image_path=cut_in.image_path
     )
     session.add(cut)
     session.commit()

@@ -2,7 +2,7 @@ from typing import List, Optional
 from uuid import UUID, uuid4
 from datetime import datetime
 from sqlmodel import Field, SQLModel, Relationship
-from sqlalchemy import Column, JSON
+from sqlalchemy import Column, JSON, Text
 
 # --- Associations ---
 class WorkspaceMember(SQLModel, table=True):
@@ -88,7 +88,7 @@ class StoryCut(SQLModel, table=True):
     script: str
     selected_layout: str
     aspect_ratio: str
-    image_path: Optional[str] = None
+    image_path: Optional[str] = Field(default=None, sa_column=Column(Text))
     dialogues: List[dict] = Field(sa_column=Column(JSON), default=[]) # JSON List of {speaker, text}
     # For RAG, pgvector would be used here, but for SQLModel we might need raw SQL or specific type
     # Skipping vector definition in model for now, handled via raw migration or dedicated table
