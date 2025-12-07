@@ -6,11 +6,11 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useWorkspaceStore } from '@/store/useWorkspaceStore';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { LayoutDashboard, LayoutTemplate, Image as ImageIcon, Settings, LogOut, HelpCircle, Coins } from 'lucide-react';
+import { LayoutDashboard, LayoutTemplate, Image as ImageIcon, Settings, LogOut, HelpCircle, Coins, Plus } from 'lucide-react';
 import { useEffect } from 'react';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-    const pathname = usePathname();
+    const pathname = usePathname() || '';
     const { logout, user } = useAuthStore();
     const { currentWorkspace, fetchWorkspaces } = useWorkspaceStore();
 
@@ -51,6 +51,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             </div>
                         </div>
                     )}
+
+                    {/* Global New Project Button */}
+                    <div className="px-1 mt-3 mb-1">
+                        <Link href="/new-project">
+                            <div className="flex items-center justify-center gap-2 w-full bg-primary hover:bg-primary/90 text-white py-2.5 rounded-lg font-bold text-sm shadow-sm transition-all cursor-pointer">
+                                <Plus size={18} />
+                                <span>New Project</span>
+                            </div>
+                        </Link>
+                    </div>
 
                     {/* Main Navigation */}
                     <nav className="flex flex-col gap-1 mt-2">
