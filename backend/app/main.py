@@ -32,10 +32,13 @@ def health_check():
 
 @app.on_event("startup")
 def on_startup():
-    from sqlmodel import Session, select
+    from sqlmodel import Session, select, SQLModel
     from app.api.deps import engine
-    from app.models.models import User, Workspace, WorkspaceMember
+    from app.models.models import User, Workspace, WorkspaceMember, ProjectTemplate
     from app.core.security import get_password_hash
+    
+    # Create tables if they don't exist
+    SQLModel.metadata.create_all(engine)
     
     try:
         with Session(engine) as session:

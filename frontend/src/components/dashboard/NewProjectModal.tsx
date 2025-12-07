@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
@@ -10,24 +10,34 @@ import {
     DialogDescription,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
     DialogFooter
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Plus } from 'lucide-react';
 
 interface NewProjectModalProps {
     onProjectCreated: () => void;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    initialValues?: {
+        style_preset?: string;
+    };
 }
 
-export default function NewProjectModal({ onProjectCreated }: NewProjectModalProps) {
-    const [open, setOpen] = useState(false);
-    const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm();
+export default function NewProjectModal({ onProjectCreated, open, onOpenChange, initialValues }: NewProjectModalProps) {
+    const { register, handleSubmit, reset, setValue, formState: { isSubmitting } } = useForm();
     const router = useRouter();
 
     const [error, setError] = useState('');
+
+    useEffect(() => {
+        if (open && initialValues) {
+            if (initialValues.style_preset) {
+                setValue('style_preset', initialValues.style_preset);
+            }
+        }
+    }, [open, initialValues, setValue]);
 
     const onSubmit = async (data: any) => {
         setError('');
@@ -36,7 +46,7 @@ export default function NewProjectModal({ onProjectCreated }: NewProjectModalPro
                 title: data.title,
                 style_preset: data.style_preset || 'anime_webtoon'
             });
-            setOpen(false);
+            onOpenChange(false);
             reset();
             onProjectCreated();
         } catch (err) {
@@ -46,12 +56,7 @@ export default function NewProjectModal({ onProjectCreated }: NewProjectModalPro
     };
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90">
-                    <Plus className="mr-2" size={20} /> New Project
-                </Button>
-            </DialogTrigger>
+        <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                     <DialogTitle>Create New Project</DialogTitle>
@@ -76,6 +81,7 @@ export default function NewProjectModal({ onProjectCreated }: NewProjectModalPro
                             <option value="american_comic">American Comic</option>
                             <option value="black_and_white">Black & White Manga</option>
                             <option value="watercolor">Watercolor</option>
+                            <option value="pixel_art">Pixel Art</option>
                         </select>
                     </div>
 

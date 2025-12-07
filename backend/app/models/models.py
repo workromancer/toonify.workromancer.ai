@@ -106,3 +106,14 @@ class Clue(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     project: Project = Relationship(back_populates="clues")
+
+class ProjectTemplate(SQLModel, table=True):
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    title: str
+    description: str
+    thumbnail_url: Optional[str] = None
+    style_preset: str
+    initial_structure: dict = Field(sa_column=Column(JSON), default={}) # JSON defining initial episodes/cuts
+    category: str = "general" # webtoon, insta, 4koma, etc.
+    is_premium: bool = False
+    created_at: datetime = Field(default_factory=datetime.utcnow)
