@@ -1,174 +1,154 @@
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Lock, Unlock } from 'lucide-react';
+'use client';
 
-// ... (imports)
+import { useEffect, useState } from 'react';
+import { useCanvasStore } from '@/store/useCanvasStore';
+import api from '@/lib/api';
+import { Button } from '@/components/ui/button';
+import { Plus, Image as ImageIcon, MessageSquare, Trash2 } from 'lucide-react';
+
+interface StoryCut {
+    id: string;
+    cut_order: number;
+    script: string;
+    aspect_ratio: string;
+    image_path?: string;
+}
+
+interface StoryboardViewProps {
+    onEditCut: () => void;
+}
 
 export default function StoryboardView({ onEditCut }: StoryboardViewProps) {
     const { activeEpisodeId, setActiveCut } = useCanvasStore();
     const [cuts, setCuts] = useState<StoryCut[]>([]);
     const [loading, setLoading] = useState(false);
-    
-    // Director Mode State
-    const [scriptInput, setScriptInput] = useState('');
-    const [isDirecting, setIsDirecting] = useState(false);
-    const [directorOptions, setDirectorOptions] = useState<DirectionOption[]>([]);
-    const [isRendering, setIsRendering] = useState(false);
-    
-    // Seed Locking
-    const [lockedSeed, setLockedSeed] = useState<number | null>(null);
-    const [isSeedLocked, setIsSeedLocked] = useState(false);
 
-    // ... (fetchCuts, handleDirect)
-
-    const handleSelectOption = async (option: DirectionOption) => {
+    const fetchCuts = async () => {
         if (!activeEpisodeId) return;
-        setIsRendering(true);
         try {
-            // Use locked seed if enabled, otherwise undefined (backend generates random)
-            const seedToUse = isSeedLocked && lockedSeed !== null ? lockedSeed : undefined;
+            setLoading(true);
+            const res = await api.get(`/cuts/?episode_id=${activeEpisodeId}`);
+            setCuts(res.data);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-            // 1. Render Image
-            const renderRes = await api.post('/scenes/render', {
-                prompt: option.image_prompt,
-                width: 1024,
-                height: 1024,
-                seed: seedToUse
-            });
-            const imageUrl = renderRes.data.image_url;
-            const usedSeed = renderRes.data.seed;
-
-            // If we didn't have a locked seed but want to lock it for future, we could.
-            // But for now, let's just update the lockedSeed if it was null and locking is enabled (auto-lock first seed?)
-            // Or just let user manually set it. 
-            // Better UX: If locking is ON and no seed set, set it to the one just used.
-            if (isSeedLocked && lockedSeed === null) {
-                setLockedSeed(usedSeed);
-            }
-
-            // 2. Create Cut
+    const createCut = async () => {
+        if (!activeEpisodeId) return;
+        try {
             const nextOrder = cuts.length > 0 ? cuts[cuts.length - 1].cut_order + 1 : 1;
             await api.post('/cuts/', {
                 episode_id: activeEpisodeId,
                 cut_order: nextOrder,
-                script: scriptInput, 
-                selected_layout: 'single',
-                aspect_ratio: option.aspect_ratio,
-                image_path: imageUrl 
+                script: `Scene ${nextOrder}`,
+                selected_layout: 'single'
             });
-
-            // 3. Reset and Refresh
-            setScriptInput('');
-            setDirectorOptions([]);
             fetchCuts();
-
         } catch (err) {
-            console.error("Rendering Failed", err);
-            alert("Failed to render scene.");
-        } finally {
-            setIsRendering(false);
+            console.error(err);
         }
     };
 
-    // ... (deleteCut, openDirectorCut, useEffect)
+    const deleteCut = async (id: string) => {
+        if (!confirm("Delete this scene?")) return;
+        try {
+            await api.delete(`/cuts/${id}`);
+            fetchCuts();
+        } catch (err) {
+            console.error("Failed to delete cut", err);
+        }
+    };
 
-    // ... (render)
+    useEffect(() => {
+        if (activeEpisodeId) {
+            fetchCuts();
+        } else {
+            setCuts([]);
+        }
+    }, [activeEpisodeId]);
 
-            {/* Director Mode Input Area (Fixed at Bottom) */}
-            <div className="border-t border-gray-700 bg-gray-800 p-4 shadow-lg z-10">
-                {/* Seed Control */}
-                <div className="flex items-center justify-end gap-2 mb-2 text-xs text-gray-400">
-                    <div className="flex items-center gap-2">
-                        <Switch 
-                            id="seed-lock" 
-                            checked={isSeedLocked}
-                            onCheckedChange={(checked) => {
-                                setIsSeedLocked(checked);
-                                if (!checked) setLockedSeed(null); // Reset when unlocking? Or keep? Let's reset for now or keep logic simple.
-                            }}
-                        />
-                        <Label htmlFor="seed-lock" className="cursor-pointer flex items-center gap-1">
-                            {isSeedLocked ? <Lock size={12} className="text-purple-400" /> : <Unlock size={12} />}
-                            {isSeedLocked ? (lockedSeed !== null ? `Seed: ${lockedSeed}` : "Locking next seed...") : "Random Seed"}
-                        </Label>
-                    </div>
-                </div>
+    if (!activeEpisodeId) {
+        return (
+            <div className="h-full flex items-center justify-center text-gray-500">
+                Select an episode to view storyboard.
+            </div>
+        );
+    }
 
-                {directorOptions.length > 0 ? (
-                    // ... (options view)
-                    <div className="mb-4 space-y-3 animate-in slide-in-from-bottom-5 fade-in duration-300">
-                        <div className="flex justify-between items-center">
-                            <h3 className="text-sm font-medium text-purple-300 flex items-center gap-2">
-                                <Sparkles size={14} /> Director AI Suggestions
-                            </h3>
-                            <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setDirectorOptions([])}>Cancel</Button>
-                        </div>
-                        <div className="grid grid-cols-3 gap-3">
-                            {directorOptions.map((opt) => (
-                                <button
-                                    key={opt.id}
-                                    disabled={isRendering}
-                                    onClick={() => handleSelectOption(opt)}
-                                    className="text-left bg-gray-700 hover:bg-gray-600 border border-gray-600 hover:border-purple-500 rounded-lg p-3 transition-all relative group"
-                                >
-                                    <div className="flex justify-between items-start mb-1">
-                                        <span className="text-xs font-bold text-white bg-gray-900 px-1.5 py-0.5 rounded">{opt.id}</span>
-                                        <span className="text-[10px] text-gray-400 border border-gray-500 px-1 rounded">{opt.aspect_ratio}</span>
+    return (
+        <div className="h-full flex flex-col bg-gray-900 overflow-hidden">
+            <div className="p-4 border-b border-gray-700 flex justify-between items-center bg-gray-800">
+                <h2 className="font-semibold text-white">Storyboard</h2>
+                <Button size="sm" onClick={createCut} data-testid="add-cut-btn" className="bg-purple-600 hover:bg-purple-700">
+                    <Plus size={16} className="mr-2" /> Add Cut
+                </Button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-8 space-y-8">
+                {loading ? (
+                    <div className="text-gray-500 text-center">Loading cuts...</div>
+                ) : cuts.length === 0 ? (
+                    <div className="text-gray-500 text-center italic mt-10">No cuts yet. Start adding scenes!</div>
+                ) : (
+                    cuts.map((cut) => (
+                        <div key={cut.id} data-testid={`cut-card-${cut.id}`} className="flex gap-4 items-start group">
+                            <div className="w-12 pt-2 text-center text-gray-500 font-mono text-sm">
+                                #{cut.cut_order}
+                            </div>
+
+                            <div className="flex-1 bg-gray-800 rounded-lg border border-gray-700 overflow-hidden hover:border-purple-500/50 transition-colors">
+                                {/* Header / Script Preview */}
+                                <div className="p-3 border-b border-gray-700 bg-gray-800/50 flex justify-between">
+                                    <span className="text-sm font-medium text-gray-300 truncate">{cut.script}</span>
+                                    <div className="flex gap-2">
+                                        <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-400 hover:text-white">
+                                            <MessageSquare size={14} />
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-6 w-6 text-gray-400 hover:text-red-400"
+                                            onClick={() => deleteCut(cut.id)}
+                                        >
+                                            <Trash2 size={14} />
+                                        </Button>
                                     </div>
-                                    <div className="font-medium text-sm text-purple-200 mb-1">{opt.label}</div>
-                                    <div className="text-xs text-gray-400 line-clamp-3">{opt.description}</div>
-                                    
-                                    {isRendering && (
-                                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
-                                            <Loader2 className="animate-spin text-purple-500" />
+                                </div>
+
+                                {/* Visual Preview area */}
+                                <div className="aspect-[3/2] bg-gray-900 flex items-center justify-center relative group-hover:bg-gray-900/80 transition-colors">
+                                    {cut.image_path ? (
+                                        <img src={cut.image_path} alt="Cut" className="w-full h-full object-contain" />
+                                    ) : (
+                                        <div className="text-center p-4">
+                                            <ImageIcon size={32} className="mx-auto text-gray-600 mb-2" />
+                                            <p className="text-xs text-gray-500">No image generated</p>
                                         </div>
                                     )}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                ) : (
-                    <div className="flex gap-3">
-                        {/* ... (input area) */}
-                        <div className="flex-1 relative">
-                            <Textarea
-                                value={scriptInput}
-                                onChange={(e) => setScriptInput(e.target.value)}
-                                placeholder="Describe the next scene... (e.g. 'Hero looks up at the sky in tears')"
-                                className="min-h-[60px] bg-gray-900 border-gray-700 focus:border-purple-500 resize-none pr-10"
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && !e.shiftKey) {
-                                        e.preventDefault();
-                                        handleDirect();
-                                    }
-                                }}
-                            />
-                            <div className="absolute right-3 bottom-3 text-gray-500">
-                                <Camera size={16} />
+
+                                    {/* Edit Button Overlay */}
+                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                        <Button
+                                            variant="secondary"
+                                            size="sm"
+                                            data-testid={`edit-cut-btn-${cut.id}`}
+                                            onClick={() => {
+                                                setActiveCut(cut.id);
+                                                onEditCut();
+                                            }}
+                                        >
+                                            Edit in Canvas
+                                        </Button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <Button 
-                            onClick={handleDirect} 
-                            disabled={isDirecting || !scriptInput.trim()}
-                            className="h-auto bg-gradient-to-br from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 w-24 flex flex-col gap-1"
-                        >
-                            {isDirecting ? (
-                                <Loader2 className="animate-spin" />
-                            ) : (
-                                <>
-                                    <Sparkles size={20} />
-                                    <span className="text-xs font-bold">Direct</span>
-                                </>
-                            )}
-                        </Button>
-                    </div>
+                    ))
                 )}
-            </div> <DirectorCutModal 
-                isOpen={isModalOpen} 
-                onClose={() => setIsModalOpen(false)} 
-                cut={editingCut}
-                onUpdate={fetchCuts}
-            />
+            </div>
         </div>
     );
 }
