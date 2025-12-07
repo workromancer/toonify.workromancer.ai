@@ -7,7 +7,9 @@ from pydantic import BaseModel
 router = APIRouter()
 
 class SceneStructureRequest(BaseModel):
+class SceneStructureRequest(BaseModel):
     script: str
+    project_id: str | None = None
 
 class SceneRenderRequest(BaseModel):
     prompt: str
@@ -25,7 +27,26 @@ def generate_scene_structure(
     Generate 3 visual direction options based on the script.
     """
     try:
-        options = ai_service.generate_direction_options(request.script)
+        # Fetch characters for consistency if project_id is provided
+        character_context = ""
+        if request.project_id:
+            from sqlmodel import Session, select
+            from app.api.deps import engine
+            from app.models.models import Character
+            
+            with Session(engine) as session:
+                statement = select(Character).where(Character.project_id == request.project_id)
+                characters = session.exec(statement).all()
+                if characters:
+                    context_parts = []
+                    for char in characters:
+                         # Combine name, role, and appearance description
+                         desc = f"{char.name} ({char.role}): {char.appearance}"
+                         context_parts.append(desc)
+                    character_context = "Characters: " + "; ".join(context_parts)
+                    print(f"Injecting Character Context: {character_context}")
+
+        options = ai_service.generate_direction_options(request.script, character_context)
         return options
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -106,7 +106,10 @@ export default function EditorPage() {
                                 {activeSegment === 'canvas' ? (
                                     <CanvasArea />
                                 ) : activeSegment === 'storyboard' ? (
-                                    <StoryboardView onEditCut={() => setActiveSegment('canvas')} />
+                                    <StoryboardView
+                                        projectId={projectId?.toString() || ''}
+                                        onEditCut={() => setActiveSegment('canvas')}
+                                    />
                                 ) : (
                                     <div className="w-full h-full max-w-3xl bg-gray-900 p-8 border border-gray-700 text-gray-300 font-mono text-sm mx-auto my-4 overflow-auto">
                                         <p>EXT. CITY STREET - DAY</p>

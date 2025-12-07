@@ -67,7 +67,7 @@ class AIService:
                 ]
             }
 
-    def generate_direction_options(self, script: str) -> dict:
+    def generate_direction_options(self, script: str, character_context: str = "") -> dict:
         """
         Generates 3 visual direction options based on the user script.
         Returns a JSON object with a list of options.
@@ -78,6 +78,8 @@ class AIService:
         
         Script: "{script}"
         
+        {f'Ensure the visual description includes the following character details if relevant: {character_context}' if character_context else ''}
+        
         Return ONLY a JSON object with the following structure:
         {{
             "options": [
@@ -86,7 +88,7 @@ class AIService:
                     "label": "Short Title (e.g., Low Angle)",
                     "description": "Brief description of the visual composition.",
                     "aspect_ratio": "3:4", 
-                    "image_prompt": "Detailed image generation prompt for this scene..."
+                    "image_prompt": "Detailed image generation prompt for this scene including character visual details..."
                 }},
                 ...
             ]

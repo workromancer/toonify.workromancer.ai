@@ -25,10 +25,11 @@ interface DirectorOption {
 }
 
 interface StoryboardViewProps {
+    projectId: string;
     onEditCut: () => void;
 }
 
-export default function StoryboardView({ onEditCut }: StoryboardViewProps) {
+export default function StoryboardView({ projectId, onEditCut }: StoryboardViewProps) {
     const { activeEpisodeId, setActiveCut } = useCanvasStore();
     const [cuts, setCuts] = useState<StoryCut[]>([]);
     const [loading, setLoading] = useState(false);
@@ -58,7 +59,10 @@ export default function StoryboardView({ onEditCut }: StoryboardViewProps) {
         if (!scriptInput.trim()) return;
         try {
             setIsSuggesting(true);
-            const res = await api.post('/scenes/structure', { script: scriptInput });
+            const res = await api.post('/scenes/structure', {
+                script: scriptInput,
+                project_id: projectId
+            });
             if (res.data && res.data.options) {
                 setDirectorOptions(res.data.options);
             }
