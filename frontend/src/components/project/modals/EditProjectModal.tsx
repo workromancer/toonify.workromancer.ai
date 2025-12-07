@@ -66,9 +66,26 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate }:
         }
     };
 
+    const handleAugmentWorldview = async () => {
+        if (!formData.worldview) return;
+        setLoading(true);
+        try {
+            const response = await api.post('/projects/worldview/augment', {
+                description: formData.worldview
+            });
+            if (response.data && response.data.augmented_worldview) {
+                setFormData(prev => ({ ...prev, worldview: response.data.augmented_worldview }));
+            }
+        } catch (error) {
+            console.error("Augmentation failed", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[550px]">
                 <DialogHeader>
                     <DialogTitle>Edit Project Details</DialogTitle>
                     <DialogDescription>
@@ -90,11 +107,29 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate }:
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="description" className="text-right">Description</Label>
-                        <Textarea id="description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="col-span-3" />
+                        <Textarea id="description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="col-span-3 min-h-[80px]" />
                     </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="worldview" className="text-right">Worldview</Label>
-                        <Textarea id="worldview" value={formData.worldview} onChange={(e) => setFormData({ ...formData, worldview: e.target.value })} className="col-span-3" />
+                    <div className="grid grid-cols-4 items-start gap-4">
+                        <Label htmlFor="worldview" className="text-right pt-2">Worldview</Label>
+                        <div className="col-span-3 flex flex-col gap-2">
+                            <Textarea
+                                id="worldview"
+                                value={formData.worldview}
+                                onChange={(e) => setFormData({ ...formData, worldview: e.target.value })}
+                                className="min-h-[120px]"
+                                placeholder="Describe the world, magic system, key rules..."
+                            />
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleAugmentWorldview}
+                                disabled={loading || !formData.worldview}
+                                className="self-start text-[#6039FE] hover:text-[#4B38FE] p-0 h-auto font-medium"
+                            >
+                                {loading ? 'Augmenting...' : '✨ AI Augment Description'}
+                            </Button>
+                        </div>
                     </div>
                 </form>
                 <DialogFooter>

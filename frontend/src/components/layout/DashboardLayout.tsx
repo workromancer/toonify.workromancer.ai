@@ -52,11 +52,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         </div>
                     )}
 
-                    {/* Navigation */}
+                    {/* Main Navigation */}
                     <nav className="flex flex-col gap-1 mt-2">
                         {navItems.map((item) => {
                             const Icon = item.icon;
-                            // Check for active state: exact match or starts with for sub-routes (mostly)
                             const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
 
                             return (
@@ -74,6 +73,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             )
                         })}
                     </nav>
+
+
                 </div>
 
                 <div className="mt-auto flex flex-col gap-1">

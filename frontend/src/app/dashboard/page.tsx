@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import ProjectCard from '@/components/dashboard/ProjectCard';
 import api from '@/lib/api';
-import NewProjectModal from '@/components/dashboard/NewProjectModal';
 import TemplateList from '@/components/dashboard/TemplateList';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Plus, Search } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -24,10 +24,6 @@ export default function DashboardPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const { user } = useAuthStore();
 
-    // Modal State
-    const [isInternalModalOpen, setIsInternalModalOpen] = useState(false);
-    const [modalInitialValues, setModalInitialValues] = useState<{ style_preset?: string }>({});
-
     const fetchProjects = async () => {
         try {
             if (projects.length === 0) setLoading(true); // Only show loading on initial fetch or empty
@@ -44,13 +40,16 @@ export default function DashboardPage() {
         fetchProjects();
     }, []);
 
+    const router = useRouter();
+
     const handleTemplateSelect = (template: any | null) => {
         if (template) {
-            setModalInitialValues({ style_preset: template.style_preset });
+            // Pass template info via query params if needed, or just navigate
+            // For now, MVP assumes wizard handles selection or defaults
+            router.push('/new-project');
         } else {
-            setModalInitialValues({});
+            router.push('/new-project');
         }
-        setIsInternalModalOpen(true);
     };
 
     const filteredProjects = projects.filter(p =>
@@ -125,13 +124,7 @@ export default function DashboardPage() {
                     <TemplateList onSelect={handleTemplateSelect} />
                 </section>
 
-                {/* Controlled Modal */}
-                <NewProjectModal
-                    open={isInternalModalOpen}
-                    onOpenChange={setIsInternalModalOpen}
-                    onProjectCreated={fetchProjects}
-                    initialValues={modalInitialValues}
-                />
+
             </div>
         </DashboardLayout>
     );

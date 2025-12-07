@@ -19,7 +19,7 @@ export default function ProjectRightSidebar({ projectId, episodes }: ProjectRigh
     const [isEpisodesOpen, setIsEpisodesOpen] = useState(true);
 
     return (
-        <aside className="sticky top-[80px] z-10 hidden h-[calc(100vh-80px)] w-64 flex-shrink-0 flex-col gap-6 overflow-y-auto border-l border-solid border-gray-200 dark:border-white/10 bg-background-light/80 p-4 backdrop-blur-sm dark:bg-background-dark/80 lg:flex">
+        <aside className="w-full h-full flex flex-col gap-6">
             <div className="rounded-xl bg-white dark:bg-[#1d1c27] p-4 shadow-sm">
                 <h3 className="mb-4 text-lg font-bold text-gray-900 dark:text-white">Quick Actions</h3>
                 <div className="flex flex-col gap-3">
