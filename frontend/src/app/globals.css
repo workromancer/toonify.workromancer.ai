@@ -10,6 +10,10 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-spline-sans);
+  --color-primary: #3713ec;
+  --color-background-light: #f6f6f8;
+  --color-background-dark: #131022;
 }
 
 @media (prefers-color-scheme: dark) {

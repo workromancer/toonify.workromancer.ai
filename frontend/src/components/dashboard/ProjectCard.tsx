@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Edit, Play } from 'lucide-react';
+import { Edit } from 'lucide-react';
 
 interface Project {
     id: string;
@@ -14,30 +14,31 @@ interface Project {
 
 export default function ProjectCard({ project }: { project: Project }) {
     return (
-        <div className="bg-gray-800 rounded-lg overflow-hidden border border-gray-700 hover:border-purple-500 transition-all group">
-            <div className="h-40 bg-gray-700 relative">
-                {project.thumbnail_url ? (
-                    <img src={project.thumbnail_url} alt={project.title} className="w-full h-full object-cover" />
-                ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-500 text-4xl font-bold opacity-30">
-                        {project.title.charAt(0)}
-                    </div>
-                )}
-
-                {/* Hover Actions */}
-                <div className="absolute inset-0 bg-black/60 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Link href={`/project/${project.id}/editor`}>
-                        <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
-                            <Edit size={16} className="mr-1" /> Edit
-                        </Button>
-                    </Link>
+        <div className="flex flex-col gap-3 group cursor-pointer">
+            <Link href={`/project/${project.id}/editor`} className="block">
+                <div
+                    className="w-full bg-center bg-no-repeat bg-cover rounded-xl aspect-[4/5] transition-transform group-hover:scale-[1.02] shadow-sm relative overflow-hidden bg-gray-200 dark:bg-gray-800"
+                    style={{ backgroundImage: project.thumbnail_url ? `url("${project.thumbnail_url}")` : undefined }}
+                >
+                    {!project.thumbnail_url && (
+                        <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500 text-4xl font-bold opacity-30">
+                            {project.title.charAt(0).toUpperCase()}
+                        </div>
+                    )}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 dark:group-hover:bg-white/5 transition-colors" />
                 </div>
-            </div>
-
-            <div className="p-4">
-                <h3 className="font-semibold text-lg text-white truncate">{project.title}</h3>
-                <p className="text-sm text-gray-400 mt-1 capitalize">{project.style_preset.replace('_', ' ')}</p>
-                <p className="text-xs text-gray-500 mt-3">{new Date(project.created_at).toLocaleDateString()}</p>
+            </Link>
+            <div>
+                <Link href={`/project/${project.id}/editor`}>
+                    <p className="text-gray-900 dark:text-white text-base font-medium leading-normal group-hover:text-primary transition-colors truncate">
+                        {project.title}
+                    </p>
+                </Link>
+                <div className="flex items-center justify-between mt-1">
+                    <p className="text-gray-500 dark:text-gray-400 text-sm font-normal leading-normal">
+                        Last modified: {new Date(project.created_at).toLocaleDateString()}
+                    </p>
+                </div>
             </div>
         </div>
     );

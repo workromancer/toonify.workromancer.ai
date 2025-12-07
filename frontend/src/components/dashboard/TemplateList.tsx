@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
-import { PlusCircle } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 interface Template {
     id: string;
@@ -11,6 +11,7 @@ interface Template {
     style_preset: string;
     category: string;
     is_premium: boolean;
+    image_url?: string; // Assume backend provides this or we use placeholder
 }
 
 export default function TemplateList({ onSelect }: { onSelect: (template: Template | null) => void }) {
@@ -23,6 +24,12 @@ export default function TemplateList({ onSelect }: { onSelect: (template: Templa
             setTemplates(res.data);
         } catch (err) {
             console.error(err);
+            // Fallback mock data if API fails or is empty for demo
+            setTemplates([
+                { id: '1', title: '4-Cut Webtoon', description: 'Short, shareable comic strips', style_preset: 'webtoon_4cut', category: 'General', is_premium: false },
+                { id: '2', title: 'Instagram Story Toon', description: 'Optimized for vertical stories', style_preset: 'insta_toon', category: 'Social', is_premium: false },
+                { id: '3', title: 'Vertical Scroll Episode', description: 'Classic long-form format', style_preset: 'vertical_scroll', category: 'Webtoon', is_premium: true },
+            ]);
         } finally {
             setLoading(false);
         }
@@ -38,47 +45,49 @@ export default function TemplateList({ onSelect }: { onSelect: (template: Templa
 
     if (loading) return <div>Loading templates...</div>;
 
+    // Placeholders for demo visuals if image_url missing
+    const getPlaceholder = (id: string) => {
+        const placeholders = [
+            "https://lh3.googleusercontent.com/aida-public/AB6AXuC5unUUBklmleZaINqKPihiMZABdrDFVaalD2Xr5_WK6qMhp429XJ6mTMmx43i5lJHLJsvZ6nMWeafFmiuN4T_0T6T4Dzod9VBNG52SSa4f-8eU2lSiQnb7kYWMi_yH3yzZ9gOO-Y78kV25BagaLAtlZoq8XKid_1s4B1qXV-XBXmREmelhMI2TFbhphgwH6H1VrYO9_ARV_CqqfvhKmaNSggqe3T1fi_OCGhqBRSrsvkjq_yVQyZHldwKef6E96OTm5IwybcWbmeA",
+            "https://lh3.googleusercontent.com/aida-public/AB6AXuAd6YB98qgZSeKLbb0R9jo9kKtqYuijNs0wSJjmPCUTqWCitmEO-lZqyIrRfj1sV0UEwj6afnvIHxkCYwXSHKff_mMU0fF0bJsoIsBEqACS-H7KcEeHjIzZ68XOVjKyUwQxY3fJUWs5lRboKsfH8DWiY68kEI1nEAOmgskN8POzb1Xo0q_fjiINIYAmn7qTo1JQsV-4PnQxSFsf3Xr-heSV1yVUx_51Yhu2AMHiJiyT3CTkxCmPUhZQBzcGTV8E1P7OpppDlQaqRak",
+            "https://lh3.googleusercontent.com/aida-public/AB6AXuArRgh4FppyC7ycoSM423Ewa5EFKujgv9fmaJGbvnRO-SQJT76GZ6BO9Eu4vT7UlyfhhzEHn_sCEHyvQ6SMWltpm18GHqrGDul59FGDjw3upIpo1aPlWg55zKTMIfz5HgAtr1RbckI9_XRvEGMq9eSQ0kR3JG-Fgyt7QZ6LpQDC14Zwap1NIK9zmB0JpsPpkJzAzH2bKt-8nxzIJtoYvDqOJYPRiynfxjonQ2nvzW7AU499qlSof4utONlzOh3D0f_eAhuyFT79brQ"
+        ];
+        return placeholders[parseInt(id) % placeholders.length] || placeholders[0];
+    }
+
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Start from Scratch Card */}
             <div
                 onClick={handleStartScratch}
-                className="cursor-pointer border-2 border-dashed border-gray-700 rounded-xl bg-gray-800/30 hover:bg-gray-800 hover:border-purple-500 transition-all flex flex-col items-center justify-center p-6 gap-3 group h-48"
+                className="flex flex-col items-center justify-center p-6 gap-4 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800/20 hover:border-primary hover:bg-primary/10 dark:hover:bg-primary/20 cursor-pointer transition-colors h-full min-h-[220px]"
             >
-                <div className="size-12 rounded-full bg-gray-700 flex items-center justify-center group-hover:bg-purple-600/20 group-hover:text-purple-400 transition-colors">
-                    <PlusCircle size={28} />
+                <div className="flex items-center justify-center size-16 bg-primary/20 dark:bg-primary/30 text-primary rounded-full mb-1">
+                    <Plus size={32} />
                 </div>
                 <div className="text-center">
-                    <h3 className="font-semibold text-white">Start from Scratch</h3>
-                    <p className="text-xs text-gray-400 mt-1">Empty canvas</p>
+                    <p className="text-gray-900 dark:text-white text-base font-semibold leading-normal">Start from Scratch</p>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm font-normal leading-normal">Begin with a blank canvas</p>
                 </div>
             </div>
 
             {/* Template Cards */}
-            {templates.map((template) => (
+            {templates.map((template, idx) => (
                 <div
                     key={template.id}
                     onClick={() => onSelect(template)}
-                    className="cursor-pointer border border-gray-800 rounded-xl bg-gray-900 hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10 transition-all overflow-hidden group h-48 flex flex-col relative"
+                    className="group cursor-pointer flex flex-col h-full"
                 >
-                    {/* Premium Badge */}
-                    {template.is_premium && (
-                        <div className="absolute top-2 right-2 bg-yellow-500/20 text-yellow-500 text-[10px] font-bold px-2 py-0.5 rounded border border-yellow-500/30">
-                            PRO
-                        </div>
-                    )}
-
-                    <div className="h-24 bg-gradient-to-br from-gray-800 to-gray-700 group-hover:from-purple-900/40 group-hover:to-gray-800 transition-colors" />
-                    <div className="p-4 flex flex-col justify-between flex-1">
-                        <div>
-                            <h3 className="font-semibold text-white text-sm truncate">{template.title}</h3>
-                            <p className="text-xs text-gray-400 line-clamp-2 mt-1">{template.description}</p>
-                        </div>
-                        <div className="flex items-center gap-2 mt-2">
-                            <span className="text-[10px] bg-gray-800 px-1.5 py-0.5 rounded text-gray-400 border border-gray-700">
-                                {template.category}
-                            </span>
-                        </div>
+                    <div className="overflow-hidden rounded-xl mb-3 flex-1 min-h-[160px]">
+                        <img
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                            src={template.image_url || getPlaceholder(template.id)}
+                            alt={template.title}
+                        />
+                    </div>
+                    <div>
+                        <p className="text-gray-900 dark:text-white text-base font-medium leading-normal">{template.title}</p>
+                        <p className="text-gray-500 dark:text-gray-400 text-sm font-normal leading-normal line-clamp-2">{template.description}</p>
                     </div>
                 </div>
             ))}

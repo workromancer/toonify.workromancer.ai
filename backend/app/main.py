@@ -5,31 +5,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.v1.api import api_router
 
-app = FastAPI(
-    title=settings.PROJECT_NAME,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json"
-)
+from contextlib import asynccontextmanager
 
-app.include_router(api_router, prefix=settings.API_V1_STR)
-
-# Set all CORS enabled origins
-if settings.BACKEND_CORS_ORIGINS:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-
-@app.get("/")
-def root():
-    return {"message": "Welcome to Toonify API"}
-
-@app.get("/health")
-def health_check():
-    return {"status": "ok"}
-
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: Init DB
     from sqlmodel import Session, select, SQLModel, text
     from app.api.deps import engine
     from app.models.models import User, Workspace, WorkspaceMember, ProjectTemplate
@@ -72,3 +52,32 @@ def health_check():
                 print("Test user already exists.")
     except Exception as e:
         print(f"Seeding failed: {e}")
+        
+    yield
+    # Shutdown logic if needed
+
+app = FastAPI(
+    title=settings.PROJECT_NAME,
+    openapi_url=f"{settings.API_V1_STR}/openapi.json",
+    lifespan=lifespan
+)
+
+app.include_router(api_router, prefix=settings.API_V1_STR)
+
+# Set all CORS enabled origins
+if settings.BACKEND_CORS_ORIGINS:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+@app.get("/")
+def root():
+    return {"message": "Welcome to Toonify API"}
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}

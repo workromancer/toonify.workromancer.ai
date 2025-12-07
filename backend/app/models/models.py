@@ -32,6 +32,18 @@ class Workspace(SQLModel, table=True):
     members: List[User] = Relationship(back_populates="workspaces", link_model=WorkspaceMember)
     projects: List["Project"] = Relationship(back_populates="workspace")
     transactions: List["CreditTransaction"] = Relationship(back_populates="workspace")
+    assets: List["Asset"] = Relationship(back_populates="workspace")
+
+class Asset(SQLModel, table=True):
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    workspace_id: UUID = Field(foreign_key="workspace.id")
+    user_id: UUID
+    filename: str
+    file_url: str
+    file_type: str # image/png, etc.
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    workspace: Workspace = Relationship(back_populates="assets")
 
 class CreditTransaction(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
