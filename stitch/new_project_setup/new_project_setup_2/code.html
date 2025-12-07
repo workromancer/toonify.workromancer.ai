@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Create a New Project</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- BEGIN: Tailwind Configuration -->
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            'brand-bg': '#10111a',
+            'brand-card': '#202134',
+            'brand-primary': '#4f46e5',
+            'brand-secondary': '#4a5568',
+            'brand-muted': '#a0aec0',
+            'brand-light': '#cbd5e0',
+            'brand-input-bg': '#202134',
+            'brand-input-border': '#4a5568',
+            'brand-placeholder': '#6b7280',
+          }
+        }
+      }
+    }
+  </script>
+<!-- END: Tailwind Configuration -->
+<!-- BEGIN: Custom Styles -->
+<style data-purpose="stepper-styles">
+    /* Custom styles for the stepper line */
+    .stepper-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      height: 1px;
+      background-color: transparent; /* Changed from #374151 */
+      z-index: 1;
+      border-bottom: 1px dashed #4a5568; /* Changed from 2px dashed #374151 */
+    }
+
+    /* Custom styles for the stepper items */
+    .stepper-item {
+      position: relative;
+      z-index: 2;
+    }
+  
+    </style>
+<!-- END: Custom Styles -->
+</head>
+<body class="bg-brand-bg text-brand-light font-sans flex items-center justify-center min-h-screen p-4">
+<!-- BEGIN: Project Creation Card -->
+<div class="bg-brand-card rounded-xl shadow-2xl p-8 sm:p-10 w-full max-w-2xl" data-purpose="project-creation-modal">
+<!-- BEGIN: Card Header -->
+<header class="mb-8">
+<h1 class="text-white text-center text-4xl font-semibold">Create a New Project</h1>
+</header>
+<!-- END: Card Header -->
+<!-- BEGIN: Stepper Navigation -->
+<nav aria-label="Project creation steps" class="mb-10">
+<div class="relative">
+<!-- Connecting line for the stepper -->
+<div class="stepper-line"></div>
+<div class="flex justify-between items-center text-center">
+<!-- Step 1: Title (Active) -->
+<div class="flex-1 stepper-item" data-purpose="stepper-step-active">
+<div class="mx-auto bg-brand-primary h-5 w-5 rounded-full mb-2"></div>
+<p class="text-sm font-semibold text-white">Title</p>
+</div>
+<!-- Step 2: Subtitle (Inactive) -->
+<div class="flex-1 stepper-item" data-purpose="stepper-step-inactive">
+<div class="mx-auto bg-brand-secondary h-5 w-5 rounded-full mb-2"></div>
+<p class="text-sm font-medium text-brand-muted text-gray-500">Subtitle</p>
+</div>
+<!-- Step 3: Genre (Inactive) -->
+<div class="flex-1 stepper-item" data-purpose="stepper-step-inactive">
+<div class="mx-auto bg-brand-secondary h-5 w-5 rounded-full mb-2"></div>
+<p class="text-sm font-medium text-brand-muted text-gray-500">Genre</p>
+</div>
+<!-- Step 4: Settings (Inactive) -->
+<div class="flex-1 stepper-item" data-purpose="stepper-step-inactive">
+<div class="mx-auto bg-brand-secondary h-5 w-5 rounded-full mb-2"></div>
+<p class="text-sm font-medium text-brand-muted text-gray-500">Worldview &amp; Key Settings</p>
+</div>
+</div>
+</div>
+</nav>
+<!-- END: Stepper Navigation -->
+<!-- BEGIN: Form Section -->
+<main data-purpose="form-content">
+<section>
+<!-- Section Header -->
+<div class="mb-4">
+<h2 class="text-white text-2xl font-bold">1. Project Title</h2>
+<label class="flex items-center space-x-2 text-brand-light mt-2 text-sm" for="project-title">
+<!-- Placeholder for chat bubble icon -->
+<img alt="Chat bubble icon" class="h-4 w-4" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA3hSJFeSgNEE2mcJ0_Wn_iy9a10Qd_4h21OAuCBg1D1EqDRrJivOZ3Jsx37QpvE9TesMHtHJoKpQJZ1z11NmZPKXxr1I-cLHygqIhUu5ZKJsqo7qWp4Gf6mdEIuGVON42fDOoFHJBrwb6YqdW30LU4GS1W0UPzHpSYy9QnN3LZH3Iw8wCnU3LYNcMst3v7ZBd2RpYA91wj_SNaO8Dy9a0fObT4cnWrFYQxOC_n3A196GKhmFhQR5SQGFVfLNc34GKULaV6mzODOqE" style="filter: brightness(0) invert(1);"/>
+<span>What's the name of your new story?</span>
+</label>
+</div>
+<!-- Input Field -->
+<input class="w-full bg-brand-input-bg border border-brand-input-border text-brand-light rounded-md px-4 py-3 placeholder-brand-placeholder focus:ring-brand-primary focus:border-brand-primary my-4" id="project-title" name="project_title" placeholder="e.g., The Last Spellcaster" type="text"/>
+</section>
+</main>
+<!-- END: Form Section -->
+<!-- BEGIN: Action Buttons Footer -->
+<footer class="mt-10 flex justify-end items-center space-x-4">
+<button class="px-6 py-2.5 rounded-md text-sm font-medium text-brand-light bg-brand-secondary hover:bg-gray-600 transition-colors" type="button">Cancel</button>
+<button class="px-6 py-2.5 rounded-md text-sm font-medium text-white bg-brand-primary hover:bg-indigo-700 transition-colors" type="submit">Next</button>
+</footer>
+<!-- END: Action Buttons Footer -->
+</div>
+<!-- END: Project Creation Card -->
+</body></html>

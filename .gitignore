@@ -25,5 +25,3 @@ build/
 # Logs
 *.log
 **/*.log
-
-stitch

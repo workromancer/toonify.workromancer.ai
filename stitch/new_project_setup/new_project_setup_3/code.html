@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Create a New Project</title>
+<!-- Tailwind CSS v3 with plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Custom Tailwind Configuration -->
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'dark-bg': '#1a1a2e',
+            'card-bg': '#2d2d44',
+            'accent-purple': '#6366F1', // Was #6a0dad
+            'accent-blue': '#4F46E5', // was #4d4dff
+            'selected-blue': '#6366F1', // was #3b3bff
+            'muted-text': '#a0aec0',
+            'back-btn': '#4A4A58', // was #4a5568
+            'inactive-gray': '#4B5563'
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+<!-- Google Fonts for a modern look -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<!-- Custom Styles -->
+<style data-purpose="custom-progress-bar">
+    /* Custom styles for the progress bar line to be positioned correctly behind the dots */
+    .progress-bar {
+        position: relative;
+    }
+    .progress-bar::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background-color: #4A4A58;
+        transform: translateY(-50%);
+        z-index: 1;
+    }
+    .progress-bar-active-line {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        height: 3px;
+        background-color: #6366F1; 
+        transform: translateY(-50%);
+        z-index: 2; /* Sits above the gray line but below the dots */
+    }
+  </style>
+<style data-purpose="layout">
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-dark-bg min-h-screen flex items-center justify-center p-4">
+<!-- BEGIN: ProjectCreationCard -->
+<main class="bg-card-bg text-white rounded-lg shadow-2xl p-8 max-w-lg w-full">
+<!-- BEGIN: CardHeader -->
+<header class="mb-8" data-purpose="card-header">
+<h1 class="text-4xl font-bold text-center">Create a New Project</h1>
+</header>
+<!-- END: CardHeader -->
+<!-- BEGIN: ProgressBar -->
+<section class="mb-8" data-purpose="progress-indicator">
+<div class="relative progress-bar">
+<!-- The active part of the progress bar line -->
+<div class="progress-bar-active-line" style="width: 66.66%;"></div>
+<!-- Progress steps container -->
+<div class="flex justify-between items-center relative z-10">
+<!-- Step 1: Title (Completed) -->
+<div class="flex flex-col items-center text-center w-1/4">
+<div class="w-5 h-5 bg-accent-purple rounded-full mb-2"></div>
+<span class="text-xs text-white font-medium">Title</span>
+</div>
+<!-- Step 2: Subtitle (Completed) -->
+<div class="flex flex-col items-center text-center w-1/4">
+<div class="w-5 h-5 bg-accent-purple rounded-full mb-2"></div>
+<span class="text-xs text-white font-medium">Subtitle</span>
+</div>
+<!-- Step 3: Genre (Current) -->
+<div class="flex flex-col items-center text-center w-1/4">
+<div class="w-5 h-5 bg-accent-purple rounded-full mb-2"></div>
+<span class="text-xs text-white font-medium">Genre</span>
+</div>
+<!-- Step 4: Settings (Upcoming) -->
+<div class="flex flex-col items-center text-center w-1/4">
+<div class="w-5 h-5 bg-inactive-gray rounded-full mb-2"></div>
+<span class="text-xs text-gray-400">Worldview &amp; Key Settings</span>
+</div>
+</div>
+</div>
+</section>
+<!-- END: ProgressBar -->
+<!-- BEGIN: GenreSelection -->
+<section data-purpose="genre-selection-form">
+<h3 class="text-xl font-bold mb-1">3. Select Genre</h3>
+<p class="text-muted-text mb-6">Choose the primary genre for your story.</p>
+<!-- Grid container for genre buttons -->
+<div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-8">
+<!-- Genre buttons. One is selected. -->
+<button class="bg-selected-blue text-white font-medium py-2 px-5 rounded-lg flex items-center justify-start space-x-2.5 hover:bg-blue-500 transition-colors">
+<span>🧙</span>
+<span>Fantasy</span>
+</button>
+<button class="bg-gray-800 text-white font-medium py-2 px-5 rounded-lg flex items-center justify-start space-x-2.5 hover:bg-gray-700 transition-colors">
+<span>❤️</span>
+<span>Romance</span>
+</button>
+<button class="bg-gray-800 text-white font-medium py-2 px-5 rounded-lg flex items-center justify-start space-x-2.5 hover:bg-gray-700 transition-colors">
+<span>🤖</span>
+<span>Sci-Fi</span>
+</button>
+<button class="bg-gray-800 text-white font-medium py-2 px-5 rounded-lg flex items-center justify-start space-x-2.5 hover:bg-gray-700 transition-colors">
+<span>🍰</span>
+<span>Slice of Life</span>
+</button>
+<button class="bg-gray-800 text-white font-medium py-2 px-5 rounded-lg flex items-center justify-start space-x-2.5 hover:bg-gray-700 transition-colors">
+<span>💥</span>
+<span>Action</span>
+</button>
+<button class="bg-gray-800 text-white font-medium py-2 px-5 rounded-lg flex items-center justify-start space-x-2.5 hover:bg-gray-700 transition-colors">
+<span>🔪</span>
+<span>Thriller</span>
+</button>
+<button class="bg-gray-800 text-white font-medium py-2 px-5 rounded-lg flex items-center justify-start space-x-2.5 hover:bg-gray-700 transition-colors">
+<span>📜</span>
+<span>Historical</span>
+</button>
+<button class="bg-gray-800 text-white font-medium py-2 px-5 rounded-lg flex items-center justify-start space-x-2.5 hover:bg-gray-700 transition-colors">
+<span>😂</span>
+<span>Comedy</span>
+</button>
+<button class="bg-gray-800 text-white font-medium py-2 px-5 rounded-lg flex items-center justify-start space-x-2.5 hover:bg-gray-700 transition-colors">
+<span>🎭</span>
+<span>Drama</span>
+</button>
+<button class="bg-gray-800 text-white font-medium py-2 px-5 rounded-lg flex items-center justify-start space-x-2.5 hover:bg-gray-700 transition-colors">
+<span>🕵️</span>
+<span>Mystery</span>
+</button>
+<button class="bg-gray-800 text-white font-medium py-2 px-5 rounded-lg flex items-center justify-start space-x-2.5 hover:bg-gray-700 transition-colors">
+<span>💎</span>
+<span>Gemser</span>
+</button>
+</div>
+</section>
+<!-- END: GenreSelection -->
+<!-- BEGIN: CardFooter -->
+<footer class="flex justify-between items-center" data-purpose="navigation-buttons">
+<!-- Back button -->
+<button class="bg-back-btn text-gray-300 font-semibold py-2 px-6 rounded-lg hover:bg-gray-500 transition-colors ring-1 ring-white/10">
+        Back
+      </button>
+<!-- Next button -->
+<button class="bg-accent-blue text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-600 transition-colors ring-1 ring-blue-400/50 shadow-[0_0_10px_rgba(77,77,255,0.5)]">
+        Next
+      </button>
+</footer>
+<!-- END: CardFooter -->
+</main>
+<!-- END: ProjectCreationCard -->
+</body></html>
