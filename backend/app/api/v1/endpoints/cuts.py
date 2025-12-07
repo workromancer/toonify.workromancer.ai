@@ -98,7 +98,7 @@ def update_cut(
     return cut
 
 
-@router.delete("/{cut_id}", status_code=204)
+@router.delete("/{cut_id}")
 def delete_cut(
     *,
     session: Session = Depends(deps.get_session),
@@ -114,4 +114,5 @@ def delete_cut(
         
     session.delete(cut)
     session.commit()
-    return None
+    from fastapi import Response
+    return Response(status_code=204)

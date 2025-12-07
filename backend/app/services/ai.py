@@ -1,5 +1,6 @@
 import vertexai
 from vertexai.preview.generative_models import GenerativeModel, Image
+from vertexai.preview.vision_models import ImageGenerationModel
 from app.core.config import settings
 import io
 
@@ -89,17 +90,39 @@ class AIService:
         Generates an image using Vertex AI and the specified model.
         """
         try:
-            # For now, we keep the mock or try-catch logic. 
-            # In a real scenario, we would call Imagen here.
-            # model = ImageGenerationModel.from_pretrained("imagegeneration@006")
-            # response = model.generate_images(prompt=prompt, seed=seed)
-            # return response[0]._image_bytes
+            # Determine aspect ratio
+            ratio = width / height
+            aspect_ratio = "1:1"
+            if abs(ratio - 3/4) < 0.01:
+                aspect_ratio = "3:4"
+            elif abs(ratio - 4/3) < 0.01:
+                aspect_ratio = "4:3"
+            elif abs(ratio - 16/9) < 0.01:
+                aspect_ratio = "16:9"
             
-            # Returning mock for stability during dev as per plan
-            return self._generate_image_mock(prompt, width, height, seed)
+            print(f"Generating image with prompt: {prompt[:50]}..., seed: {seed}, ratio: {aspect_ratio}")
+            
+            # User requested specific model
+            model = ImageGenerationModel.from_pretrained("gemini-3-pro-image-preview")
+            response = model.generate_images(
+                prompt=prompt,
+                number_of_images=1,
+                seed=seed,
+                aspect_ratio=aspect_ratio,
+                language="en",
+                safety_filter_level="block_some",
+                person_generation="allow_adult"
+            )
+            
+            if response and response[0]:
+                 return response[0]._image_bytes
+            else:
+                 raise Exception("No image returned from Vertex AI")
                  
         except Exception as e:
             print(f"Vertex AI Generation Error: {e}")
+            import traceback
+            traceback.print_exc()
             return self._generate_image_mock(prompt, width, height, seed)
 
     def modify_image(self, original_image_url: str, instruction: str) -> bytes:
