@@ -16,9 +16,10 @@ interface Project {
 
 export default function ProjectPage() {
     const params = useParams();
-    const projectId = params.projectId as string;
+    const projectId = params?.projectId as string;
     const [project, setProject] = useState<Project | null>(null);
     const [characters, setCharacters] = useState<Character[]>([]);
+    const [episodes, setEpisodes] = useState<any[]>([]); // Define Episode type properly if possible
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -27,25 +28,26 @@ export default function ProjectPage() {
 
             try {
                 // Fetch project details
-                // Assuming GET /projects/{id} returns the project object
                 const projectRes = await api.get(`/projects/${projectId}`);
                 setProject(projectRes.data);
 
                 // Fetch characters
-                // Assuming GET /projects/{id}/characters or similar. 
-                // If not, we might need to filter from a general endpoint or it's included in project details.
-                // Let's assume a separate endpoint for now or empty if not implemented yet.
-                // Based on previous conversations, there might be a /characters endpoint that takes project_id query param?
-                // Or maybe the project response includes characters?
-                // I'll try fetching from /characters/?project_id={projectId} if that works, or just mock for now if endpoint is unknown.
-                 try {
-                     const charactersRes = await api.get(`/characters/?project_id=${projectId}`);
-                     setCharacters(charactersRes.data);
-                 } catch (charErr) {
-                     console.warn("Failed to fetch characters, or endpoint doesn't exist yet.", charErr);
-                     // Fallback to empty list
-                     setCharacters([]);
-                 }
+                try {
+                    const charactersRes = await api.get(`/characters/?project_id=${projectId}`);
+                    setCharacters(charactersRes.data);
+                } catch (charErr) {
+                    console.warn("Failed to fetch characters", charErr);
+                    setCharacters([]);
+                }
+
+                // Fetch episodes
+                try {
+                    const episodesRes = await api.get(`/episodes/?project_id=${projectId}`);
+                    setEpisodes(episodesRes.data);
+                } catch (epErr) {
+                    console.warn("Failed to fetch episodes", epErr);
+                    setEpisodes([]);
+                }
 
             } catch (err) {
                 console.error("Failed to fetch project data", err);
@@ -56,6 +58,18 @@ export default function ProjectPage() {
 
         fetchData();
     }, [projectId]);
+
+    const handleProjectUpdate = (updatedProject: Project) => {
+        setProject(updatedProject);
+    };
+
+    const handleCharacterAdd = (newCharacter: Character) => {
+        setCharacters([...characters, newCharacter]);
+    };
+
+    const handleEpisodeAdd = (newEpisode: any) => {
+        setEpisodes([...episodes, newEpisode]);
+    };
 
     if (loading) {
         return (
@@ -73,5 +87,14 @@ export default function ProjectPage() {
         );
     }
 
-    return <ProjectHome project={project} characters={characters} />;
+    return (
+        <ProjectHome
+            project={project}
+            characters={characters}
+            episodes={episodes}
+            onProjectUpdate={handleProjectUpdate}
+            onCharacterAdd={handleCharacterAdd}
+            onEpisodeAdd={handleEpisodeAdd}
+        />
+    );
 }

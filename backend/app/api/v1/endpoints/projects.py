@@ -13,11 +13,25 @@ router = APIRouter()
 
 class ProjectCreate(BaseModel):
     title: str
+    subtitle: str | None = None
+    genre: str | None = None
+    worldview: str | None = None
     style_preset: str = "anime_webtoon" # Default
+
+class ProjectUpdate(BaseModel):
+    title: str | None = None
+    subtitle: str | None = None
+    genre: str | None = None
+    worldview: str | None = None
+    style_preset: str | None = None
+    description: str | None = None # For compatibility if description is added to model later or alias
 
 class ProjectOut(BaseModel):
     id: Any
     title: str
+    subtitle: str | None
+    genre: str | None
+    worldview: str | None
     style_preset: str
     thumbnail_url: str | None
     created_at: datetime
@@ -27,6 +41,9 @@ class ProjectDetailOut(ProjectOut):
     characters: List[Any] = []
 
 class StyleRecommendRequest(BaseModel):
+    description: str
+
+class WorldviewAugmentRequest(BaseModel):
     description: str
 
 @router.get("/", response_model=List[ProjectOut])
@@ -80,6 +97,9 @@ def create_project(
 
     project = Project(
         title=project_in.title,
+        subtitle=project_in.subtitle,
+        genre=project_in.genre,
+        worldview=project_in.worldview,
         style_preset=project_in.style_preset,
         workspace_id=workspace_id,
         owner_id=current_user_id,
@@ -89,6 +109,21 @@ def create_project(
     session.refresh(project)
     
     return project
+
+@router.post("/worldview/augment")
+def augment_worldview(
+    *,
+    request: WorldviewAugmentRequest,
+    current_user_id: str = Depends(deps.get_current_user_id),
+) -> Any:
+    """
+    Augment the worldview description using AI.
+    """
+    try:
+        augmented_text = ai_service.augment_worldview(request.description)
+        return {"augmented_worldview": augmented_text}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{project_id}", response_model=ProjectDetailOut)
 def get_project(
@@ -114,6 +149,38 @@ def get_project(
     # Check permissions (simplified)
     # real app: check if user is in workspace of project
     
+    return project
+
+@router.patch("/{project_id}", response_model=ProjectOut)
+def update_project(
+    *,
+    session: Session = Depends(deps.get_session),
+    project_id: str,
+    project_in: ProjectUpdate,
+    current_user_id: str = Depends(deps.get_current_user_id),
+) -> Any:
+    """
+    Update a project.
+    """
+    from uuid import UUID
+    try:
+        project_uuid = UUID(project_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid UUID")
+
+    project = session.get(Project, project_uuid)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    # Update fields
+    project_data = project_in.dict(exclude_unset=True)
+    for key, value in project_data.items():
+        if hasattr(project, key):
+            setattr(project, key, value)
+
+    session.add(project)
+    session.commit()
+    session.refresh(project)
     return project
 
 @router.post("/styles/recommend")

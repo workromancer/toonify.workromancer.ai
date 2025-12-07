@@ -5,7 +5,17 @@ import { Settings, FolderOpen, Upload, ChevronDown, ChevronRight } from 'lucide-
 import { useState } from 'react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
-export default function ProjectRightSidebar() {
+interface Episode {
+    id: string;
+    title: string;
+}
+
+interface ProjectRightSidebarProps {
+    projectId: string;
+    episodes: Episode[];
+}
+
+export default function ProjectRightSidebar({ projectId, episodes }: ProjectRightSidebarProps) {
     const [isEpisodesOpen, setIsEpisodesOpen] = useState(true);
 
     return (
@@ -32,9 +42,19 @@ export default function ProjectRightSidebar() {
                     </CollapsibleTrigger>
                     <CollapsibleContent>
                         <div className="mt-4 flex flex-col gap-2">
-                            <Link href="#" className="block rounded-md p-2 text-sm text-gray-600 dark:text-[#a19db9] hover:bg-gray-100 dark:hover:bg-white/10 dark:hover:text-white transition-colors">Episode 1: The Awakening</Link>
-                            <Link href="#" className="block rounded-md p-2 text-sm text-gray-600 dark:text-[#a19db9] hover:bg-gray-100 dark:hover:bg-white/10 dark:hover:text-white transition-colors">Episode 2: First Contact</Link>
-                            <Link href="#" className="block rounded-md p-2 text-sm text-gray-600 dark:text-[#a19db9] hover:bg-gray-100 dark:hover:bg-white/10 dark:hover:text-white transition-colors">Episode 3: The Shadow Council</Link>
+                            {episodes && episodes.length > 0 ? (
+                                episodes.map((ep) => (
+                                    <Link
+                                        key={ep.id}
+                                        href={`/project/${projectId}/editor?episodeId=${ep.id}`}
+                                        className="block rounded-md p-2 text-sm text-gray-600 dark:text-[#a19db9] hover:bg-gray-100 dark:hover:bg-white/10 dark:hover:text-white transition-colors"
+                                    >
+                                        {ep.title}
+                                    </Link>
+                                ))
+                            ) : (
+                                <p className="text-sm text-gray-500 dark:text-gray-400 p-2">No episodes yet.</p>
+                            )}
                         </div>
                     </CollapsibleContent>
                 </Collapsible>

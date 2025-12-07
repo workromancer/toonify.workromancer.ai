@@ -67,6 +67,36 @@ class AIService:
                 ]
             }
 
+            return {
+                "options": [
+                    {"id": "s1", "label": "Modern Webtoon", "description": "Clean lines, standard coloring.", "sample_image_url": ""},
+                    {"id": "s2", "label": "Sketchy/Rough", "description": "For intense or dark themes.", "sample_image_url": ""},
+                    {"id": "s3", "label": "Soft/Pastel", "description": "For romance or slice of life.", "sample_image_url": ""}
+                ]
+            }
+
+    def augment_worldview(self, description: str) -> str:
+        """
+        Augments and refines the worldview description using AI.
+        """
+        prompt = f"""
+        You are an expert fantasy/sci-fi world builder.
+        Enhance the following worldview description to make it more immersive, detailed, and suitable for a webtoon setting.
+        Keep the core ideas but expand on them.
+        
+        Original Description: "{description}"
+        
+        Return ONLY the enhanced description text.
+        """
+        
+        try:
+            model = GenerativeModel("gemini-1.5-flash-001")
+            response = model.generate_content(prompt)
+            return response.text.strip()
+        except Exception as e:
+            print(f"Worldview Augmentation Error: {e}")
+            return description + "\n(AI augmentation failed, using original)"
+
     def generate_direction_options(self, script: str, character_context: str = "") -> dict:
         """
         Generates 3 visual direction options based on the user script.

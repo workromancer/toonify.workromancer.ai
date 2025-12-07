@@ -12,6 +12,11 @@ def migrate():
             print("Adding embedding column to storycut...")
             conn.execute(text("ALTER TABLE storycut ADD COLUMN IF NOT EXISTS embedding JSON;"))
             
+            print("Adding new columns to project table...")
+            conn.execute(text("ALTER TABLE project ADD COLUMN IF NOT EXISTS subtitle VARCHAR;"))
+            conn.execute(text("ALTER TABLE project ADD COLUMN IF NOT EXISTS genre VARCHAR;"))
+            conn.execute(text("ALTER TABLE project ADD COLUMN IF NOT EXISTS worldview TEXT;"))
+            
             # Also for project template if needed
             print("Ensuring projecttemplate table exists (handled by main.py startup)...")
             

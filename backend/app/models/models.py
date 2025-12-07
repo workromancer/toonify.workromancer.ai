@@ -58,6 +58,9 @@ class CreditTransaction(SQLModel, table=True):
 class Project(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     title: str
+    subtitle: Optional[str] = None
+    genre: Optional[str] = None
+    worldview: Optional[str] = Field(default=None, sa_column=Column(Text))
     workspace_id: UUID = Field(foreign_key="workspace.id")
     owner_id: UUID
     style_preset: str

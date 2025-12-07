@@ -4,9 +4,15 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Save, Clapperboard } from 'lucide-react';
 
-export default function ProjectHeader({ projectId }: { projectId: string }) {
+interface ProjectHeaderProps {
+    projectId: string;
+    onSave?: () => void;
+    onGenerateEpisode?: () => void;
+}
+
+export default function ProjectHeader({ projectId, onSave, onGenerateEpisode }: ProjectHeaderProps) {
     return (
-        <header className="sticky top-0 z-10 flex items-center justify-between whitespace-nowrap border-b border-solid border-white/10 bg-background-light/80 px-4 py-3 backdrop-blur-sm dark:bg-background-dark/80 md:px-8 lg:px-10">
+        <header className="sticky top-0 z-10 flex items-center justify-between whitespace-nowrap border-b border-solid border-gray-200 dark:border-white/10 bg-background-light/80 px-4 py-3 backdrop-blur-sm dark:bg-background-dark/80 md:px-8 lg:px-10">
             <div className="flex items-center gap-4 text-white">
                 <div className="size-6 text-primary">
                     <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
@@ -17,16 +23,14 @@ export default function ProjectHeader({ projectId }: { projectId: string }) {
                 <h2 className="text-gray-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Toonify</h2>
             </div>
             <div className="flex items-center gap-2">
-                <Button variant="ghost" className="h-10 px-4 text-gray-900 dark:text-white bg-white/10 hover:bg-white/20">
+                <Button variant="ghost" className="h-10 px-4 text-gray-900 dark:text-white bg-white/10 hover:bg-white/20" onClick={onSave}>
                     <Save size={18} className="mr-2" />
                     <span className="truncate">Save</span>
                 </Button>
-                <Link href={`/project/${projectId}/editor`}>
-                    <Button className="h-10 px-4 bg-primary text-white hover:bg-primary/90">
-                        <Clapperboard size={18} className="mr-2" />
-                        <span className="truncate">Generate Episode</span>
-                    </Button>
-                </Link>
+                <Button className="h-10 px-4 bg-primary text-white hover:bg-primary/90" onClick={onGenerateEpisode}>
+                    <Clapperboard size={18} className="mr-2" />
+                    <span className="truncate">Generate Episode</span>
+                </Button>
             </div>
         </header>
     );
