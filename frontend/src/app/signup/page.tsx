@@ -27,8 +27,13 @@ export default function SignupPage() {
             console.error('API request failed:', err);
             if (err.response) {
                 console.error('Error response data:', err.response.data);
-                if (err.response.data.detail) {
-                    setError(err.response.data.detail);
+                const detail = err.response.data.detail;
+                if (detail) {
+                    if (Array.isArray(detail)) {
+                        setError(detail.map((d: any) => d.msg).join(', '));
+                    } else {
+                        setError(String(detail));
+                    }
                 } else {
                     setError('Signup failed. Unknown server error.');
                 }
