@@ -15,3 +15,4 @@ requests
 python-jose[cryptography]
 passlib[bcrypt]
 email-validator
+google-genai==1.53.0

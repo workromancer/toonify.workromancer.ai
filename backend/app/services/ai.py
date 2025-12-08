@@ -168,7 +168,7 @@ class AIService:
 
     def generate_image(self, prompt: str, width: int = 1024, height: int = 1024, seed: int = None) -> bytes:
         """
-        Generates an image using Vertex AI.
+        Generates an image using Google GenAI SDK (Gemini 3).
         """
         try:
             # Aspect Ratio logic
@@ -183,24 +183,39 @@ class AIService:
             
             print(f"Generating image with prompt: {prompt[:50]}..., seed: {seed}, ratio: {aspect_ratio}")
             
-            model = ImageGenerationModel.from_pretrained("gemini-3-pro-image-preview")
-            response = model.generate_images(
-                prompt=prompt,
-                number_of_images=1,
-                seed=seed,
-                aspect_ratio=aspect_ratio,
-                language="en",
-                safety_filter_level="block_some",
-                person_generation="allow_adult"
+            from google import genai
+            from google.genai import types
+            
+            client = genai.Client(
+                vertexai=True, 
+                project=settings.GOOGLE_CLOUD_PROJECT, 
+                location=settings.GOOGLE_CLOUD_LOCATION
             )
             
-            if response and response[0]:
-                 return response[0]._image_bytes
-            else:
-                 raise Exception("No image returned from Vertex AI")
+            response = client.models.generate_content(
+                model='gemini-3-pro-image-preview',
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_modalities=['IMAGE', 'TEXT'],
+                    image_config=types.ImageConfig(
+                        aspect_ratio=aspect_ratio,
+                    ),
+                ),
+            )
+            
+            # Check for errors
+            if not response.candidates or not response.candidates[0]:
+                 raise Exception("No candidates returned")
+                 
+            # Extract image from parts
+            for part in response.candidates[0].content.parts:
+                if part.inline_data:
+                    return part.inline_data.data
+            
+            raise Exception("No image part found in response")
                  
         except Exception as e:
-            print(f"Vertex AI Generation Error: {e}")
+            print(f"GenAI Generation Error: {e}")
             return self._generate_image_mock(prompt, width, height, seed)
 
     def modify_image(self, original_image_url: str, instruction: str) -> bytes:

@@ -122,13 +122,17 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                         {/* Characters Section */}
                         <section>
                             <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-gray-900 dark:text-white text-2xl font-bold">Characters</h2>
-                                {/* Add Character Button could also go here */}
+                                <Link href={`/project/${project.id}/characters`} className="hover:underline">
+                                    <h2 className="text-gray-900 dark:text-white text-2xl font-bold">Characters</h2>
+                                </Link>
+                                <Link href={`/project/${project.id}/casting`} className="text-primary text-sm font-bold hover:underline">
+                                    + Add Character
+                                </Link>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
-                                <div onClick={() => setIsAddCharacterOpen(true)} className="cursor-pointer h-full">
+                                <Link href={`/project/${project.id}/casting`} className="cursor-pointer h-full">
                                     <AddCharacterCard />
-                                </div>
+                                </Link>
                                 {characters.map(char => (
                                     <CharacterCard key={char.id || char.name} character={char} />
                                 ))}

@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, select, col
 
@@ -15,6 +15,12 @@ class CharacterCreate(BaseModel):
     project_id: UUID
     appearance_tags: List[str] = []
     default_mood: str = "neutral"
+
+class CharacterUpdate(BaseModel):
+    name: Optional[str] = None
+    appearance_tags: Optional[List[str]] = None
+    default_mood: Optional[str] = None
+    profile_image_url: Optional[str] = None
 
 class CharacterOut(BaseModel):
     id: Any
@@ -67,6 +73,30 @@ def create_character(
         consistency_seed=0, # Default, generate later
         profile_image_url=None
     )
+    session.add(character)
+    session.commit()
+    session.refresh(character)
+    return character
+
+@router.patch("/{character_id}", response_model=CharacterOut)
+def update_character(
+    *,
+    session: Session = Depends(deps.get_session),
+    character_id: UUID,
+    character_in: CharacterUpdate,
+    current_user_id: str = Depends(deps.get_current_user_id),
+) -> Any:
+    """
+    Update a character.
+    """
+    character = session.get(Character, character_id)
+    if not character:
+        raise HTTPException(status_code=404, detail="Character not found")
+        
+    character_data = character_in.dict(exclude_unset=True)
+    for key, value in character_data.items():
+        setattr(character, key, value)
+        
     session.add(character)
     session.commit()
     session.refresh(character)
