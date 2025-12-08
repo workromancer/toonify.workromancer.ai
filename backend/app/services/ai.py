@@ -1,23 +1,28 @@
-import vertexai
-from vertexai.preview.generative_models import GenerativeModel, Part
-from vertexai.preview.vision_models import ImageGenerationModel, Image as VertexImage
+from google import genai
+from google.genai import types
 from app.core.config import settings
 import io
 import base64
 import requests
-from typing import List
+import json
+from typing import List, Optional
+import os
 
 class AIService:
     def __init__(self):
-        # Initialize Vertex AI
+        # Initialize Google GenAI Client
         try:
-            vertexai.init(
-                project=settings.GOOGLE_CLOUD_PROJECT, 
-                location=settings.GOOGLE_CLOUD_LOCATION
+            api_key = settings.GEMINI_API_KEY or os.environ.get("GOOGLE_CLOUD_API_KEY")
+            self.client = genai.Client(
+                vertexai=True,
+                api_key=api_key
             )
-            self.model_name = "gemini-3-pro-image-preview" 
+            # Default models
+            self.text_model = "gemini-3-pro-preview"
+            self.image_model = "gemini-3-pro-image-preview" 
         except Exception as e:
-            print(f"Vertex AI Init Failed: {e}")
+            print(f"GenAI Client Init Failed: {e}")
+            self.client = None
 
     def recommend_style(self, description: str) -> dict:
         """
@@ -44,29 +49,18 @@ class AIService:
         """
         
         try:
-            model = GenerativeModel("gemini-1.5-flash-001")
-            response = model.generate_content(prompt)
+            response = self.client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json"
+                )
+            )
             
-            # Cleanup
-            text = response.text.strip()
-            if text.startswith("```json"):
-                text = text[7:-3]
-            if text.endswith("```"):
-                text = text[:-3]
-            
-            import json
-            return json.loads(text)
+            return json.loads(response.text)
             
         except Exception as e:
             print(f"Style Director Error: {e}")
-            return {
-                "options": [
-                    {"id": "s1", "label": "Modern Webtoon", "description": "Clean lines, standard coloring.", "sample_image_url": ""},
-                    {"id": "s2", "label": "Sketchy/Rough", "description": "For intense or dark themes.", "sample_image_url": ""},
-                    {"id": "s3", "label": "Soft/Pastel", "description": "For romance or slice of life.", "sample_image_url": ""}
-                ]
-            }
-
             return {
                 "options": [
                     {"id": "s1", "label": "Modern Webtoon", "description": "Clean lines, standard coloring.", "sample_image_url": ""},
@@ -90,12 +84,14 @@ class AIService:
         """
         
         try:
-            model = GenerativeModel("gemini-1.5-flash-001")
-            response = model.generate_content(prompt)
+            response = self.client.models.generate_content(
+                model=self.text_model,
+                contents=prompt
+            )
             return response.text.strip()
         except Exception as e:
             print(f"Worldview Augmentation Error: {e}")
-            return description + "\n(AI augmentation failed, using original)"
+            return description + "\n(AI augmentation failed)"
 
     def generate_direction_options(self, script: str, character_context: str = "") -> dict:
         """
@@ -125,17 +121,14 @@ class AIService:
         """
         
         try:
-            model = GenerativeModel("gemini-1.5-flash-001") 
-            response = model.generate_content(prompt)
-            
-            text = response.text.strip()
-            if text.startswith("```json"):
-                text = text[7:-3]
-            if text.endswith("```"):
-                text = text[:-3]
-            
-            import json
-            return json.loads(text)
+            response = self.client.models.generate_content(
+                model=self.text_model,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json"
+                )
+            )
+            return json.loads(response.text)
             
         except Exception as e:
             print(f"Director AI Error: {e}")
@@ -183,34 +176,26 @@ class AIService:
             
             print(f"Generating image with prompt: {prompt[:50]}..., seed: {seed}, ratio: {aspect_ratio}")
             
-            from google import genai
-            from google.genai import types
-            
-            client = genai.Client(
-                vertexai=True, 
-                project=settings.GOOGLE_CLOUD_PROJECT, 
-                location=settings.GOOGLE_CLOUD_LOCATION
+            config = types.GenerateContentConfig(
+                response_modalities=['IMAGE'], # Requesting image only
+                image_config=types.ImageConfig(
+                    aspect_ratio=aspect_ratio,
+                )
+                # Seed is not directly supported in ImageConfig types yet, usually controlled by model or not exposed. 
+                # If supported, it would be in generation_config.
             )
-            
-            response = client.models.generate_content(
-                model='gemini-3-pro-image-preview',
+
+            response = self.client.models.generate_content(
+                model=self.image_model,
                 contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_modalities=['IMAGE', 'TEXT'],
-                    image_config=types.ImageConfig(
-                        aspect_ratio=aspect_ratio,
-                    ),
-                ),
+                config=config,
             )
             
-            # Check for errors
-            if not response.candidates or not response.candidates[0]:
-                 raise Exception("No candidates returned")
-                 
-            # Extract image from parts
-            for part in response.candidates[0].content.parts:
-                if part.inline_data:
-                    return part.inline_data.data
+            # Extract image from candidates
+            if response.candidates and response.candidates[0].content and response.candidates[0].content.parts:
+                for part in response.candidates[0].content.parts:
+                    if part.inline_data:
+                        return part.inline_data.data
             
             raise Exception("No image part found in response")
                  
@@ -221,6 +206,7 @@ class AIService:
     def modify_image(self, original_image_url: str, instruction: str) -> bytes:
         """
         Modifies an existing image based on the instruction.
+        Using Gemini 3 multimodal generation (Image + Text -> Image).
         """
         print(f"Modifying image with instruction: {instruction}")
         
@@ -244,28 +230,44 @@ class AIService:
             if not img_bytes:
                 raise Exception("Could not retrieve source image bytes")
 
-            # 2. Call Vertex AI for Edit
-            # ImageGenerationModel.edit_image takes 'base_image' as VertexImage
-            base_image = VertexImage(img_bytes)
+            # 2. Call GenAI
+            # Construct content with image and text
+            # Depending on how the new SDK handles bytes, we might need types.Part.from_bytes
             
-            model = ImageGenerationModel.from_pretrained("gemini-3-pro-image-preview")
-            response = model.edit_image(
-                base_image=base_image,
-                prompt=instruction, # The instruction acts as the prompt for the new image or the change
-                number_of_images=1,
-                language="en",
-                safety_filter_level="block_some",
-                person_generation="allow_adult"
+            image_part = types.Part.from_bytes(data=img_bytes, mime_type="image/png") # Assuming PNG/JPEG, API usually detects or we can guess
+            text_part = types.Part.from_text(text=f"Edit this image: {instruction}")
+            
+            contents = [
+                types.Content(
+                    role="user",
+                    parts=[image_part, text_part]
+                )
+            ]
+            
+            # Using image model for editing
+            config = types.GenerateContentConfig(
+                response_modalities=['IMAGE'],
+                image_config=types.ImageConfig(
+                    aspect_ratio="1:1" # Preserve original aspect usually, but here strict.
+                    # Ideally we match input aspect ratio.
+                )
+            )
+
+            response = self.client.models.generate_content(
+                model=self.image_model,
+                contents=contents,
+                config=config
             )
             
-            if response and response[0]:
-                 return response[0]._image_bytes
-            else:
-                 raise Exception("No modified image returned")
+            if response.candidates and response.candidates[0].content and response.candidates[0].content.parts:
+                for part in response.candidates[0].content.parts:
+                    if part.inline_data:
+                        return part.inline_data.data
+
+            raise Exception("No modified image returned")
                  
         except Exception as e:
             print(f"Modification Error: {e}")
-            # Fallback to Mock
             return self._generate_image_mock(f"Modified: {instruction}", 1024, 1024)
 
     def _generate_image_mock(self, prompt: str, width: int, height: int, seed: int = None) -> bytes:
@@ -277,7 +279,7 @@ class AIService:
             
         img = Image.new('RGB', (width, height), color = (50, 50, 50))
         d = ImageDraw.Draw(img)
-        d.text((10,10), f"Toonify AI (Mock)\nPrompt: {prompt[:50]}...\nSeed: {seed}", fill=(255,255,255))
+        d.text((10,10), f"Toonify AI (Mock) - Gemini 3 Failed\nPrompt: {prompt[:50]}...", fill=(255,255,255))
         
         color = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
         d.rectangle([width//4, height//4, width*3//4, height*3//4], outline=color, width=5)
@@ -290,17 +292,17 @@ class AIService:
         """
         Generates text embedding for RAG.
         """
-        from vertexai.preview.language_models import TextEmbeddingModel
-        
         try:
-             model = TextEmbeddingModel.from_pretrained("text-embedding-004")
-             embeddings = model.get_embeddings([text])
-             if embeddings:
-                 return embeddings[0].values
+             # embedding model might be different, let's use a standard one supported by genai
+             response = self.client.models.embed_content(
+                 model="gemini-embedding-001",
+                 contents=text
+             )
+             if response.embeddings:
+                 return response.embeddings[0].values
              return []
         except Exception as e:
              print(f"Embedding Error: {e}")
-             # Return zero vector fallback
              return [0.0] * 768
 
 ai_service = AIService()

@@ -4,15 +4,4 @@ sqlmodel
 asyncpg
 pydantic-settings
 python-multipart
-google-generativeai
-minio
-alembic
-psycopg2-binary
-pgvector
-google-cloud-aiplatform>=1.38.0
-Pillow
-requests
-python-jose[cryptography]
-passlib[bcrypt]
-email-validator
-google-genai==1.53.0
+google-genai
