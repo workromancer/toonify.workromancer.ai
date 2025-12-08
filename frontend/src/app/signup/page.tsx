@@ -13,18 +13,31 @@ export default function SignupPage() {
     const [error, setError] = useState('');
 
     const onSubmit = async (data: any) => {
+        console.log('Signup form submitted with data:', data);
         try {
-            await api.post('/auth/signup', {
+            console.log('Sending API request to /auth/signup');
+            const response = await api.post('/auth/signup', {
                 email: data.email,
                 password: data.password,
                 username: data.email.split('@')[0]
             });
+            console.log('API response success:', response);
             router.push('/login');
         } catch (err: any) {
-            if (err.response && err.response.data.detail) {
-                setError(err.response.data.detail);
+            console.error('API request failed:', err);
+            if (err.response) {
+                console.error('Error response data:', err.response.data);
+                if (err.response.data.detail) {
+                    setError(err.response.data.detail);
+                } else {
+                    setError('Signup failed. Unknown server error.');
+                }
+            } else if (err.request) {
+                console.error('No response received:', err.request);
+                setError('Network error. Check your connection.');
             } else {
-                setError('Signup failed. Please try again.');
+                console.error('Error setting up request:', err.message);
+                setError('An unexpected error occurred.');
             }
         }
     };

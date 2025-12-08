@@ -29,10 +29,7 @@ interface CanvasState {
 }
 
 export const useCanvasStore = create<CanvasState>((set, get) => ({
-    elements: [
-        // Initial Demo Panel
-        { id: '1', type: 'panel', x: 50, y: 50, width: 300, height: 300, content: '', prompt: 'A futuristic city skyline' }
-    ],
+    elements: [],
     selectedId: null,
     activeCharacter: null,
     activeEpisodeId: null,
