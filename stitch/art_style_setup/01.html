@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Art Style Selection</title>
+    <!-- Tailwind CSS v3 with plugins -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Tailwind Custom Configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-background': '#1a1a2e',
+                        'brand-modal': '#2c2c44',
+                        'brand-text-primary': '#ffffff',
+                        'brand-text-secondary': '#a9a9d1',
+                        'brand-button-primary': '#4a4aff',
+                        'brand-button-secondary': '#3d3d5c',
+                        'brand-border-secondary': '#5a5a7d',
+                        'brand-accent': '#8e44ad',
+                    },
+                    boxShadow: {
+                        'glow-purple': '0 0 0 3px rgba(142, 68, 173, 0.7), 0 0 15px rgba(142, 68, 173, 0.4)',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts for a modern look, e.g., 'Inter' -->
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;display=swap" rel="stylesheet" />
+    <style data-purpose="Base-Styles">
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-brand-background flex items-center justify-center min-h-screen p-4">
+    <!-- BEGIN: ArtStyleSelectionModal -->
+    <div class="bg-brand-modal text-brand-text-primary rounded-xl shadow-lg p-8 w-full max-w-4xl"
+        data-purpose="modal-container" id="art-style-modal">
+        <!-- BEGIN: ModalHeader -->
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold mb-2">Art Style Selection</h1>
+            <p class="text-brand-text-secondary">Choose the visual identity for your webtoon. You can select from
+                presets or see what our AI recommends.</p>
+        </header>
+        <!-- END: ModalHeader -->
+        <!-- BEGIN: ModalBody -->
+        <main>
+            <!-- BEGIN: PresetStylesSection -->
+            <section class="mb-8" data-purpose="preset-styles-grid" id="preset-styles">
+                <h2 class="text-xl font-bold mb-4">Preset Styles</h2>
+                <!-- Grid container for the style cards -->
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    <!-- Style Card: Shonen Manga (Selected) -->
+                    <div class="relative rounded-lg overflow-hidden cursor-pointer ring-2 ring-brand-accent shadow-glow-purple"
+                        data-purpose="style-card">
+                        <img alt="Shonen Manga style" class="w-full h-full object-cover"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuBo2-PAGHwNQ7VPowPJKfMRXliFwq49Kjx_C2CTIIs6XY5ubMc-gRmrgDdGhlE9nvKWeU50NPVud6ZshCA0OW67owZPEO5H9Tqrvu8gWQ_DTPDgWIDk2UoEuCFLLRHBmy3V-6D2Y8DujkFmY5a5nYKdmYJsUqkSQcNzG6ywmhmDJ80BWF9lJq4oIzNPxSYbXpCL64S_RSkT4f1Zq6jBVr8w3L5ozu9M4jOrVDNDgSo27eND1sXNPc6YV43IHaVgOxN3p0Pgd--Zw-8" />
+                        <div class="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
+                            <span class="text-white text-sm font-medium">Shonen Manga</span>
+                        </div>
+                    </div>
+                    <!-- Style Card: Shojo Manga -->
+                    <div class="relative rounded-lg overflow-hidden cursor-pointer" data-purpose="style-card">
+                        <img alt="Shojo Manga style" class="w-full h-full object-cover"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuAcNqLoc_ZPNmK6FKo50EKvvxPLYL8yjBhJq_0BdrKbddp1Yx7Xi1V_mwwXJoHaROcVaRhrhxPvbjaPsLCp7hjaRsxQ00KpYoUVAxqXdPEtLCpWwCYyD2wpQ_zzYXtbO3U3Q8mtgIgoLrJGg0JMk5Yy-5fnq1IZXE9fdWN-62HXvFrv-qfX2e9vFelYLWIu76SuZgb-S_sNxkFxuXXFmynrX3gfOdplrJjUFswc8fdzk_l-CCC4dFLwq-w3RS5HjawZ2u7CfsVwzcE" />
+                        <div class="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
+                            <span class="text-white text-sm font-medium">Shojo Manga</span>
+                        </div>
+                    </div>
+                    <!-- Style Card: Chibi -->
+                    <div class="relative rounded-lg overflow-hidden cursor-pointer" data-purpose="style-card">
+                        <img alt="Chibi style" class="w-full h-full object-cover"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuAX2omh3i1iWKpqJDNXp-wSFhLk8HQCsaUr8W0K3rmYaOHPqvthcl2SwgCf2XyVr7kwQ1jnTwyp3pgAsaxytjS_eOHI30jMq0-zCIpJJehIYEFynvnELGiBtqlpcByieKf6oXX6Wyeavxry6EbNJAOhzc32-mUzCV_fMQW8xxWJvOuLYDkJXq8ClFIOjCY5oGUgrtMhSSmYVhJoWWJjJcsA_g33VkdOS4tqS4Y-0berAp1MuHEDPLEuFsp2780LCaHQuuF7fEPFgrA" />
+                        <div class="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
+                            <span class="text-white text-sm font-medium">Chibi</span>
+                        </div>
+                    </div>
+                    <!-- Style Card: Painterly -->
+                    <div class="relative rounded-lg overflow-hidden cursor-pointer" data-purpose="style-card">
+                        <img alt="Painterly style" class="w-full h-full object-cover"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuBe_WeQz4x4Rlmjr_bCL9tDGCze9KCTAiHJBc4KPMdqOe-NemkFOSDuABvOBoifBOBMTSwoCga7lFKsPxMEfI1K2v6rX47sKKdsUK2IpBn8fiaLOfetNdWWzBbj5WSAippUH7R4fbjiSd-tpluPauRL_N2wsK96Fl7S4iPNNeb0cY93hNE81icQKq0cgL1r6x1VKzGTs_NogpkAAv1E7TjKtwk7TpjN3t1b_rrplvsiJQALHIZiYpIQanNPpDtjkEX0_UfBMa6GCm0" />
+                        <div class="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
+                            <span class="text-white text-sm font-medium">Painterly</span>
+                        </div>
+                    </div>
+                    <!-- Style Card: Sketch -->
+                    <div class="relative rounded-lg overflow-hidden cursor-pointer" data-purpose="style-card">
+                        <img alt="Sketch style" class="w-full h-full object-cover"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuC8KjNnlPcGDFtLpNvaoiG_7qiZRoUQQB1t5va2uMxCp9lDHDbEsE5zIWfv6-P5dKIn9yvUDvxcn2hyXw90KTtbkvkMegJMSxk3hCXJxZYn_35jHdvW9N4BMGOmkb-fZHtqU3cDSuNVxdiyoyDV95zC0yqWe8_YSsZ9ADY4EJXOodyTnxlGFkoGOkYqaiX4-hsfFMFNkzaVsrDqHX8gtW3OttQVVarfhCu3ALZBMABvzwP6c3KnkMDpPNxigcJuegEkmYtIGZevajU" />
+                        <div class="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
+                            <span class="text-white text-sm font-medium">Sketch</span>
+                        </div>
+                    </div>
+                    <!-- Style Card: Fantasy -->
+                    <div class="relative rounded-lg overflow-hidden cursor-pointer" data-purpose="style-card">
+                        <img alt="Fantasy style" class="w-full h-full object-cover"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7Wcm1yy7RGlgLDKN6rTnZhC4l6EDonxetvvQcJ7k8ToISj7Ba1tBWYKMYDWrKG-zThgnkbDSWp-xdYpMmVprY2nAmgA9-7kt313c326T-rIJShisDoZ7ATK9LAeVn4L9y4R4Hxzy5q7X3IsE_mfzRFlRlzMr2aM85-DT1Tfdy6HSNP6niXhAFww7FmE9jQhX86leiTNxaexOXaUqkNHAwU_AeRItx8f7Cni_GWnKxHitcGF9q2U6dRHN_QwRCeNB8CBbBKJz79nw" />
+                        <div class="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
+                            <span class="text-white text-sm font-medium">Fantasy</span>
+                        </div>
+                    </div>
+                    <!-- Style Card: Sci-Fi -->
+                    <div class="relative rounded-lg overflow-hidden cursor-pointer" data-purpose="style-card">
+                        <img alt="Sci-Fi style" class="w-full h-full object-cover"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCkJIvktsb4YF1JVsxZWH-fb1_OrGsQwSbl9D8xNTm3ildTgdbcO1s0pFh0ezKM52j5ML91t4ZCjHMZOM4KW-Zn3KlT0ELWVxwmCRfc-VOKtfW-IRQ18af1EH6AKFeKNHfcsaqULzBhLj2qixnTsjsfveEacSl6XDHxzISATheKyTRpguQGeJo8CDSofEZqx1avNuNDBvVWHUqQMS4eecNVminpqkGU3JQ4nmhRF2u8WZvwES3bDZ_W1DEzEv6NDyqHxLtei0oQLx8" />
+                        <div class="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
+                            <span class="text-white text-sm font-medium">Sci-Fi</span>
+                        </div>
+                    </div>
+                    <!-- Style Card: Noir -->
+                    <div class="relative rounded-lg overflow-hidden cursor-pointer" data-purpose="style-card">
+                        <img alt="Noir style" class="w-full h-full object-cover"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDraQPY8H36LpK33hDV6_Z6thL9hDYLaJTf0ZcLWTYFCLUNCR1TKflT9CgeA5IRLCxSGbLYzV85dyxxlHxytyBtLKE9LSfFWF4qvGuHYtJCiEXWRtfkHeBqnnmKu_1mo1YyZ1uoQY35ea1xXVELF_zjbTvdrlAJnq3EQHus-VQEfeUWkC4i9w9V1ITuXR33h_C2eXnZBVRhG1v2xOOVvB4CYmK3iLv2nAXw5P43EqXuG-95nPzvURgG3FTFGw691bH3lF_q6elO1xk" />
+                        <div class="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
+                            <span class="text-white text-sm font-medium">Noir</span>
+                        </div>
+                    </div>
+                    <!-- Style Card: Retro -->
+                    <div class="relative rounded-lg overflow-hidden cursor-pointer" data-purpose="style-card">
+                        <img alt="Retro style" class="w-full h-full object-cover"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuAvoAun5PuxSCzk5DsMUKfrQhT-l0ewPVch0TLLmrgiCf_St15tPfNEgR3N38nzucL4L-Yd8ibSlMyTZms1v1qTSGQ3IAbazEkGHJvyyuuBta5aeib63VxzwsLAmB8XEscpSbkgCNJ9dpaft-d1e_Jdwyek48zqTUsPxJ8ZV_4d0hRzopisyOob9YN8dK7kMSRTIsvoxnwGAtv5Pe2t8uRedGKEXDzE0CqlGvUgOxYQmOGeb4PzG9rt1pAARXrFqwHvMb1d7cOV7OY" />
+                        <div class="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
+                            <span class="text-white text-sm font-medium">Retro</span>
+                        </div>
+                    </div>
+                    <!-- Style Card: Webtoon -->
+                    <div class="relative rounded-lg overflow-hidden cursor-pointer" data-purpose="style-card">
+                        <img alt="Webtoon style" class="w-full h-full object-cover"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuD37jHcZr32eobg4fh1mlw-1GXv0nTWWCVrm41g537bHP9zCTsPLTZun0siNy-DUh9-36rydD-jxILwJjIygRmaXmSnWs75MVF29EsGEFLciH0sl_PeJDX7Y94JxzV5RX0mJzNnYmo71kXSWamtl3w3lCHF8guGjUp9NxeJ3ywOjap6X1xg8QrJF7XR1kO2cvHPokHT6DcxLjpJFKeydpezecIqUNYPyMHpz6vvCqeJJT444Kbp_fxY25SvCrm1lk1Y14SkDRDCzzk" />
+                        <div class="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
+                            <span class="text-white text-sm font-medium">Webtoon</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <!-- END: PresetStylesSection -->
+            <!-- BEGIN: AiSuggestionsSection -->
+            <section class="mb-8" data-purpose="ai-suggestions-grid" id="ai-suggestions">
+                <h2 class="text-xl font-bold mb-4">AI Suggestions <span
+                        class="font-normal text-brand-text-secondary">(Based on Project Title/Genre)</span></h2>
+                <!-- Grid container for the suggestion cards -->
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <!-- Suggestion Card: Ethereal Fantasy (Selected) -->
+                    <div class="relative rounded-lg overflow-hidden cursor-pointer ring-2 ring-brand-accent shadow-glow-purple"
+                        data-purpose="style-card">
+                        <img alt="Ethereal Fantasy style" class="w-full h-full object-cover"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuBU1i_6VEJ_wAJ-QbqyVyA0PoTewCNjD4crOqTJQeSYrOARVNEl5D8ONWhDvEtjubx0YXWTBokEYlOOXL_E2UdJiOqmc2BOj4wHiX3FY-KS08sGH49zpl0D9-rwGE1bH3mHo3NDJC-aIMfqht3VgMgRMbO60dxKW8GDkF2MvhKUxH9DqzYXyDJlXKfPLp7LyQX98R0mzAKmQX59fjr3Mrdeeo1c8meLQHunAGXbmyP2UTgw3bxunUcd4OJqbIqLPome5ez3mStzWoo" />
+                        <div class="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
+                            <span class="text-white text-sm font-medium">Ethereal Fantasy</span>
+                        </div>
+                    </div>
+                    <!-- Suggestion Card: Cyberpunk Noir -->
+                    <div class="relative rounded-lg overflow-hidden cursor-pointer" data-purpose="style-card">
+                        <img alt="Cyberpunk Noir style" class="w-full h-full object-cover"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuBORRlG0IN8AR1L95a9uQZXqMp3sjEMGlGUJk9ItFhgczNolZjDGjhXvY7NuJSKxcM7GnWW6TQvwNd1njmf8hdbIy1_XzfO6bftWfLoTljfCyXOivMwtLaW6kNblsue6AkAacumvvbJbuH08xqJo5h5kwKSnJ73Fww06vUBjDAEBn7aLOngSrtGswGJ5tY4bu8XdMpfp1tcyThB6tFW10jur_PXnEKJmOQ_1twtRJe6W1Ym1ezw5xGmzQMKN4onen62EMZdD30AXjo" />
+                        <div class="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
+                            <span class="text-white text-sm font-medium">Cyberpunk Noir</span>
+                        </div>
+                    </div>
+                    <!-- Suggestion Card: Pastel Slice of Life -->
+                    <div class="relative rounded-lg overflow-hidden cursor-pointer" data-purpose="style-card">
+                        <img alt="Pastel Slice of Life style" class="w-full h-full object-cover"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuD-wHic5VZtIBFVvAdpp1i0GiZ5H5XzVII98N5wClX4ok0oHixh7kNjWNGlzbraRaTiuxb3t0oMa-R5A9xXoGXY_eeKw4b8VD4DGz1xQ8ZOBn6FE1ENsY3swMtk426CkBVrq6dauYEQ8IY1Uig63vAwN2UToaZiDOPyifsltxB8CcjPgexudUZxIDsdRcRWbwovXdanWCN6KTGYG19pMjA2PyGTC4U18_QUmWDrKGJll0VfTVRL3JP8Yn837_wwtS88XZmiLxDVY3Y" />
+                        <div class="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
+                            <span class="text-white text-sm font-medium">Pastel Slice of Life</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <!-- END: AiSuggestionsSection -->
+        </main>
+        <!-- END: ModalBody -->
+        <!-- BEGIN: ModalFooter -->
+        <footer class="flex justify-end items-center gap-4 pt-4">
+            <button
+                class="px-6 py-2 rounded-md bg-brand-button-secondary border border-brand-border-secondary text-brand-text-secondary font-semibold hover:bg-opacity-80 transition-colors"
+                type="button">
+                Cancel
+            </button>
+            <button
+                class="px-6 py-2 rounded-md bg-brand-button-primary text-white font-semibold hover:bg-opacity-90 transition-colors"
+                type="button">
+                Next: Character Casting
+            </button>
+        </footer>
+        <!-- END: ModalFooter -->
+    </div>
+    <!-- END: ArtStyleSelectionModal -->
+</body>
+
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Toonify - First Character Casting</title>
+    <!-- Tailwind CSS v3 with forms and container-queries plugins -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Tailwind Custom Configuration -->
+    <script data-purpose="tailwind-config">
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-purple-dark': '#13111C',
+                        'brand-purple-light': '#1A1829',
+                        'brand-purple-border': '#3C306E',
+                        'brand-purple-button': '#4F46E5',
+                        'brand-purple-button-hover': '#4338CA',
+                        'brand-progress-bar': '#3B82F6',
+                        'brand-text-primary': '#E0E0E0',
+                        'brand-text-secondary': '#A0A0A0',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts for 'Inter' -->
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <!-- Custom Styles for Typography and Layout -->
+    <style data-purpose="base-styles">
+        body {
+            background-color: #13111C;
+            /* brand-purple-dark */
+            font-family: 'Inter', sans-serif;
+            color: #E0E0E0;
+            /* brand-text-primary */
+        }
+    </style>
+</head>
+
+<body class="bg-brand-purple-dark min-h-screen flex flex-col">
+    <!-- BEGIN: MainHeader -->
+    <header class="w-full py-4 px-8 md:px-12 border-b border-gray-800" data-purpose="site-navigation-bar">
+        <div class="container mx-auto flex justify-between items-center">
+            <!-- Logo Section -->
+            <div class="flex items-center space-x-3">
+                <svg class="h-8 w-8 text-indigo-500" fill="currentColor" viewbox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path d="M6.34315 4.92893L17.6569 12L6.34315 19.0711V4.92893Z"></path>
+                </svg>
+                <span class="text-xl font-bold text-white">Toonify</span>
+            </div>
+            <!-- Navigation Links -->
+            <nav class="hidden md:flex" data-purpose="main-navigation">
+                <ul class="flex items-center space-x-8 text-brand-text-secondary">
+                    <li><a class="hover:text-white transition-colors" href="#">Projects</a></li>
+                    <li><a class="text-white font-medium" href="#">Characters</a></li>
+                    <li><a class="hover:text-white transition-colors" href="#">Storyboards</a></li>
+                    <li><a class="hover:text-white transition-colors" href="#">Export</a></li>
+                </ul>
+            </nav>
+            <!-- Actions and User Profile Section -->
+            <div class="flex items-center space-x-4">
+                <button
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                    Save Project
+                </button>
+                <div class="w-10 h-10 rounded-full bg-gray-700" data-purpose="user-profile-avatar"></div>
+            </div>
+        </div>
+    </header>
+    <!-- END: MainHeader -->
+    <!-- BEGIN: MainContent -->
+    <main class="flex-grow flex flex-col items-center w-full px-4 pt-16 md:pt-24"
+        data-purpose="character-creation-form">
+        <div class="w-full max-w-2xl">
+            <!-- Step Title -->
+            <h1 class="text-5xl font-bold text-white mb-6">First Character Casting: Name Step</h1>
+            <!-- Progress Bar -->
+            <div class="w-full mb-12" data-purpose="step-progress-indicator">
+                <p class="text-sm text-brand-text-secondary mb-2">Step 1 of 3: Name</p>
+                <div class="w-full bg-gray-700 rounded-full h-2">
+                    <div class="bg-gradient-to-r from-blue-500 to-indigo-600 h-2 rounded-full" style="width: 33%;">
+                    </div>
+                </div>
+            </div>
+            <!-- Character Name Form -->
+            <div data-purpose="form-content">
+                <h2 class="text-4xl font-bold text-white mb-8">What's your character's name?</h2>
+                <div class="flex flex-col">
+                    <label class="text-sm text-brand-text-secondary mb-2" for="character-name">Character Name</label>
+                    <input
+                        class="w-full bg-brand-purple-light border border-indigo-600 text-white placeholder-gray-500 rounded-lg p-4 h-14 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                        id="character-name" name="character-name" placeholder="Enter Character Name" type="text" />
+                </div>
+            </div>
+        </div>
+    </main>
+    <!-- END: MainContent -->
+    <!-- BEGIN: PageFooter -->
+    <footer
+        class="w-full py-4 px-8 md:px-12 border-t border-brand-purple-border fixed bottom-0 left-0 right-0 bg-brand-purple-dark"
+        data-purpose="form-navigation-footer">
+        <div class="container mx-auto flex justify-end items-center">
+            <button
+                class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-6 rounded-lg flex items-center space-x-2 transition-colors">
+                <span>Next</span>
+                <svg class="h-5 w-5" fill="currentColor" viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                    <path clip-rule="evenodd"
+                        d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+                        fill-rule="evenodd"></path>
+                </svg>
+            </button>
+        </div>
+    </footer>
+    <!-- END: PageFooter -->
+</body>
+
+</html>
