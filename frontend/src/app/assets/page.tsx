@@ -5,6 +5,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Upload, Image as ImageIcon, Trash2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface Asset {
     id: string;
@@ -18,6 +19,7 @@ export default function AssetsPage() {
     const [assets, setAssets] = useState<Asset[]>([]);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
+    const { toast } = useToast();
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -60,7 +62,12 @@ export default function AssetsPage() {
             await fetchAssets();
         } catch (err) {
             console.error(err);
-            alert("Failed to upload asset");
+            toast({
+                title: "Upload Failed",
+                description: "Failed to upload asset. Please try again.",
+                variant: 'destructive',
+            });
+            // alert("Failed to upload asset");
         } finally {
             setUploading(false);
             if (fileInputRef.current) fileInputRef.current.value = '';

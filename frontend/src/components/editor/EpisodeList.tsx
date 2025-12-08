@@ -6,6 +6,7 @@ import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Plus, Trash2 } from 'lucide-react';
 import { useCanvasStore } from '@/store/useCanvasStore';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 
 
 interface Episode {
@@ -15,7 +16,8 @@ interface Episode {
 }
 
 export default function EpisodeList() {
-    const { projectId } = useParams();
+    const params = useParams();
+    const projectId = params?.projectId as string;
     const [episodes, setEpisodes] = useState<Episode[]>([]);
     const [loading, setLoading] = useState(true);
     const { setActiveEpisode, activeEpisodeId } = useCanvasStore(); // Use store
@@ -57,9 +59,9 @@ export default function EpisodeList() {
         }
     }
 
-    const deleteEpisode = async (e: React.MouseEvent, id: string) => {
-        e.stopPropagation();
-        if (!confirm("Are you sure you want to delete this episode and all its cuts?")) return;
+    const [deleteConfirmationId, setDeleteConfirmationId] = useState<string | null>(null);
+
+    const handleDeleteConfirm = async (id: string) => {
         try {
             await api.delete(`/episodes/${id}`);
             if (activeEpisodeId === id) setActiveEpisode(null);
@@ -94,14 +96,27 @@ export default function EpisodeList() {
                             onClick={() => setActiveEpisode(ep.id)}
                         >
                             <span className="text-sm font-medium text-gray-200">{ep.title}</span>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6 text-gray-400 hover:text-red-400 hover:bg-gray-800"
-                                onClick={(e) => deleteEpisode(e, ep.id)}
-                            >
-                                <Trash2 size={14} />
-                            </Button>
+                            <ConfirmationDialog
+                                open={deleteConfirmationId === ep.id}
+                                onOpenChange={(open) => !open && setDeleteConfirmationId(null)}
+                                title="Delete Episode?"
+                                description="Are you sure you want to delete this episode? This action cannot be undone and all cuts will be lost."
+                                onConfirm={() => handleDeleteConfirm(ep.id)}
+                                variant="destructive"
+                                trigger={
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-6 w-6 text-gray-400 hover:text-red-400 hover:bg-gray-800"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setDeleteConfirmationId(ep.id);
+                                        }}
+                                    >
+                                        <Trash2 size={14} />
+                                    </Button>
+                                }
+                            />
                         </div>
                     ))
                 )}

@@ -14,37 +14,52 @@ import StoryboardView from '@/components/editor/StoryboardView';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import api from '@/lib/api';
 import { ArrowLeft, Play, Save, Users, Clapperboard, Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 export default function EditorPage() {
-    const { projectId } = useParams();
+    const params = useParams();
+    const projectId = params?.projectId as string;
     const [activeSegment, setActiveSegment] = useState('storyboard'); // canvas, script, storyboard
     const [sidebarTab, setSidebarTab] = useState<'episodes' | 'characters'>('episodes');
     const { activeEpisodeId } = useCanvasStore();
     const [exporting, setExporting] = useState(false);
+    const { toast } = useToast();
 
     const handleExport = async () => {
         if (!activeEpisodeId) {
-            alert("Select an episode to export.");
+            toast({
+                title: "No Episode Selected",
+                description: "Select an episode to export.",
+                variant: 'destructive',
+            });
             return;
         }
         try {
             setExporting(true);
             const response = await api.post(`/episodes/${activeEpisodeId}/export`, { format: 'webtoon' }, {
-                responseType: 'blob' // Important for file download
+                responseType: 'blob'
             });
 
-            // Create Blob download link
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', 'webtoon_export.png'); // Filename fallback
+            link.setAttribute('download', 'webtoon_export.png');
             document.body.appendChild(link);
             link.click();
             link.parentNode?.removeChild(link);
 
+            toast({
+                title: "Export Started",
+                description: "Your webtoon strip is downloading.",
+            });
+
         } catch (err) {
             console.error("Export failed", err);
-            alert("Failed to export episode.");
+            toast({
+                title: "Export Failed",
+                description: "Failed to export episode. Please try again.",
+                variant: 'destructive'
+            });
         } finally {
             setExporting(false);
         }

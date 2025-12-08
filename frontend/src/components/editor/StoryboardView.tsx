@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Plus, Image as ImageIcon, MessageSquare, Trash2, Clapperboard, Loader2, Wand2, Sparkles } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import DirectorCutModal from './DirectorCutModal';
+import { useToast } from '@/hooks/use-toast';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 
 interface StoryCut {
     id: string;
@@ -33,6 +35,7 @@ export default function StoryboardView({ projectId, onEditCut }: StoryboardViewP
     const { activeEpisodeId, setActiveCut } = useCanvasStore();
     const [cuts, setCuts] = useState<StoryCut[]>([]);
     const [loading, setLoading] = useState(false);
+    const { toast } = useToast();
 
     // Director Mode State
     const [isDirectorMode, setIsDirectorMode] = useState(false);
@@ -68,7 +71,11 @@ export default function StoryboardView({ projectId, onEditCut }: StoryboardViewP
             }
         } catch (err) {
             console.error("Director Suggest Error", err);
-            alert("Failed to get suggestions from Director AI.");
+            toast({
+                title: "Suggestion Failed",
+                description: "Failed to get suggestions from Director AI.",
+                variant: 'destructive',
+            });
         } finally {
             setIsSuggesting(false);
         }
@@ -107,19 +114,33 @@ export default function StoryboardView({ projectId, onEditCut }: StoryboardViewP
 
         } catch (err) {
             console.error("Render & Save Error", err);
-            alert("Failed to create cut.");
+            toast({
+                title: "Creation Failed",
+                description: "Failed to create cut. Please try again.",
+                variant: 'destructive',
+            });
         } finally {
             setIsRendering(null);
         }
     };
 
-    const deleteCut = async (id: string) => {
-        if (!confirm("Delete this scene?")) return;
+    const [deleteConfirmationId, setDeleteConfirmationId] = useState<string | null>(null);
+
+    const handleDeleteConfirm = async (id: string) => {
         try {
             await api.delete(`/cuts/${id}`);
             fetchCuts();
+            toast({
+                title: "Scene Deleted",
+                description: "The scene has been removed.",
+            });
         } catch (err) {
             console.error("Failed to delete cut", err);
+            toast({
+                title: "Deletion Failed",
+                description: "Failed to delete scene.",
+                variant: 'destructive',
+            });
         }
     };
 
@@ -190,14 +211,24 @@ export default function StoryboardView({ projectId, onEditCut }: StoryboardViewP
                                             >
                                                 <Sparkles size={14} />
                                             </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-6 w-6 text-gray-400 hover:text-red-400"
-                                                onClick={() => deleteCut(cut.id)}
-                                            >
-                                                <Trash2 size={14} />
-                                            </Button>
+                                            <ConfirmationDialog
+                                                open={deleteConfirmationId === cut.id}
+                                                onOpenChange={(open) => !open && setDeleteConfirmationId(null)}
+                                                title="Delete Scene?"
+                                                description="Are you sure you want to delete this scene?"
+                                                onConfirm={() => handleDeleteConfirm(cut.id)}
+                                                variant="destructive"
+                                                trigger={
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-6 w-6 text-gray-400 hover:text-red-400"
+                                                        onClick={() => setDeleteConfirmationId(cut.id)}
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </Button>
+                                                }
+                                            />
                                         </div>
                                     </div>
 

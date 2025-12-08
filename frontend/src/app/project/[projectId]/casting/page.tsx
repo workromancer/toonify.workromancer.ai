@@ -8,8 +8,9 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, Save, RotateCw, X, Image as ImageIcon, Plus } from 'lucide-react';
+import { Plus, X, Sparkles, Image as ImageIcon, RotateCw, Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 interface Character {
     id: string;
@@ -20,9 +21,10 @@ interface Character {
 }
 
 export default function CharacterCastingPage() {
-    const params = useParams();
     const router = useRouter();
+    const params = useParams();
     const projectId = params?.projectId as string;
+    const { toast } = useToast();
 
     // State
     const [name, setName] = useState('');
@@ -69,7 +71,11 @@ export default function CharacterCastingPage() {
 
     const handleGenerate = async () => {
         if (!name) {
-            alert("Please enter a character name");
+            toast({
+                title: "Incomplete",
+                description: "Please enter a character name to continue.",
+                variant: "destructive"
+            });
             return;
         }
         setIsGenerating(true);
@@ -101,9 +107,18 @@ export default function CharacterCastingPage() {
             const castRes = await api.get(`/characters/?project_id=${projectId}`);
             setCast(castRes.data);
 
+            toast({
+                title: "Magic Complete",
+                description: "Character generated successfully!",
+            });
+
         } catch (err) {
             console.error("Generation failed", err);
-            alert("Failed to generate character. See console.");
+            toast({
+                title: "Generation Error",
+                description: "Failed to generate character. Please try again.",
+                variant: "destructive"
+            });
         } finally {
             setIsGenerating(false);
         }

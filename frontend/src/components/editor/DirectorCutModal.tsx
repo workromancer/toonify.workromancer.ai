@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Loader2, Sparkles, RefreshCw } from 'lucide-react';
 import api from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 
 interface StoryCut {
     id: string;
@@ -26,6 +27,7 @@ interface DirectorCutModalProps {
 export default function DirectorCutModal({ isOpen, onClose, cut, onUpdate }: DirectorCutModalProps) {
     const [instruction, setInstruction] = useState('');
     const [isModifying, setIsModifying] = useState(false);
+    const { toast } = useToast();
 
     const handleModify = async () => {
         if (!cut || !cut.image_path || !instruction.trim()) return;
@@ -47,9 +49,17 @@ export default function DirectorCutModal({ isOpen, onClose, cut, onUpdate }: Dir
             onUpdate();
             onClose();
             setInstruction('');
+            toast({
+                title: "Scene Modified",
+                description: "Director's Cut applied successfully!",
+            });
         } catch (err) {
             console.error("Modification Failed", err);
-            alert("Failed to modify scene.");
+            toast({
+                title: "Modification Failed",
+                description: "Failed to modify scene. Please try again.",
+                variant: "destructive"
+            });
         } finally {
             setIsModifying(false);
         }
@@ -100,8 +110,8 @@ export default function DirectorCutModal({ isOpen, onClose, cut, onUpdate }: Dir
 
                 <DialogFooter>
                     <Button variant="ghost" onClick={onClose} disabled={isModifying}>Cancel</Button>
-                    <Button 
-                        onClick={handleModify} 
+                    <Button
+                        onClick={handleModify}
                         disabled={isModifying || !instruction.trim()}
                         className="bg-purple-600 hover:bg-purple-700"
                     >
