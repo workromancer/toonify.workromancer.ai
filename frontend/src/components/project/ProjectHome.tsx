@@ -10,7 +10,8 @@ import AddCharacterCard from './AddCharacterCard';
 import EditProjectModal from './modals/EditProjectModal';
 import AddCharacterModal from './modals/AddCharacterModal';
 import GenerateEpisodeModal from './modals/GenerateEpisodeModal';
-import { Save, Clapperboard, Edit2 } from 'lucide-react';
+import ArtStyleSetupModal from './modals/ArtStyleSetupModal';
+import { Save, Clapperboard, Edit2, Palette } from 'lucide-react';
 
 interface Project {
     id: string;
@@ -36,6 +37,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
     const [isEditProjectOpen, setIsEditProjectOpen] = useState(false);
     const [isAddCharacterOpen, setIsAddCharacterOpen] = useState(false);
     const [isGenerateEpisodeOpen, setIsGenerateEpisodeOpen] = useState(false);
+    const [isArtStyleSetupOpen, setIsArtStyleSetupOpen] = useState(false);
 
     return (
         <DashboardLayout>
@@ -91,8 +93,9 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                 {project.description || project.worldview || "No description provided."}
                             </p>
                             <div className="flex items-center gap-2 mt-1">
-                                <span className="px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 text-xs font-medium text-gray-600 dark:text-gray-300">
+                                <span className="px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 text-xs font-medium text-gray-600 dark:text-gray-300 flex items-center gap-1 group/style cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" onClick={() => setIsArtStyleSetupOpen(true)}>
                                     Style: {project.style_preset}
+                                    <Palette size={12} className="opacity-0 group-hover/style:opacity-100 transition-opacity" />
                                 </span>
                                 {project.genre && (
                                     <span className="px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 text-xs font-medium text-gray-600 dark:text-gray-300">
@@ -141,6 +144,15 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
             </div>
 
             {/* Modals */}
+            <ArtStyleSetupModal
+                isOpen={isArtStyleSetupOpen}
+                onClose={() => setIsArtStyleSetupOpen(false)}
+                projectId={project.id}
+                currentStyle={project.style_preset}
+                projectTitle={project.title}
+                projectGenre={project.genre}
+                onStyleUpdate={(newStyle: string) => onProjectUpdate({ ...project, style_preset: newStyle })}
+            />
             <EditProjectModal
                 isOpen={isEditProjectOpen}
                 onClose={() => setIsEditProjectOpen(false)}
