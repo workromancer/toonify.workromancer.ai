@@ -45,6 +45,9 @@ class StyleRecommendRequest(BaseModel):
 
 class WorldviewAugmentRequest(BaseModel):
     description: str
+    title: str | None = None
+    subtitle: str | None = None
+    genres: List[str] | None = None
 
 @router.get("/", response_model=List[ProjectOut])
 def list_projects(
@@ -120,8 +123,13 @@ def augment_worldview(
     Augment the worldview description using AI.
     """
     try:
-        augmented_text = ai_service.augment_worldview(request.description)
-        return {"augmented_worldview": augmented_text}
+        result = ai_service.augment_worldview(
+            description=request.description,
+            title=request.title,
+            subtitle=request.subtitle,
+            genres=request.genres
+        )
+        return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

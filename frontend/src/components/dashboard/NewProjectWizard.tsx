@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { Check, MoveRight, MoveLeft, Sparkles, AlertCircle } from 'lucide-react';
+import { WorldviewCarousel } from '@/components/ui/carousel-custom';
 
 const StepIndicator = ({ currentStep, totalSteps }: { currentStep: number; totalSteps: number }) => {
     return (
@@ -58,12 +59,18 @@ export default function NewProjectWizard() {
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<{
+        title: string;
+        subtitle: string;
+        genre: string[];
+        worldview: string;
+    }>({
         title: '',
         subtitle: '',
-        genre: '',
+        genre: [],
         worldview: ''
     });
+    const [augmentOptions, setAugmentOptions] = useState<any[]>([]);
 
     const genres = [
         { label: 'Fantasy', icon: '🧙' },
@@ -86,21 +93,37 @@ export default function NewProjectWizard() {
     };
 
     const handleGenreSelect = (genre: string) => {
-        setFormData(prev => ({ ...prev, genre }));
+        setFormData(prev => {
+            const currentGenres = prev.genre;
+            if (currentGenres.includes(genre)) {
+                return { ...prev, genre: currentGenres.filter(g => g !== genre) };
+            } else {
+                return { ...prev, genre: [...currentGenres, genre] };
+            }
+        });
     };
 
     const nextStep = () => setStep(prev => Math.min(prev + 1, 4));
     const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
 
     const handleAugmentWorldview = async () => {
-        if (!formData.worldview) return;
+        // if (!formData.worldview) return; // Allow empty worldview to use context
         setLoading(true);
         setError('');
+        setAugmentOptions([]); // Reset options
         try {
             const response = await api.post('/projects/worldview/augment', {
-                description: formData.worldview
+                description: formData.worldview,
+                title: formData.title,
+                subtitle: formData.subtitle,
+                genres: formData.genre // sending array
             });
-            setFormData(prev => ({ ...prev, worldview: response.data.augmented_worldview }));
+            // Handle both legacy string response and new object response
+            if (response.data.options) {
+                setAugmentOptions(response.data.options);
+            } else if (response.data.augmented_worldview) {
+                setFormData(prev => ({ ...prev, worldview: response.data.augmented_worldview }));
+            }
         } catch (error) {
             console.error("Augmentation failed", error);
             setError("Failed to augment worldview. Try again.");
@@ -109,24 +132,33 @@ export default function NewProjectWizard() {
         }
     };
 
-    const handleSubmit = async () => {
+    const handleSelectAugmentedOption = async (content: string) => {
+        // Immediate submission with the selected content
+        setFormData(prev => ({ ...prev, worldview: content }));
+        await submitProject({ ...formData, worldview: content });
+    };
+
+    const submitProject = async (data: typeof formData) => {
         setLoading(true);
         setError('');
         try {
             await api.post('/projects/', {
-                title: formData.title,
-                subtitle: formData.subtitle,
-                genre: formData.genre,
-                worldview: formData.worldview,
+                title: data.title,
+                subtitle: data.subtitle,
+                genre: data.genre.join(', '),
+                worldview: data.worldview,
                 style_preset: "anime_webtoon"
             });
             router.push('/dashboard');
         } catch (error) {
             console.error("Error creating project", error);
             setError("Failed to create project.");
-        } finally {
-            setLoading(false);
+            setLoading(false); // Only stop loading on error, otherwise we are redirecting
         }
+    };
+
+    const handleSubmit = () => {
+        submitProject(formData);
     };
 
     const stepVariants = {
@@ -137,12 +169,12 @@ export default function NewProjectWizard() {
         visible: {
             opacity: 1,
             x: 0,
-            transition: { type: "spring", stiffness: 300, damping: 30 }
+            transition: { type: "spring", stiffness: 300, damping: 30 } as any
         },
         exit: (direction: number) => ({
             opacity: 0,
             x: direction < 0 ? 50 : -50,
-            transition: { duration: 0.2 }
+            transition: { duration: 0.2 } as any
         })
     };
 
@@ -199,7 +231,12 @@ export default function NewProjectWizard() {
                                     placeholder="e.g. The Last Starfighter"
                                     className="h-14 text-lg bg-background-dark border-gray-600 focus-visible:ring-primary text-white placeholder:text-gray-500"
                                     autoFocus
-                                    onKeyDown={(e) => e.key === 'Enter' && formData.title && handleNext()}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && formData.title) {
+                                            e.preventDefault();
+                                            handleNext();
+                                        }
+                                    }}
                                 />
                             </motion.div>
                         )}
@@ -222,7 +259,12 @@ export default function NewProjectWizard() {
                                     placeholder="e.g. A Tale of Two Galaxies"
                                     className="h-14 text-lg bg-background-dark border-gray-600 focus-visible:ring-primary text-white placeholder:text-gray-500"
                                     autoFocus
-                                    onKeyDown={(e) => e.key === 'Enter' && handleNext()}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            handleNext();
+                                        }
+                                    }}
                                 />
                             </motion.div>
                         )}
@@ -244,14 +286,14 @@ export default function NewProjectWizard() {
                                             onClick={() => handleGenreSelect(g.label)}
                                             className={cn(
                                                 "flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-200 text-left group",
-                                                formData.genre === g.label
+                                                formData.genre.includes(g.label)
                                                     ? "bg-primary/20 border-primary text-white shadow-[0_0_15px_rgba(55,19,236,0.3)]"
                                                     : "bg-background-dark border-gray-700 text-gray-300 hover:border-gray-500 hover:text-white hover:bg-gray-800/80"
                                             )}
                                         >
                                             <span className="text-2xl group-hover:scale-110 transition-transform">{g.icon}</span>
                                             <span className="font-bold text-sm">{g.label}</span>
-                                            {formData.genre === g.label && <Check size={16} className="ml-auto text-primary" />}
+                                            {formData.genre.includes(g.label) && <Check size={16} className="ml-auto text-primary" />}
                                         </button>
                                     ))}
                                 </div>
@@ -273,8 +315,10 @@ export default function NewProjectWizard() {
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        onClick={handleAugmentWorldview}
-                                        disabled={loading || !formData.worldview}
+                                        onClick={() => {
+                                            console.log("Button Clicked directly");
+                                            handleAugmentWorldview();
+                                        }}
                                         className="text-primary hover:text-primary/80 hover:bg-primary/10 gap-2 h-8"
                                     >
                                         {loading ? <span className="animate-spin">✨</span> : <Sparkles size={14} />}
@@ -288,6 +332,27 @@ export default function NewProjectWizard() {
                                     placeholder="Describe the world, magic system, key rules..."
                                     className="flex-1 min-h-[200px] bg-background-dark border-gray-600 focus-visible:ring-primary text-white placeholder:text-gray-500 resize-none text-base leading-relaxed p-4"
                                 />
+                                {augmentOptions.length > 0 && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="mt-4"
+                                    >
+                                        <div className="flex justify-between items-center mb-2">
+                                            <span className="text-sm font-bold text-primary">AI Suggestions</span>
+                                            <button
+                                                onClick={() => setAugmentOptions([])}
+                                                className="text-xs text-gray-400 hover:text-white"
+                                            >
+                                                Dismiss
+                                            </button>
+                                        </div>
+                                        <WorldviewCarousel
+                                            options={augmentOptions}
+                                            onSelect={handleSelectAugmentedOption}
+                                        />
+                                    </motion.div>
+                                )}
                             </motion.div>
                         )}
                     </AnimatePresence>

@@ -69,29 +69,84 @@ class AIService:
                 ]
             }
 
-    def augment_worldview(self, description: str) -> str:
+    def augment_worldview(self, description: str, title: str = None, subtitle: str = None, genres: List[str] = None) -> dict:
         """
-        Augments and refines the worldview description using AI.
+        Augments and refines the worldview description using AI, providing 3 options.
         """
+        
+        context_str = ""
+        if title:
+            context_str += f"\nProject Title: {title}"
+        if subtitle:
+            context_str += f"\nSubtitle: {subtitle}"
+        if genres:
+            context_str += f"\nGenres: {', '.join(genres)}"
+            
         prompt = f"""
         You are an expert fantasy/sci-fi world builder.
-        Enhance the following worldview description to make it more immersive, detailed, and suitable for a webtoon setting.
-        Keep the core ideas but expand on them.
+        Based on the following worldview description and project context, create 3 distinct directions/variations for this world.
+        Each option should have a catchy title, a short summary, and a detailed enhanced description.
+        
+        Project Context:{context_str}
         
         Original Description: "{description}"
         
-        Return ONLY the enhanced description text.
+        Return ONLY a JSON object with the following structure:
+        {{
+            "options": [
+                {{
+                    "id": "option_1",
+                    "title": "Title (e.g., Gritty Realism)",
+                    "tone": "Dark / Serious / Whimsical",
+                    "key_features": ["Feature 1", "Feature 2", "Feature 3"],
+                    "description": "Short summary of this direction",
+                    "content": "Full detailed enhanced worldview description..."
+                }},
+                ...
+            ]
+        }}
         """
         
         try:
             response = self.client.models.generate_content(
                 model=self.text_model,
-                contents=prompt
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json"
+                )
             )
-            return response.text.strip()
+            return json.loads(response.text)
         except Exception as e:
             print(f"Worldview Augmentation Error: {e}")
-            return description + "\n(AI augmentation failed)"
+            # Fallback
+            return {
+                "options": [
+                    {
+                        "id": "fallback_1",
+                        "title": "Enhanced Version",
+                        "tone": "Neutral",
+                        "key_features": ["Refined Description"],
+                        "description": "A refined version of your description.",
+                        "content": description + "\n(AI augmented)"
+                    },
+                    {
+                        "id": "fallback_2",
+                        "title": "Darker Twist",
+                        "tone": "Dark",
+                        "key_features": ["Shadows", "Mystery"],
+                        "description": "A darker take on your world.",
+                        "content": description + "\nThe shadows in this world are alive..."
+                    },
+                    {
+                        "id": "fallback_3",
+                        "title": "Magical Expansion",
+                        "tone": "Magical",
+                        "key_features": ["High Magic", "Wonder"],
+                        "description": "More focus on magic systems.",
+                        "content": description + "\nMagic flows through every vein of this land..."
+                    }
+                ]
+            }
 
     def generate_direction_options(self, script: str, character_context: str = "") -> dict:
         """
