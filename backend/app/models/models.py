@@ -60,7 +60,7 @@ class Project(SQLModel, table=True):
     title: str
     subtitle: Optional[str] = None
     genre: Optional[str] = None
-    worldview: Optional[str] = Field(default=None, sa_column=Column(Text))
+    worldview: Optional[dict] = Field(default=None, sa_column=Column(JSON))
     workspace_id: UUID = Field(foreign_key="workspace.id")
     owner_id: UUID
     style_preset: str

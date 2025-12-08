@@ -15,14 +15,14 @@ class ProjectCreate(BaseModel):
     title: str
     subtitle: str | None = None
     genre: str | None = None
-    worldview: str | None = None
+    worldview: dict | str | None = None
     style_preset: str = "anime_webtoon" # Default
 
 class ProjectUpdate(BaseModel):
     title: str | None = None
     subtitle: str | None = None
     genre: str | None = None
-    worldview: str | None = None
+    worldview: dict | str | None = None
     style_preset: str | None = None
     description: str | None = None # For compatibility if description is added to model later or alias
 
@@ -31,7 +31,7 @@ class ProjectOut(BaseModel):
     title: str
     subtitle: str | None
     genre: str | None
-    worldview: str | None
+    worldview: dict | str | None
     style_preset: str
     thumbnail_url: str | None
     created_at: datetime

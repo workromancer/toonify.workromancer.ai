@@ -18,7 +18,7 @@ class AIService:
                 api_key=api_key
             )
             # Default models
-            self.text_model = "gemini-3-pro-preview"
+            self.text_model = "gemini-2.5-flash"
             self.image_model = "gemini-3-pro-image-preview" 
         except Exception as e:
             print(f"GenAI Client Init Failed: {e}")
@@ -82,6 +82,8 @@ class AIService:
         if genres:
             context_str += f"\nGenres: {', '.join(genres)}"
             
+        desc_str = f'"{description}"' if description else "(None provided, suggest based on project context)"
+        
         prompt = f"""
         You are an expert fantasy/sci-fi world builder.
         Based on the following worldview description and project context, create 3 distinct directions/variations for this world.
@@ -89,7 +91,7 @@ class AIService:
         
         Project Context:{context_str}
         
-        Original Description: "{description}"
+        Original Description: {desc_str}
         
         Return ONLY a JSON object with the following structure:
         {{

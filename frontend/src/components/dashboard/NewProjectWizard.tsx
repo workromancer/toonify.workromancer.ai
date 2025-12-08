@@ -112,8 +112,12 @@ export default function NewProjectWizard() {
         setError('');
         setAugmentOptions([]); // Reset options
         try {
+            // If worldview is an object (already augmented), send its content or description as seed?
+            // For now, assume if re-augmenting, we use the raw string or extract content.
+            const desc = typeof formData.worldview === 'string' ? formData.worldview : formData.worldview.content || JSON.stringify(formData.worldview);
+
             const response = await api.post('/projects/worldview/augment', {
-                description: formData.worldview,
+                description: desc,
                 title: formData.title,
                 subtitle: formData.subtitle,
                 genres: formData.genre // sending array
@@ -132,10 +136,14 @@ export default function NewProjectWizard() {
         }
     };
 
-    const handleSelectAugmentedOption = async (content: string) => {
-        // Immediate submission with the selected content
-        setFormData(prev => ({ ...prev, worldview: content }));
-        await submitProject({ ...formData, worldview: content });
+    const handleSelectAugmentedOption = async (option: any) => {
+        // Immediate submission with the selected FULL OPTION object
+        const finalWorldview = {
+            ...option,
+            meta_type: "augmented_v1"
+        };
+        setFormData(prev => ({ ...prev, worldview: finalWorldview }));
+        await submitProject({ ...formData, worldview: finalWorldview });
     };
 
     const submitProject = async (data: typeof formData) => {
@@ -315,10 +323,8 @@ export default function NewProjectWizard() {
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        onClick={() => {
-                                            console.log("Button Clicked directly");
-                                            handleAugmentWorldview();
-                                        }}
+                                        onClick={handleAugmentWorldview}
+                                        disabled={loading}
                                         className="text-primary hover:text-primary/80 hover:bg-primary/10 gap-2 h-8"
                                     >
                                         {loading ? <span className="animate-spin">✨</span> : <Sparkles size={14} />}
@@ -350,6 +356,7 @@ export default function NewProjectWizard() {
                                         <WorldviewCarousel
                                             options={augmentOptions}
                                             onSelect={handleSelectAugmentedOption}
+                                            onDismiss={() => setAugmentOptions([])}
                                         />
                                     </motion.div>
                                 )}

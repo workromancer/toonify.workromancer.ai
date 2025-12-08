@@ -21,7 +21,7 @@ interface Project {
     thumbnail_url?: string;
     subtitle?: string;
     genre?: string;
-    worldview?: string;
+    worldview?: string | any;
 }
 
 interface ProjectHomeProps {
@@ -89,9 +89,46 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                     <Edit2 size={16} /> Edit Details
                                 </Button>
                             </div>
-                            <p className="text-gray-600 dark:text-gray-400 text-base font-normal leading-normal max-w-3xl">
-                                {project.description || project.worldview || "No description provided."}
-                            </p>
+                            <div className="flex flex-col gap-2">
+                                {/* Worldview Display Logic */}
+                                {typeof project.worldview === 'string' ? (
+                                    <p className="text-gray-600 dark:text-gray-400 text-base font-normal leading-normal max-w-3xl whitespace-pre-line">
+                                        {project.worldview || "No description provided."}
+                                    </p>
+                                ) : project.worldview ? (
+                                    <div className="flex flex-col gap-3">
+                                        {/* Structured Worldview from AI */}
+                                        <div className="flex items-center gap-2">
+                                            {project.worldview.tone && (
+                                                <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-bold border border-primary/20">
+                                                    {project.worldview.tone}
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200">
+                                            {project.worldview.title}
+                                        </h3>
+
+                                        <p className="text-gray-600 dark:text-gray-400 text-base font-normal leading-relaxed max-w-3xl">
+                                            {project.worldview.content}
+                                        </p>
+
+                                        {project.worldview.key_features && (
+                                            <div className="flex flex-wrap gap-2 mt-1">
+                                                {project.worldview.key_features.map((feat: string, idx: number) => (
+                                                    <span key={idx} className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-500 px-2 py-1 rounded">
+                                                        #{feat}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <p className="text-gray-500 italic">No worldview description provided.</p>
+                                )}
+                            </div>
+
                             <div className="flex items-center gap-2 mt-1">
                                 <span className="px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 text-xs font-medium text-gray-600 dark:text-gray-300 flex items-center gap-1 group/style cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" onClick={() => setIsArtStyleSetupOpen(true)}>
                                     Style: {project.style_preset}
