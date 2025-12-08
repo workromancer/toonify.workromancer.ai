@@ -14,6 +14,7 @@ interface WorkspaceState {
     currentWorkspace: Workspace | null;
     fetchWorkspaces: () => Promise<void>;
     setCurrentWorkspace: (workspace: Workspace) => void;
+    createWorkspace: (name: string) => Promise<void>;
 }
 
 export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
@@ -34,4 +35,20 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
         }
     },
     setCurrentWorkspace: (workspace) => set({ currentWorkspace: workspace }),
+    createWorkspace: async (name: string) => {
+        try {
+            const res = await api.post('/workspaces/', { name });
+            const newWorkspace = res.data;
+
+            // Refetch or update local state
+            const currentWorkspaces = get().workspaces;
+            set({
+                workspaces: [...currentWorkspaces, newWorkspace],
+                currentWorkspace: newWorkspace
+            });
+        } catch (err) {
+            console.error('Failed to create workspace', err);
+            throw err;
+        }
+    },
 }));
