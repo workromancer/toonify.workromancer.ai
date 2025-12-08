@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import api from '@/lib/api';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import ProjectRightSidebar from './ProjectRightSidebar';
 import CharacterCard, { Character } from './CharacterCard';
@@ -11,7 +12,7 @@ import EditProjectModal from './modals/EditProjectModal';
 import AddCharacterModal from './modals/AddCharacterModal';
 import GenerateEpisodeModal from './modals/GenerateEpisodeModal';
 import ArtStyleSetupModal from './modals/ArtStyleSetupModal';
-import { Save, Clapperboard, Edit2, Palette } from 'lucide-react';
+import { Plus, X, Sparkles, Image as ImageIcon, RotateCw, Save, Wand2, Clapperboard, Edit2, Palette } from 'lucide-react';
 
 interface Project {
     id: string;
@@ -38,6 +39,40 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
     const [isAddCharacterOpen, setIsAddCharacterOpen] = useState(false);
     const [isGenerateEpisodeOpen, setIsGenerateEpisodeOpen] = useState(false);
     const [isArtStyleSetupOpen, setIsArtStyleSetupOpen] = useState(false);
+    const [isPollingCover, setIsPollingCover] = useState(false);
+
+    // Poll for cover image if style is set but no thumbnail
+    useEffect(() => {
+        let intervalId: NodeJS.Timeout;
+
+        const checkCoverStatus = async () => {
+            if (project.thumbnail_url) return; // Already has thumbnail
+
+            // Assume 'anime_webtoon' is default/unset for this logic, or just check if user initiated
+            // Ideally we check if a job is running, but for MVP we infer from state
+            if (!project.style_preset || project.style_preset === 'anime_webtoon') return;
+
+            setIsPollingCover(true);
+            try {
+                const res = await api.get(`/projects/${project.id}`);
+                if (res.data.thumbnail_url) {
+                    onProjectUpdate(res.data);
+                    setIsPollingCover(false);
+                }
+            } catch (e) {
+                console.error("Polling error", e);
+            }
+        };
+
+        if (!project.thumbnail_url && project.style_preset && project.style_preset !== 'anime_webtoon') {
+            checkCoverStatus(); // Check immediately
+            intervalId = setInterval(checkCoverStatus, 5000); // Check every 5s
+        }
+
+        return () => {
+            if (intervalId) clearInterval(intervalId);
+        };
+    }, [project.id, project.thumbnail_url, project.style_preset, onProjectUpdate]);
 
     return (
         <DashboardLayout>
@@ -130,10 +165,33 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                             </div>
 
                             <div className="flex items-center gap-2 mt-1">
-                                <span className="px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 text-xs font-medium text-gray-600 dark:text-gray-300 flex items-center gap-1 group/style cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" onClick={() => setIsArtStyleSetupOpen(true)}>
-                                    Style: {project.style_preset}
-                                    <Palette size={12} className="opacity-0 group-hover/style:opacity-100 transition-opacity" />
-                                </span>
+                                {!project.style_preset || project.style_preset === 'anime_webtoon' ? (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setIsArtStyleSetupOpen(true)}
+                                        className="h-7 text-xs border-dashed border-primary text-primary hover:bg-primary/5"
+                                    >
+                                        <Palette size={12} className="mr-1" /> Setup Art Style
+                                    </Button>
+                                ) : (
+                                    <span className="px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 text-xs font-medium text-gray-600 dark:text-gray-300 flex items-center gap-1 group/style cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" onClick={() => setIsArtStyleSetupOpen(true)}>
+                                        Style: {project.style_preset}
+                                        <Palette size={12} className="opacity-0 group-hover/style:opacity-100 transition-opacity" />
+                                    </span>
+                                )}
+
+                                {project.style_preset && project.style_preset !== 'anime_webtoon' && characters.length === 0 && (
+                                    <Link href={`/project/${project.id}/casting`}>
+                                        <Button
+                                            size="sm"
+                                            className="h-7 text-xs bg-purple-600 hover:bg-purple-700 text-white animate-pulse"
+                                        >
+                                            <Sparkles size={12} className="mr-1" /> Start Casting
+                                        </Button>
+                                    </Link>
+                                )}
+
                                 {project.genre && (
                                     <span className="px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 text-xs font-medium text-gray-600 dark:text-gray-300">
                                         {project.genre}
@@ -148,10 +206,17 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                         {/* Project Thumbnail / Overview */}
                         <div className="relative w-full aspect-[21/9] bg-gray-100 dark:bg-gray-800 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
                             {project.thumbnail_url ? (
-                                <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url("${project.thumbnail_url}")` }} />
+                                <div className="absolute inset-0 bg-cover bg-center transition-all duration-700 hover:scale-105" style={{ backgroundImage: `url("${project.thumbnail_url}")` }} />
                             ) : (
-                                <div className="absolute inset-0 flex items-center justify-center text-gray-300 dark:text-gray-600">
-                                    <span className="text-6xl font-black opacity-20">{project.title.charAt(0)}</span>
+                                <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-300 dark:text-gray-600 bg-gray-50 dark:bg-gray-900/50">
+                                    {isPollingCover ? (
+                                        <div className="flex flex-col items-center gap-3 animate-pulse">
+                                            <Palette className="w-12 h-12 text-primary/50" />
+                                            <span className="text-sm font-medium text-gray-500">Generating AI Cover...</span>
+                                        </div>
+                                    ) : (
+                                        <span className="text-6xl font-black opacity-20">{project.title.charAt(0)}</span>
+                                    )}
                                 </div>
                             )}
                         </div>

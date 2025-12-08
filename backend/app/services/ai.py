@@ -150,6 +150,63 @@ class AIService:
                 ]
             }
 
+    def augment_character_text(self, name: str, tags: List[str], mood: str, style: str) -> dict:
+        """
+        Augments character description/tags details.
+        """
+        prompt = f"""
+        You are a character design expert for {style} webtoons.
+        Enhance the following character concept into a detailed visual description and tags.
+        
+        Name: {name}
+        Initial Tags: {', '.join(tags) if tags else 'None'}
+        Mood: {mood}
+        
+        Return ONLY a JSON object:
+        {{
+            "augmented_tags": ["tag1", "tag2", ...],
+            "visual_description": "Detailed visual description for image generation...",
+            "personality_hint": "Brief personality note"
+        }}
+        """
+        try:
+            response = self.client.models.generate_content(
+                model=self.text_model,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json"
+                )
+            )
+            return json.loads(response.text)
+        except Exception as e:
+            print(f"Character Augment Error: {e}")
+            return {
+                "augmented_tags": tags,
+                "visual_description": f"{name}, {', '.join(tags)}", 
+                "personality_hint": ""
+            }
+
+    def generate_character_sheet(self, name: str, description: str, style: str) -> bytes:
+        """
+        Generates a character Reference Sheet (Left: Face, Right: Full Body Front/Back).
+        """
+        prompt = f"""
+        Create a Character Reference Sheet for a {style} webtoon character named {name}.
+        
+        Character Description:
+        {description}
+        
+        Composition Requirements:
+        - Split the image vertically or arrange clearly.
+        - LEFT HALF: A high-quality detailed Portrait/Headshot of the character's face (showing expression).
+        - RIGHT HALF: Full body view (Front view, and if possible partial Back view) to show the costume and body type.
+        - Background: Neutral, simple (white or grey) to focus on the design.
+        - Style: {style} (High quality, professional concept art).
+        """
+        
+        # Using a landscape-ish ratio to fit both aspects comfortably
+        return self.generate_image(prompt, width=1536, height=1024) 
+
     def generate_direction_options(self, script: str, character_context: str = "") -> dict:
         """
         Generates 3 visual direction options based on the user script.
@@ -359,7 +416,34 @@ class AIService:
                  return response.embeddings[0].values
              return []
         except Exception as e:
-             print(f"Embedding Error: {e}")
-             return [0.0] * 768
+            print(f"Embedding failed: {e}")
+            return [0.0] * 768
+
+    def generate_project_cover_image(self, title: str, genre: str, worldview: str, style: str) -> bytes:
+        """
+        Generates a cover image for the project based on its details.
+        """
+        prompt = f"""
+        Create a high-quality webtoon cover image.
+        
+        Title: {title}
+        Genre: {genre}
+        Art Style: {style}
+        
+        Worldview/Setting:
+        {worldview}
+        
+        Requirements:
+        - The image should be eye-catching and representative of the genre and story.
+        - Use the specified art style: {style}.
+        - Aspect Ratio: 21:9 (Ultrawide cinematic) or similar suitable for a banner.
+        - No text overlay (title is added via UI). Focus on the visual composition.
+        """
+        
+        # We want a banner like aspect ratio. 21:9 is approx 2.33. 
+        # generate_image logic handles 16:9 (1.77) which is closest standard.
+        # Let's request a wide image.
+        
+        return self.generate_image(prompt, width=1536, height=640) # ~2.4 aspect ratio, logic in generate_image maps to nearest supported.
 
 ai_service = AIService()

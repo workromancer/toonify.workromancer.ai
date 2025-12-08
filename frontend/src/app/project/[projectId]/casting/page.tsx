@@ -8,7 +8,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Plus, X, Sparkles, Image as ImageIcon, RotateCw, Save } from 'lucide-react';
+import { Plus, X, Sparkles, Image as ImageIcon, RotateCw, Save, Wand2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
@@ -36,6 +36,8 @@ export default function CharacterCastingPage() {
     const [generatedImage, setGeneratedImage] = useState<string | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
     const [currentCharacterId, setCurrentCharacterId] = useState<string | null>(null);
+    const [isAugmenting, setIsAugmenting] = useState(false);
+    const [isPollingImage, setIsPollingImage] = useState(false); // New state for polling
 
     const [cast, setCast] = useState<Character[]>([]);
     const [projectTitle, setProjectTitle] = useState('Project');
@@ -57,6 +59,54 @@ export default function CharacterCastingPage() {
         };
         fetchData();
     }, [projectId]);
+
+    // Polling effect
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (isPollingImage && currentCharacterId) {
+            const poll = async () => {
+                try {
+                    const res = await api.get(`/characters/?project_id=${projectId}`);
+                    const char = res.data.find((c: any) => c.id === currentCharacterId);
+
+                    if (char && char.profile_image_url) {
+                        setGeneratedImage(char.profile_image_url);
+                        setCast(res.data); // Update list too
+                        setIsPollingImage(false);
+                        setIsGenerating(false);
+                        toast({ title: "Magic Complete", description: "Character sheet generated!" });
+                    }
+                } catch (e) {
+                    console.error("Polling error", e);
+                }
+            };
+            interval = setInterval(poll, 3000);
+        }
+        return () => clearInterval(interval);
+    }, [isPollingImage, currentCharacterId, projectId, toast]);
+
+    const handleAugment = async () => {
+        if (!name && tags.length === 0) return;
+        setIsAugmenting(true);
+        try {
+            const res = await api.post('/characters/augment', {
+                name,
+                tags,
+                mood,
+                project_id: projectId
+            });
+            if (res.data) {
+                if (res.data.augmented_tags) setTags(res.data.augmented_tags);
+                // Optionally handle visual description or personality hint if we had fields
+                toast({ title: "Enhanced!", description: "Character attributes augmented by AI." });
+            }
+        } catch (e) {
+            console.error("Augment failed", e);
+            toast({ title: "Augment Failed", variant: "destructive" });
+        } finally {
+            setIsAugmenting(false);
+        }
+    };
 
     const handleAddTag = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && tagInput.trim()) {
@@ -99,29 +149,28 @@ export default function CharacterCastingPage() {
                 });
             }
 
-            // 2. Generate Image
-            const genRes = await api.post(`/characters/${charId}/generate`);
-            setGeneratedImage(genRes.data.profile_image_url);
+            // 2. Generate Image (Start Async Task)
+            await api.post(`/characters/${charId}/generate`); // Now triggers background task
 
-            // Refresh cast list
-            const castRes = await api.get(`/characters/?project_id=${projectId}`);
-            setCast(castRes.data);
+            // Start Polling
+            setIsPollingImage(true);
+            setGeneratedImage(null); // Clear old image while generating new one
 
             toast({
-                title: "Magic Complete",
-                description: "Character generated successfully!",
+                title: "Magic Started",
+                description: "Generating character sheet... this may take a moment.",
             });
 
         } catch (err) {
             console.error("Generation failed", err);
             toast({
                 title: "Generation Error",
-                description: "Failed to generate character. Please try again.",
+                description: "Failed to start generation. Please try again.",
                 variant: "destructive"
             });
-        } finally {
             setIsGenerating(false);
         }
+        // Note: setIsGenerating(false) is moved to polling completion for visual feedback
     };
 
     const handleSaveAndExit = () => {
@@ -163,8 +212,20 @@ export default function CharacterCastingPage() {
                     {/* Left Column: Controls */}
                     <div className="col-span-12 lg:col-span-3 flex flex-col gap-6 overflow-y-auto pr-2 custom-scrollbar">
                         <div className="bg-white/5 border border-white/10 rounded-xl p-6 flex flex-col gap-6">
-                            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                                <Sparkles size={20} className="text-primary" /> Character Design
+                            <h2 className="text-xl font-bold text-white flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-2">
+                                    <Sparkles size={20} className="text-primary" /> Character Design
+                                </div>
+                                <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={handleAugment}
+                                    disabled={isAugmenting}
+                                    className="h-8 px-2 text-xs text-purple-400 hover:text-purple-300 hover:bg-purple-900/20"
+                                >
+                                    {isAugmenting ? <Sparkles size={12} className="animate-spin mr-1" /> : <Wand2 size={12} className="mr-1" />}
+                                    AI Enhance
+                                </Button>
                             </h2>
 
                             <div className="space-y-4">
@@ -253,6 +314,13 @@ export default function CharacterCastingPage() {
                                     </div>
                                     <p className="text-lg font-bold text-gray-200">Your character will appear here</p>
                                     <p className="text-sm">Configure existing details and press Generate</p>
+                                </div>
+                            )}
+                            {isPollingImage && (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 backdrop-blur-sm z-10 rounded-xl">
+                                    <Sparkles className="w-12 h-12 text-primary animate-pulse mb-4" />
+                                    <p className="text-white font-bold animate-pulse">Designing Character Sheet...</p>
+                                    <p className="text-xs text-gray-400 mt-2">Generating front & back views</p>
                                 </div>
                             )}
                         </div>

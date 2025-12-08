@@ -6,7 +6,11 @@ from app.api import deps
 from app.models import Character, Project
 from pydantic import BaseModel
 from datetime import datetime
+from datetime import datetime
 from uuid import UUID
+from fastapi import BackgroundTasks
+from app.services.storage import storage
+from app.api.deps import engine
 
 router = APIRouter()
 
@@ -21,6 +25,13 @@ class CharacterUpdate(BaseModel):
     appearance_tags: Optional[List[str]] = None
     default_mood: Optional[str] = None
     profile_image_url: Optional[str] = None
+    description: Optional[str] = None
+
+class CharacterAugmentRequest(BaseModel):
+    name: str
+    tags: List[str]
+    mood: str
+    project_id: UUID
 
 class CharacterOut(BaseModel):
     id: Any
@@ -29,6 +40,7 @@ class CharacterOut(BaseModel):
     appearance_tags: List[str]
     default_mood: str
     profile_image_url: str | None
+    description: str | None
     created_at: datetime
 
 @router.get("/", response_model=List[CharacterOut])
@@ -71,7 +83,8 @@ def create_character(
         appearance_tags=character_in.appearance_tags,
         default_mood=character_in.default_mood,
         consistency_seed=0, # Default, generate later
-        profile_image_url=None
+        profile_image_url=None,
+        description=None
     )
     session.add(character)
     session.commit()
@@ -102,15 +115,70 @@ def update_character(
     session.refresh(character)
     return character
 
+@router.post("/augment")
+def augment_character(
+    *,
+    request: CharacterAugmentRequest,
+    session: Session = Depends(deps.get_session),
+    current_user_id: str = Depends(deps.get_current_user_id),
+):
+    """
+    Augments character tags and description.
+    """
+    project = session.get(Project, request.project_id)
+    if not project:
+         raise HTTPException(status_code=404, detail="Project not found")
+
+    result = ai_service.augment_character_text(
+        name=request.name,
+        tags=request.tags,
+        mood=request.mood,
+        style=project.style_preset
+    )
+    return result
+
+def generate_character_image_task(character_id: UUID, prompt: str):
+    """
+    Background task to generate character sheet and save it.
+    """
+    try:
+        print(f"Starting background character generation for {character_id}")
+        # Generate Image (Sheet)
+        # We need style from project but prompt already constructed in endpoint? 
+        # Actually generate_character_sheet needs separate args. 
+        # Refactoring to pass necessary info or query inside here?
+        # Let's query inside here to be safe and clean.
+        
+        with Session(engine) as session:
+            character = session.get(Character, character_id)
+            if not character:
+                return
+            project = session.get(Project, character.project_id)
+            
+            # Using the specialized character sheet generation
+            desc_for_img = character.description or ", ".join(character.appearance_tags)
+            img_bytes = ai_service.generate_character_sheet(character.name, desc_for_img, project.style_preset)
+            
+            if img_bytes:
+                url = storage.upload_image(img_bytes)
+                character.profile_image_url = url
+                session.add(character)
+                session.commit()
+                print(f"Character {character_id} image updated: {url}")
+                
+    except Exception as e:
+        print(f"Background Character Gen Error: {e}")
+
 @router.post("/{character_id}/generate", response_model=CharacterOut)
 def generate_character_image(
     *,
     session: Session = Depends(deps.get_session),
     character_id: UUID,
+    background_tasks: BackgroundTasks,
     current_user_id: str = Depends(deps.get_current_user_id),
 ) -> Any:
     """
-    Generate a profile image for the character using AI.
+    Start background generation of character sheet.
     """
     character = session.get(Character, character_id)
     if not character:
@@ -120,27 +188,7 @@ def generate_character_image(
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
-    # Construct prompt
-    # "anime_webtoon character portrait of {name}, {tags}, {mood}"
-    tags_str = ", ".join(character.appearance_tags)
-    prompt = f"{project.style_preset} style character portrait of {character.name}, {tags_str}, {character.default_mood} expression, high quality, webtoon aesthetic"
+    # Add background task
+    background_tasks.add_task(generate_character_image_task, character_id, "")
     
-    # Generate Image
-    from app.services.ai import ai_service
-    import base64
-    
-    try:
-        image_bytes = ai_service.generate_image(prompt=prompt, width=512, height=512)
-        base64_image = base64.b64encode(image_bytes).decode("utf-8")
-        data_url = f"data:image/png;base64,{base64_image}"
-        
-        # Save to DB
-        character.profile_image_url = data_url
-        session.add(character)
-        session.commit()
-        session.refresh(character)
-        
-        return character
-    except Exception as e:
-        print(f"Character Generation Failed: {e}")
-        raise HTTPException(status_code=500, detail="Failed to generate character image")
+    return character

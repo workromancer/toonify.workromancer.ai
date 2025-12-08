@@ -8,6 +8,9 @@ from app.models import Project, Workspace, WorkspaceMember, User, Character
 from app.services.ai import ai_service
 from pydantic import BaseModel
 from datetime import datetime
+from fastapi import BackgroundTasks
+from app.services.storage import storage
+from app.api.deps import engine
 
 router = APIRouter()
 
@@ -49,6 +52,33 @@ class WorldviewAugmentRequest(BaseModel):
     subtitle: str | None = None
     genres: List[str] | None = None
 
+def generate_project_cover_task(project_id: str, title: str, genre: str, worldview_content: str, style: str):
+    """
+    Background task to generate and update project cover image.
+    """
+    try:
+        print(f"Starting background cover generation for project {project_id}")
+        # Generate Image
+        img_bytes = ai_service.generate_project_cover_image(title, genre, worldview_content, style)
+        
+        # Upload to Storage
+        if img_bytes:
+            url = storage.upload_image(img_bytes)
+            print(f"Cover image uploaded to {url}")
+            
+            # Update Project in DB
+            with Session(engine) as session:
+                # We need to convert project_id to UUID if it's str
+                from uuid import UUID
+                p_uuid = UUID(project_id)
+                project = session.get(Project, p_uuid)
+                if project:
+                    project.thumbnail_url = url
+                    session.add(project)
+                    session.commit()
+                    print(f"Project {project_id} thumbnail updated.")
+    except Exception as e:
+        print(f"Background Task Error: {e}")
 @router.get("/", response_model=List[ProjectOut])
 def list_projects(
     session: Session = Depends(deps.get_session),
@@ -165,6 +195,7 @@ def update_project(
     session: Session = Depends(deps.get_session),
     project_id: str,
     project_in: ProjectUpdate,
+    background_tasks: BackgroundTasks,
     current_user_id: str = Depends(deps.get_current_user_id),
 ) -> Any:
     """
@@ -189,6 +220,26 @@ def update_project(
     session.add(project)
     session.commit()
     session.refresh(project)
+    
+    # Check if style was updated and trigger cover generation
+    if project_in.style_preset and project_in.style_preset != "anime_webtoon": # Trigger if style is set to something specific
+         # Extract worldview content safely
+         wv_content = ""
+         if project.worldview:
+             if isinstance(project.worldview, dict):
+                 wv_content = project.worldview.get("content", "") or project.worldview.get("description", "")
+             else:
+                 wv_content = str(project.worldview)
+         
+         background_tasks.add_task(
+             generate_project_cover_task, 
+             str(project.id), 
+             project.title, 
+             project.genre or "Fantasy", 
+             wv_content, 
+             project.style_preset
+         )
+
     return project
 
 @router.post("/styles/recommend")
