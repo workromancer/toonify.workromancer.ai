@@ -45,7 +45,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return (
         <div className="flex h-screen w-full bg-background-light dark:bg-background-dark font-display text-gray-900 dark:text-white">
             {/* Sidebar */}
-            <aside className="w-64 bg-background-light dark:bg-background-dark border-r border-gray-200 dark:border-gray-800 flex flex-col sticky top-0 h-screen p-4">
+            <aside className="w-64 bg-background-light dark:bg-[#0f0c1d] border-r border-gray-200 dark:border-white/5 flex flex-col sticky top-0 h-screen p-4">
                 <div className="flex flex-col gap-4">
                     {/* Logo Area */}
                     <Link href="/dashboard" className="flex items-center gap-3 px-3 hover:opacity-80 transition-opacity">
@@ -124,7 +124,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     {/* Global New Project Button */}
                     <div className="px-1 mt-3 mb-1">
                         <Link href="/new-project">
-                            <div className="flex items-center justify-center gap-2 w-full bg-primary hover:bg-primary/90 text-white py-2.5 rounded-lg font-bold text-sm shadow-sm transition-all cursor-pointer">
+                            <div className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90 text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-primary/20 transition-all cursor-pointer hover:scale-[1.02]">
                                 <Plus size={18} />
                                 <span>New Project</span>
                             </div>

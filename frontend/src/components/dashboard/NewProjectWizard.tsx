@@ -8,15 +8,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { Check, MoveRight, MoveLeft, Sparkles, AlertCircle } from 'lucide-react';
+import { Check, MoveRight, MoveLeft, Sparkles, AlertCircle, Wand2 } from 'lucide-react';
 import { WorldviewCarousel } from '@/components/ui/carousel-custom';
 
 const StepIndicator = ({ currentStep, totalSteps }: { currentStep: number; totalSteps: number }) => {
     return (
         <div className="w-full relative mb-12">
-            <div className="absolute top-1/2 left-0 right-0 h-[2px] bg-gray-800 -translate-y-1/2 z-0"></div>
+            <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-white/10 -translate-y-1/2 z-0"></div>
             <motion.div
-                className="absolute top-1/2 left-0 h-[2px] bg-primary -translate-y-1/2 z-1"
+                className="absolute top-1/2 left-0 h-[1px] bg-primary -translate-y-1/2 z-1 shadow-[0_0_10px_rgba(55,19,236,0.6)]"
                 initial={{ width: '0%' }}
                 animate={{ width: `${((currentStep - 1) / (totalSteps - 1)) * 100}%` }}
                 transition={{ duration: 0.3, ease: "easeInOut" }}
@@ -29,22 +29,22 @@ const StepIndicator = ({ currentStep, totalSteps }: { currentStep: number; total
                     const isCurrent = stepNum === currentStep;
 
                     return (
-                        <div key={index} className="flex flex-col items-center gap-2">
+                        <div key={index} className="flex flex-col items-center gap-2 relative group">
                             <div
                                 className={cn(
-                                    "w-4 h-4 rounded-full transition-all duration-300 border-2",
-                                    isActive ? "bg-primary border-primary" : "bg-gray-800 border-gray-600",
-                                    isCurrent && "ring-4 ring-primary/20 scale-110"
+                                    "w-3 h-3 rounded-full transition-all duration-300 border-2",
+                                    isActive ? "bg-primary border-primary shadow-[0_0_10px_rgba(55,19,236,0.8)]" : "bg-background-dark border-white/20",
+                                    isCurrent && "scale-150 ring-4 ring-primary/20 bg-white border-white"
                                 )}
                             ></div>
                             <span className={cn(
-                                "text-xs font-bold transition-colors duration-300 absolute -bottom-6 w-24 text-center",
-                                isActive ? "text-white" : "text-gray-400"
+                                "text-[10px] uppercase tracking-widest font-bold transition-all duration-300 absolute -bottom-8 w-24 text-center",
+                                isActive ? "text-white opacity-100" : "text-gray-500 opacity-0 group-hover:opacity-50"
                             )}>
                                 {stepNum === 1 && 'Title'}
                                 {stepNum === 2 && 'Subtitle'}
                                 {stepNum === 3 && 'Genre'}
-                                {stepNum === 4 && 'Worldview'}
+                                {stepNum === 4 && 'World'}
                             </span>
                         </div>
                     );
@@ -107,37 +107,33 @@ export default function NewProjectWizard() {
     const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
 
     const handleAugmentWorldview = async () => {
-        // if (!formData.worldview) return; // Allow empty worldview to use context
         setLoading(true);
         setError('');
-        setAugmentOptions([]); // Reset options
+        setAugmentOptions([]);
         try {
-            // If worldview is an object (already augmented), send its content or description as seed?
-            // For now, assume if re-augmenting, we use the raw string or extract content.
             const desc = typeof formData.worldview === 'string' ? formData.worldview : formData.worldview.content || JSON.stringify(formData.worldview);
 
             const response = await api.post('/projects/worldview/augment', {
                 description: desc,
                 title: formData.title,
                 subtitle: formData.subtitle,
-                genres: formData.genre // sending array
+                genres: formData.genre
             });
-            // Handle both legacy string response and new object response
+
             if (response.data.options) {
                 setAugmentOptions(response.data.options);
             } else if (response.data.augmented_worldview) {
                 setFormData(prev => ({ ...prev, worldview: response.data.augmented_worldview }));
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Augmentation failed", error);
-            setError("Failed to augment worldview. Try again.");
+            setError("Failed to augment worldview. Please check API Key configuration.");
         } finally {
             setLoading(false);
         }
     };
 
     const handleSelectAugmentedOption = async (option: any) => {
-        // Immediate submission with the selected FULL OPTION object
         const finalWorldview = {
             ...option,
             meta_type: "augmented_v1"
@@ -150,11 +146,10 @@ export default function NewProjectWizard() {
         setLoading(true);
         setError('');
         try {
-            // Ensure worldview is an object for the JSON column
             let finalWorldview = data.worldview;
             if (typeof finalWorldview === 'string') {
                 finalWorldview = {
-                    title: data.title + " World", // Default title
+                    title: data.title + " World",
                     content: finalWorldview,
                     tone: "General",
                     key_features: []
@@ -175,7 +170,7 @@ export default function NewProjectWizard() {
                 ? (typeof error.response.data.detail === 'object' ? JSON.stringify(error.response.data.detail) : error.response.data.detail)
                 : error.message;
             setError(`Failed: ${msg}`);
-            setLoading(false); // Only stop loading on error, otherwise we are redirecting
+            setLoading(false);
         }
     };
 
@@ -186,16 +181,19 @@ export default function NewProjectWizard() {
     const stepVariants = {
         hidden: (direction: number) => ({
             opacity: 0,
-            x: direction > 0 ? 50 : -50
+            x: direction > 0 ? 30 : -30,
+            scale: 0.95
         }),
         visible: {
             opacity: 1,
             x: 0,
+            scale: 1,
             transition: { type: "spring", stiffness: 300, damping: 30 } as any
         },
         exit: (direction: number) => ({
             opacity: 0,
-            x: direction < 0 ? 50 : -50,
+            x: direction < 0 ? 30 : -30,
+            scale: 0.95,
             transition: { duration: 0.2 } as any
         })
     };
@@ -213,203 +211,229 @@ export default function NewProjectWizard() {
     };
 
     return (
-        <div className="min-h-screen bg-background-dark text-white flex items-center justify-center p-4 font-display">
-            {/* Background elements if needed */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-0 left-0 w-full h-[500px] bg-primary/5 blur-[120px] rounded-full translate-y-[-50%]"></div>
-            </div>
+        <div className="min-h-screen bg-background-dark text-white flex items-center justify-center p-4 font-display overflow-hidden relative">
+            {/* Ambient Background */}
+            <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-primary/20 blur-[150px] rounded-full pointer-events-none mix-blend-screen" />
+            <div className="absolute bottom-[-20%] right-[-10%] w-[40%] h-[40%] bg-purple-500/10 blur-[150px] rounded-full pointer-events-none mix-blend-screen" />
 
-            <main className="bg-[#1a1726] border border-gray-800 w-full max-w-2xl rounded-2xl shadow-2xl p-8 md:p-12 relative overflow-hidden z-10 flex flex-col min-h-[600px]">
+            <main className="w-full max-w-3xl relative z-10 flex flex-col min-h-[600px]">
 
-                <header className="text-center mb-10">
-                    <h1 className="text-3xl font-black tracking-tight text-white mb-2">Create New Project</h1>
-                    <p className="text-gray-400 text-lg">
-                        {step === 1 && 'Let\'s start with a catchy title.'}
-                        {step === 2 && 'Add a subtitle or tagline.'}
-                        {step === 3 && 'What\'s the genre?'}
-                        {step === 4 && 'Tell us about the world.'}
+                {/* Header Section with Glass effect */}
+                <div className="mb-8 text-center bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
+                    <h1 className="text-4xl font-black tracking-tight text-white mb-3">
+                        {step === 1 && 'Name Your Story'}
+                        {step === 2 && 'Add a Tagline'}
+                        {step === 3 && 'Choose Genre'}
+                        {step === 4 && 'Build the World'}
+                    </h1>
+                    <p className="text-gray-400 text-lg font-light">
+                        {step === 1 && 'Every great webtoon starts with a memorable title.'}
+                        {step === 2 && 'Give your readers a hint of what\'s coming.'}
+                        {step === 3 && 'Select one or more genres that fit your story.'}
+                        {step === 4 && 'Describe the setting and let AI enhance it for you.'}
                     </p>
-                </header>
-
-                <StepIndicator currentStep={step} totalSteps={4} />
-
-                <div className="flex-1 flex flex-col justify-center">
-                    <AnimatePresence custom={direction} mode="wait">
-                        {step === 1 && (
-                            <motion.div
-                                key="step1"
-                                custom={direction}
-                                variants={stepVariants}
-                                initial="hidden"
-                                animate="visible"
-                                exit="exit"
-                                className="flex flex-col gap-4"
-                            >
-                                <label className="block text-sm font-bold text-gray-300">Project Title</label>
-                                <Input
-                                    name="title"
-                                    value={formData.title}
-                                    onChange={handleInputChange}
-                                    placeholder="e.g. The Last Starfighter"
-                                    className="h-14 text-lg bg-background-dark border-gray-600 focus-visible:ring-primary text-white placeholder:text-gray-500"
-                                    autoFocus
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter' && formData.title) {
-                                            e.preventDefault();
-                                            handleNext();
-                                        }
-                                    }}
-                                />
-                            </motion.div>
-                        )}
-
-                        {step === 2 && (
-                            <motion.div
-                                key="step2"
-                                custom={direction}
-                                variants={stepVariants}
-                                initial="hidden"
-                                animate="visible"
-                                exit="exit"
-                                className="flex flex-col gap-4"
-                            >
-                                <label className="block text-sm font-bold text-gray-300">Subtitle (Optional)</label>
-                                <Input
-                                    name="subtitle"
-                                    value={formData.subtitle}
-                                    onChange={handleInputChange}
-                                    placeholder="e.g. A Tale of Two Galaxies"
-                                    className="h-14 text-lg bg-background-dark border-gray-600 focus-visible:ring-primary text-white placeholder:text-gray-500"
-                                    autoFocus
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
-                                            e.preventDefault();
-                                            handleNext();
-                                        }
-                                    }}
-                                />
-                            </motion.div>
-                        )}
-
-                        {step === 3 && (
-                            <motion.div
-                                key="step3"
-                                custom={direction}
-                                variants={stepVariants}
-                                initial="hidden"
-                                animate="visible"
-                                exit="exit"
-                                className="h-full"
-                            >
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                    {genres.map((g) => (
-                                        <button
-                                            key={g.label}
-                                            onClick={() => handleGenreSelect(g.label)}
-                                            className={cn(
-                                                "flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-200 text-left group",
-                                                formData.genre.includes(g.label)
-                                                    ? "bg-primary/20 border-primary text-white shadow-[0_0_15px_rgba(55,19,236,0.3)]"
-                                                    : "bg-background-dark border-gray-700 text-gray-300 hover:border-gray-500 hover:text-white hover:bg-gray-800/80"
-                                            )}
-                                        >
-                                            <span className="text-2xl group-hover:scale-110 transition-transform">{g.icon}</span>
-                                            <span className="font-bold text-sm">{g.label}</span>
-                                            {formData.genre.includes(g.label) && <Check size={16} className="ml-auto text-primary" />}
-                                        </button>
-                                    ))}
-                                </div>
-                            </motion.div>
-                        )}
-
-                        {step === 4 && (
-                            <motion.div
-                                key="step4"
-                                custom={direction}
-                                variants={stepVariants}
-                                initial="hidden"
-                                animate="visible"
-                                exit="exit"
-                                className="flex flex-col gap-4 h-full"
-                            >
-                                <div className="flex justify-between items-center">
-                                    <label className="block text-sm font-bold text-gray-300">Worldview & Key Settings</label>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={handleAugmentWorldview}
-                                        disabled={loading}
-                                        className="text-primary hover:text-primary/80 hover:bg-primary/10 gap-2 h-8"
-                                    >
-                                        {loading ? <span className="animate-spin">✨</span> : <Sparkles size={14} />}
-                                        AI Augment
-                                    </Button>
-                                </div>
-                                <Textarea
-                                    name="worldview"
-                                    value={formData.worldview}
-                                    onChange={handleInputChange}
-                                    placeholder="Describe the world, magic system, key rules..."
-                                    className="flex-1 min-h-[200px] bg-background-dark border-gray-600 focus-visible:ring-primary text-white placeholder:text-gray-500 resize-none text-base leading-relaxed p-4"
-                                />
-                                {augmentOptions.length > 0 && (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        className="mt-4"
-                                    >
-                                        <div className="flex justify-between items-center mb-2">
-                                            <span className="text-sm font-bold text-primary">AI Suggestions</span>
-                                            <button
-                                                onClick={() => setAugmentOptions([])}
-                                                className="text-xs text-gray-400 hover:text-white"
-                                            >
-                                                Dismiss
-                                            </button>
-                                        </div>
-                                        <WorldviewCarousel
-                                            options={augmentOptions}
-                                            onSelect={handleSelectAugmentedOption}
-                                            onDismiss={() => setAugmentOptions([])}
-                                        />
-                                    </motion.div>
-                                )}
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
                 </div>
 
-                {error && (
-                    <div className="mt-4 p-3 bg-red-900/20 border border-red-900/50 rounded-lg text-red-400 text-sm flex items-center gap-2">
-                        <AlertCircle size={16} />
-                        {error}
+                {/* Main Content Card */}
+                <div className="bg-[#1a1726]/80 backdrop-blur-md border border-white/10 rounded-2xl shadow-2xl p-8 md:p-12 flex-1 flex flex-col relative overflow-hidden">
+
+                    <StepIndicator currentStep={step} totalSteps={4} />
+
+                    <div className="flex-1 flex flex-col justify-center relative">
+                        <AnimatePresence custom={direction} mode="wait">
+                            {step === 1 && (
+                                <motion.div
+                                    key="step1"
+                                    custom={direction}
+                                    variants={stepVariants}
+                                    initial="hidden"
+                                    animate="visible"
+                                    exit="exit"
+                                    className="flex flex-col gap-6"
+                                >
+                                    <Input
+                                        name="title"
+                                        value={formData.title}
+                                        onChange={handleInputChange}
+                                        placeholder="Enter title here..."
+                                        className="h-20 text-3xl font-bold bg-black/20 border-white/10 focus-visible:ring-primary focus-visible:border-primary/50 text-white placeholder:text-white/20 rounded-xl px-6"
+                                        autoFocus
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' && formData.title) {
+                                                e.preventDefault();
+                                                handleNext();
+                                            }
+                                        }}
+                                    />
+                                </motion.div>
+                            )}
+
+                            {step === 2 && (
+                                <motion.div
+                                    key="step2"
+                                    custom={direction}
+                                    variants={stepVariants}
+                                    initial="hidden"
+                                    animate="visible"
+                                    exit="exit"
+                                    className="flex flex-col gap-6"
+                                >
+                                    <Input
+                                        name="subtitle"
+                                        value={formData.subtitle}
+                                        onChange={handleInputChange}
+                                        placeholder="Enter subtitle (optional)..."
+                                        className="h-16 text-xl bg-black/20 border-white/10 focus-visible:ring-primary focus-visible:border-primary/50 text-white placeholder:text-white/20 rounded-xl px-6"
+                                        autoFocus
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                handleNext();
+                                            }
+                                        }}
+                                    />
+                                </motion.div>
+                            )}
+
+                            {step === 3 && (
+                                <motion.div
+                                    key="step3"
+                                    custom={direction}
+                                    variants={stepVariants}
+                                    initial="hidden"
+                                    animate="visible"
+                                    exit="exit"
+                                    className="h-full"
+                                >
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                        {genres.map((g) => (
+                                            <button
+                                                key={g.label}
+                                                onClick={() => handleGenreSelect(g.label)}
+                                                className={cn(
+                                                    "flex items-center gap-3 px-4 py-4 rounded-xl border transition-all duration-200 text-left group relative overflow-hidden",
+                                                    formData.genre.includes(g.label)
+                                                        ? "bg-primary border-primary text-white shadow-[0_0_20px_rgba(55,19,236,0.4)]"
+                                                        : "bg-white/5 border-white/5 text-gray-400 hover:bg-white/10 hover:border-white/20 hover:text-white"
+                                                )}
+                                            >
+                                                <span className="text-2xl group-hover:scale-110 transition-transform duration-300">{g.icon}</span>
+                                                <span className="font-bold text-sm">{g.label}</span>
+                                                {formData.genre.includes(g.label) && (
+                                                    <motion.div
+                                                        layoutId="genre-check"
+                                                        className="absolute right-2 top-2 text-white/50"
+                                                    >
+                                                        <Check size={14} />
+                                                    </motion.div>
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </motion.div>
+                            )}
+
+                            {step === 4 && (
+                                <motion.div
+                                    key="step4"
+                                    custom={direction}
+                                    variants={stepVariants}
+                                    initial="hidden"
+                                    animate="visible"
+                                    exit="exit"
+                                    className="flex flex-col gap-4 h-full"
+                                >
+                                    <div className="flex justify-between items-center bg-white/5 p-4 rounded-xl border border-white/10">
+                                        <div>
+                                            <h3 className="text-sm font-bold text-white">Project Worldview</h3>
+                                            <p className="text-xs text-gray-500">Describe your setting for better AI results.</p>
+                                        </div>
+                                        <Button
+                                            size="sm"
+                                            onClick={handleAugmentWorldview}
+                                            disabled={loading}
+                                            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white border-0 shadow-lg shadow-purple-500/20 gap-2 font-bold px-4 h-9"
+                                        >
+                                            {loading ? <span className="animate-spin"><Wand2 size={16} /></span> : <Sparkles size={16} />}
+                                            AI Augment
+                                        </Button>
+                                    </div>
+
+                                    <Textarea
+                                        name="worldview"
+                                        value={typeof formData.worldview === 'string' ? formData.worldview : (formData.worldview.content || '')}
+                                        onChange={handleInputChange}
+                                        placeholder="E.g. A dystopian cyberpunk city where rain never stops and neon lights control people's emotions..."
+                                        className="flex-1 min-h-[150px] bg-black/20 border-white/10 focus-visible:ring-primary focus-visible:border-primary/50 text-white placeholder:text-white/20 resize-none text-base leading-relaxed p-6 rounded-xl"
+                                    />
+
+                                    {augmentOptions.length > 0 && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="mt-4"
+                                        >
+                                            <div className="flex justify-between items-center mb-3 px-1">
+                                                <span className="text-xs font-bold text-blue-400 uppercase tracking-widest">AI Suggestions</span>
+                                                <button
+                                                    onClick={() => setAugmentOptions([])}
+                                                    className="text-xs text-gray-500 hover:text-white transition-colors"
+                                                >
+                                                    Dismiss
+                                                </button>
+                                            </div>
+                                            <WorldviewCarousel
+                                                options={augmentOptions}
+                                                onSelect={handleSelectAugmentedOption}
+                                                onDismiss={() => setAugmentOptions([])}
+                                            />
+                                        </motion.div>
+                                    )}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
-                )}
 
-                <footer className="mt-10 flex justify-between items-center pt-6 border-t border-gray-800">
-                    <Button
-                        variant="ghost"
-                        onClick={handlePrev}
-                        disabled={step === 1 || loading}
-                        className="text-gray-400 hover:text-white hover:bg-white/5 gap-2"
-                    >
-                        <MoveLeft size={16} /> Back
-                    </Button>
+                    {error && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="mt-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-200 text-sm flex items-center gap-3"
+                        >
+                            <AlertCircle size={18} className="text-red-500" />
+                            {error}
+                        </motion.div>
+                    )}
 
-                    <Button
-                        onClick={step < 4 ? handleNext : handleSubmit}
-                        disabled={loading || (step === 1 && !formData.title)}
-                        className="bg-primary hover:bg-primary/90 text-white min-w-[120px] h-12 rounded-xl text-base font-bold shadow-lg shadow-primary/20 gap-2"
-                    >
-                        {loading ? (
-                            'Processing...'
-                        ) : step < 4 ? (
-                            <>Next <MoveRight size={18} /></>
-                        ) : (
-                            <>Finish Setup <Check size={18} /></>
-                        )}
-                    </Button>
-                </footer>
+                    <footer className="mt-12 flex justify-between items-center pt-8 border-t border-white/5">
+                        <Button
+                            variant="ghost"
+                            onClick={handlePrev}
+                            disabled={step === 1 || loading}
+                            className="text-gray-400 hover:text-white hover:bg-white/5 gap-2"
+                        >
+                            <MoveLeft size={16} /> Back
+                        </Button>
+
+                        <Button
+                            onClick={step < 4 ? handleNext : handleSubmit}
+                            disabled={loading || (step === 1 && !formData.title)}
+                            className={cn(
+                                "min-w-[140px] h-14 rounded-xl text-base font-bold shadow-xl gap-2 transition-all duration-300",
+                                step === 4 ? "bg-green-600 hover:bg-green-500 shadow-green-500/20" : "bg-primary hover:bg-primary/90 shadow-primary/20",
+                                loading && "opacity-80 scale-95"
+                            )}
+                        >
+                            {loading ? (
+                                'Processing...'
+                            ) : step < 4 ? (
+                                <>Next <MoveRight size={18} /></>
+                            ) : (
+                                <>Create Project <Check size={18} /></>
+                            )}
+                        </Button>
+                    </footer>
+                </div>
             </main>
         </div>
     );

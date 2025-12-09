@@ -5,6 +5,7 @@ import io
 import base64
 import requests
 import json
+import re
 from typing import List, Optional
 import os
 
@@ -13,17 +14,39 @@ class AIService:
         # Initialize Google GenAI Client
         try:
             api_key = settings.GEMINI_API_KEY or os.environ.get("GOOGLE_CLOUD_API_KEY")
+            project = os.environ.get("GOOGLE_CLOUD_PROJECT") or "webtoon-factory" # Default or from env
+            location = settings.GOOGLE_CLOUD_LOCATION or "us-central1"
+            
+            if not api_key:
+                print(f"Info: No API Key found. Attempting to use Application Default Credentials (ADC) for project '{project}'.")
+            
             self.client = genai.Client(
                 vertexai=True,
-                api_key=api_key
+                project=project,
+                location=location,
+                api_key=api_key # Can be None for ADC
             )
-            # Default models
-            self.text_model = "gemini-2.5-flash"
-            self.text_model = "gemini-2.5-flash"
-            self.image_model = "gemini-3-0-image-preview" # User requested 3.0 image preview
+            # Models Configuration (Ref: AI_MODELS.md)
+            self.model_config = {
+                "style": "gemini-2.5-flash",
+                "worldview": "gemini-3-pro-preview",
+                "director": "gemini-3-pro-preview",
+                "image": "gemini-3-pro-image-preview",
+                "embedding": "gemini-embedding-001"
+            } 
         except Exception as e:
             print(f"GenAI Client Init Failed: {e}")
             self.client = None
+
+    def _clean_json_text(self, text: str) -> str:
+        """Cleans markdown code blocks from JSON string."""
+        if not text:
+            return "{}"
+        # Remove ```json and ```
+        text = re.sub(r'^```json\s*', '', text, flags=re.MULTILINE)
+        text = re.sub(r'^```\s*', '', text, flags=re.MULTILINE)
+        text = re.sub(r'```\s*$', '', text, flags=re.MULTILINE)
+        return text.strip()
 
     def recommend_style(self, description: str) -> dict:
         """
@@ -51,30 +74,26 @@ class AIService:
         
         try:
             response = self.client.models.generate_content(
-                model='gemini-2.5-flash',
+                model=self.model_config["style"],
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json"
                 )
             )
-            
-            return json.loads(response.text)
+            cleaned_text = self._clean_json_text(response.text)
+            return json.loads(cleaned_text)
             
         except Exception as e:
             print(f"Style Director Error: {e}")
-            return {
-                "options": [
-                    {"id": "s1", "label": "Modern Webtoon", "description": "Clean lines, standard coloring.", "sample_image_url": ""},
-                    {"id": "s2", "label": "Sketchy/Rough", "description": "For intense or dark themes.", "sample_image_url": ""},
-                    {"id": "s3", "label": "Soft/Pastel", "description": "For romance or slice of life.", "sample_image_url": ""}
-                ]
-            }
+            raise e # Propagate error to let UI know
 
     def augment_worldview(self, description: str, title: str = None, subtitle: str = None, genres: List[str] = None) -> dict:
         """
         Augments and refines the worldview description using AI, providing 3 options.
         """
-        
+        if not self.client:
+             raise Exception("AI Client not initialized. Check API Key.")
+
         context_str = ""
         if title:
             context_str += f"\nProject Title: {title}"
@@ -112,44 +131,17 @@ class AIService:
         
         try:
             response = self.client.models.generate_content(
-                model=self.text_model,
+                model=self.model_config["worldview"],
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json"
                 )
             )
-            return json.loads(response.text)
+            cleaned_text = self._clean_json_text(response.text)
+            return json.loads(cleaned_text)
         except Exception as e:
             print(f"Worldview Augmentation Error: {e}")
-            # Fallback
-            return {
-                "options": [
-                    {
-                        "id": "fallback_1",
-                        "title": "Enhanced Version",
-                        "tone": "Neutral",
-                        "key_features": ["Refined Description"],
-                        "description": "A refined version of your description.",
-                        "content": description + "\n(AI augmented)"
-                    },
-                    {
-                        "id": "fallback_2",
-                        "title": "Darker Twist",
-                        "tone": "Dark",
-                        "key_features": ["Shadows", "Mystery"],
-                        "description": "A darker take on your world.",
-                        "content": description + "\nThe shadows in this world are alive..."
-                    },
-                    {
-                        "id": "fallback_3",
-                        "title": "Magical Expansion",
-                        "tone": "Magical",
-                        "key_features": ["High Magic", "Wonder"],
-                        "description": "More focus on magic systems.",
-                        "content": description + "\nMagic flows through every vein of this land..."
-                    }
-                ]
-            }
+            raise e
 
     def augment_character_text(self, name: str, tags: List[str], mood: str, style: str) -> dict:
         """
@@ -172,20 +164,17 @@ class AIService:
         """
         try:
             response = self.client.models.generate_content(
-                model=self.text_model,
+                model=self.model_config["worldview"],
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json"
                 )
             )
-            return json.loads(response.text)
+            cleaned_text = self._clean_json_text(response.text)
+            return json.loads(cleaned_text)
         except Exception as e:
             print(f"Character Augment Error: {e}")
-            return {
-                "augmented_tags": tags,
-                "visual_description": f"{name}, {', '.join(tags)}", 
-                "personality_hint": ""
-            }
+            raise e
 
     def generate_character_sheet(self, name: str, description: str, style: str) -> bytes:
         """
@@ -204,7 +193,6 @@ class AIService:
         - Background: Neutral, simple (white or grey) to focus on the design.
         - Style: {style} (High quality, professional concept art).
         """
-        
         # Using a landscape-ish ratio to fit both aspects comfortably
         return self.generate_image(prompt, width=1536, height=1024) 
 
@@ -237,47 +225,26 @@ class AIService:
         
         try:
             response = self.client.models.generate_content(
-                model=self.text_model,
+                model=self.model_config["director"],
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json"
                 )
             )
-            return json.loads(response.text)
+            cleaned_text = self._clean_json_text(response.text)
+            return json.loads(cleaned_text)
             
         except Exception as e:
             print(f"Director AI Error: {e}")
-            # Fallback
-            return {
-                "options": [
-                    {
-                        "id": "A",
-                        "label": "Close Up (Mock)",
-                        "description": "Focus on character expression.",
-                        "aspect_ratio": "3:4",
-                        "image_prompt": f"Close up shot, {script}, webtoon style"
-                    },
-                    {
-                        "id": "B",
-                        "label": "Wide Shot (Mock)",
-                        "description": "Showing the environment.",
-                        "aspect_ratio": "3:4",
-                        "image_prompt": f"Wide shot, {script}, webtoon style"
-                    },
-                    {
-                        "id": "C",
-                        "label": "Dynamic Angle (Mock)",
-                        "description": "Action oriented view.",
-                        "aspect_ratio": "3:4",
-                        "image_prompt": f"Dynamic angle, {script}, webtoon style"
-                    }
-                ]
-            }
+            raise e
 
     def generate_image(self, prompt: str, width: int = 1024, height: int = 1024, seed: int = None) -> bytes:
         """
         Generates an image using Google GenAI SDK (Gemini 3).
         """
+        if not self.client:
+             raise Exception("AI Client not initialized.")
+
         try:
             # Aspect Ratio logic
             ratio = width / height
@@ -289,19 +256,17 @@ class AIService:
             elif abs(ratio - 16/9) < 0.01:
                 aspect_ratio = "16:9"
             
-            print(f"Generating image with prompt: {prompt[:50]}..., seed: {seed}, ratio: {aspect_ratio}")
+            print(f"Generating image with prompt: {prompt[:50]}..., ratio: {aspect_ratio}")
             
             config = types.GenerateContentConfig(
-                response_modalities=['IMAGE'], # Requesting image only
+                response_modalities=['IMAGE'], 
                 image_config=types.ImageConfig(
                     aspect_ratio=aspect_ratio,
                 )
-                # Seed is not directly supported in ImageConfig types yet, usually controlled by model or not exposed. 
-                # If supported, it would be in generation_config.
             )
 
             response = self.client.models.generate_content(
-                model=self.image_model,
+                model=self.model_config["image"],
                 contents=prompt,
                 config=config,
             )
@@ -316,7 +281,7 @@ class AIService:
                  
         except Exception as e:
             print(f"GenAI Generation Error: {e}")
-            return self._generate_image_mock(prompt, width, height, seed)
+            raise e
 
     def modify_image(self, original_image_url: str, instruction: str) -> bytes:
         """
@@ -330,15 +295,19 @@ class AIService:
             img_bytes = None
             if original_image_url.startswith("data:image"):
                 # Decode Base64
-                header, encoded = original_image_url.split(",", 1)
-                img_bytes = base64.b64decode(encoded)
+                try:
+                    header, encoded = original_image_url.split(",", 1)
+                    img_bytes = base64.b64decode(encoded)
+                except Exception:
+                    # Maybe it's raw base64?
+                    img_bytes = base64.b64decode(original_image_url)
             elif original_image_url.startswith("http"):
                 # Download
                 res = requests.get(original_image_url)
                 if res.status_code == 200:
                     img_bytes = res.content
                 else:
-                     raise Exception("Failed to download image")
+                     raise Exception(f"Failed to download image: {res.status_code}")
             else:
                  raise Exception("Invalid image URL format")
             
@@ -346,10 +315,7 @@ class AIService:
                 raise Exception("Could not retrieve source image bytes")
 
             # 2. Call GenAI
-            # Construct content with image and text
-            # Depending on how the new SDK handles bytes, we might need types.Part.from_bytes
-            
-            image_part = types.Part.from_bytes(data=img_bytes, mime_type="image/png") # Assuming PNG/JPEG, API usually detects or we can guess
+            image_part = types.Part.from_bytes(data=img_bytes, mime_type="image/png") 
             text_part = types.Part.from_text(text=f"Edit this image: {instruction}")
             
             contents = [
@@ -363,13 +329,12 @@ class AIService:
             config = types.GenerateContentConfig(
                 response_modalities=['IMAGE'],
                 image_config=types.ImageConfig(
-                    aspect_ratio="1:1" # Preserve original aspect usually, but here strict.
-                    # Ideally we match input aspect ratio.
+                    aspect_ratio="1:1" 
                 )
             )
 
             response = self.client.models.generate_content(
-                model=self.image_model,
+                model=self.model_config["image"],
                 contents=contents,
                 config=config
             )
@@ -383,32 +348,13 @@ class AIService:
                  
         except Exception as e:
             print(f"Modification Error: {e}")
-            return self._generate_image_mock(f"Modified: {instruction}", 1024, 1024)
-
-    def _generate_image_mock(self, prompt: str, width: int, height: int, seed: int = None) -> bytes:
-        from PIL import Image, ImageDraw
-        import random
-        
-        if seed is not None:
-            random.seed(seed)
-            
-        img = Image.new('RGB', (width, height), color = (50, 50, 50))
-        d = ImageDraw.Draw(img)
-        d.text((10,10), f"Toonify AI (Mock) - Gemini 3 Failed\nPrompt: {prompt[:50]}...", fill=(255,255,255))
-        
-        color = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
-        d.rectangle([width//4, height//4, width*3//4, height*3//4], outline=color, width=5)
-        
-        img_byte_arr = io.BytesIO()
-        img.save(img_byte_arr, format='PNG')
-        return img_byte_arr.getvalue()
+            raise e
 
     def get_embedding(self, text: str) -> List[float]:
         """
         Generates text embedding for RAG.
         """
         try:
-             # embedding model might be different, let's use a standard one supported by genai
              response = self.client.models.embed_content(
                  model="gemini-embedding-001",
                  contents=text
@@ -421,21 +367,9 @@ class AIService:
             return [0.0] * 768
 
     def generate_project_cover_async(self, project_id: str, title: str, genre: str, worldview: str, style: str):
-
-        """
-        Async wrapper for cover generation (to be called via BackgroundTasks).
-        Ideally, this would be a separate worker function, but for now we put logic here 
-        or call a function that updates DB.
-        NOTE: Since `self` doesn't have DB access, this should return the bytes or URL.
-        Actually, for BackgroundTasks in FastAPI, we usually pass a service method that *does* DB updates.
-        We will implement the raw generation here.
-        """
         return self.generate_project_cover_image(title, genre, worldview, style)
 
     def generate_character_sheet_async(self, character_id: str, name: str, description: str, style: str):
-        """
-        Async wrapper for character sheet.
-        """
         return self.generate_character_sheet(name, description, style)
 
     def generate_project_cover_image(self, title: str, genre: str, worldview: str, style: str) -> bytes:
@@ -463,27 +397,6 @@ class AIService:
         # Requesting 16:9 as it's standard wide
         return self.generate_image(prompt, width=1920, height=1080) 
 
-    def generate_character_sheet(self, name: str, description: str, style: str) -> bytes:
-        """
-        Generates a character Reference Sheet (Left: Face, Right: Full Body Front/Back).
-        """
-        prompt = f"""
-        Create a Character Reference Sheet for a webtoon character.
-        
-        Name: {name}
-        Description: {description}
-        Style: {style}
-        
-        Composition:
-        - Split view or Side-by-Side.
-        - PART 1: Detailed Headshot/Portrait (Front/3-4 View).
-        - PART 2: Full Body Standing Pose (Front View).
-        - Background: Simple white/grey studio background.
-        - High consistency in character details between views.
-        """
-        
-        return self.generate_image(prompt, width=1536, height=1024) 
-
     def generate_episode_ideas(self, project_title: str, worldview: str, recent_episodes: str) -> dict:
         """
         Generates 3 episode ideas based on worldview and recent events.
@@ -509,14 +422,15 @@ class AIService:
         """
         try:
             response = self.client.models.generate_content(
-                model=self.text_model,
+                model=self.model_config["worldview"],
                 contents=prompt,
                 config=types.GenerateContentConfig(response_mime_type="application/json")
             )
-            return json.loads(response.text)
+            cleaned_text = self._clean_json_text(response.text)
+            return json.loads(cleaned_text)
         except Exception as e:
             print(f"Episode Idea Gen Failed: {e}")
-            return {"options": []}
+            raise e
 
     def generate_initial_cuts(self, episode_title: str, summary: str, style: str, num_cuts: int = 6) -> List[dict]:
         """
@@ -548,14 +462,15 @@ class AIService:
         """
         try:
             response = self.client.models.generate_content(
-                model=self.text_model,
+                model=self.model_config["director"],
                 contents=prompt,
                 config=types.GenerateContentConfig(response_mime_type="application/json")
             )
-            return json.loads(response.text).get("cuts", [])
+            cleaned_text = self._clean_json_text(response.text)
+            return json.loads(cleaned_text).get("cuts", [])
         except Exception as e:
             print(f"Cut Gen Failed: {e}")
-            return []
+            raise e
 
 
 ai_service = AIService()
