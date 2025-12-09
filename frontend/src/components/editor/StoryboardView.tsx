@@ -144,6 +144,48 @@ export default function StoryboardView({ projectId, onEditCut }: StoryboardViewP
         }
     };
 
+    // New function to handle generation for existing cuts (bulk created)
+    const [generatingIds, setGeneratingIds] = useState<Set<string>>(new Set());
+
+    const handleGenerateImage = async (cutId: string) => {
+        try {
+            setGeneratingIds(prev => new Set(prev).add(cutId));
+            await api.post(`/episodes/${activeEpisodeId}/cuts/${cutId}/generate-image`);
+            toast({
+                title: "Generation Started",
+                description: "AI is generating the image. This may take a moment.",
+            });
+            // Poll for update or just let user refresh?
+            // Simple poll for this specific cut
+            const poll = setInterval(async () => {
+                const res = await api.get(`/cuts/${cutId}`);
+                // Assuming GET /cuts/{id} exists, if not we fall back to refreshing list
+                // Since fetching single cut might not be exposed, let's just refresh the whole list after delay
+                fetchCuts();
+            }, 3000);
+
+            // Stop polling after 30s
+            setTimeout(() => {
+                clearInterval(poll);
+                setGeneratingIds(prev => {
+                    const next = new Set(prev);
+                    next.delete(cutId);
+                    return next;
+                });
+            }, 30000);
+
+        } catch (e) {
+            console.error("Gen Image Failed", e);
+            toast({ title: "Generation Failed", variant: "destructive" });
+            setGeneratingIds(prev => {
+                const next = new Set(prev);
+                next.delete(cutId);
+                return next;
+            });
+        }
+    };
+
+
     useEffect(() => {
         if (activeEpisodeId) {
             fetchCuts();
@@ -238,9 +280,27 @@ export default function StoryboardView({ projectId, onEditCut }: StoryboardViewP
                                             <img src={cut.image_path} alt="Cut" className="max-w-full max-h-[400px] object-contain" />
                                         ) : (
                                             <div className="text-center p-8">
-                                                <ImageIcon size={32} className="mx-auto text-gray-600 mb-2" />
-                                                <p className="text-xs text-gray-500">No image generated</p>
+                                                {generatingIds.has(cut.id) ? (
+                                                    <div className="flex flex-col items-center gap-2">
+                                                        <Loader2 className="animate-spin text-purple-500" />
+                                                        <p className="text-xs text-purple-500">Generating...</p>
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <ImageIcon size={32} className="mx-auto text-gray-600 mb-2" />
+                                                        <p className="text-xs text-gray-500 mb-2">No image generated</p>
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => handleGenerateImage(cut.id)}
+                                                            className="h-7 text-xs"
+                                                        >
+                                                            <Wand2 size={12} className="mr-1" /> Generate
+                                                        </Button>
+                                                    </>
+                                                )}
                                             </div>
+
                                         )}
 
                                         {/* Edit Button Overlay */}

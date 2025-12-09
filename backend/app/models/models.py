@@ -64,6 +64,9 @@ class Project(SQLModel, table=True):
     workspace_id: UUID = Field(foreign_key="workspace.id")
     owner_id: UUID
     style_preset: str
+    art_style: Optional[str] = None # Detailed style description or name
+    cover_image_status: str = "pending" # pending, processing, completed, failed
+    cover_image_url: Optional[str] = None
     thumbnail_url: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -81,8 +84,17 @@ class Character(SQLModel, table=True):
     consistency_seed: int
     profile_image_url: Optional[str] = Field(default=None, sa_column=Column(Text))
     description: Optional[str] = Field(default=None, sa_column=Column(Text))
+    
+    # Character Sheet Generation
+    character_sheet_url: Optional[str] = Field(default=None, sa_column=Column(Text))
+    sheet_status: str = "pending" # pending, processing, completed, failed
+    
     height_cm: Optional[int] = None
     body_type: Optional[str] = None
+    
+    # RAG Embedding
+    embedding: List[float] = Field(sa_column=Column(JSON), default=None)
+    
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     project: Project = Relationship(back_populates="characters")

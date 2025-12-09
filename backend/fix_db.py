@@ -1,12 +1,16 @@
-from sqlmodel import Session, text
-from app.api.deps import engine
+from sqlmodel import Session, text, create_engine
+from app.core.config import settings
+
+# Force sync engine for migration script
+sync_url = settings.DATABASE_URL.replace("postgresql+asyncpg", "postgresql")
+engine = create_engine(sync_url)
 
 def fix():
     try:
         with Session(engine) as session:
-            # Check current type (optional, but let's just force alter)
-            print("Altering storycut table...")
-            session.exec(text("ALTER TABLE storycut ALTER COLUMN image_path TYPE text;"))
+            print("Altering project table...")
+            # Alter worldview to JSON (using casting if there's existing text data)
+            session.exec(text("ALTER TABLE project ALTER COLUMN worldview TYPE JSON USING worldview::JSON;"))
             session.commit()
             print("Table altered successfully.")
     except Exception as e:

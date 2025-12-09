@@ -119,29 +119,37 @@ def create_project(
     Create a new project.
     For MVP, we assign it to the user's first Workspace (default).
     """
-    # Get user's default workspace (first one)
-    ws_statement = select(WorkspaceMember).where(WorkspaceMember.user_id == current_user_id)
-    member = session.exec(ws_statement).first()
-    
-    if not member:
-         raise HTTPException(status_code=404, detail="No workspace found for user.")
-    
-    workspace_id = member.workspace_id
+    try:
+        # Get user's default workspace (first one)
+        ws_statement = select(WorkspaceMember).where(WorkspaceMember.user_id == current_user_id)
+        member = session.exec(ws_statement).first()
+        
+        if not member:
+             raise HTTPException(status_code=404, detail="No workspace found for user.")
+        
+        workspace_id = member.workspace_id
 
-    project = Project(
-        title=project_in.title,
-        subtitle=project_in.subtitle,
-        genre=project_in.genre,
-        worldview=project_in.worldview,
-        style_preset=project_in.style_preset,
-        workspace_id=workspace_id,
-        owner_id=current_user_id,
-    )
-    session.add(project)
-    session.commit()
-    session.refresh(project)
-    
-    return project
+        # Handle worldview: Project model expects dict, input might be str
+        final_worldview = project_in.worldview
+        if isinstance(final_worldview, str):
+            final_worldview = {"content": final_worldview, "title": f"{project_in.title} World"}
+
+        project = Project(
+            title=project_in.title,
+            subtitle=project_in.subtitle,
+            genre=project_in.genre,
+            worldview=final_worldview,
+            style_preset=project_in.style_preset,
+            workspace_id=workspace_id,
+            owner_id=current_user_id,
+        )
+        session.add(project)
+        session.commit()
+        session.refresh(project)
+        
+        return project
+    except Exception as e:
+        raise e
 
 @router.post("/worldview/augment")
 def augment_worldview(

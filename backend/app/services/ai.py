@@ -19,7 +19,8 @@ class AIService:
             )
             # Default models
             self.text_model = "gemini-2.5-flash"
-            self.image_model = "gemini-3-pro-image-preview" 
+            self.text_model = "gemini-2.5-flash"
+            self.image_model = "gemini-3-0-image-preview" # User requested 3.0 image preview
         except Exception as e:
             print(f"GenAI Client Init Failed: {e}")
             self.client = None
@@ -419,12 +420,30 @@ class AIService:
             print(f"Embedding failed: {e}")
             return [0.0] * 768
 
+    def generate_project_cover_async(self, project_id: str, title: str, genre: str, worldview: str, style: str):
+
+        """
+        Async wrapper for cover generation (to be called via BackgroundTasks).
+        Ideally, this would be a separate worker function, but for now we put logic here 
+        or call a function that updates DB.
+        NOTE: Since `self` doesn't have DB access, this should return the bytes or URL.
+        Actually, for BackgroundTasks in FastAPI, we usually pass a service method that *does* DB updates.
+        We will implement the raw generation here.
+        """
+        return self.generate_project_cover_image(title, genre, worldview, style)
+
+    def generate_character_sheet_async(self, character_id: str, name: str, description: str, style: str):
+        """
+        Async wrapper for character sheet.
+        """
+        return self.generate_character_sheet(name, description, style)
+
     def generate_project_cover_image(self, title: str, genre: str, worldview: str, style: str) -> bytes:
         """
         Generates a cover image for the project based on its details.
         """
         prompt = f"""
-        Create a high-quality webtoon cover image.
+        Create a high-quality webtoon cover illustration.
         
         Title: {title}
         Genre: {genre}
@@ -435,15 +454,108 @@ class AIService:
         
         Requirements:
         - The image should be eye-catching and representative of the genre and story.
-        - Use the specified art style: {style}.
-        - Aspect Ratio: 21:9 (Ultrawide cinematic) or similar suitable for a banner.
-        - No text overlay (title is added via UI). Focus on the visual composition.
+        - Use the user-defined art style: {style}.
+        - Aspect Ratio: Wide (21:9 or 16:9).
+        - Composition: Cinematic, showing the atmosphere.
+        - No text overlay.
         """
         
-        # We want a banner like aspect ratio. 21:9 is approx 2.33. 
-        # generate_image logic handles 16:9 (1.77) which is closest standard.
-        # Let's request a wide image.
+        # Requesting 16:9 as it's standard wide
+        return self.generate_image(prompt, width=1920, height=1080) 
+
+    def generate_character_sheet(self, name: str, description: str, style: str) -> bytes:
+        """
+        Generates a character Reference Sheet (Left: Face, Right: Full Body Front/Back).
+        """
+        prompt = f"""
+        Create a Character Reference Sheet for a webtoon character.
         
-        return self.generate_image(prompt, width=1536, height=640) # ~2.4 aspect ratio, logic in generate_image maps to nearest supported.
+        Name: {name}
+        Description: {description}
+        Style: {style}
+        
+        Composition:
+        - Split view or Side-by-Side.
+        - PART 1: Detailed Headshot/Portrait (Front/3-4 View).
+        - PART 2: Full Body Standing Pose (Front View).
+        - Background: Simple white/grey studio background.
+        - High consistency in character details between views.
+        """
+        
+        return self.generate_image(prompt, width=1536, height=1024) 
+
+    def generate_episode_ideas(self, project_title: str, worldview: str, recent_episodes: str) -> dict:
+        """
+        Generates 3 episode ideas based on worldview and recent events.
+        """
+        prompt = f"""
+        You are a webtoon writer.
+        Project: {project_title}
+        Worldview: {worldview}
+        Recent Episodes: {recent_episodes}
+        
+        Propose 3 distinct episode ideas for the next chapter.
+        Return ONLY JSON:
+        {{
+            "options": [
+                {{
+                    "title": "Title",
+                    "summary": "Brief summary",
+                    "reason": "Why this is interesting"
+                }},
+                ...
+            ]
+        }}
+        """
+        try:
+            response = self.client.models.generate_content(
+                model=self.text_model,
+                contents=prompt,
+                config=types.GenerateContentConfig(response_mime_type="application/json")
+            )
+            return json.loads(response.text)
+        except Exception as e:
+            print(f"Episode Idea Gen Failed: {e}")
+            return {"options": []}
+
+    def generate_initial_cuts(self, episode_title: str, summary: str, style: str, num_cuts: int = 6) -> List[dict]:
+        """
+        Generates initial text plan for cuts.
+        """
+        prompt = f"""
+        Plan a {num_cuts}-cut webtoon episode.
+        Title: {episode_title}
+        Summary: {summary}
+        Style: {style}
+        
+        For each cut, determine:
+        - Script (Visual Description of action/scene)
+        - Dialogues (List of {{speaker, text}})
+        - Panel Type (Wide, Vertical, Square)
+        
+        Return ONLY JSON:
+        {{
+            "cuts": [
+                {{
+                    "cut_order": 1,
+                    "script": "Visual description...",
+                    "dialogues": [{{"speaker": "A", "text": "Hello"}}],
+                    "panel_type": "Wide"
+                }},
+                ...
+            ]
+        }}
+        """
+        try:
+            response = self.client.models.generate_content(
+                model=self.text_model,
+                contents=prompt,
+                config=types.GenerateContentConfig(response_mime_type="application/json")
+            )
+            return json.loads(response.text).get("cuts", [])
+        except Exception as e:
+            print(f"Cut Gen Failed: {e}")
+            return []
+
 
 ai_service = AIService()

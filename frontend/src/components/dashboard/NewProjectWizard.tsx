@@ -63,7 +63,7 @@ export default function NewProjectWizard() {
         title: string;
         subtitle: string;
         genre: string[];
-        worldview: string;
+        worldview: string | any;
     }>({
         title: '',
         subtitle: '',
@@ -150,17 +150,31 @@ export default function NewProjectWizard() {
         setLoading(true);
         setError('');
         try {
+            // Ensure worldview is an object for the JSON column
+            let finalWorldview = data.worldview;
+            if (typeof finalWorldview === 'string') {
+                finalWorldview = {
+                    title: data.title + " World", // Default title
+                    content: finalWorldview,
+                    tone: "General",
+                    key_features: []
+                };
+            }
+
             await api.post('/projects/', {
                 title: data.title,
                 subtitle: data.subtitle,
                 genre: data.genre.join(', '),
-                worldview: data.worldview,
+                worldview: finalWorldview,
                 style_preset: "anime_webtoon"
             });
             router.push('/dashboard');
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error creating project", error);
-            setError("Failed to create project.");
+            const msg = error.response?.data?.detail
+                ? (typeof error.response.data.detail === 'object' ? JSON.stringify(error.response.data.detail) : error.response.data.detail)
+                : error.message;
+            setError(`Failed: ${msg}`);
             setLoading(false); // Only stop loading on error, otherwise we are redirecting
         }
     };
