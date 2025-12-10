@@ -52,29 +52,7 @@ class AIService:
 
     def recommend_style(self, description: str) -> dict:
         if not self.client:
-            print("AI Service (Mock): Recommending styles")
-            return {
-                "options": [
-                    {
-                        "id": "mock_style_1",
-                        "label": "Mock Webtoon Style",
-                        "description": "A vibrant and dynamic style perfect for action.",
-                        "sample_image_url": "https://placehold.co/400x300?text=Style+1"
-                    },
-                    {
-                        "id": "mock_style_2",
-                        "label": "Mock Noir",
-                        "description": "High contrast, dark atmosphere.",
-                        "sample_image_url": "https://placehold.co/400x300?text=Style+2"
-                    },
-                    {
-                        "id": "mock_style_3",
-                        "label": "Mock Watercolor",
-                        "description": "Soft, dreamy aesthetic.",
-                        "sample_image_url": "https://placehold.co/400x300?text=Style+3"
-                    }
-                ]
-            }
+             raise Exception("AI Service not initialized provided")
 
         # ... real implementation ...
         prompt = f"""
@@ -110,29 +88,7 @@ class AIService:
             
         except Exception as e:
             print(f"Style Director Error: {e}")
-            # Fallback for verification
-            return {
-                "options": [
-                    {
-                        "id": "mock_style_1",
-                        "label": "Mock Webtoon Style",
-                        "description": "A vibrant and dynamic style perfect for action.",
-                        "sample_image_url": "https://placehold.co/400x300?text=Style+1"
-                    },
-                    {
-                        "id": "mock_style_2",
-                        "label": "Mock Noir",
-                        "description": "High contrast, dark atmosphere.",
-                        "sample_image_url": "https://placehold.co/400x300?text=Style+2"
-                    },
-                     {
-                        "id": "mock_style_3",
-                        "label": "Mock Watercolor",
-                        "description": "Soft, dreamy aesthetic.",
-                        "sample_image_url": "https://placehold.co/400x300?text=Style+3"
-                    }
-                ]
-            }
+            raise e
 
     def augment_worldview(self, description: str, title: str = None, subtitle: str = None, genres: List[str] = None) -> dict:
 
@@ -148,27 +104,7 @@ class AIService:
         desc_str = f'"{description}"' if description else "(None provided, suggest based on project context)"
         
         if not self.client:
-            print("AI Service (Mock): Augmenting Worldview")
-            return {
-                "options": [
-                    {
-                        "id": "mock_wv_1",
-                        "title": "Mock World 1",
-                        "tone": "Dark / Serious",
-                        "key_features": ["Feature A", "Feature B"],
-                        "description": "A mocked worldview description.",
-                        "content": "This is a detailed mock description of the worldview. The sun never sets, and machines rule."
-                    },
-                    {
-                        "id": "mock_wv_2",
-                        "title": "Mock World 2",
-                        "tone": "Light / Funny",
-                        "key_features": ["Feature C", "Feature D"],
-                        "description": "Another mocked worldview.",
-                        "content": "This is another detailed mock description. Everyone is a cat."
-                    }
-                ]
-            }
+             raise Exception("AI Service not initialized")
 
         prompt = f"""
         You are an expert fantasy/sci-fi world builder.
@@ -206,50 +142,48 @@ class AIService:
             cleaned_text = self._clean_json_text(response.text)
             return json.loads(cleaned_text)
         except Exception as e:
-            print(f"Worldview Augmentation Error: {e}. Returning Mocks.")
-            return {
-                "options": [
-                    {
-                        "id": "mock_wv_1",
-                        "title": "Mock World 1",
-                        "tone": "Dark / Serious",
-                        "key_features": ["Feature A", "Feature B"],
-                        "description": "A mocked worldview description.",
-                        "content": "This is a detailed mock description of the worldview. The sun never sets, and machines rule."
-                    },
-                    {
-                        "id": "mock_wv_2",
-                        "title": "Mock World 2",
-                        "tone": "Light / Funny",
-                        "key_features": ["Feature C", "Feature D"],
-                        "description": "Another mocked worldview.",
-                        "content": "This is another detailed mock description. Everyone is a cat."
-                    }
-                ]
-            }
+            print(f"Worldview Augmentation Error: {e}")
+            raise e
 
-    def augment_character_text(self, name: str, tags: List[str], mood: str, style: str) -> dict:
+    def augment_character_text(self, name: str, tags: List[str], mood: str, style: str, project_context: str = "") -> dict:
         if not self.client:
-            print("AI Service (Mock): Augmenting Character")
-            return {
-                "augmented_tags": ["heroic", "brave", "detailed"],
-                "visual_description": f"A highly detailed character design for {name}, emphasizing {mood} mood.",
-                "personality_hint": "Determination and courage."
-            }
+             raise Exception("AI Service not initialized")
 
         prompt = f"""
         You are a character design expert for {style} webtoons.
-        Enhance the following character concept into a detailed visual description and tags.
+        Based on the initial concept and the project context, create 3 distinct character profile variations that fit the world.
         
-        Name: {name}
+        Project Context:
+        {project_context}
+        
+        Input Name: {name}
         Initial Tags: {', '.join(tags) if tags else 'None'}
         Mood: {mood}
         
+        For each option, provide:
+        - Unique Name (can be same or variation)
+        - Age (e.g. "Early 20s", "Ancient")
+        - Personality (Short summary)
+        - Features (Visual traits as list)
+        - Pros (Strengths/Advantages)
+        - Cons (Weaknesses/Flaws)
+        - Visual Description (Detailed prompt for image generation, ensuring it respects the Project Context/Worldview)
+        
         Return ONLY a JSON object:
         {{
-            "augmented_tags": ["tag1", "tag2", ...],
-            "visual_description": "Detailed visual description for image generation...",
-            "personality_hint": "Brief personality note"
+            "options": [
+                {{
+                    "name": "Name",
+                    "age": "Age",
+                    "personality": "...",
+                    "features": ["tag1", "tag2"],
+                    "pros": ["..."],
+                    "cons": ["..."],
+                    "visual_description": "...",
+                    "reason": "Why this fits"
+                }},
+                ...
+            ]
         }}
         """
         try:
@@ -263,12 +197,8 @@ class AIService:
             cleaned_text = self._clean_json_text(response.text)
             return json.loads(cleaned_text)
         except Exception as e:
-            print(f"Character Augment Error: {e}. Returning Mocks.")
-            return {
-                "augmented_tags": ["heroic", "brave", "detailed"],
-                "visual_description": f"A highly detailed character design for {name}, emphasizing {mood} mood.",
-                "personality_hint": "Determination and courage."
-            }
+            print(f"Character Augment Error: {e}")
+            raise e
 
     def generate_character_sheet(self, name: str, description: str, style: str) -> bytes:
 
@@ -332,10 +262,7 @@ class AIService:
 
     def generate_image(self, prompt: str, width: int = 1024, height: int = 1024, seed: int = None) -> bytes:
         if not self.client:
-            print(f"AI Service (Mock): Generating Image for '{prompt[:20]}...'")
-            # Return 1x1 transparent PNG or similar placeholder
-            # Base64 for 1x1 red pixel for visibility: iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKwMIQAAAABJRU5ErkJggg==
-            return base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKwMIQAAAABJRU5ErkJggg==")
+             raise Exception("AI Service not initialized")
 
 
         try:
@@ -373,8 +300,8 @@ class AIService:
             raise Exception("No image part found in response")
                   
         except Exception as e:
-            print(f"GenAI Generation Error: {e}. Returning Placeholder.")
-            return base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKwMIQAAAABJRU5ErkJggg==")
+            print(f"GenAI Generation Error: {e}")
+            raise e
 
     def modify_image(self, original_image_url: str, instruction: str) -> bytes:
 
@@ -488,26 +415,7 @@ class AIService:
 
     def generate_episode_ideas(self, project_title: str, worldview: str, recent_episodes: str) -> dict:
         if not self.client:
-            print("AI Service (Mock): Generating Episode Ideas")
-            return {
-                "options": [
-                    {
-                        "title": "Mock Episode 1: The Beginning",
-                        "summary": "Our hero realizes they are in a simulation.",
-                        "reason": "Classic trope twist."
-                    },
-                    {
-                        "title": "Mock Episode 2: The Glitch",
-                        "summary": "A strange cat appears where it shouldn't.",
-                        "reason": "Adds mystery."
-                    },
-                    {
-                        "title": "Mock Episode 3: System Reboot",
-                        "summary": "The world goes dark for 10 seconds.",
-                        "reason": "High stakes event."
-                    }
-                ]
-            }
+             raise Exception("AI Service not initialized")
              
         prompt = f"""
         You are a webtoon writer.
@@ -537,39 +445,12 @@ class AIService:
             cleaned_text = self._clean_json_text(response.text)
             return json.loads(cleaned_text)
         except Exception as e:
-            print(f"Episode Idea Gen Failed: {e}. Returning Mocks.")
-            return {
-                "options": [
-                    {
-                        "title": "Mock Episode 1: The Beginning",
-                        "summary": "Our hero realizes they are in a simulation.",
-                        "reason": "Classic trope twist."
-                    },
-                    {
-                        "title": "Mock Episode 2: The Glitch",
-                        "summary": "A strange cat appears where it shouldn't.",
-                        "reason": "Adds mystery."
-                    },
-                    {
-                        "title": "Mock Episode 3: System Reboot",
-                        "summary": "The world goes dark for 10 seconds.",
-                        "reason": "High stakes event."
-                    }
-                ]
-            }
+            print(f"Episode Idea Gen Failed: {e}")
+            raise e
 
     def generate_initial_cuts(self, episode_title: str, summary: str, style: str, num_cuts: int = 6) -> List[dict]:
         if not self.client:
-            print("AI Service (Mock): Generating Initial Cuts")
-            cuts = []
-            for i in range(1, num_cuts + 1):
-                cuts.append({
-                    "cut_order": i,
-                    "script": f"Mock visual description for cut {i}. Action happening here.",
-                    "dialogues": [{"speaker": "Hero", "text": f"Line for cut {i}"}],
-                    "panel_type": "Wide" if i % 2 == 0 else "Square"
-                })
-            return cuts
+             raise Exception("AI Service not initialized")
 
         prompt = f"""
         Plan a {num_cuts}-cut webtoon episode.
@@ -604,16 +485,8 @@ class AIService:
             cleaned_text = self._clean_json_text(response.text)
             return json.loads(cleaned_text).get("cuts", [])
         except Exception as e:
-            print(f"Cut Gen Failed: {e}. Returning Mocks.")
-            cuts = []
-            for i in range(1, num_cuts + 1):
-                cuts.append({
-                    "cut_order": i,
-                    "script": f"Mock visual description for cut {i}. Action happening here.",
-                    "dialogues": [{"speaker": "Hero", "text": f"Line for cut {i}"}],
-                    "panel_type": "Wide" if i % 2 == 0 else "Square"
-                })
-            return cuts
+            print(f"Cut Gen Failed: {e}")
+            raise e
 
 
 ai_service = AIService()

@@ -15,8 +15,11 @@ export default function CastingPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        if (!projectId) {
+            setLoading(false);
+            return;
+        }
         const fetchProject = async () => {
-            if (!projectId) return;
             try {
                 const res = await api.get(`/projects/${projectId}`);
                 // Use 'art_style' if available (custom), else style_preset

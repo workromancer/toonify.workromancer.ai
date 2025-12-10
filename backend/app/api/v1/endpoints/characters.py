@@ -128,7 +128,21 @@ def update_character(
     session.refresh(character)
     return character
 
-@router.post("/augment")
+
+class CharacterOption(BaseModel):
+    name: str
+    age: str
+    personality: str
+    features: List[str]
+    pros: List[str]
+    cons: List[str]
+    visual_description: str
+    reason: Optional[str] = None
+
+class CharacterAugmentResponse(BaseModel):
+    options: List[CharacterOption]
+
+@router.post("/augment", response_model=CharacterAugmentResponse)
 def augment_character(
     *,
     request: CharacterAugmentRequest,
@@ -136,17 +150,33 @@ def augment_character(
     current_user_id: str = Depends(deps.get_current_user_id),
 ):
     """
-    Augments character tags and description.
+    Augments character tags and description into 3 distinct options.
     """
     project = session.get(Project, request.project_id)
     if not project:
          raise HTTPException(status_code=404, detail="Project not found")
 
+    # Construct Context
+    wv_desc = ""
+    if project.worldview:
+        if isinstance(project.worldview, dict):
+            # Prefer 'content' or 'description'
+            wv_desc = project.worldview.get("content") or project.worldview.get("description") or ""
+        else:
+             wv_desc = str(project.worldview)
+
+    project_context = f"""
+    Title: {project.title}
+    Genre: {project.genre or 'Unknown'}
+    Worldview: {wv_desc}
+    """
+
     result = ai_service.augment_character_text(
         name=request.name,
         tags=request.tags,
         mood=request.mood,
-        style=project.style_preset
+        style=project.style_preset,
+        project_context=project_context
     )
     return result
 
