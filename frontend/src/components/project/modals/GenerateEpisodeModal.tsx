@@ -38,7 +38,8 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
     const handleSuggestIdeas = async () => {
         setLoadingIdeas(true);
         try {
-            const res = await api.post(`/projects/${projectId}/episodes/ideas`);
+            // New endpoint: /episodes/generate-options?project_id=...
+            const res = await api.post('/episodes/generate-options', null, { params: { project_id: projectId } });
             if (res.data.options) {
                 setIdeas(res.data.options);
                 setShowIdeas(true);
@@ -60,10 +61,10 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
         setLoading(true);
         try {
             // Use new endpoint that creates cuts
-            const response = await api.post(`/projects/${projectId}/episodes/create`, {
+            const response = await api.post('/episodes/generate-cuts', {
                 project_id: projectId,
-                title: formData.title,
-                summary: formData.story_summary,
+                episode_title: formData.title,
+                episode_summary: formData.story_summary,
                 num_cuts: formData.num_cuts
             });
 

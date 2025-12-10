@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, select, col
 
@@ -8,7 +8,23 @@ from pydantic import BaseModel
 from datetime import datetime
 from uuid import UUID
 
+from uuid import UUID
+import json
+from app.services.ai import ai_service
+from app.services.storage import storage
+
 router = APIRouter()
+
+class GenerateCutsRequest(BaseModel):
+    project_id: UUID
+    episode_title: str
+    episode_summary: str
+    style: Optional[str] = None
+    num_cuts: int = 6
+
+class GenerateImageRequest(BaseModel):
+    prompt_override: Optional[str] = None
+
 
 
 class EpisodeCreate(BaseModel):
@@ -94,6 +110,174 @@ def delete_episode(
     session.commit()
     from fastapi import Response
     return Response(status_code=204)
+
+@router.post("/generate-options")
+def generate_episode_options(
+    *,
+    project_id: UUID,
+    session: Session = Depends(deps.get_session),
+    current_user_id: str = Depends(deps.get_current_user_id),
+):
+    """
+    Generate 3 episode ideas based on project context.
+    """
+    project = session.get(Project, project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    # Fetch recent episodes for context
+    statement = select(Episode).where(Episode.project_id == project_id).order_by(Episode.episode_order.desc()).limit(3)
+    episodes = session.exec(statement).all()
+    # Reverse to chronological
+    episodes.reverse()
+    recent_summaries = "\n".join([f"{ep.title}: {ep.story_summary}" for ep in episodes])
+
+    worldview_str = json.dumps(project.worldview) if project.worldview else ""
+
+    result = ai_service.generate_episode_ideas(
+        project_title=project.title,
+        worldview=worldview_str,
+        recent_episodes=recent_summaries
+    )
+    return result
+
+@router.post("/generate-cuts")
+def generate_episode_cuts(
+    *,
+    request: GenerateCutsRequest,
+    session: Session = Depends(deps.get_session),
+    current_user_id: str = Depends(deps.get_current_user_id),
+):
+    """
+    Generate and save initial cuts (script, dialogue, panel type).
+    """
+    style = request.style
+    if not style:
+        project = session.get(Project, request.project_id)
+        style = project.style_preset if project else "Webtoon"
+
+    # 1. Create Episode
+    # Determine order: max order + 1
+    statement = select(Episode).where(Episode.project_id == request.project_id).order_by(Episode.episode_order.desc()).limit(1)
+    last_ep = session.exec(statement).first()
+    new_order = (last_ep.episode_order + 1) if last_ep else 1
+
+    episode = Episode(
+        title=request.episode_title,
+        story_summary=request.episode_summary,
+        project_id=request.project_id,
+        episode_order=new_order
+    )
+    session.add(episode)
+    session.commit()
+    session.refresh(episode)
+
+    # 2. Generate Cuts via AI
+    try:
+        cuts_data = ai_service.generate_initial_cuts(
+            episode_title=request.episode_title,
+            summary=request.episode_summary,
+            style=style,
+            num_cuts=request.num_cuts
+        )
+    except Exception as e:
+        # If AI fails, we might still want the episode? Or rollback?
+        # Let's keep episode but empty cuts.
+        print(f"AI Cut Gen Failed: {e}")
+        cuts_data = []
+
+    # 3. Save Cuts
+    created_cuts = []
+    for cut_item in cuts_data:
+        # cut_item has keys: cut_order, script, dialogues, panel_type
+        # mapping cut_item keys to StoryCut model
+        # dialogues is list of dict, compatible with JSON column
+        
+        story_cut = StoryCut(
+            episode_id=episode.id,
+            cut_order=cut_item.get("cut_order", 1),
+            script=cut_item.get("script", ""),
+            selected_layout=cut_item.get("panel_type", "Square"), # Mapping panel_type to layout?
+            aspect_ratio=cut_item.get("panel_type", "1:1"), # Simplified mapping
+            dialogues=cut_item.get("dialogues", []),
+            image_path=None
+        )
+        
+        # Refine aspect ratio based on panel type
+        ptype = cut_item.get("panel_type", "").lower()
+        if "wide" in ptype:
+            story_cut.aspect_ratio = "Wide"
+        elif "vertical" in ptype:
+            story_cut.aspect_ratio = "Vertical"
+        else:
+            story_cut.aspect_ratio = "Square"
+            
+        session.add(story_cut)
+        created_cuts.append(story_cut)
+        
+    session.commit()
+    
+    return {
+        "episode_id": episode.id,
+        "title": episode.title,
+        "cuts_count": len(created_cuts),
+        "cuts": created_cuts
+    }
+
+@router.post("/{episode_id}/cuts/{cut_id}/generate-image")
+def generate_cut_image(
+    *,
+    episode_id: UUID,
+    cut_id: UUID,
+    request: GenerateImageRequest,
+    session: Session = Depends(deps.get_session),
+    current_user_id: str = Depends(deps.get_current_user_id),
+):
+    """
+    Generate image for a specific cut.
+    """
+    cut = session.get(StoryCut, cut_id)
+    if not cut:
+        raise HTTPException(status_code=404, detail="Cut not found")
+        
+    episode = session.get(Episode, episode_id) # Just to verify hierarchy if needed
+    
+    project = session.get(Project, episode.project_id)
+    style = project.style_preset
+    
+    # Construct prompt
+    prompt = request.prompt_override
+    if not prompt:
+        dialogue_text = " ".join([d.get("text", "") for d in cut.dialogues])
+        prompt = f"""
+        Webtoon Panel, Style: {style}
+        Scene: {cut.script}
+        Dialogues (Context): {dialogue_text}
+        
+        Ensure the composition fits a {cut.aspect_ratio} panel.
+        """
+    
+    try:
+        # Determine dimensions based on Aspect Ratio
+        width, height = 1024, 1024
+        if cut.aspect_ratio == "Wide":
+            width, height = 1536, 1024 # 3:2
+        elif cut.aspect_ratio == "Vertical":
+            width, height = 1024, 1536 # 2:3
+            
+        img_bytes = ai_service.generate_image(prompt, width=width, height=height)
+        
+        url = storage.upload_image(img_bytes)
+        cut.image_path = url
+        session.add(cut)
+        session.commit()
+        session.refresh(cut)
+        
+        return cut
+    except Exception as e:
+        print(f"Image Gen Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.post("/{episode_id}/export")
 def export_episode(

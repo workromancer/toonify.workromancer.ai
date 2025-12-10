@@ -441,7 +441,11 @@ export default function StoryboardView({ projectId, onEditCut }: StoryboardViewP
                 isOpen={isMobileViewerOpen}
                 onClose={() => setIsMobileViewerOpen(false)}
                 title="Episode Preview"
+                episodeId={activeEpisodeId || ''}
                 cuts={cuts}
+                onUpdateCut={(cutId, newPath) => {
+                    setCuts(prev => prev.map(c => c.id === cutId ? { ...c, image_path: newPath } : c));
+                }}
             />
         </div>
     );

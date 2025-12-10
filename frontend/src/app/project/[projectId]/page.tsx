@@ -22,6 +22,8 @@ export default function ProjectPage() {
     const [episodes, setEpisodes] = useState<any[]>([]); // Define Episode type properly if possible
     const [loading, setLoading] = useState(true);
 
+    const [error, setError] = useState<string | null>(null);
+
     useEffect(() => {
         const fetchData = async () => {
             if (!projectId) return;
@@ -49,8 +51,9 @@ export default function ProjectPage() {
                     setEpisodes([]);
                 }
 
-            } catch (err) {
+            } catch (err: any) {
                 console.error("Failed to fetch project data", err);
+                setError(err.message || "Failed to load project");
             } finally {
                 setLoading(false);
             }
@@ -77,6 +80,19 @@ export default function ProjectPage() {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-background-light dark:bg-background-dark text-gray-900 dark:text-white">
                 Loading...
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex h-screen w-full flex-col items-center justify-center bg-background-light dark:bg-background-dark text-red-500">
+                <h1 className="text-2xl font-bold mb-2">Error Loading Project</h1>
+                <p>{error}</p>
+                <div className="mt-4 text-xs text-gray-500 font-mono text-left max-w-lg overflow-auto p-4 bg-gray-100 rounded">
+                    DEBUG INFO: Project ID {projectId} <br />
+                    Check console for details.
+                </div>
             </div>
         );
     }

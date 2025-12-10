@@ -11,6 +11,7 @@ from uuid import UUID
 from fastapi import BackgroundTasks
 from app.services.storage import storage
 from app.api.deps import engine
+from app.services.ai import ai_service
 
 router = APIRouter()
 
@@ -86,6 +87,10 @@ def create_character(
         profile_image_url=None,
         description=None
     )
+    # Generate Embedding
+    combined_text = f"{character_in.name} {character_in.default_mood} {' '.join(character_in.appearance_tags)}"
+    character.embedding = ai_service.get_embedding(combined_text)
+
     session.add(character)
     session.commit()
     session.refresh(character)
@@ -107,8 +112,16 @@ def update_character(
         raise HTTPException(status_code=404, detail="Character not found")
         
     character_data = character_in.dict(exclude_unset=True)
+    should_update_embedding = any(k in character_data for k in ["name", "appearance_tags", "default_mood", "description"])
+    
     for key, value in character_data.items():
         setattr(character, key, value)
+
+    if should_update_embedding:
+        tags = character.appearance_tags or []
+        desc = character.description or ""
+        combined_text = f"{character.name} {character.default_mood} {' '.join(tags)} {desc}"
+        character.embedding = ai_service.get_embedding(combined_text)
         
     session.add(character)
     session.commit()

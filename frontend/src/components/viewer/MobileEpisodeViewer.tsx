@@ -11,18 +11,40 @@ interface StoryCut {
     dialogues: any[];
 }
 
+import api from '@/lib/api';
+import { Loader2, Wand2 } from 'lucide-react';
+import { useState } from 'react';
+
 interface MobileEpisodeViewerProps {
     isOpen: boolean;
     onClose: () => void;
     title: string;
+    episodeId: string;
     cuts: StoryCut[];
+    onUpdateCut?: (cutId: string, newPath: string) => void;
 }
 
-export default function MobileEpisodeViewer({ isOpen, onClose, title, cuts }: MobileEpisodeViewerProps) {
+export default function MobileEpisodeViewer({ isOpen, onClose, title, episodeId, cuts, onUpdateCut }: MobileEpisodeViewerProps) {
     if (!isOpen) return null;
 
     // Sort cuts by order
     const sortedCuts = [...cuts].sort((a, b) => a.cut_order - b.cut_order);
+
+    const [generatingCuts, setGeneratingCuts] = useState<Record<string, boolean>>({});
+
+    const handleGenerateImage = async (cutId: string) => {
+        setGeneratingCuts(prev => ({ ...prev, [cutId]: true }));
+        try {
+            const res = await api.post(`/episodes/${episodeId}/cuts/${cutId}/generate-image`);
+            if (res.data && onUpdateCut) {
+                onUpdateCut(cutId, res.data.image_path);
+            }
+        } catch (e) {
+            console.error("Failed to generate image", e);
+        } finally {
+            setGeneratingCuts(prev => ({ ...prev, [cutId]: false }));
+        }
+    };
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 animate-in fade-in duration-300">
@@ -70,9 +92,22 @@ export default function MobileEpisodeViewer({ isOpen, onClose, title, cuts }: Mo
                                         loading="lazy"
                                     />
                                 ) : (
-                                    <div className="w-full aspect-square bg-gray-200 flex flex-col items-center justify-center p-4 text-center">
+                                    <div className="w-full aspect-square bg-gray-200 flex flex-col items-center justify-center p-4 text-center group">
                                         <p className="font-bold text-gray-400 text-lg">Cut #{cut.cut_order}</p>
                                         <p className="text-xs text-gray-500 mt-2 max-w-[80%]">{cut.script}</p>
+
+                                        <Button
+                                            size="sm"
+                                            className="mt-4 gap-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleGenerateImage(cut.id);
+                                            }}
+                                            disabled={generatingCuts[cut.id]}
+                                        >
+                                            {generatingCuts[cut.id] ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wand2 className="w-3 h-3" />}
+                                            Generate Image
+                                        </Button>
                                     </div>
                                 )}
 
