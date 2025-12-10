@@ -4,11 +4,12 @@ import { useEffect, useState } from 'react';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Plus, Image as ImageIcon, MessageSquare, Trash2, Clapperboard, Loader2, Wand2, Sparkles } from 'lucide-react';
+import { Plus, Image as ImageIcon, MessageSquare, Trash2, Clapperboard, Loader2, Wand2, Sparkles, Smartphone } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import DirectorCutModal from './DirectorCutModal';
 import { useToast } from '@/hooks/use-toast';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import MobileEpisodeViewer from '@/components/viewer/MobileEpisodeViewer';
 
 interface StoryCut {
     id: string;
@@ -16,6 +17,7 @@ interface StoryCut {
     script: string;
     aspect_ratio: string;
     image_path?: string;
+    dialogues: any[];
 }
 
 interface DirectorOption {
@@ -44,6 +46,22 @@ export default function StoryboardView({ projectId, onEditCut }: StoryboardViewP
     const [isSuggesting, setIsSuggesting] = useState(false);
     const [isRendering, setIsRendering] = useState<string | null>(null); // storing option ID being rendered
     const [modifyingCut, setModifyingCut] = useState<StoryCut | null>(null); // For Director's Cut modal
+    const [isMobileViewerOpen, setIsMobileViewerOpen] = useState(false);
+
+    const handleGenerateAll = async () => {
+        const cutsToGenerate = cuts.filter(c => !c.image_path && !generatingIds.has(c.id));
+        if (cutsToGenerate.length === 0) {
+            toast({ title: "No cuts to generate", description: "All cuts already have images or are processing." });
+            return;
+        }
+
+        toast({ title: "Starting Batch Generation", description: `Generating images for ${cutsToGenerate.length} cuts...` });
+
+        // Trigger all (in parallel or sequence? Parallel is fine for async backend)
+        for (const cut of cutsToGenerate) {
+            handleGenerateImage(cut.id);
+        }
+    };
 
     const fetchCuts = async () => {
         if (!activeEpisodeId) return;
@@ -209,7 +227,18 @@ export default function StoryboardView({ projectId, onEditCut }: StoryboardViewP
                 <h2 className="font-semibold text-white flex items-center gap-2">
                     <Clapperboard size={18} className="text-purple-400" />
                     Storyboard
+                    Storyboard
                 </h2>
+                <div className="flex gap-2">
+                    {cuts.some(c => !c.image_path) && (
+                        <Button variant="outline" size="sm" onClick={handleGenerateAll} className="h-8 text-xs border-purple-500/50 text-purple-400 hover:bg-purple-500/10">
+                            <Sparkles size={14} className="mr-1" /> Generate All
+                        </Button>
+                    )}
+                    <Button variant="outline" size="sm" onClick={() => setIsMobileViewerOpen(true)} className="h-8 text-xs bg-gray-800 border-gray-600 hover:bg-gray-700">
+                        <Smartphone size={14} className="mr-1" /> Preview
+                    </Button>
+                </div>
             </div>
 
             {/* Main Content Area */}
@@ -406,6 +435,14 @@ export default function StoryboardView({ projectId, onEditCut }: StoryboardViewP
                     )
                 )}
             </div>
+
+            {/* Mobile Viewer */}
+            <MobileEpisodeViewer
+                isOpen={isMobileViewerOpen}
+                onClose={() => setIsMobileViewerOpen(false)}
+                title="Episode Preview"
+                cuts={cuts}
+            />
         </div>
     );
 }

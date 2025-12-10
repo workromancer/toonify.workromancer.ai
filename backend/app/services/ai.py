@@ -51,9 +51,14 @@ class AIService:
         return text.strip()
 
     def recommend_style(self, description: str) -> dict:
-        """
-        Recommends 3 distinct art styles based on the project description/worldview.
-        """
+        if not self.client:
+             print("Mocking recommend_style")
+             return {"options": [
+                 {"id": "style_1", "label": "Mock Webtoon", "description": "A mock style.", "sample_image_url": "https://placeholder.com/1.png"},
+                 {"id": "style_2", "label": "Mock Noir", "description": "Dark mock style.", "sample_image_url": "https://placeholder.com/2.png"},
+                 {"id": "style_3", "label": "Mock Watercolor", "description": "Soft mock style.", "sample_image_url": "https://placeholder.com/3.png"}
+             ]}
+        # ... real implementation ...
         prompt = f"""
         You are an expert art director for webtoons.
         Based on the following story or worldview description, recommend 3 distinct art styles that would suit the project.
@@ -87,15 +92,15 @@ class AIService:
             
         except Exception as e:
             print(f"Style Director Error: {e}")
-            raise e # Propagate error to let UI know
+            raise e
 
     def augment_worldview(self, description: str, title: str = None, subtitle: str = None, genres: List[str] = None) -> dict:
-        """
-        Augments and refines the worldview description using AI, providing 3 options.
-        """
         if not self.client:
-             raise Exception("AI Client not initialized. Check API Key.")
-
+             print("Mocking augment_worldview")
+             return {"options": [
+                 {"id": "opt1", "title": "Mock World", "tone": "Mock", "key_features": ["Mock Feature"], "description": "A mock world.", "content": description or "Mock content"}
+             ]}
+             
         context_str = ""
         if title:
             context_str += f"\nProject Title: {title}"
@@ -146,9 +151,12 @@ class AIService:
             raise e
 
     def augment_character_text(self, name: str, tags: List[str], mood: str, style: str) -> dict:
-        """
-        Augments character description/tags details.
-        """
+        if not self.client:
+             return {
+                 "augmented_tags": ["mock", "hero"],
+                 "visual_description": f"A mock visual description of {name} in {style} style.",
+                 "personality_hint": "Brave and mock."
+             }
         prompt = f"""
         You are a character design expert for {style} webtoons.
         Enhance the following character concept into a detailed visual description and tags.
@@ -179,9 +187,10 @@ class AIService:
             raise e
 
     def generate_character_sheet(self, name: str, description: str, style: str) -> bytes:
-        """
-        Generates a character Reference Sheet (Left: Face, Right: Full Body Front/Back).
-        """
+        if not self.client:
+            # 1x1 Red Pixel
+            return b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDAT\x08\xd7c\xf8\xcf\xc0\x00\x00\x03\x01\x01\x00\x18\xdd\x8d\xb0\x00\x00\x00\x00IEND\xaeB`\x82'
+
         prompt = f"""
         Create a Character Reference Sheet for a {style} webtoon character named {name}.
         
@@ -199,9 +208,9 @@ class AIService:
         return self.generate_image(prompt, width=1536, height=1024) 
 
     def generate_direction_options(self, script: str, character_context: str = "") -> dict:
-        """
-        Generates 3 visual direction options based on the user script.
-        """
+        if not self.client:
+            return {"options": []}
+
         prompt = f"""
         You are a professional webtoon director. 
         Analyze the following script and suggest 3 distinct visual direction options (camera angle, composition, mood).
@@ -241,11 +250,8 @@ class AIService:
             raise e
 
     def generate_image(self, prompt: str, width: int = 1024, height: int = 1024, seed: int = None) -> bytes:
-        """
-        Generates an image using Google GenAI SDK (Gemini 3).
-        """
         if not self.client:
-             raise Exception("AI Client not initialized.")
+             return b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDAT\x08\xd7c\xf8\xcf\xc0\x00\x00\x03\x01\x01\x00\x18\xdd\x8d\xb0\x00\x00\x00\x00IEND\xaeB`\x82'
 
         try:
             # Aspect Ratio logic
@@ -286,10 +292,9 @@ class AIService:
             raise e
 
     def modify_image(self, original_image_url: str, instruction: str) -> bytes:
-        """
-        Modifies an existing image based on the instruction.
-        Using Gemini 3 multimodal generation (Image + Text -> Image).
-        """
+        if not self.client:
+            return b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDAT\x08\xd7c\xf8\xcf\xc0\x00\x00\x03\x01\x01\x00\x18\xdd\x8d\xb0\x00\x00\x00\x00IEND\xaeB`\x82'
+
         print(f"Modifying image with instruction: {instruction}")
         
         try:
@@ -353,9 +358,9 @@ class AIService:
             raise e
 
     def get_embedding(self, text: str) -> List[float]:
-        """
-        Generates text embedding for RAG.
-        """
+        if not self.client:
+            return [0.0] * 768
+
         try:
              response = self.client.models.embed_content(
                  model="gemini-embedding-001",
@@ -375,9 +380,9 @@ class AIService:
         return self.generate_character_sheet(name, description, style)
 
     def generate_project_cover_image(self, title: str, genre: str, worldview: str, style: str) -> bytes:
-        """
-        Generates a cover image for the project based on its details.
-        """
+        if not self.client:
+             return b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDAT\x08\xd7c\xf8\xcf\xc0\x00\x00\x03\x01\x01\x00\x18\xdd\x8d\xb0\x00\x00\x00\x00IEND\xaeB`\x82'
+
         prompt = f"""
         Create a high-quality webtoon cover illustration.
         
@@ -400,9 +405,11 @@ class AIService:
         return self.generate_image(prompt, width=1920, height=1080) 
 
     def generate_episode_ideas(self, project_title: str, worldview: str, recent_episodes: str) -> dict:
-        """
-        Generates 3 episode ideas based on worldview and recent events.
-        """
+        if not self.client:
+             return {"options": [
+                 {"title": "Mock Idea 1", "summary": "A mock episode summary.", "reason": "Mock reason."}
+             ]}
+             
         prompt = f"""
         You are a webtoon writer.
         Project: {project_title}
@@ -435,9 +442,12 @@ class AIService:
             raise e
 
     def generate_initial_cuts(self, episode_title: str, summary: str, style: str, num_cuts: int = 6) -> List[dict]:
-        """
-        Generates initial text plan for cuts.
-        """
+        if not self.client:
+             return [
+                 {"cut_order": i+1, "script": f"Mock Cut {i+1}", "dialogues": [], "panel_type": "Square"} 
+                 for i in range(num_cuts)
+             ]
+
         prompt = f"""
         Plan a {num_cuts}-cut webtoon episode.
         Title: {episode_title}

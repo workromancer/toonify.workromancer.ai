@@ -69,6 +69,8 @@ export default function ProjectPage() {
 
     const handleEpisodeAdd = (newEpisode: any) => {
         setEpisodes([...episodes, newEpisode]);
+        // Redirect to editor
+        window.location.href = `/project/${projectId}/editor?episode_id=${newEpisode.id}`;
     };
 
     if (loading) {

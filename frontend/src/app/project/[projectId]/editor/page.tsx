@@ -1,10 +1,10 @@
 'use client';
 
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import EpisodeList from '@/components/editor/EpisodeList';
 import CharacterList from '@/components/editor/CharacterList';
 
@@ -18,12 +18,21 @@ import { useToast } from '@/hooks/use-toast';
 
 export default function EditorPage() {
     const params = useParams();
+    const searchParams = useSearchParams();
     const projectId = params?.projectId as string;
     const [activeSegment, setActiveSegment] = useState('storyboard'); // canvas, script, storyboard
     const [sidebarTab, setSidebarTab] = useState<'episodes' | 'characters'>('episodes');
-    const { activeEpisodeId } = useCanvasStore();
+    const { activeEpisodeId, setActiveEpisode } = useCanvasStore();
     const [exporting, setExporting] = useState(false);
     const { toast } = useToast();
+
+    // Load episode from query param if present
+    useEffect(() => {
+        const epId = searchParams?.get('episode_id');
+        if (epId) {
+            setActiveEpisode(epId);
+        }
+    }, [searchParams, setActiveEpisode]);
 
     const handleExport = async () => {
         if (!activeEpisodeId) {
