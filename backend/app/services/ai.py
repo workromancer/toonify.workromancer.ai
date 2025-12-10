@@ -14,8 +14,10 @@ class AIService:
         # Initialize Google GenAI Client
         try:
             api_key = settings.GEMINI_API_KEY or os.environ.get("GOOGLE_CLOUD_API_KEY")
-            project = os.environ.get("GOOGLE_CLOUD_PROJECT") or "webtoon-factory" # Default or from env
-            location = settings.GOOGLE_CLOUD_LOCATION or "us-central1"
+            project = settings.GOOGLE_CLOUD_PROJECT or os.environ.get("GOOGLE_CLOUD_PROJECT")
+            location = settings.GOOGLE_CLOUD_LOCATION
+            
+            print(f"AI Service: Initializing for project '{project}' in '{location}'")
             
             if not api_key:
                 print(f"Info: No API Key found. Attempting to use Application Default Credentials (ADC) for project '{project}'.")

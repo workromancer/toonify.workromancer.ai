@@ -16,6 +16,7 @@ def migrate():
             conn.execute(text("ALTER TABLE project ADD COLUMN IF NOT EXISTS subtitle VARCHAR;"))
             conn.execute(text("ALTER TABLE project ADD COLUMN IF NOT EXISTS genre VARCHAR;"))
             conn.execute(text("ALTER TABLE project ADD COLUMN IF NOT EXISTS worldview TEXT;"))
+            conn.execute(text("ALTER TABLE project ADD COLUMN IF NOT EXISTS art_style VARCHAR;"))
             
             # Also for project template if needed
             print("Ensuring projecttemplate table exists (handled by main.py startup)...")

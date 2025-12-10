@@ -3,9 +3,9 @@ from typing import Any, Union
 from jose import jwt
 from passlib.context import CryptContext
 
-# Configuration (Move to config.py ideally, but hardcoding for MVP speed if needed, but let's be good)
-# SECRET_KEY should be in settings, but default for dev
-SECRET_KEY = "CHANGE_THIS_TO_A_STRONG_SECRET" 
+from app.core.config import settings
+
+SECRET_KEY = settings.SECRET_KEY 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
