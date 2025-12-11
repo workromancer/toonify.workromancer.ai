@@ -1,4 +1,4 @@
-import { X, Smartphone } from 'lucide-react';
+import { X, Smartphone, Check, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import React from 'react';
@@ -11,26 +11,17 @@ interface StoryCut {
     dialogues: any[];
 }
 
-import api from '@/lib/api';
-import { Loader2, Wand2 } from 'lucide-react';
-import { useState } from 'react';
-
-interface MobileEpisodeViewerProps {
-    isOpen: boolean;
-    onClose: () => void;
-    title: string;
-    episodeId: string;
-    cuts: StoryCut[];
-    onUpdateCut?: (cutId: string, newPath: string) => void;
+mode ?: 'view' | 'review';
 }
 
-export default function MobileEpisodeViewer({ isOpen, onClose, title, episodeId, cuts, onUpdateCut }: MobileEpisodeViewerProps) {
+export default function MobileEpisodeViewer({ isOpen, onClose, title, episodeId, cuts, onUpdateCut, mode = 'view' }: MobileEpisodeViewerProps) {
     if (!isOpen) return null;
 
     // Sort cuts by order
     const sortedCuts = [...cuts].sort((a, b) => a.cut_order - b.cut_order);
 
     const [generatingCuts, setGeneratingCuts] = useState<Record<string, boolean>>({});
+    const [reviewStatus, setReviewStatus] = useState<Record<string, 'approved' | 'rejected' | null>>({});
 
     const handleGenerateImage = async (cutId: string) => {
         setGeneratingCuts(prev => ({ ...prev, [cutId]: true }));
@@ -44,6 +35,13 @@ export default function MobileEpisodeViewer({ isOpen, onClose, title, episodeId,
         } finally {
             setGeneratingCuts(prev => ({ ...prev, [cutId]: false }));
         }
+    };
+
+    const toggleReviewStatus = (cutId: string, status: 'approved' | 'rejected') => {
+        setReviewStatus(prev => ({
+            ...prev,
+            [cutId]: prev[cutId] === status ? null : status
+        }));
     };
 
     return (
@@ -119,6 +117,45 @@ export default function MobileEpisodeViewer({ isOpen, onClose, title, episodeId,
                                              For now let's assume image has text or valid enough.
                                          */}
                                     </div>
+                                )}
+
+                                {mode === 'review' && (
+                                    <div className="absolute top-2 right-2 flex gap-2 z-10">
+                                        <Button
+                                            size="icon"
+                                            className={cn(
+                                                "h-8 w-8 rounded-full shadow-lg transition-all",
+                                                reviewStatus[cut.id] === 'approved'
+                                                    ? "bg-green-500 hover:bg-green-600 text-white"
+                                                    : "bg-white/80 hover:bg-white text-gray-400"
+                                            )}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                toggleReviewStatus(cut.id, 'approved');
+                                            }}
+                                        >
+                                            <Check size={16} />
+                                        </Button>
+                                        <Button
+                                            size="icon"
+                                            className={cn(
+                                                "h-8 w-8 rounded-full shadow-lg transition-all",
+                                                reviewStatus[cut.id] === 'rejected'
+                                                    ? "bg-red-500 hover:bg-red-600 text-white"
+                                                    : "bg-white/80 hover:bg-white text-gray-400"
+                                            )}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                toggleReviewStatus(cut.id, 'rejected');
+                                            }}
+                                        >
+                                            <XCircle size={16} />
+                                        </Button>
+                                    </div>
+                                )}
+
+                                {mode === 'review' && reviewStatus[cut.id] === 'rejected' && (
+                                    <div className="absolute inset-0 bg-red-500/20 pointer-events-none border-2 border-red-500" />
                                 )}
                             </div>
                         ))}

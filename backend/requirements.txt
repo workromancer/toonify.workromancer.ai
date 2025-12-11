@@ -5,3 +5,10 @@ asyncpg
 pydantic-settings
 python-multipart
 google-genai
+python-jose[cryptography]
+passlib[bcrypt]
+argon2-cffi
+psycopg2-binary
+minio
+requests
+pydantic[email]

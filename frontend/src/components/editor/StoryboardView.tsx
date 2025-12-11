@@ -236,7 +236,7 @@ export default function StoryboardView({ projectId, onEditCut }: StoryboardViewP
                         </Button>
                     )}
                     <Button variant="outline" size="sm" onClick={() => setIsMobileViewerOpen(true)} className="h-8 text-xs bg-gray-800 border-gray-600 hover:bg-gray-700">
-                        <Smartphone size={14} className="mr-1" /> Preview
+                        <Smartphone size={14} className="mr-1" /> Review
                     </Button>
                 </div>
             </div>
@@ -446,6 +446,7 @@ export default function StoryboardView({ projectId, onEditCut }: StoryboardViewP
                 onUpdateCut={(cutId, newPath) => {
                     setCuts(prev => prev.map(c => c.id === cutId ? { ...c, image_path: newPath } : c));
                 }}
+                mode={isMobileViewerOpen ? 'review' : 'view'} // Defaulting to review mode for now as requested
             />
         </div>
     );

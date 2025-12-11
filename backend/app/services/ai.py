@@ -216,8 +216,8 @@ class AIService:
         - Background: Neutral, simple (white or grey) to focus on the design.
         - Style: {style} (High quality, professional concept art).
         """
-        # Using a landscape-ish ratio to fit both aspects comfortably
-        return self.generate_image(prompt, width=1536, height=1024) 
+        # Using 16:9 ratio for guaranteed support
+        return self.generate_image(prompt, width=1920, height=1080) 
 
     def generate_direction_options(self, script: str, character_context: str = "") -> dict:
 

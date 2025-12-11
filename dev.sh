@@ -5,6 +5,26 @@ GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+# Parse Arguments
+LOG_LEVEL="info"
+DEBUG_MODE=false
+
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        -d|--debug) 
+            DEBUG_MODE=true
+            LOG_LEVEL="debug" 
+            ;;
+        *) echo "Unknown parameter passed: $1"; exit 1 ;;
+    esac
+    shift
+done
+
+if [ "$DEBUG_MODE" = true ]; then
+    echo -e "${BLUE}Debug mode enabled. Log level set to debug.${NC}"
+    export DEBUG=true
+fi
+
 # Function to kill process on port
 kill_port() {
     local port=$1
@@ -71,7 +91,7 @@ else
     echo "WARNING: gcloud credentials not found at $GCLOUD_CRED_PATH"
 fi
 
-./venv/bin/uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 &
+./venv/bin/uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 --log-level $LOG_LEVEL &
 BACKEND_PID=$!
 echo "Backend started (PID: $BACKEND_PID)"
 

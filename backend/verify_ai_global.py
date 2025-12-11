@@ -1,7 +1,7 @@
 from google import genai
 import os
 
-PROJECT = "toonify-develop697726"
+PROJECT = "toonify-develop"
 LOCATION = "global" # Testing User's preferred location
 
 print(f"Testing GenAI client with Project: {PROJECT}, Location: {LOCATION}")

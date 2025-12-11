@@ -25,7 +25,13 @@ def get_current_user_id(
             token, security.SECRET_KEY, algorithms=[security.ALGORITHM]
         )
         token_data = payload.get("sub")
-    except (JWTError, ValidationError):
+    except (JWTError, ValidationError) as e:
+        if settings.DEBUG:
+            print(f"JWT Validation Error: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Could not validate credentials: {e}",
+            )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Could not validate credentials",

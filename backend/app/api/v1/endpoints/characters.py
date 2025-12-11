@@ -126,6 +126,22 @@ def update_character(
     session.add(character)
     session.commit()
     session.refresh(character)
+    session.refresh(character)
+    return character
+
+@router.get("/{character_id}", response_model=CharacterOut)
+def get_character(
+    *,
+    session: Session = Depends(deps.get_session),
+    character_id: UUID,
+    current_user_id: str = Depends(deps.get_current_user_id),
+) -> Any:
+    """
+    Get a specific character by ID.
+    """
+    character = session.get(Character, character_id)
+    if not character:
+        raise HTTPException(status_code=404, detail="Character not found")
     return character
 
 

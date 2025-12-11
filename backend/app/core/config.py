@@ -5,6 +5,7 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Toonify"
     API_V1_STR: str = "/api/v1"
+    DEBUG: bool = False
     
     # CORS
     BACKEND_CORS_ORIGINS: Union[List[str], str] = ["http://localhost:3000", "http://localhost:8000"]
@@ -44,7 +45,7 @@ class Settings(BaseSettings):
 
     # AI
     GEMINI_API_KEY: str = ""
-    GOOGLE_CLOUD_PROJECT: str = "toonify-workromancer" # Default or env
+    GOOGLE_CLOUD_PROJECT: str = "toonify-develop" # Default or env
     GOOGLE_CLOUD_LOCATION: str = "global"
 
 

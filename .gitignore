@@ -1,14 +1,15 @@
 # Python
-__pycache__/
-*.py[cod]
-*$py.class
-venv/
-.env
-.venv
-env/
-dist/
-build/
-*.egg-info/
+**/__pycache__/
+**/*.py[cod]
+**/*$py.class
+**/venv/
+**/.env
+**/.venv
+**/env/
+**/dist/
+**/build/
+**/*.egg-info/
+**/application_default_credentials.json
 
 # Node
 node_modules/
@@ -25,5 +26,3 @@ build/
 # Logs
 *.log
 **/*.log
-
-backend/application_default_credentials.json
