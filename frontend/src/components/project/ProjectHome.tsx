@@ -76,8 +76,11 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
 
     return (
         <DashboardLayout>
-            <div className="flex h-full items-start">
-                <div className="flex-1 flex flex-col p-6 md:p-8 min-h-0">
+            <div className="flex h-full items-start relative overflow-hidden">
+                {/* Ambient Background for Project Home */}
+                <div className="absolute top-[-200px] left-[-200px] w-[500px] h-[500px] bg-primary/10 blur-[120px] rounded-full pointer-events-none mix-blend-screen z-0" />
+
+                <div className="flex-1 flex flex-col p-6 md:p-8 min-h-0 relative z-10">
                     {/* Page Header matching Dashboard */}
                     <div className="flex flex-col gap-6 mb-8">
                         {/* Breadcrumb / Top Line */}
@@ -244,7 +247,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                 </div>
 
                 {/* Right Sidebar - Sticky within the flex container */}
-                <div className="hidden xl:block w-80 shrink-0 sticky top-0 h-[calc(100vh)] overflow-y-auto border-l border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-background-dark/50 p-4">
+                <div className="hidden xl:block w-80 shrink-0 sticky top-0 h-[calc(100vh)] overflow-y-auto border-l border-white/10 bg-[#13111C]/80 backdrop-blur-xl p-4 z-20">
                     <ProjectRightSidebar projectId={project.id} episodes={episodes} />
                 </div>
             </div>
