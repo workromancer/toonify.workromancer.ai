@@ -9,34 +9,42 @@ import { useCanvasStore } from '@/store/useCanvasStore';
 import api from '@/lib/api';
 
 export default function InspectorPanel() {
-    const { selectedId, elements, updateSelectedElement, activeCharacter, activeCutId } = useCanvasStore();
+    const { selectedId, elements, updateSelectedElement, activeCharacter, activeCutId, activeEpisodeId } = useCanvasStore(); // Added activeEpisodeId
     const selectedElement = elements.find(el => el.id === selectedId);
     const [prompt, setPrompt] = useState('');
     const [generating, setGenerating] = useState(false);
 
     const handleGenerate = async () => {
-        if (!selectedElement || !prompt) return;
+        if (!selectedElement) return;
 
         try {
             setGenerating(true);
-            const res = await api.post('/ai/generate', {
-                prompt,
-                width: selectedElement.width,
-                height: selectedElement.height,
-                style_preset: "anime_webtoon"
-            });
+            let imageUrl = "";
 
-            const imageUrl = res.data.image_url;
-            updateSelectedElement({ content: imageUrl, prompt });
-
-            // If working on a cut, update the cut's image as well!
-            if (activeCutId) {
-                await api.put(`/cuts/${activeCutId}`, {
-                    image_path: imageUrl
+            if (activeEpisodeId && activeCutId) {
+                // Use Cut-specific generation
+                const res = await api.post(`/episodes/${activeEpisodeId}/cuts/${activeCutId}/generate-image`, {
+                    prompt_override: prompt || undefined
                 });
+                // Res.data is the Cut object, which should have image_path
+                imageUrl = res.data.image_path;
+            } else {
+                // Fallback / Standalone generation
+                const res = await api.post('/ai/generate', {
+                    prompt,
+                    width: selectedElement.width,
+                    height: selectedElement.height,
+                    style_preset: "anime_webtoon"
+                });
+                imageUrl = res.data.image_url;
             }
+
+            if (imageUrl) {
+                updateSelectedElement({ content: imageUrl, prompt });
+            }
+
         } catch (err) {
-            console.error(err);
+            console.error("Generation failed", err);
         } finally {
             setGenerating(false);
         }
@@ -143,7 +151,7 @@ export default function InspectorPanel() {
                         data-testid="ai-generate-button"
                         className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90"
                         onClick={handleGenerate}
-                        disabled={generating || !prompt}
+                        disabled={generating || (!prompt && !activeCutId)}
                     >
                         {generating ? (
                             'Generating...'

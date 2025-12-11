@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Plus, Trash2 } from 'lucide-react';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import EpisodeGenerationModal from './EpisodeGenerationModal';
+import { Sparkles } from 'lucide-react';
 
 
 interface Episode {
@@ -71,6 +73,13 @@ export default function EpisodeList() {
         }
     };
 
+    const [genModalOpen, setGenModalOpen] = useState(false);
+
+    const handleEpisodeCreated = async (newItemId: string) => {
+        await fetchEpisodes();
+        setActiveEpisode(newItemId);
+    };
+
     useEffect(() => {
         fetchEpisodes();
     }, [projectId]);
@@ -83,7 +92,17 @@ export default function EpisodeList() {
                 {loading ? (
                     <div className="text-gray-500 text-sm">Loading...</div>
                 ) : episodes.length === 0 ? (
-                    <div className="text-gray-500 text-sm italic">No episodes yet.</div>
+                    <div className="text-center py-8">
+                        <div className="text-gray-500 text-sm italic mb-4">No episodes yet.</div>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="bg-gray-800 border-gray-700 text-purple-400 hover:text-purple-300 hover:bg-gray-700 hover:border-purple-500"
+                            onClick={() => setGenModalOpen(true)}
+                        >
+                            <Sparkles size={14} className="mr-2" /> Auto-Generate
+                        </Button>
+                    </div>
                 ) : (
                     episodes.map((ep) => (
                         <div
@@ -122,7 +141,15 @@ export default function EpisodeList() {
                 )}
             </div>
 
-            <div className="p-4 border-t border-gray-700">
+            <div className="p-4 border-t border-gray-700 space-y-2">
+                <Button
+                    variant="default"
+                    size="sm"
+                    className="w-full bg-purple-900/50 hover:bg-purple-900 text-purple-200 border border-purple-800"
+                    onClick={() => setGenModalOpen(true)}
+                >
+                    <Sparkles size={16} className="mr-2" /> Generate with AI
+                </Button>
                 <Button
                     variant="ghost"
                     size="sm"
@@ -136,9 +163,16 @@ export default function EpisodeList() {
                     ) : (
                         <Plus size={16} className="mr-2" />
                     )}
-                    {creating ? 'Creating...' : 'Add Episode'}
+                    {creating ? 'Creating...' : 'Empty Episode'}
                 </Button>
             </div>
-        </div >
+
+            <EpisodeGenerationModal
+                isOpen={genModalOpen}
+                onClose={() => setGenModalOpen(false)}
+                projectId={projectId}
+                onEpisodeCreated={handleEpisodeCreated}
+            />
+        </div>
     );
 }

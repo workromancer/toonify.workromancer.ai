@@ -3,21 +3,21 @@
 Based on the analysis of `docs/new_requirments.md` and the current codebase, the following items are currently unimplemented or require further work.
 
 ## 1. Character Casting
-- [ ] **RAG Embedding Generation**:
-    - [ ] Update `Character` model to support embedding storage.
-    - [ ] Implement backend logic to generate embeddings (using `gemini-embedding-001`) when character attributes/settings are created or updated.
-    - [ ] Store embeddings for future RAG usage.
+- [x] **RAG Embedding Generation**:
+    - [x] Update `Character` model to support embedding storage.
+    - [x] Implement backend logic to generate embeddings (using `gemini-embedding-001`) when character attributes/settings are created or updated.
+    - [x] Store embeddings for future RAG usage.
 
 ## 2. Episode Creation (Start)
 - [ ] **AI Episode Options Generation**:
-    - [ ] Implement Backend API `POST /episodes/generate-options` to call `ai_service.generate_episode_ideas`.
+    - [x] Implement Backend API `POST /episodes/generate-options` to call `ai_service.generate_episode_ideas`.
     - [ ] Implement Frontend UI to request and display 3 episode options.
     - [ ] Implement logic to select an option or allow user augmentation.
 - [ ] **AI Initial Cut Generation**:
-    - [ ] Implement Backend API `POST /episodes/generate-cuts` to call `ai_service.generate_initial_cuts` (Text-only first: Script, Dialogues, Panel Type).
+    - [x] Implement Backend API `POST /episodes/generate-cuts` to call `ai_service.generate_initial_cuts` (Text-only first: Script, Dialogues, Panel Type).
     - [ ] Implement Frontend UI to set cut count and trigger generation.
 - [ ] **Cut Image Generation**:
-    - [ ] Implement Backend API `POST /episodes/{id}/cuts/{cut_id}/generate-image` (or batch) to call `ai_service.generate_image` based on the review text.
+    - [x] Implement Backend API `POST /episodes/{id}/cuts/{cut_id}/generate-image` (or batch) to call `ai_service.generate_image` based on the review text.
     - [ ] Implement Frontend UI to trigger image generation after text review.
 
 ## 3. Episode Review
