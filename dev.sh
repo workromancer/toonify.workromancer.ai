@@ -43,6 +43,19 @@ echo -e "${BLUE}Starting Servers...${NC}"
 
 # Start Backend in background
 cd backend
+
+# Setup Google Cloud Credentials
+GCLOUD_CRED_PATH="$HOME/.config/gcloud/application_default_credentials.json"
+TARGET_CRED_PATH="application_default_credentials.json"
+if [ -f "$GCLOUD_CRED_PATH" ]; then
+    echo "Copying gcloud credentials..."
+    cp "$GCLOUD_CRED_PATH" "$TARGET_CRED_PATH"
+    export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/$TARGET_CRED_PATH"
+    echo "GOOGLE_APPLICATION_CREDENTIALS set to $(pwd)/$TARGET_CRED_PATH"
+else
+    echo "WARNING: gcloud credentials not found at $GCLOUD_CRED_PATH"
+fi
+
 ./venv/bin/uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 &
 BACKEND_PID=$!
 echo "Backend started (PID: $BACKEND_PID)"
