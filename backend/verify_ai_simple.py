@@ -1,8 +1,8 @@
 from google import genai
 import os
 
-PROJECT = "webtoon-factory"
-LOCATION = "us-central1" # Explicitly testing this
+PROJECT = "toonify-develop"
+LOCATION = "global" # Explicitly testing this
 
 print(f"Testing GenAI client with Project: {PROJECT}, Location: {LOCATION}")
 

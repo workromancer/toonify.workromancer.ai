@@ -5,7 +5,22 @@ GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+# Function to kill process on port
+kill_port() {
+    local port=$1
+    local pid=$(lsof -t -i :$port)
+    if [ ! -z "$pid" ]; then
+        echo -e "${BLUE}Killing process on port $port (PID: $pid)...${NC}"
+        kill -9 $pid
+    fi
+}
+
 echo -e "${BLUE}Starting Toonify Development Environment...${NC}"
+
+# Cleanup existing processes
+echo "Cleaning up ports 8000 and 3000..."
+kill_port 8000
+kill_port 3000
 
 # Backend Setup
 echo -e "${GREEN}Setting up Backend...${NC}"
