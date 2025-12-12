@@ -82,17 +82,21 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
     // Check for setup query param
     useEffect(() => {
         if (searchParams && searchParams.get('setup') === 'true') {
-            setIsArtStyleSetupOpen(true);
-            // Remove query param without refreshing
-            const params = new URLSearchParams(searchParams);
-            params.delete('setup');
-            router.replace(`${pathname}?${params.toString()}`);
+            // Use setTimeout to avoid synchronous state update warning during render phase
+            const timer = setTimeout(() => {
+                setIsArtStyleSetupOpen(true);
+                // Remove query param without refreshing
+                const params = new URLSearchParams(searchParams);
+                params.delete('setup');
+                router.replace(`${pathname}?${params.toString()}`);
+            }, 0);
+            return () => clearTimeout(timer);
         }
     }, [searchParams, router, pathname]);
 
     return (
         <DashboardLayout>
-            <div className="flex h-full items-start relative overflow-hidden">
+            <div className="flex h-full items-start relative overflow-y-auto">
                 {/* Ambient Background for Project Home */}
                 <div className="absolute top-[-200px] left-[-200px] w-[500px] h-[500px] bg-primary/10 blur-[120px] rounded-full pointer-events-none mix-blend-screen z-0" />
 
