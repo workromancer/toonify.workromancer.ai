@@ -156,14 +156,15 @@ export default function NewProjectWizard() {
                 };
             }
 
-            await api.post('/projects/', {
+            const response = await api.post('/projects/', {
                 title: data.title,
                 subtitle: data.subtitle,
                 genre: data.genre.join(', '),
                 worldview: finalWorldview,
                 style_preset: "anime_webtoon"
             });
-            router.push('/dashboard');
+            // Redirect to project page with setup=true to trigger Art Style modal
+            router.push(`/project/${response.data.id}?setup=true`);
         } catch (error: any) {
             console.error("Error creating project", error);
             const msg = error.response?.data?.detail
@@ -211,7 +212,7 @@ export default function NewProjectWizard() {
     };
 
     return (
-        <div className="min-h-screen bg-background-dark text-white flex items-center justify-center p-4 font-display overflow-hidden relative">
+        <div className="min-h-screen bg-background-dark text-white flex items-center justify-center p-4 font-display overflow-y-auto relative">
             {/* Ambient Background */}
             <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-primary/20 blur-[150px] rounded-full pointer-events-none mix-blend-screen" />
             <div className="absolute bottom-[-20%] right-[-10%] w-[40%] h-[40%] bg-purple-500/10 blur-[150px] rounded-full pointer-events-none mix-blend-screen" />

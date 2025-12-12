@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import api from '@/lib/api';
 import DashboardLayout from '@/components/layout/DashboardLayout';
@@ -73,6 +74,21 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
             if (intervalId) clearInterval(intervalId);
         };
     }, [project.id, project.thumbnail_url, project.style_preset, onProjectUpdate]);
+
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const pathname = usePathname();
+
+    // Check for setup query param
+    useEffect(() => {
+        if (searchParams && searchParams.get('setup') === 'true') {
+            setIsArtStyleSetupOpen(true);
+            // Remove query param without refreshing
+            const params = new URLSearchParams(searchParams);
+            params.delete('setup');
+            router.replace(`${pathname}?${params.toString()}`);
+        }
+    }, [searchParams, router, pathname]);
 
     return (
         <DashboardLayout>
