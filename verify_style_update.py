@@ -54,7 +54,11 @@ def verify_style_update():
 
     # 2. Update style
     new_style = "shonen_manga"
-    update_data = {"style_preset": new_style}
+    reference_url = "https://example.com/style.png"
+    update_data = {
+        "style_preset": new_style,
+        "style_reference_url": reference_url
+    }
     response = requests.patch(f"{API_URL}/projects/{project_id}", json=update_data, headers=headers)
     
     if response.status_code != 200:
@@ -63,11 +67,12 @@ def verify_style_update():
     
     updated_project = response.json()
     print(f"Updated project style to: {updated_project['style_preset']}")
+    print(f"Updated project reference URL to: {updated_project.get('style_reference_url')}")
 
-    if updated_project["style_preset"] == new_style:
-        print("SUCCESS: Style updated correctly.")
+    if updated_project["style_preset"] == new_style and updated_project.get("style_reference_url") == reference_url:
+        print("SUCCESS: Style and reference URL updated correctly.")
     else:
-        print(f"FAILURE: Style mismatch. Expected {new_style}, got {updated_project['style_preset']}")
+        print(f"FAILURE: Mismatch. Expected {new_style} / {reference_url}")
 
 if __name__ == "__main__":
     verify_style_update()

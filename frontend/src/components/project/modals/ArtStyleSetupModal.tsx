@@ -120,12 +120,14 @@ export default function ArtStyleSetupModal({
             // Adjusted based on backend response_model which returns StyleRecommendResponse with 'styles' (checking ai_service.recommend_style implementation might be needed, but assuming a simple list for now from step 42 endpoint def says returns 'styles' variable)
             // Step 42: returns `styles` which is result of `ai_service.recommend_style`. Let's assume it returns a list of style names or objects.
             // If it returns strings, map them to StyleOption structure.
-            const suggestions = Array.isArray(res.data) ? res.data : (res.data.styles || []);
+            // Check for options (from backend ai.py recommend_style structure) or styles (legacy)
+            const suggestions = res.data.options || res.data.styles || (Array.isArray(res.data) ? res.data : []);
 
-            const formattedSuggestions = suggestions.map((s: any, index: number) => ({
-                id: typeof s === 'string' ? s.toLowerCase().replace(/\s+/g, '_') : s.id,
-                name: typeof s === 'string' ? s : s.name,
-                imageUrl: 'https://placehold.co/300x400/2c2c44/ffffff?text=' + (typeof s === 'string' ? s : s.name), // Placeholder for AI suggestions if no image
+            const formattedSuggestions = suggestions.map((s: any) => ({
+                id: s.id || (typeof s === 'string' ? s.toLowerCase().replace(/\s+/g, '_') : `style_${Math.random().toString(36).substr(2, 9)}`),
+                name: s.label || s.name || (typeof s === 'string' ? s : 'Unknown Style'),
+                imageUrl: s.sample_image_url, // URL or undefined
+                description: s.description, // Capture description if available
                 isPreset: false
             }));
             setAiSuggestions(formattedSuggestions);
@@ -140,7 +142,14 @@ export default function ArtStyleSetupModal({
     const handleSave = async () => {
         setSaving(true);
         try {
-            await api.patch(`/projects/${projectId}`, { style_preset: selectedStyle });
+            // Find selected style object
+            const styleObj = PRESET_STYLES.find(s => s.id === selectedStyle) || aiSuggestions.find(s => s.id === selectedStyle);
+            const styleReferenceUrl = styleObj?.imageUrl;
+
+            await api.patch(`/projects/${projectId}`, { 
+                style_preset: selectedStyle,
+                style_reference_url: styleReferenceUrl
+            });
             onStyleUpdate(selectedStyle);
             onClose();
         } catch (err) {
@@ -186,11 +195,17 @@ export default function ArtStyleSetupModal({
                                             : "hover:scale-[1.02] hover:shadow-xl ring-1 ring-white/10"
                                     )}
                                 >
-                                    <img
-                                        src={style.imageUrl}
-                                        alt={style.name}
-                                        className="w-full h-full object-cover"
-                                    />
+                                    {style.imageUrl ? (
+                                        <img
+                                            src={style.imageUrl}
+                                            alt={style.name}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-gray-500">
+                                            <span className="text-4xl opacity-20 font-black">{style.name.charAt(0)}</span>
+                                        </div>
+                                    )}
                                     <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/90 via-black/60 to-transparent">
                                         <div className="flex justify-between items-center">
                                             <span className={cn("font-medium transition-colors", selectedStyle === style.id ? "text-[#8e44ad]" : "text-white")}>
@@ -243,11 +258,17 @@ export default function ArtStyleSetupModal({
                                                 : "hover:scale-[1.02] hover:shadow-xl ring-1 ring-white/10"
                                         )}
                                     >
-                                        <img
-                                            src={style.imageUrl}
-                                            alt={style.name}
-                                            className="w-full h-full object-cover"
-                                        />
+                                        {style.imageUrl ? (
+                                            <img
+                                                src={style.imageUrl}
+                                                alt={style.name}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full bg-gradient-to-br from-indigo-900/50 to-purple-900/50 flex items-center justify-center text-indigo-300/30">
+                                                <span className="text-3xl font-bold">AI</span>
+                                            </div>
+                                        )}
                                         <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/90 via-black/60 to-transparent">
                                             <div className="flex justify-between items-center">
                                                 <span className={cn("font-medium transition-colors", selectedStyle === style.id ? "text-[#8e44ad]" : "text-white")}>

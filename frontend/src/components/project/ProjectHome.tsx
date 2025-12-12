@@ -24,6 +24,7 @@ interface Project {
     subtitle?: string;
     genre?: string;
     worldview?: string | any;
+    style_reference_url?: string;
 }
 
 interface ProjectHomeProps {
@@ -198,10 +199,21 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                         <Palette size={12} className="mr-1" /> Setup Art Style
                                     </Button>
                                 ) : (
-                                    <span className="px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 text-xs font-medium text-gray-600 dark:text-gray-300 flex items-center gap-1 group/style cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" onClick={() => setIsArtStyleSetupOpen(true)}>
-                                        Style: {project.style_preset}
-                                        <Palette size={12} className="opacity-0 group-hover/style:opacity-100 transition-opacity" />
-                                    </span>
+                                    <div className="relative group/style cursor-pointer" onClick={() => setIsArtStyleSetupOpen(true)}>
+                                        <span className="px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 text-xs font-medium text-gray-600 dark:text-gray-300 flex items-center gap-1 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                                            Style: {project.style_preset}
+                                            <Palette size={12} className="opacity-0 group-hover/style:opacity-100 transition-opacity" />
+                                        </span>
+                                        {/* Style Preview Tooltip */}
+                                        {project.style_reference_url && (
+                                            <div className="absolute top-full left-0 mt-2 w-48 bg-[#13111C] border border-white/10 rounded-lg shadow-xl p-2 opacity-0 group-hover/style:opacity-100 transition-opacity pointer-events-none z-30">
+                                                <div className="aspect-[3/4] rounded-md overflow-hidden bg-white/5 relative">
+                                                    <img src={project.style_reference_url} alt="Style Reference" className="w-full h-full object-cover" />
+                                                </div>
+                                                <p className="text-[10px] text-gray-400 mt-1 text-center">Current Style Reference</p>
+                                            </div>
+                                        )}
+                                    </div>
                                 )}
 
                                 {project.style_preset && project.style_preset !== 'anime_webtoon' && characters.length === 0 && (

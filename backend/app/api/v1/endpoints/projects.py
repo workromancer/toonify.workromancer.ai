@@ -20,6 +20,7 @@ class ProjectCreate(BaseModel):
     genre: str | None = None
     worldview: dict | str | None = None
     style_preset: str = "anime_webtoon" # Default
+    style_reference_url: str | None = None
 
 class ProjectUpdate(BaseModel):
     title: str | None = None
@@ -27,6 +28,7 @@ class ProjectUpdate(BaseModel):
     genre: str | None = None
     worldview: dict | str | None = None
     style_preset: str | None = None
+    style_reference_url: str | None = None
     description: str | None = None # For compatibility if description is added to model later or alias
 
 class ProjectOut(BaseModel):
@@ -36,6 +38,7 @@ class ProjectOut(BaseModel):
     genre: str | None
     worldview: dict | str | None
     style_preset: str
+    style_reference_url: str | None = None
     thumbnail_url: str | None
     created_at: datetime
     workspace_id: Any
@@ -140,6 +143,7 @@ def create_project(
             genre=project_in.genre,
             worldview=final_worldview,
             style_preset=project_in.style_preset,
+            style_reference_url=project_in.style_reference_url,
             workspace_id=workspace_id,
             owner_id=current_user_id,
         )

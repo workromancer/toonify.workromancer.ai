@@ -15,7 +15,13 @@ export interface Character {
 export default function CharacterCard({ character }: { character: Character }) {
     return (
         <div className="group relative flex flex-col overflow-hidden rounded-xl bg-white dark:bg-[#1d1c27] transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-primary/20 border border-gray-200 dark:border-transparent">
-            <img className="h-48 w-full object-cover" alt={`Illustration of ${character.name}`} src={character.imageUrl || "https://placehold.co/400x300"} />
+            {character.imageUrl ? (
+                <img className="h-48 w-full object-cover" alt={`Illustration of ${character.name}`} src={character.imageUrl} />
+            ) : (
+                <div className="h-48 w-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
+                    <span className="text-4xl text-slate-400 dark:text-slate-600 font-bold opacity-30">{character.name.charAt(0)}</span>
+                </div>
+            )}
             <div className="flex flex-1 flex-col p-4">
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white">{character.name}</h3>
                 <p className="text-sm text-gray-500 dark:text-[#a19db9]">Default Mood: {character.mood || 'Neutral'}</p>

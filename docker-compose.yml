@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: toonify_db
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ./infra/postgres_data:/var/lib/postgresql/data
 
   minio:
     image: minio/minio
@@ -22,7 +22,7 @@ services:
       MINIO_ROOT_PASSWORD: minioadmin
     command: server /data --console-address ":9001"
     volumes:
-      - minio_data:/data
+      - ./infra/minio_data:/data
 
   createbuckets:
     image: minio/mc

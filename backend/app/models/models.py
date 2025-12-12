@@ -65,6 +65,7 @@ class Project(SQLModel, table=True):
     owner_id: UUID
     style_preset: str
     art_style: Optional[str] = None # Detailed style description or name
+    style_reference_url: Optional[str] = None # URL of the selected style image (preset or generated)
     cover_image_status: str = "pending" # pending, processing, completed, failed
     cover_image_url: Optional[str] = None
     thumbnail_url: Optional[str] = None

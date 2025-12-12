@@ -8,6 +8,7 @@ import json
 import re
 from typing import List, Optional
 import os
+from app.services.storage import storage
 
 class AIService:
     def __init__(self):
@@ -68,7 +69,7 @@ class AIService:
                     "id": "style_A",
                     "label": "Style Name (e.g., Noir, Watercolor)",
                     "description": "Why this fits the story.",
-                    "sample_image_url": "https://placeholder.com/style_a.png" 
+                    "sample_image_url": "https://example.com/style_sample.png" 
                 }},
                 ...
             ]
@@ -84,7 +85,30 @@ class AIService:
                 )
             )
             cleaned_text = self._clean_json_text(response.text)
-            return json.loads(cleaned_text)
+            parsed_json = json.loads(cleaned_text)
+            
+            # Generate images for each style
+            if "options" in parsed_json:
+                for option in parsed_json["options"]:
+                    # Remove hallucinated URL
+                    option.pop("sample_image_url", None)
+                    
+                    try:
+                        style_label = option.get("label", "Art Style")
+                        style_desc = option.get("description", "")
+                        image_prompt = f"A high-quality representative illustration of the art style: {style_label}. {style_desc} Visual composition: portrait or character focus."
+                        
+                        print(f"Generating sample for style: {style_label}")
+                        img_bytes = self.generate_image(image_prompt, width=768, height=1024) # 3:4 ratio approx
+                        
+                        if img_bytes:
+                            url = storage.upload_image(img_bytes)
+                            option["sample_image_url"] = url
+                    except Exception as e:
+                        print(f"Failed to generate sample for {style_label}: {e}")
+                        # Leave sample_image_url empty so frontend uses its clean fallback
+            
+            return parsed_json
             
         except Exception as e:
             print(f"Style Director Error: {e}")

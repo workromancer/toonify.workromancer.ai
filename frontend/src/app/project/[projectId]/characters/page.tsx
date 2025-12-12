@@ -95,9 +95,17 @@ export default function CharacterListPage() {
                     <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-6">
                         {characters.map((char) => (
                             <div key={char.id} className="relative group flex flex-col overflow-hidden rounded-xl border border-transparent hover:border-primary/50 dark:border-white/10 dark:hover:border-primary/50 transition-colors bg-slate-50 dark:bg-slate-800/20">
-                                <div className="w-full bg-center bg-no-repeat aspect-[3/4] bg-cover transition-transform duration-300 group-hover:scale-105"
-                                    style={{ backgroundImage: `url("${char.profile_image_url || 'https://via.placeholder.com/300x400?text=No+Image'}")` }}
-                                ></div>
+                                <div className="w-full bg-center bg-no-repeat aspect-[3/4] bg-cover transition-transform duration-300 group-hover:scale-105 bg-slate-200 dark:bg-slate-700"
+                                    style={char.profile_image_url ? { backgroundImage: `url("${char.profile_image_url}")` } : {}}
+                                >
+                                    {!char.profile_image_url && (
+                                        <div className="flex h-full w-full items-center justify-center">
+                                            <span className="text-4xl font-bold opacity-30 text-slate-400 dark:text-slate-600">
+                                                {char.name.charAt(0)}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
                                 <div className="flex flex-col gap-1 p-4">
                                     <p className="text-base font-bold leading-normal text-slate-900 dark:text-white">{char.name}</p>
                                     <p className="text-sm font-normal leading-normal text-slate-600 dark:text-slate-400 capitalize">{char.default_mood}</p>
