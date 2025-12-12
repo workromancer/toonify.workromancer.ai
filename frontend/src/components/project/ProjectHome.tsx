@@ -1,6 +1,9 @@
+
+
 'use client';
 
 import { useState, useEffect } from 'react';
+import ViewStyleModal from './modals/ViewStyleModal';
 import Link from 'next/link';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -30,6 +33,7 @@ interface Project {
     genre?: string;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     worldview?: any;
+    art_style?: string; // Should be consistent with interface
     style_reference_url?: string;
 }
 
@@ -53,11 +57,23 @@ interface ProjectHomeProps {
     onEpisodeAdd: (e: any) => void;
 }
 
+
+
+
 export default function ProjectHome({ project, characters, episodes, onProjectUpdate, onCharacterAdd, onEpisodeAdd }: ProjectHomeProps) {
     const [isEditProjectOpen, setIsEditProjectOpen] = useState(false);
     const [isAddCharacterOpen, setIsAddCharacterOpen] = useState(false);
     const [isGenerateEpisodeOpen, setIsGenerateEpisodeOpen] = useState(false);
     const [isArtStyleSetupOpen, setIsArtStyleSetupOpen] = useState(false);
+    const [isViewStyleOpen, setIsViewStyleOpen] = useState(false);
+
+    const handleStyleClick = () => {
+        if (project.style_preset && project.style_preset !== 'anime_webtoon') {
+            setIsViewStyleOpen(true);
+        } else {
+            setIsArtStyleSetupOpen(true);
+        }
+    };
 
     // Poll for cover image if style is set but no thumbnail
     useEffect(() => {
@@ -110,6 +126,13 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
 
     return (
         <DashboardLayout>
+            <ViewStyleModal
+                isOpen={isViewStyleOpen}
+                onClose={() => setIsViewStyleOpen(false)}
+                styleName={project.style_preset}
+                styleImageUrl={project.style_reference_url}
+                description={project.art_style}
+            />
             <div className="flex h-full relative overflow-y-auto bg-[#13111C]">
                 {/* Main Content Scrollable Area */}
                 <div className="flex-1 flex flex-col min-h-0 relative z-10 custom-scrollbar">
@@ -180,7 +203,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                         </span>
                                     ))}
                                     
-                                    <div className="relative group/style cursor-pointer" onClick={() => setIsArtStyleSetupOpen(true)}>
+                                    <div className="relative group/style cursor-pointer" onClick={handleStyleClick}>
                                         <span className="px-2.5 py-0.5 rounded-md bg-black/40 hover:bg-black/60 text-white text-[10px] font-medium border border-white/10 backdrop-blur-md flex items-center gap-1.5 transition-all">
                                             <Palette size={10} className="text-[#a9a9d1]" /> 
                                             {project.style_preset || "Setup Style"}
@@ -221,7 +244,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                         variant="ghost" 
                                         className="w-8 h-8 rounded-full text-gray-400 hover:text-white hover:bg-white/10"
                                         title="Art Style"
-                                        onClick={() => setIsArtStyleSetupOpen(true)}
+                                        onClick={handleStyleClick}
                                     >
                                         <Palette size={16} />
                                     </Button>
@@ -234,14 +257,14 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                     >
                                         <Settings size={16} />
                                     </Button>
-                                    <Button size="icon" variant="ghost" className="w-8 h-8 rounded-full text-gray-400 hover:text-white hover:bg-white/10" title="Manage Assets">
+                                    <Button size="icon" variant="ghost" className="w-8 h-8 rounded-full text-gray-400 hover:text-white hover:bg-white/10" title="Manage Assets" onClick={() => alert("Asset Manager: Coming Soon")}>
                                         <FolderOpen size={16} />
                                     </Button>
-                                    <Button size="icon" variant="ghost" className="w-8 h-8 rounded-full text-gray-400 hover:text-white hover:bg-white/10" title="Generator Options">
+                                    <Button size="icon" variant="ghost" className="w-8 h-8 rounded-full text-gray-400 hover:text-white hover:bg-white/10" title="Generator Options" onClick={() => alert("Generator Options: Coming Soon")}>
                                         <Code size={16} />
                                     </Button>
                                     <div className="w-px h-4 bg-white/10 mx-1" />
-                                    <Button size="icon" variant="ghost" className="w-8 h-8 rounded-full text-gray-400 hover:text-white hover:bg-white/10" title="Export Project">
+                                    <Button size="icon" variant="ghost" className="w-8 h-8 rounded-full text-gray-400 hover:text-white hover:bg-white/10" title="Export Project" onClick={() => alert("Export started!")}>
                                         <Upload size={16} />
                                     </Button>
                                 </div>
@@ -267,6 +290,23 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                     {/* Content Section (Episodes & Characters) */}
                     <div className="flex-1 p-6 md:p-8 bg-[#13111C]">
                         <div className="max-w-7xl mx-auto flex flex-col gap-12">
+                            
+                            {/* Worldview Key Features (If available) */}
+                            {project.worldview?.key_features && Array.isArray(project.worldview.key_features) && (
+                                <section className="mb-4">
+                                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                        <Sparkles size={12} /> Key Features
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                        {project.worldview.key_features.map((feature: string, idx: number) => (
+                                            <div key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-white/[0.03] border border-white/5">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-purple-500 mt-2 shrink-0" />
+                                                <span className="text-sm text-gray-300 leading-relaxed">{feature}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </section>
+                            )}
                             
                             {/* Episodes List - Studio Mode */}
                             <section>

@@ -100,12 +100,13 @@ export default function ArtStyleSetupModal({
     const [saving, setSaving] = useState(false);
 
     useEffect(() => {
-        if (isOpen && currentStyle) {
-            setSelectedStyle(currentStyle);
-        }
         if (isOpen) {
-            // Fetch suggestions if not already present or refresh them
-            fetchSuggestions();
+            if (currentStyle) {
+                setSelectedStyle(currentStyle);
+            } else if (aiSuggestions.length === 0) {
+                // Fetch suggestions only if no style is currently selected and no suggestions exist
+                fetchSuggestions();
+            }
         }
     }, [isOpen, currentStyle]);
 
