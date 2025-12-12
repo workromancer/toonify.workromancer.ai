@@ -6,17 +6,16 @@ import { Button } from '@/components/ui/button';
 export interface Character {
     id?: string;
     name: string;
-    mood?: string;
-    tags?: string[]; // Assuming tags might be an array of strings
-    imageUrl?: string;
-    // Add other fields as necessary from the backend response
+    default_mood?: string;
+    appearance_tags?: string[]; 
+    profile_image_url?: string;
 }
 
 export default function CharacterCard({ character }: { character: Character }) {
     return (
         <div className="group relative flex flex-col overflow-hidden rounded-xl bg-white dark:bg-[#1d1c27] transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-primary/20 border border-gray-200 dark:border-transparent">
-            {character.imageUrl ? (
-                <img className="h-48 w-full object-cover" alt={`Illustration of ${character.name}`} src={character.imageUrl} />
+            {character.profile_image_url ? (
+                <img className="h-48 w-full object-cover" alt={`Illustration of ${character.name}`} src={character.profile_image_url} />
             ) : (
                 <div className="h-48 w-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
                     <span className="text-4xl text-slate-400 dark:text-slate-600 font-bold opacity-30">{character.name.charAt(0)}</span>
@@ -24,14 +23,14 @@ export default function CharacterCard({ character }: { character: Character }) {
             )}
             <div className="flex flex-1 flex-col p-4">
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white">{character.name}</h3>
-                <p className="text-sm text-gray-500 dark:text-[#a19db9]">Default Mood: {character.mood || 'Neutral'}</p>
+                <p className="text-sm text-gray-500 dark:text-[#a19db9]">Default Mood: {character.default_mood || 'Neutral'}</p>
                 <div className="mt-2 flex flex-wrap gap-2">
-                    {character.tags && character.tags.map((tag, index) => (
+                    {character.appearance_tags && character.appearance_tags.map((tag, index) => (
                         <span key={index} className={`rounded-full px-2 py-1 text-xs font-medium ${index === 0 ? 'bg-primary/20 text-primary' : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-[#a19db9]'}`}>
                             {tag}
                         </span>
                     ))}
-                    {!character.tags && (
+                    {(!character.appearance_tags || character.appearance_tags.length === 0) && (
                          <span className="rounded-full px-2 py-1 text-xs font-medium bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-[#a19db9]">
                             Protagonist
                         </span>

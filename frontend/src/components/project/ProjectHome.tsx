@@ -7,13 +7,19 @@ import { Button } from '@/components/ui/button';
 import api from '@/lib/api';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import ProjectRightSidebar from './ProjectRightSidebar';
-import CharacterCard, { Character } from './CharacterCard';
-import AddCharacterCard from './AddCharacterCard';
 import EditProjectModal from './modals/EditProjectModal';
 import AddCharacterModal from './modals/AddCharacterModal';
 import GenerateEpisodeModal from './modals/GenerateEpisodeModal';
 import ArtStyleSetupModal from './modals/ArtStyleSetupModal';
-import { Plus, X, Sparkles, Image as ImageIcon, RotateCw, Save, Wand2, Clapperboard, Edit2, Palette } from 'lucide-react';
+import { Plus, Sparkles, Clapperboard, Edit2, Palette, ArrowLeft, Play, ArrowRight } from 'lucide-react';
+
+interface Character {
+    id?: string;
+    name: string;
+    description?: string;
+    profile_image_url?: string;
+    default_mood?: string;
+}
 
 interface Project {
     id: string;
@@ -41,7 +47,6 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
     const [isAddCharacterOpen, setIsAddCharacterOpen] = useState(false);
     const [isGenerateEpisodeOpen, setIsGenerateEpisodeOpen] = useState(false);
     const [isArtStyleSetupOpen, setIsArtStyleSetupOpen] = useState(false);
-    const [isPollingCover, setIsPollingCover] = useState(false);
 
     // Poll for cover image if style is set but no thumbnail
     useEffect(() => {
@@ -51,15 +56,12 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
             if (project.thumbnail_url) return; // Already has thumbnail
 
             // Assume 'anime_webtoon' is default/unset for this logic, or just check if user initiated
-            // Ideally we check if a job is running, but for MVP we infer from state
             if (!project.style_preset || project.style_preset === 'anime_webtoon') return;
 
-            setIsPollingCover(true);
             try {
                 const res = await api.get(`/projects/${project.id}`);
                 if (res.data.thumbnail_url) {
                     onProjectUpdate(res.data);
-                    setIsPollingCover(false);
                 }
             } catch (e) {
                 console.error("Polling error", e);
@@ -97,194 +99,213 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
 
     return (
         <DashboardLayout>
-            <div className="flex h-full items-start relative overflow-y-auto">
-                {/* Ambient Background for Project Home */}
-                <div className="absolute top-[-200px] left-[-200px] w-[500px] h-[500px] bg-primary/10 blur-[120px] rounded-full pointer-events-none mix-blend-screen z-0" />
+            <div className="flex h-full relative overflow-y-auto bg-[#13111C]">
+                {/* Main Content Scrollable Area */}
+                <div className="flex-1 flex flex-col min-h-0 relative z-10">
+                    
+                    {/* Immersive Hero Banner - Reduced height for Creator Focus */}
+                    <div className="relative w-full h-[350px] shrink-0 group">
+                        {/* Background Image */}
+                        <div 
+                            className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
+                            style={{ 
+                                backgroundImage: `url("${project.thumbnail_url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=2564&ixlib=rb-4.0.3'}")` 
+                            }}
+                        />
+                        {/* Darker Overlay for text readability & focus */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#13111C] via-[#13111C]/40 to-[#13111C]/20" />
+                        <div className="absolute inset-0 bg-black/20" />
 
-                <div className="flex-1 flex flex-col p-6 md:p-8 min-h-0 relative z-10">
-                    {/* Page Header matching Dashboard */}
-                    <div className="flex flex-col gap-6 mb-8">
-                        {/* Breadcrumb / Top Line */}
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                                <Link href="/dashboard" className="hover:text-gray-900 dark:hover:text-white transition-colors">
-                                    My Projects
-                                </Link>
-                                <span>/</span>
-                                <span className="text-gray-900 dark:text-white font-medium">{project.title}</span>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <Button variant="ghost" className="h-9 px-3 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
-                                    <Save size={18} className="mr-2" />
-                                    <span>Save</span>
+                        {/* Top Navigation (Floating) */}
+                        <div className="absolute top-6 left-6 z-20">
+                            <Link href="/dashboard">
+                                <Button variant="ghost" className="text-white/70 hover:text-white hover:bg-black/40 gap-2 h-9 px-3 rounded-full bg-black/20 backdrop-blur-md border border-white/5 transition-all">
+                                    <ArrowLeft size={14} />
+                                    <span className="text-sm font-medium">My Projects</span>
                                 </Button>
-                                <Button
-                                    className="h-10 px-4 bg-primary text-white hover:bg-primary/90 rounded-xl font-bold text-sm shadow-sm transition-colors"
-                                    onClick={() => setIsGenerateEpisodeOpen(true)}
-                                >
-                                    <Clapperboard size={18} className="mr-2" />
-                                    <span>Generate Episode</span>
-                                </Button>
-                            </div>
+                            </Link>
                         </div>
 
-                        {/* Title Section */}
-                        <div className="flex flex-col gap-2">
-                            <div className="flex items-start justify-between">
-                                <div>
-                                    <h1 className="text-gray-900 dark:text-white text-3xl md:text-4xl font-black leading-tight tracking-[-0.033em]">
-                                        {project.title}
-                                    </h1>
-                                    {project.subtitle && (
-                                        <p className="text-xl text-gray-500 mt-1">{project.subtitle}</p>
+                        {/* Banner Content (Bottom Left) */}
+                        <div className="absolute bottom-0 left-0 w-full p-8 flex items-end justify-between">
+                            <div className="flex flex-col gap-4 max-w-4xl">
+                                {/* Tags / Badges */}
+                                <div className="flex items-center gap-3">
+                                    {project.genre && (
+                                        <span className="px-2.5 py-0.5 rounded-md bg-[#4a4aff] text-white text-[10px] font-bold uppercase tracking-wider shadow-lg border border-[#6b6bff]">
+                                            {project.genre}
+                                        </span>
                                     )}
-                                </div>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setIsEditProjectOpen(true)}
-                                    className="gap-2"
-                                >
-                                    <Edit2 size={16} /> Edit Details
-                                </Button>
-                            </div>
-                            <div className="flex flex-col gap-2">
-                                {/* Worldview Display Logic */}
-                                {typeof project.worldview === 'string' ? (
-                                    <p className="text-gray-600 dark:text-gray-400 text-base font-normal leading-normal max-w-3xl whitespace-pre-line">
-                                        {project.worldview || "No description provided."}
-                                    </p>
-                                ) : project.worldview ? (
-                                    <div className="flex flex-col gap-3">
-                                        {/* Structured Worldview from AI */}
-                                        <div className="flex items-center gap-2">
-                                            {project.worldview.tone && (
-                                                <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-bold border border-primary/20">
-                                                    {project.worldview.tone}
-                                                </span>
-                                            )}
-                                        </div>
-
-                                        <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200">
-                                            {project.worldview.title}
-                                        </h3>
-
-                                        <p className="text-gray-600 dark:text-gray-400 text-base font-normal leading-relaxed max-w-3xl">
-                                            {project.worldview.content}
-                                        </p>
-
-                                        {project.worldview.key_features && (
-                                            <div className="flex flex-wrap gap-2 mt-1">
-                                                {project.worldview.key_features.map((feat: string, idx: number) => (
-                                                    <span key={idx} className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-500 px-2 py-1 rounded">
-                                                        #{feat}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <p className="text-gray-500 italic">No worldview description provided.</p>
-                                )}
-                            </div>
-
-                            <div className="flex items-center gap-2 mt-1">
-                                {!project.style_preset || project.style_preset === 'anime_webtoon' ? (
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => setIsArtStyleSetupOpen(true)}
-                                        className="h-7 text-xs border-dashed border-primary text-primary hover:bg-primary/5"
-                                    >
-                                        <Palette size={12} className="mr-1" /> Setup Art Style
-                                    </Button>
-                                ) : (
                                     <div className="relative group/style cursor-pointer" onClick={() => setIsArtStyleSetupOpen(true)}>
-                                        <span className="px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 text-xs font-medium text-gray-600 dark:text-gray-300 flex items-center gap-1 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-                                            Style: {project.style_preset}
-                                            <Palette size={12} className="opacity-0 group-hover/style:opacity-100 transition-opacity" />
+                                        <span className="px-2.5 py-0.5 rounded-md bg-black/40 hover:bg-black/60 text-white text-[10px] font-medium border border-white/10 backdrop-blur-md flex items-center gap-1.5 transition-all">
+                                            <Palette size={10} className="text-[#a9a9d1]" /> 
+                                            {project.style_preset || "Setup Style"}
                                         </span>
                                         {/* Style Preview Tooltip */}
                                         {project.style_reference_url && (
-                                            <div className="absolute top-full left-0 mt-2 w-48 bg-[#13111C] border border-white/10 rounded-lg shadow-xl p-2 opacity-0 group-hover/style:opacity-100 transition-opacity pointer-events-none z-30">
-                                                <div className="aspect-[3/4] rounded-md overflow-hidden bg-white/5 relative">
+                                            <div className="absolute bottom-full left-0 mb-3 w-40 bg-[#1E1C29] border border-white/10 rounded-lg shadow-2xl p-1.5 opacity-0 group-hover/style:opacity-100 transition-all pointer-events-none z-30 translate-y-2 group-hover/style:translate-y-0 duration-200">
+                                                <div className="aspect-[3/4] rounded-md overflow-hidden bg-white/5 relative mb-1.5">
                                                     <img src={project.style_reference_url} alt="Style Reference" className="w-full h-full object-cover" />
                                                 </div>
-                                                <p className="text-[10px] text-gray-400 mt-1 text-center">Current Style Reference</p>
+                                                <p className="text-[9px] text-[#a9a9d1] font-medium text-center uppercase tracking-wide">Target Style</p>
                                             </div>
                                         )}
                                     </div>
-                                )}
+                                </div>
 
-                                {project.style_preset && project.style_preset !== 'anime_webtoon' && characters.length === 0 && (
-                                    <Link href={`/project/${project.id}/casting`}>
-                                        <Button
-                                            size="sm"
-                                            className="h-7 text-xs bg-purple-600 hover:bg-purple-700 text-white animate-pulse"
-                                        >
-                                            <Sparkles size={12} className="mr-1" /> Start Casting
-                                        </Button>
-                                    </Link>
-                                )}
+                                {/* Title & Meta */}
+                                <div>
+                                    <div className="flex items-baseline gap-4 mb-1">
+                                        <h1 className="text-3xl md:text-4xl font-black text-white leading-tight tracking-[-0.02em] drop-shadow-xl">
+                                            {project.title}
+                                        </h1>
+                                        <div className="flex items-center gap-2 text-xs font-medium text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full border border-green-400/20">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-current shimmer"></div>
+                                            Active
+                                        </div>
+                                    </div>
+                                    <p className="text-gray-300/80 text-sm max-w-2xl line-clamp-2">
+                                        {project.subtitle || project.description || "No description provided."}
+                                    </p>
+                                </div>
+                            </div>
 
-                                {project.genre && (
-                                    <span className="px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 text-xs font-medium text-gray-600 dark:text-gray-300">
-                                        {project.genre}
-                                    </span>
-                                )}
+                            {/* Creator Actions */}
+                            <div className="flex items-center gap-3 shrink-0">
+                                <Button 
+                                    className="h-10 px-4 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/10 backdrop-blur-md"
+                                    onClick={() => setIsEditProjectOpen(true)}
+                                >
+                                    <Edit2 size={16} className="mr-2" /> Edit Details
+                                </Button>
+                                <Button 
+                                    className="h-10 px-5 rounded-full bg-[#4a4aff] hover:bg-[#3d3dcc] text-white font-bold shadow-lg shadow-blue-900/20"
+                                    onClick={() => setIsGenerateEpisodeOpen(true)}
+                                >
+                                    <Sparkles size={16} className="mr-2" /> New Episode
+                                </Button>
                             </div>
                         </div>
                     </div>
 
-                    {/* Main Content Areas */}
-                    <div className="flex flex-col gap-8">
-                        {/* Project Thumbnail / Overview */}
-                        <div className="relative w-full aspect-[21/9] bg-gray-100 dark:bg-gray-800 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
-                            {project.thumbnail_url ? (
-                                <div className="absolute inset-0 bg-cover bg-center transition-all duration-700 hover:scale-105" style={{ backgroundImage: `url("${project.thumbnail_url}")` }} />
-                            ) : (
-                                <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-300 dark:text-gray-600 bg-gray-50 dark:bg-gray-900/50">
-                                    {isPollingCover ? (
-                                        <div className="flex flex-col items-center gap-3 animate-pulse">
-                                            <Palette className="w-12 h-12 text-primary/50" />
-                                            <span className="text-sm font-medium text-gray-500">Generating AI Cover...</span>
-                                        </div>
+                    {/* Content Section (Episodes & Characters) */}
+                    <div className="flex-1 p-6 md:p-8 bg-[#13111C]">
+                        <div className="max-w-7xl mx-auto flex flex-col gap-12">
+                            
+                            {/* Episodes List - Studio Mode */}
+                            <section>
+                                <div className="flex items-center justify-between mb-6">
+                                    <div className="flex items-center gap-3">
+                                        <h3 className="text-xl font-bold text-white">Episodes</h3>
+                                        <span className="px-2 py-0.5 bg-white/5 rounded-full text-xs text-gray-400 font-mono">{episodes?.length || 0}</span>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white h-8 text-xs">Ascending</Button>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col gap-3">
+                                    {episodes && episodes.length > 0 ? (
+                                        episodes.map((ep, idx) => (
+                                            <div key={ep.id} className="group relative flex items-center gap-4 p-3 pr-4 rounded-xl bg-[#1d1c27] border border-white/5 hover:border-white/10 transition-all hover:bg-[#252433]">
+                                                {/* Episode Thumbnail */}
+                                                <div className="w-32 aspect-video rounded-md bg-black/40 overflow-hidden relative shrink-0 border border-white/5">
+                                                    {ep.thumbnail_url ? (
+                                                        <img src={ep.thumbnail_url} className="w-full h-full object-cover" alt={ep.title} />
+                                                    ) : (
+                                                        <div className="w-full h-full flex flex-col items-center justify-center text-gray-700">
+                                                            <span className="text-xl font-bold">{ep.episode_order}</span>
+                                                        </div>
+                                                    )}
+                                                    {idx === episodes.length - 1 && (
+                                                        <div className="absolute top-1 left-1 w-2 h-2 bg-[#4a4aff] rounded-full shadow-[0_0_8px_rgba(74,74,255,0.8)]" />
+                                                    )}
+                                                </div>
+
+                                                {/* Episode Info */}
+                                                <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-[10px] font-mono text-gray-500 uppercase">EP {ep.episode_order}</span>
+                                                        <span className="text-[10px] text-gray-600">•</span>
+                                                        <span className="text-[10px] text-gray-500">{ep.created_at ? new Date(ep.created_at).toLocaleDateString() : 'Draft'}</span>
+                                                    </div>
+                                                    <h4 className="text-base font-bold text-gray-200 group-hover:text-white truncate pr-4">
+                                                        {ep.title}
+                                                    </h4>
+                                                </div>
+
+                                                {/* Studio Actions */}
+                                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity focus-within:opacity-100">
+                                                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full text-gray-400 hover:text-white hover:bg-white/10">
+                                                        <Play size={14} />
+                                                    </Button>
+                                                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full text-gray-400 hover:text-white hover:bg-white/10">
+                                                        <Edit2 size={14} />
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        ))
                                     ) : (
-                                        <span className="text-6xl font-black opacity-20">{project.title.charAt(0)}</span>
+                                        // Empty State
+                                        <div className="py-12 flex flex-col items-center justify-center text-center gap-3 border border-dashed border-white/5 rounded-xl bg-white/[0.02]">
+                                            <div className="p-3 rounded-full bg-white/5 text-gray-500">
+                                                <Clapperboard size={24} />
+                                            </div>
+                                            <p className="text-sm text-gray-500">No episodes created yet.</p>
+                                        </div>
                                     )}
                                 </div>
-                            )}
-                        </div>
+                            </section>
 
-                        {/* Characters Section */}
-                        <section>
-                            <div className="flex items-center justify-between mb-4">
-                                <Link href={`/project/${project.id}/characters`} className="hover:underline">
-                                    <h2 className="text-gray-900 dark:text-white text-2xl font-bold">Characters</h2>
-                                </Link>
-                                <Link href={`/project/${project.id}/casting`} className="text-primary text-sm font-bold hover:underline">
-                                    + Add Character
-                                </Link>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
-                                <Link href={`/project/${project.id}/casting`} className="cursor-pointer h-full">
-                                    <AddCharacterCard />
-                                </Link>
-                                {characters.map(char => (
-                                    <CharacterCard key={char.id || char.name} character={char} />
-                                ))}
-                            </div>
-                        </section>
+                            {/* Characters Section */}
+                            <section>
+                                <div className="flex items-center justify-between mb-6">
+                                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                        Cast & Characters
+                                    </h3>
+                                    <Link href={`/project/${project.id}/characters`}>
+                                        <Button variant="ghost" size="sm" className="text-sm text-gray-400 hover:text-white">View All <ArrowRight size={14} className="ml-1" /></Button>
+                                    </Link>
+                                </div>
+                                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                                    {/* Add Card */}
+                                    <div 
+                                        onClick={() => setIsAddCharacterOpen(true)}
+                                        className="aspect-[3/4] cursor-pointer rounded-xl border border-dashed border-white/10 bg-white/[0.02] flex flex-col items-center justify-center gap-2 hover:bg-white/[0.05] hover:border-white/20 transition-all group"
+                                    >
+                                        <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-gray-400 group-hover:text-white transition-colors">
+                                            <Plus size={16} />
+                                        </div>
+                                        <span className="text-xs font-medium text-gray-500 group-hover:text-gray-300">Add Character</span>
+                                    </div>
+                                    
+                                    {characters.slice(0, 5).map(char => (
+                                        <div key={char.id || char.name} className="group relative rounded-xl overflow-hidden bg-[#1d1c27] border border-white/5 hover:border-white/20 transition-all">
+                                            <div className="aspect-[3/4] bg-cover bg-center" style={char.profile_image_url ? { backgroundImage: `url("${char.profile_image_url}")` } : {}}>
+                                                {!char.profile_image_url && (
+                                                     <div className="w-full h-full bg-slate-800 flex items-center justify-center text-gray-600 font-bold text-xl">{char.name[0]}</div>
+                                                )}
+                                            </div>
+                                            <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/90 to-transparent">
+                                                <h4 className="text-white text-xs font-bold truncate">{char.name}</h4>
+                                                <p className="text-[10px] text-gray-400 truncate">{char.default_mood || 'Neutral'}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+
+                        </div>
                     </div>
                 </div>
 
-                {/* Right Sidebar - Sticky within the flex container */}
-                <div className="hidden xl:block w-80 shrink-0 sticky top-0 h-[calc(100vh)] overflow-y-auto border-l border-white/10 bg-[#13111C]/80 backdrop-blur-xl p-4 z-20">
+                {/* Right Sidebar - Restored & Integrated */}
+                <div className="hidden xl:block w-72 shrink-0 border-l border-white/10 bg-[#13111C]">
                     <ProjectRightSidebar projectId={project.id} episodes={episodes} />
-                </div>
+                </div> 
             </div>
 
-            {/* Modals */}
+            {/* Modals - Kept same */}
             <ArtStyleSetupModal
                 isOpen={isArtStyleSetupOpen}
                 onClose={() => setIsArtStyleSetupOpen(false)}
