@@ -4,15 +4,17 @@
 
 import { useState, useEffect } from 'react';
 import ViewStyleModal from './modals/ViewStyleModal';
+import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import api from '@/lib/api';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import ProjectLayout from '@/components/layout/ProjectLayout';
 import EditProjectModal from './modals/EditProjectModal';
 import GenerateEpisodeModal from './modals/GenerateEpisodeModal';
 import ArtStyleSetupModal from './modals/ArtStyleSetupModal';
-import { Plus, Sparkles, Clapperboard, Edit2, Palette, ArrowLeft, Play, ArrowRight, Settings, FolderOpen, Upload, Database, Zap, Code } from 'lucide-react';
+import CharacterDetailModal from './modals/CharacterDetailModal';
+import { Plus, Sparkles, Clapperboard, Edit2, Palette, ArrowLeft, Play, ArrowRight, Settings, FolderOpen, Upload, Database, Zap, Code, AlertCircle } from 'lucide-react';
 
 interface Character {
     id?: string;
@@ -86,7 +88,26 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
         };
     }, [characters, onRefreshCharacters]);
 
-    // Poll for cover image if style is set but no thumbnail
+    // Detail Modal Logic
+    const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
+    const [isDetailOpen, setIsDetailOpen] = useState(false);
+
+    // Update selected character when list updates (polling)
+    useEffect(() => {
+        if (selectedCharacter && isDetailOpen) {
+            const upToDateChar = characters.find(c => c.id === selectedCharacter.id || c.name === selectedCharacter.name);
+            if (upToDateChar) {
+                setSelectedCharacter(upToDateChar);
+            }
+        }
+    }, [characters, selectedCharacter, isDetailOpen]);
+
+    const handleCharacterClick = (char: Character) => {
+        setSelectedCharacter(char);
+        setIsDetailOpen(true);
+    };
+
+    // Poll for cover image... logic remains same
     useEffect(() => {
         let intervalId: NodeJS.Timeout;
 
@@ -135,8 +156,26 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
         }
     }, [searchParams, router, pathname]);
 
+
+
+    const handleRetryCharacter = async (charId: string) => {
+        try {
+            await api.post(`/characters/${charId}/generate`);
+            // Optimistic update
+            if (onRefreshCharacters) onRefreshCharacters();
+            
+            // Also update selected character if open
+            if (selectedCharacter && selectedCharacter.id === charId) {
+                setSelectedCharacter({ ...selectedCharacter, sheet_status: 'processing' });
+            }
+        } catch (e) {
+            console.error("Retry failed", e);
+            alert("Retry failed. Please try again.");
+        }
+    };
+
     return (
-        <DashboardLayout>
+        <ProjectLayout projectId={project.id} projectTitle={project.title}>
             <ViewStyleModal
                 isOpen={isViewStyleOpen}
                 onClose={() => setIsViewStyleOpen(false)}
@@ -186,15 +225,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                             </div>
                         )}
 
-                        {/* Top Navigation (Floating) */}
-                        <div className="absolute top-6 left-6 z-20">
-                            <Link href="/dashboard">
-                                <Button variant="ghost" className="text-white/70 hover:text-white hover:bg-black/40 gap-2 h-9 px-3 rounded-full bg-black/20 backdrop-blur-md border border-white/5 transition-all">
-                                    <ArrowLeft size={14} />
-                                    <span className="text-sm font-medium">My Projects</span>
-                                </Button>
-                            </Link>
-                        </div>
+                        {/* Removed Floating Back Button as Sidebar handles it */}
 
                         {/* Banner Content (Bottom Left) */}
                         <div className="absolute bottom-0 left-0 w-full p-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -395,7 +426,6 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                     </Link>
                                 </div>
                                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                                    {/* Add Card */}
                                     <div 
                                         onClick={() => router.push(`/project/${project.id}/casting`)}
                                         className="aspect-[3/4] cursor-pointer rounded-xl border border-dashed border-white/10 bg-white/[0.02] flex flex-col items-center justify-center gap-2 hover:bg-white/[0.05] hover:border-white/20 transition-all group"
@@ -405,18 +435,36 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                         </div>
                                         <span className="text-xs font-medium text-gray-500 group-hover:text-gray-300">Add Character</span>
                                     </div>
-                                    
-                                    {characters.slice(0, 5).map(char => {
+
+
+                                    {[...characters].reverse().slice(0, 5).map(char => {
                                         const isGenerating = char.sheet_status === 'pending' || char.sheet_status === 'processing';
+                                        const isFailed = char.sheet_status === 'failed';
                                         return (
-                                            <div key={char.id || char.name} className="group relative rounded-xl overflow-hidden bg-[#1d1c27] border border-white/5 hover:border-white/20 transition-all">
+                                            <div 
+                                                key={char.id || char.name} 
+                                                onClick={() => handleCharacterClick(char)}
+                                                className={cn(
+                                                    "group relative rounded-xl overflow-hidden bg-[#1d1c27] border transition-all cursor-pointer",
+                                                    isFailed 
+                                                        ? "border-red-500/50 hover:border-red-500" 
+                                                        : "border-white/5 hover:border-white/20"
+                                                )}
+                                            >
                                                 <div className="aspect-[3/4] bg-cover bg-center relative" style={char.profile_image_url && !isGenerating ? { backgroundImage: `url("${char.profile_image_url}")` } : {}}>
-                                                    {(!char.profile_image_url || isGenerating) && (
+                                                    {(!char.profile_image_url || isGenerating || isFailed) && (
                                                          <div className="w-full h-full bg-slate-800 flex flex-col items-center justify-center text-gray-600 gap-2">
                                                             {isGenerating ? (
                                                                 <>
                                                                     <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                                                                     <span className="text-[10px] text-primary font-mono animate-pulse">CREATING...</span>
+                                                                </>
+                                                            ) : isFailed ? (
+                                                                <>
+                                                                    <div className="w-8 h-8 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center">
+                                                                        <AlertCircle size={16} />
+                                                                    </div>
+                                                                    <span className="text-[10px] text-red-400 font-bold">FAILED</span>
                                                                 </>
                                                             ) : (
                                                                 <span className="font-bold text-xl">{char.name[0]}</span>
@@ -439,6 +487,12 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
             </div>
 
             {/* Modals - Kept same */}
+            <CharacterDetailModal 
+                isOpen={isDetailOpen}
+                onClose={() => setIsDetailOpen(false)}
+                character={selectedCharacter}
+                onRetry={handleRetryCharacter}
+            />
             <ArtStyleSetupModal
                 isOpen={isArtStyleSetupOpen}
                 onClose={() => setIsArtStyleSetupOpen(false)}
@@ -462,6 +516,6 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                 onGenerate={onEpisodeAdd}
                 nextOrder={episodes ? episodes.length + 1 : 1}
             />
-        </DashboardLayout>
+        </ProjectLayout>
     );
 }

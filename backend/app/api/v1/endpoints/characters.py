@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, select, col
 
 from app.api import deps
-from app.models import Character, Project
+from app.models import Character, Project, Asset
 from pydantic import BaseModel
 from datetime import datetime
 from datetime import datetime
@@ -207,31 +207,63 @@ def generate_character_image_task(character_id: UUID, prompt: str):
     """
     try:
         print(f"Starting background character generation for {character_id}")
-        # Generate Image (Sheet)
-        # We need style from project but prompt already constructed in endpoint? 
-        # Actually generate_character_sheet needs separate args. 
-        # Refactoring to pass necessary info or query inside here?
-        # Let's query inside here to be safe and clean.
         
         with Session(engine) as session:
             character = session.get(Character, character_id)
             if not character:
+                print(f"Character {character_id} not found via background task.")
                 return
+            
+            # Update status to processing
+            character.sheet_status = "processing"
+            session.add(character)
+            session.commit()
+            
             project = session.get(Project, character.project_id)
-            
-            # Using the specialized character sheet generation
-            desc_for_img = character.description or ", ".join(character.appearance_tags)
-            img_bytes = ai_service.generate_character_sheet(character.name, desc_for_img, project.style_preset)
-            
-            if img_bytes:
-                url = storage.upload_image(img_bytes)
-                character.profile_image_url = url
+            if not project:
+                print(f"Project for character {character_id} not found.")
+                return
+
+            try:
+                # Using the specialized character sheet generation
+                # Fallback to name if no description or tags
+                desc_for_img = character.description or ", ".join(character.appearance_tags) or character.name
+                img_bytes = ai_service.generate_character_sheet(character.name, desc_for_img, project.style_preset)
+                
+                if img_bytes:
+                    url = storage.upload_image(img_bytes)
+                    
+                    # Create Asset record
+                    asset = Asset(
+                        filename=f"character_{character.id}_sheet.png",
+                        file_url=url,
+                        file_type="image/png",
+                        workspace_id=project.workspace_id
+                    )
+                    session.add(asset)
+                    session.flush() # Get asset.id
+                    
+                    character.profile_image_asset_id = asset.id
+                    character.sheet_status = "completed"
+                    session.add(character)
+                    session.commit()
+                    print(f"Character {character_id} image updated: {url}")
+                else:
+                    print("No image bytes returned for character generation.")
+                    character.sheet_status = "failed"
+                    session.add(character)
+                    session.commit()
+                    
+            except Exception as e:
+                print(f"Generation logic error: {e}")
+                character.sheet_status = "failed"
                 session.add(character)
                 session.commit()
-                print(f"Character {character_id} image updated: {url}")
                 
     except Exception as e:
-        print(f"Background Character Gen Error: {e}")
+        print(f"Background Character Gen Task Error: {e}")
+                
+
 
 @router.post("/{character_id}/generate", response_model=CharacterOut)
 def generate_character_image(

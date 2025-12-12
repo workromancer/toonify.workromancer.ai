@@ -238,14 +238,16 @@ class AIService:
         {description}
         
         Composition Requirements:
-        - Split the image vertically or arrange clearly.
-        - LEFT HALF: A high-quality detailed Portrait/Headshot of the character's face (showing expression).
-        - RIGHT HALF: Full body view (Front view, and if possible partial Back view) to show the costume and body type.
-        - Background: Neutral, simple (white or grey) to focus on the design.
+        - Vertical Layout (9:16 Portrait aspect ratio).
+        - TOP HALF: High-quality detailed Portrait/Close-up of the character's face (showing expression and facial features).
+        - BOTTOM HALF: Full body view showing character's physique, costume, and posture.
+        - Background: Neutral, simple (solid color or gradient) to focus on the design.
         - Style: {style} (High quality, professional concept art).
+        
+        NEGATIVE PROMPT: Do NOT include any text, logos, watermarks, signature, or charts.
         """
-        # Using 16:9 ratio for guaranteed support
-        return self.generate_image(prompt, width=1920, height=1080) 
+        # Using 9:16 ratio for vertical character sheet (576x1024)
+        return self.generate_image(prompt, width=576, height=1024) 
 
     def generate_direction_options(self, script: str, character_context: str = "") -> dict:
 
@@ -299,6 +301,8 @@ class AIService:
             aspect_ratio = "1:1"
             if abs(ratio - 3/4) < 0.01:
                 aspect_ratio = "3:4"
+            elif abs(ratio - 9/16) < 0.01:
+                aspect_ratio = "9:16"
             elif abs(ratio - 4/3) < 0.01:
                 aspect_ratio = "4:3"
             elif abs(ratio - 16/9) < 0.01:

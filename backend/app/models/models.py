@@ -148,6 +148,13 @@ class Character(SQLModel, table=True):
         }
     )
 
+    @property
+    def profile_image_url(self) -> Optional[str]:
+        if self.profile_image_asset:
+            return self.profile_image_asset.file_url
+        return None
+
+
 class Episode(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     project_id: UUID = Field(foreign_key="project.id")
