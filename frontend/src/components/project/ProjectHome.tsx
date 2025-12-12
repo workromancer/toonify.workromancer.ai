@@ -6,12 +6,11 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import api from '@/lib/api';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import ProjectRightSidebar from './ProjectRightSidebar';
 import EditProjectModal from './modals/EditProjectModal';
 import AddCharacterModal from './modals/AddCharacterModal';
 import GenerateEpisodeModal from './modals/GenerateEpisodeModal';
 import ArtStyleSetupModal from './modals/ArtStyleSetupModal';
-import { Plus, Sparkles, Clapperboard, Edit2, Palette, ArrowLeft, Play, ArrowRight } from 'lucide-react';
+import { Plus, Sparkles, Clapperboard, Edit2, Palette, ArrowLeft, Play, ArrowRight, Settings, FolderOpen, Upload, Database, Zap, Code } from 'lucide-react';
 
 interface Character {
     id?: string;
@@ -29,16 +28,28 @@ interface Project {
     thumbnail_url?: string;
     subtitle?: string;
     genre?: string;
-    worldview?: string | any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    worldview?: any;
     style_reference_url?: string;
+}
+
+interface Episode {
+    id: string;
+    title: string;
+    episode_order?: number;
+    thumbnail_url?: string;
+    created_at?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key: string]: any;
 }
 
 interface ProjectHomeProps {
     project: Project;
     characters: Character[];
-    episodes: any[];
+    episodes: Episode[];
     onProjectUpdate: (p: Project) => void;
     onCharacterAdd: (c: Character) => void;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onEpisodeAdd: (e: any) => void;
 }
 
@@ -101,20 +112,36 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
         <DashboardLayout>
             <div className="flex h-full relative overflow-y-auto bg-[#13111C]">
                 {/* Main Content Scrollable Area */}
-                <div className="flex-1 flex flex-col min-h-0 relative z-10">
+                <div className="flex-1 flex flex-col min-h-0 relative z-10 custom-scrollbar">
                     
-                    {/* Immersive Hero Banner - Reduced height for Creator Focus */}
-                    <div className="relative w-full h-[350px] shrink-0 group">
+                    {/* Immersive Hero Banner */}
+                    <div className="relative w-full h-[400px] shrink-0 group border-b border-white/5">
                         {/* Background Image */}
                         <div 
-                            className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
+                            className="absolute inset-0 bg-cover bg-center"
                             style={{ 
                                 backgroundImage: `url("${project.thumbnail_url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=2564&ixlib=rb-4.0.3'}")` 
                             }}
                         />
-                        {/* Darker Overlay for text readability & focus */}
+                        {/* Gradient Overlays */}
                         <div className="absolute inset-0 bg-gradient-to-t from-[#13111C] via-[#13111C]/40 to-[#13111C]/20" />
                         <div className="absolute inset-0 bg-black/20" />
+
+                        {/* Generate AI Cover Button (if missing) */}
+                        {!project.thumbnail_url && (
+                             <div className="absolute inset-0 flex items-center justify-center z-30">
+                                <Button 
+                                    className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white font-bold py-6 px-8 rounded-xl shadow-2xl transition-all hover:scale-105 group/gen"
+                                    onClick={() => setIsArtStyleSetupOpen(true)}
+                                >
+                                    <Sparkles className="w-6 h-6 mr-3 text-purple-400 group-hover/gen:text-purple-300 group-hover/gen:animate-pulse" />
+                                    <div className="flex flex-col items-start">
+                                        <span className="text-lg">Generate AI Cover</span>
+                                        <span className="text-xs text-gray-300 font-normal">Create a unique style & cover art</span>
+                                    </div>
+                                </Button>
+                            </div>
+                        )}
 
                         {/* Top Navigation (Floating) */}
                         <div className="absolute top-6 left-6 z-20">
@@ -127,10 +154,10 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                         </div>
 
                         {/* Banner Content (Bottom Left) */}
-                        <div className="absolute bottom-0 left-0 w-full p-8 flex items-end justify-between">
+                        <div className="absolute bottom-0 left-0 w-full p-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
                             <div className="flex flex-col gap-4 max-w-4xl">
-                                {/* Tags / Badges */}
-                                <div className="flex items-center gap-3">
+                                {/* Tags / Badges / Worldview Data */}
+                                <div className="flex items-center flex-wrap gap-2">
                                     {project.genre && (
                                         <span className="px-2.5 py-0.5 rounded-md bg-[#4a4aff] text-white text-[10px] font-bold uppercase tracking-wider shadow-lg border border-[#6b6bff]">
                                             {project.genre}
@@ -141,49 +168,66 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                             <Palette size={10} className="text-[#a9a9d1]" /> 
                                             {project.style_preset || "Setup Style"}
                                         </span>
-                                        {/* Style Preview Tooltip */}
-                                        {project.style_reference_url && (
-                                            <div className="absolute bottom-full left-0 mb-3 w-40 bg-[#1E1C29] border border-white/10 rounded-lg shadow-2xl p-1.5 opacity-0 group-hover/style:opacity-100 transition-all pointer-events-none z-30 translate-y-2 group-hover/style:translate-y-0 duration-200">
-                                                <div className="aspect-[3/4] rounded-md overflow-hidden bg-white/5 relative mb-1.5">
-                                                    <img src={project.style_reference_url} alt="Style Reference" className="w-full h-full object-cover" />
-                                                </div>
-                                                <p className="text-[9px] text-[#a9a9d1] font-medium text-center uppercase tracking-wide">Target Style</p>
-                                            </div>
-                                        )}
                                     </div>
+                                    <div className="w-px h-3 bg-white/20 mx-1" />
+                                    <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-white/5 border border-white/5 text-[10px] font-mono text-gray-300">
+                                        <Database size={10} className="text-[#4a4aff]" /> Synced
+                                    </span>
+                                    <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-white/5 border border-white/5 text-[10px] font-mono text-gray-300">
+                                        <Zap size={10} className="text-yellow-400" /> Fast Prod.
+                                    </span>
                                 </div>
 
                                 {/* Title & Meta */}
                                 <div>
                                     <div className="flex items-baseline gap-4 mb-1">
-                                        <h1 className="text-3xl md:text-4xl font-black text-white leading-tight tracking-[-0.02em] drop-shadow-xl">
+                                        <h1 className="text-3xl md:text-5xl font-black text-white leading-tight tracking-[-0.02em] drop-shadow-xl">
                                             {project.title}
                                         </h1>
-                                        <div className="flex items-center gap-2 text-xs font-medium text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full border border-green-400/20">
+                                        {/* Status Badge */}
+                                        <div className="hidden md:flex items-center gap-2 text-xs font-medium text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full border border-green-400/20">
                                             <div className="w-1.5 h-1.5 rounded-full bg-current shimmer"></div>
                                             Active
                                         </div>
                                     </div>
-                                    <p className="text-gray-300/80 text-sm max-w-2xl line-clamp-2">
+                                    <p className="text-gray-300/80 text-sm md:text-base max-w-2xl line-clamp-2">
                                         {project.subtitle || project.description || "No description provided."}
                                     </p>
                                 </div>
                             </div>
 
-                            {/* Creator Actions */}
-                            <div className="flex items-center gap-3 shrink-0">
-                                <Button 
-                                    className="h-10 px-4 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/10 backdrop-blur-md"
-                                    onClick={() => setIsEditProjectOpen(true)}
-                                >
-                                    <Edit2 size={16} className="mr-2" /> Edit Details
-                                </Button>
-                                <Button 
-                                    className="h-10 px-5 rounded-full bg-[#4a4aff] hover:bg-[#3d3dcc] text-white font-bold shadow-lg shadow-blue-900/20"
-                                    onClick={() => setIsGenerateEpisodeOpen(true)}
-                                >
-                                    <Sparkles size={16} className="mr-2" /> New Episode
-                                </Button>
+                            {/* Creator Actions Toolbar */}
+                            <div className="flex flex-col items-end gap-3 shrink-0">
+                                <div className="flex items-center gap-2 p-1 rounded-full bg-black/20 backdrop-blur-md border border-white/10">
+                                    <Button size="icon" variant="ghost" className="w-8 h-8 rounded-full text-gray-400 hover:text-white hover:bg-white/10" title="Project Settings" onClick={() => setIsEditProjectOpen(true)}>
+                                        <Settings size={16} />
+                                    </Button>
+                                    <Button size="icon" variant="ghost" className="w-8 h-8 rounded-full text-gray-400 hover:text-white hover:bg-white/10" title="Manage Assets">
+                                        <FolderOpen size={16} />
+                                    </Button>
+                                    <Button size="icon" variant="ghost" className="w-8 h-8 rounded-full text-gray-400 hover:text-white hover:bg-white/10" title="Generator Options">
+                                        <Code size={16} />
+                                    </Button>
+                                    <div className="w-px h-4 bg-white/10 mx-1" />
+                                    <Button size="icon" variant="ghost" className="w-8 h-8 rounded-full text-gray-400 hover:text-white hover:bg-white/10" title="Export Project">
+                                        <Upload size={16} />
+                                    </Button>
+                                </div>
+                                
+                                <div className="flex items-center gap-3">
+                                     <Button 
+                                        className="h-10 px-6 rounded-full bg-white text-black hover:bg-white/90 font-bold border border-transparent shadow-lg"
+                                        onClick={() => setIsEditProjectOpen(true)}
+                                    >
+                                        <Edit2 size={16} className="mr-2" /> Edit Details
+                                    </Button>
+                                    <Button 
+                                        className="h-10 px-6 rounded-full bg-[#4a4aff] hover:bg-[#3d3dcc] text-white font-bold shadow-lg shadow-blue-900/20"
+                                        onClick={() => setIsGenerateEpisodeOpen(true)}
+                                    >
+                                        <Sparkles size={16} className="mr-2" /> New Episode
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -298,11 +342,6 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                         </div>
                     </div>
                 </div>
-
-                {/* Right Sidebar - Restored & Integrated */}
-                <div className="hidden xl:block w-72 shrink-0 border-l border-white/10 bg-[#13111C]">
-                    <ProjectRightSidebar projectId={project.id} episodes={episodes} />
-                </div> 
             </div>
 
             {/* Modals - Kept same */}
