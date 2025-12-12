@@ -113,7 +113,7 @@ class Character(SQLModel, table=True):
     project_id: UUID = Field(foreign_key="project.id")
     name: str
     appearance_tags: List[str] = Field(sa_column=Column(JSON), default=[])
-    default_mood: str
+    default_mood: List[str] = Field(sa_column=Column(JSON), default=[])
     consistency_seed: int
     
     # File Reference

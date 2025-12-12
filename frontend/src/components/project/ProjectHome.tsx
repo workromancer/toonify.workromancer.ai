@@ -19,7 +19,8 @@ interface Character {
     name: string;
     description?: string;
     profile_image_url?: string;
-    default_mood?: string;
+    default_mood?: string | string[];
+    sheet_status?: 'pending' | 'processing' | 'completed' | 'failed';
 }
 
 interface Project {
@@ -54,12 +55,10 @@ interface ProjectHomeProps {
     onCharacterAdd: (c: Character) => void;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onEpisodeAdd: (e: any) => void;
+    onRefreshCharacters?: () => void;
 }
 
-
-
-
-export default function ProjectHome({ project, characters, episodes, onProjectUpdate, onCharacterAdd, onEpisodeAdd }: ProjectHomeProps) {
+export default function ProjectHome({ project, characters, episodes, onProjectUpdate, onCharacterAdd, onEpisodeAdd, onRefreshCharacters }: ProjectHomeProps) {
     const [isEditProjectOpen, setIsEditProjectOpen] = useState(false);
     const [isGenerateEpisodeOpen, setIsGenerateEpisodeOpen] = useState(false);
     const [isArtStyleSetupOpen, setIsArtStyleSetupOpen] = useState(false);
@@ -72,6 +71,20 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
             setIsArtStyleSetupOpen(true);
         }
     };
+
+    // Poll for pending characters
+    useEffect(() => {
+        const hasPendingChars = characters.some(c => c.sheet_status === 'pending' || c.sheet_status === 'processing');
+        let intervalId: NodeJS.Timeout;
+
+        if (hasPendingChars && onRefreshCharacters) {
+            intervalId = setInterval(onRefreshCharacters, 3000);
+        }
+
+        return () => {
+            if (intervalId) clearInterval(intervalId);
+        };
+    }, [characters, onRefreshCharacters]);
 
     // Poll for cover image if style is set but no thumbnail
     useEffect(() => {
@@ -393,22 +406,33 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                         <span className="text-xs font-medium text-gray-500 group-hover:text-gray-300">Add Character</span>
                                     </div>
                                     
-                                    {characters.slice(0, 5).map(char => (
-                                        <div key={char.id || char.name} className="group relative rounded-xl overflow-hidden bg-[#1d1c27] border border-white/5 hover:border-white/20 transition-all">
-                                            <div className="aspect-[3/4] bg-cover bg-center" style={char.profile_image_url ? { backgroundImage: `url("${char.profile_image_url}")` } : {}}>
-                                                {!char.profile_image_url && (
-                                                     <div className="w-full h-full bg-slate-800 flex items-center justify-center text-gray-600 font-bold text-xl">{char.name[0]}</div>
-                                                )}
+                                    {characters.slice(0, 5).map(char => {
+                                        const isGenerating = char.sheet_status === 'pending' || char.sheet_status === 'processing';
+                                        return (
+                                            <div key={char.id || char.name} className="group relative rounded-xl overflow-hidden bg-[#1d1c27] border border-white/5 hover:border-white/20 transition-all">
+                                                <div className="aspect-[3/4] bg-cover bg-center relative" style={char.profile_image_url && !isGenerating ? { backgroundImage: `url("${char.profile_image_url}")` } : {}}>
+                                                    {(!char.profile_image_url || isGenerating) && (
+                                                         <div className="w-full h-full bg-slate-800 flex flex-col items-center justify-center text-gray-600 gap-2">
+                                                            {isGenerating ? (
+                                                                <>
+                                                                    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                                                                    <span className="text-[10px] text-primary font-mono animate-pulse">CREATING...</span>
+                                                                </>
+                                                            ) : (
+                                                                <span className="font-bold text-xl">{char.name[0]}</span>
+                                                            )}
+                                                         </div>
+                                                    )}
+                                                </div>
+                                                <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/90 to-transparent">
+                                                    <h4 className="text-white text-xs font-bold truncate">{char.name}</h4>
+                                                    <p className="text-[10px] text-gray-400 truncate">{Array.isArray(char.default_mood) ? char.default_mood.join(', ') : (char.default_mood || 'Neutral')}</p>
+                                                </div>
                                             </div>
-                                            <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/90 to-transparent">
-                                                <h4 className="text-white text-xs font-bold truncate">{char.name}</h4>
-                                                <p className="text-[10px] text-gray-400 truncate">{char.default_mood || 'Neutral'}</p>
-                                            </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </section>
-
                         </div>
                     </div>
                 </div>

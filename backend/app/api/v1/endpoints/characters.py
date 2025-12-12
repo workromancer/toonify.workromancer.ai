@@ -19,29 +19,30 @@ class CharacterCreate(BaseModel):
     name: str
     project_id: UUID
     appearance_tags: List[str] = []
-    default_mood: str = "neutral"
+    default_mood: List[str] = []
+    description: Optional[str] = None
 
 class CharacterUpdate(BaseModel):
     name: Optional[str] = None
     appearance_tags: Optional[List[str]] = None
-    default_mood: Optional[str] = None
+    default_mood: Optional[List[str]] = None
     profile_image_url: Optional[str] = None
     description: Optional[str] = None
 
 class CharacterAugmentRequest(BaseModel):
     name: str
     tags: List[str]
-    mood: str
+    mood: List[str]
     project_id: UUID
 
 class CharacterOut(BaseModel):
     id: Any
     name: str
     project_id: Any
-    appearance_tags: List[str]
-    default_mood: str
-    profile_image_url: str | None
-    description: str | None
+    appearance_tags: List[str] = []
+    default_mood: Any = [] # Handle list or json string
+    profile_image_url: Optional[str] = None
+    description: Optional[str] = None
     created_at: datetime
 
 @router.get("/", response_model=List[CharacterOut])
@@ -83,12 +84,14 @@ def create_character(
         project_id=character_in.project_id,
         appearance_tags=character_in.appearance_tags,
         default_mood=character_in.default_mood,
-        consistency_seed=0, # Default, generate later
+
+        consistency_seed=0,
         profile_image_url=None,
-        description=None
+        description=character_in.description
     )
     # Generate Embedding
-    combined_text = f"{character_in.name} {character_in.default_mood} {' '.join(character_in.appearance_tags)}"
+    mood_str = " ".join(character_in.default_mood)
+    combined_text = f"{character_in.name} {mood_str} {' '.join(character_in.appearance_tags)}"
     character.embedding = ai_service.get_embedding(combined_text)
 
     session.add(character)
@@ -120,7 +123,9 @@ def update_character(
     if should_update_embedding:
         tags = character.appearance_tags or []
         desc = character.description or ""
-        combined_text = f"{character.name} {character.default_mood} {' '.join(tags)} {desc}"
+        moods = character.default_mood or []
+        mood_str = " ".join(moods)
+        combined_text = f"{character.name} {mood_str} {' '.join(tags)} {desc}"
         character.embedding = ai_service.get_embedding(combined_text)
         
     session.add(character)

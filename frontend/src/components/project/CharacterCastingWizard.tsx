@@ -100,7 +100,7 @@ export default function CharacterCastingWizard({ projectId, stylePreset }: Chara
     const [direction, setDirection] = useState(0); // For animation direction
 
     const [name, setName] = useState('');
-    const [mood, setMood] = useState('Neutral');
+    const [moods, setMoods] = useState<string[]>(['Neutral']);
     const [tags, setTags] = useState<string[]>([]);
     const [currentTag, setCurrentTag] = useState('');
     const [description, setDescription] = useState('');
@@ -156,7 +156,7 @@ export default function CharacterCastingWizard({ projectId, stylePreset }: Chara
             const res = await api.post(`/characters/augment`, {
                 name,
                 tags,
-                mood,
+                mood: moods,
                 project_id: projectId
             });
             // Handle new list response
@@ -170,18 +170,23 @@ export default function CharacterCastingWizard({ projectId, stylePreset }: Chara
                 const singleTags = res.data.augmented_tags || tags;
                 
                 // Directly finalize
-                handleFinalize(name, mood, singleTags, singleDesc);
+                handleFinalize(name, moods, singleTags, singleDesc);
             }
         } catch (e) {
             console.error("Augment error", e);
-            setError("Failed to augment text. Please try manual entry.");
-            setError("Failed to augment text. Please try manual entry.");
-            // If failed, just use what we have
-            handleFinalize(name, mood, tags, tags.join(", ") + " " + mood);
+            // Don't show error, just finalize with what we have
+            handleFinalize(name, moods, tags, tags.join(", ") + " " + moods.join(", "));
         } finally {
             setIsAugmenting(false);
         }
     };
+
+    // Auto-select first option when options appear
+    useEffect(() => {
+        if (step === 'selection' && conceptOptions.length > 0 && selectedOptionIndex === null) {
+            setSelectedOptionIndex(0);
+        }
+    }, [step, conceptOptions, selectedOptionIndex]);
 
     const handleSelectOption = (idx: number) => {
         setSelectedOptionIndex(idx);
@@ -197,27 +202,24 @@ export default function CharacterCastingWizard({ projectId, stylePreset }: Chara
     const handleConfirmSelection = () => {
         if (selectedOptionIndex !== null) {
             const opt = conceptOptions[selectedOptionIndex];
-            handleFinalize(opt.name, mood, opt.features, opt.visual_description);
+            handleFinalize(opt.name, moods, opt.features, opt.visual_description);
         }
     };
 
-    const handleFinalize = async (finalName: string, finalMood: string, finalTags: string[], finalDesc: string) => {
+    const handleFinalize = async (finalName: string, finalMoods: string[], finalTags: string[], finalDesc: string) => {
         setIsGenerating(true); // Re-using state for loading UI on button
         setError(null);
         try {
             // Create Character
+            // Create Character with description in one go
             const charRes = await api.post(`/characters`, {
                 name: finalName,
                 project_id: projectId,
-                default_mood: finalMood,
+                default_mood: finalMoods,
                 appearance_tags: finalTags,
-            });
-            const newCharId = charRes.data.id;
-
-            // Update description
-            await api.patch(`/characters/${newCharId}`, {
                 description: finalDesc
             });
+            const newCharId = charRes.data.id;
 
             // Trigger Generation Async
             api.post(`/characters/${newCharId}/generate`, {});
@@ -338,46 +340,96 @@ export default function CharacterCastingWizard({ projectId, stylePreset }: Chara
                         <Label className="text-white font-bold">Default Mood</Label>
                     </div>
                     <div className="grid grid-cols-2 gap-3 flex-1 content-start">
-                        {['Happy', 'Neutral', 'Sad', 'Angry', 'Serious', 'Mysterious'].map((m) => (
-                            <button
-                                key={m}
-                                onClick={() => setMood(m)}
-                                className={cn(
-                                    "flex items-center justify-center p-3 rounded-lg border transition-all h-12",
-                                    mood === m
-                                        ? "border-primary bg-primary/20 text-white shadow-sm shadow-primary/20"
-                                        : "border-white/5 bg-black/20 text-gray-400 hover:bg-white/10 hover:text-white"
-                                )}
-                            >
-                                <span className="text-sm font-medium">{m}</span>
-                            </button>
-                        ))}
+                        {['Happy', 'Neutral', 'Sad', 'Angry', 'Serious', 'Mysterious'].map((m) => {
+                            const isSelected = moods.includes(m);
+                            return (
+                                <button
+                                    key={m}
+                                    onClick={() => {
+                                        if (isSelected) {
+                                            setMoods(moods.filter(x => x !== m));
+                                        } else {
+                                            setMoods([...moods, m]);
+                                        }
+                                    }}
+                                    className={cn(
+                                        "flex items-center justify-center p-3 rounded-lg border transition-all h-12",
+                                        isSelected
+                                            ? "border-primary bg-primary/20 text-white shadow-sm shadow-primary/20"
+                                            : "border-white/5 bg-black/20 text-gray-400 hover:bg-white/10 hover:text-white"
+                                    )}
+                                >
+                                    <span className="text-sm font-medium">{m}</span>
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
             </div>
         </motion.div>
     );
 
-    const renderSelectionStep = () => (
-        <motion.div
-            key="selection"
-            custom={direction}
-            variants={stepVariants}
-            initial="hidden" animate="visible" exit="exit"
-            className="flex flex-col h-full gap-4"
-        >
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full min-h-[400px]">
-                {conceptOptions.map((opt, idx) => (
-                    <CharacterConceptCard
-                        key={idx}
-                        option={opt}
-                        isSelected={idx === selectedOptionIndex}
-                        onSelect={() => handleSelectOption(idx)}
+    const renderSelectionStep = () => {
+        if (!conceptOptions.length) return null;
+
+        const currentOption = conceptOptions[selectedOptionIndex || 0];
+
+        return (
+            <motion.div
+                key="selection"
+                custom={direction}
+                variants={stepVariants}
+                initial="hidden" animate="visible" exit="exit"
+                className="flex gap-6 h-full w-full"
+            >
+                {/* Left Sidebar: Bookmarks */}
+                <div className="w-1/3 flex flex-col gap-3 pr-2 border-r border-white/5 overflow-y-auto custom-scrollbar">
+                    <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest pl-1 mb-2">Candidates</h3>
+                    {conceptOptions.map((opt, idx) => (
+                        <div
+                            key={idx}
+                            onClick={() => setSelectedOptionIndex(idx)}
+                            className={cn(
+                                "cursor-pointer p-4 rounded-xl border transition-all duration-200 group relative overflow-hidden",
+                                selectedOptionIndex === idx
+                                    ? "bg-white/10 border-primary/50 text-white shadow-lg shadow-primary/10"
+                                    : "bg-black/20 border-white/5 text-gray-400 hover:bg-white/5 hover:border-white/20"
+                            )}
+                        >
+                            {selectedOptionIndex === idx && (
+                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
+                            )}
+                            <div className="flex justify-between items-center mb-1">
+                                <span className={cn("font-bold transition-colors", selectedOptionIndex === idx ? "text-primary-foreground" : "")}>
+                                    {opt.name}
+                                </span>
+                                {selectedOptionIndex === idx && <Sparkles className="w-3 h-3 text-primary animate-pulse" />}
+                            </div>
+                            <div className="flex flex-wrap gap-1 mt-2">
+                                {opt.features.slice(0, 3).map((f, i) => (
+                                    <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-black/40 border border-white/10 text-gray-500">
+                                        {f}
+                                    </span>
+                                ))}
+                                {opt.features.length > 3 && (
+                                    <span className="text-[10px] px-1.5 py-0.5 text-gray-600">+{opt.features.length - 3}</span>
+                                )}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Right Content: Detail View */}
+                <div className="flex-1 h-full pl-2">
+                     <CharacterConceptCard
+                        option={currentOption}
+                        isSelected={true}
+                        onSelect={() => {}} // Already selected
                     />
-                ))}
-            </div>
-        </motion.div>
-    );
+                </div>
+            </motion.div>
+        );
+    };
 
 
 
@@ -410,14 +462,12 @@ export default function CharacterCastingWizard({ projectId, stylePreset }: Chara
 
                     <StepIndicator currentStep={getStepNumber(step)} totalSteps={3} />
 
-                    <div className="flex-1 flex flex-col justify-center relative min-h-[300px]">
+                    <div className="flex-1 flex flex-col relative h-0 min-h-0">
                         <AnimatePresence custom={direction} mode="wait">
                             {step === 'name' && renderNameStep()}
                             {step === 'appearance' && renderAppearanceStep()}
                             {step === 'selection' && renderSelectionStep()}
-                            {step === 'name' && renderNameStep()}
-                            {step === 'appearance' && renderAppearanceStep()}
-                            {step === 'selection' && renderSelectionStep()}
+
                         </AnimatePresence>
                     </div>
 

@@ -105,6 +105,15 @@ export default function ProjectPage() {
         );
     }
 
+    const refetchCharacters = async () => {
+        try {
+            const charactersRes = await api.get(`/characters/?project_id=${projectId}`);
+            setCharacters(charactersRes.data);
+        } catch (charErr) {
+            console.warn("Failed to refetch characters", charErr);
+        }
+    };
+
     return (
         <ProjectHome
             project={project}
@@ -113,6 +122,7 @@ export default function ProjectPage() {
             onProjectUpdate={handleProjectUpdate}
             onCharacterAdd={handleCharacterAdd}
             onEpisodeAdd={handleEpisodeAdd}
+            onRefreshCharacters={refetchCharacters}
         />
     );
 }

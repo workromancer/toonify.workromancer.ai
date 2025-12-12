@@ -169,9 +169,13 @@ class AIService:
             print(f"Worldview Augmentation Error: {e}")
             raise e
 
-    def augment_character_text(self, name: str, tags: List[str], mood: str, style: str, project_context: str = "") -> dict:
+    # Updated signature to accept List[str] explicitly, or Union handled by type hint if we import Union
+    # But for cleaner code let's just assume simple type or check instance
+    def augment_character_text(self, name: str, tags: List[str], mood: list | str, style: str, project_context: str = "") -> dict:
         if not self.client:
              raise Exception("AI Service not initialized")
+
+        mood_str = ", ".join(mood) if isinstance(mood, list) else mood
 
         prompt = f"""
         You are a character design expert for {style} webtoons.
@@ -182,7 +186,7 @@ class AIService:
         
         Input Name: {name}
         Initial Tags: {', '.join(tags) if tags else 'None'}
-        Mood: {mood}
+        Mood: {mood_str}
         
         For each option, provide:
         - Unique Name (can be same or variation)

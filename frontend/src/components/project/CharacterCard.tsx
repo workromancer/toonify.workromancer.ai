@@ -6,12 +6,16 @@ import { Button } from '@/components/ui/button';
 export interface Character {
     id?: string;
     name: string;
-    default_mood?: string;
+    default_mood?: string | string[];
     appearance_tags?: string[]; 
     profile_image_url?: string;
 }
 
 export default function CharacterCard({ character }: { character: Character }) {
+    const moodDisplay = Array.isArray(character.default_mood) 
+        ? character.default_mood.join(", ") 
+        : (character.default_mood || "Neutral");
+
     return (
         <div className="group relative flex flex-col overflow-hidden rounded-xl bg-white dark:bg-[#1d1c27] transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-primary/20 border border-gray-200 dark:border-transparent">
             {character.profile_image_url ? (
@@ -23,7 +27,7 @@ export default function CharacterCard({ character }: { character: Character }) {
             )}
             <div className="flex flex-1 flex-col p-4">
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white">{character.name}</h3>
-                <p className="text-sm text-gray-500 dark:text-[#a19db9]">Default Mood: {character.default_mood || 'Neutral'}</p>
+                <p className="text-sm text-gray-500 dark:text-[#a19db9]">Default Mood: {moodDisplay}</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                     {character.appearance_tags && character.appearance_tags.map((tag, index) => (
                         <span key={index} className={`rounded-full px-2 py-1 text-xs font-medium ${index === 0 ? 'bg-primary/20 text-primary' : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-[#a19db9]'}`}>

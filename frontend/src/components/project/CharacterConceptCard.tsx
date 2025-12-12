@@ -26,8 +26,8 @@ export default function CharacterConceptCard({ option, isSelected, onSelect }: C
         <div
             onClick={onSelect}
             className={cn(
-                "relative group cursor-pointer transition-all duration-300 h-full",
-                isSelected ? "scale-105" : "hover:scale-[1.02]"
+                "relative group transition-all duration-300 h-full",
+                isSelected ? "" : "hover:scale-[1.02] cursor-pointer"
             )}
         >
             <div className={cn(
