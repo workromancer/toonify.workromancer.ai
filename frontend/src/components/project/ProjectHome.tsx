@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import api from '@/lib/api';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import EditProjectModal from './modals/EditProjectModal';
-import AddCharacterModal from './modals/AddCharacterModal';
 import GenerateEpisodeModal from './modals/GenerateEpisodeModal';
 import ArtStyleSetupModal from './modals/ArtStyleSetupModal';
 import { Plus, Sparkles, Clapperboard, Edit2, Palette, ArrowLeft, Play, ArrowRight, Settings, FolderOpen, Upload, Database, Zap, Code } from 'lucide-react';
@@ -62,7 +61,6 @@ interface ProjectHomeProps {
 
 export default function ProjectHome({ project, characters, episodes, onProjectUpdate, onCharacterAdd, onEpisodeAdd }: ProjectHomeProps) {
     const [isEditProjectOpen, setIsEditProjectOpen] = useState(false);
-    const [isAddCharacterOpen, setIsAddCharacterOpen] = useState(false);
     const [isGenerateEpisodeOpen, setIsGenerateEpisodeOpen] = useState(false);
     const [isArtStyleSetupOpen, setIsArtStyleSetupOpen] = useState(false);
     const [isViewStyleOpen, setIsViewStyleOpen] = useState(false);
@@ -386,7 +384,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                                     {/* Add Card */}
                                     <div 
-                                        onClick={() => setIsAddCharacterOpen(true)}
+                                        onClick={() => router.push(`/project/${project.id}/casting`)}
                                         className="aspect-[3/4] cursor-pointer rounded-xl border border-dashed border-white/10 bg-white/[0.02] flex flex-col items-center justify-center gap-2 hover:bg-white/[0.05] hover:border-white/20 transition-all group"
                                     >
                                         <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-gray-400 group-hover:text-white transition-colors">
@@ -432,12 +430,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                 project={project}
                 onUpdate={onProjectUpdate}
             />
-            <AddCharacterModal
-                isOpen={isAddCharacterOpen}
-                onClose={() => setIsAddCharacterOpen(false)}
-                projectId={project.id}
-                onAdd={onCharacterAdd}
-            />
+
             <GenerateEpisodeModal
                 isOpen={isGenerateEpisodeOpen}
                 onClose={() => setIsGenerateEpisodeOpen(false)}

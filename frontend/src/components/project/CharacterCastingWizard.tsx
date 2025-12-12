@@ -26,13 +26,14 @@ import {
 } from 'lucide-react';
 import api from '@/lib/api';
 import CharacterConceptCard from './CharacterConceptCard';
+import { useToast } from '@/hooks/use-toast';
 
 interface CharacterCastingWizardProps {
     projectId: string;
     stylePreset: string;
 }
 
-type StepName = 'name' | 'appearance' | 'selection' | 'augment' | 'generate' | 'result';
+type StepName = 'name' | 'appearance' | 'selection';
 
 interface ConceptOption {
     name: string;
@@ -80,9 +81,7 @@ const StepIndicator = ({ currentStep, totalSteps }: { currentStep: number; total
                             )}>
                                 {stepNum === 1 && 'Name'}
                                 {stepNum === 2 && 'Traits'}
-                                {stepNum === 3 && 'Concepts'}
-                                {stepNum === 4 && 'Review'}
-                                {stepNum === 5 && 'Generate'}
+                                {stepNum === 3 && 'Cast'}
                             </span>
                         </div>
                     );
@@ -94,6 +93,7 @@ const StepIndicator = ({ currentStep, totalSteps }: { currentStep: number; total
 
 export default function CharacterCastingWizard({ projectId, stylePreset }: CharacterCastingWizardProps) {
     const router = useRouter();
+    const { toast } = useToast();
 
     // State
     const [step, setStep] = useState<StepName>('name');
@@ -119,9 +119,7 @@ export default function CharacterCastingWizard({ projectId, stylePreset }: Chara
             case 'name': return 1;
             case 'appearance': return 2;
             case 'selection': return 3;
-            case 'augment': return 4;
-            case 'generate': return 5;
-            case 'result': return 5;
+            case 'selection': return 3;
             default: return 1;
         }
     };
@@ -166,18 +164,20 @@ export default function CharacterCastingWizard({ projectId, stylePreset }: Chara
                 setConceptOptions(res.data.options);
                 handleNextStep('selection');
             } else {
-                // Fallback for single object (legacy/error)
-                setDescription(res.data.visual_description || "");
-                if (res.data.augmented_tags) {
-                    setTags(res.data.augmented_tags);
-                }
-                handleNextStep('augment');
+                // Fallback for single object -> Finalize immediately or treated as selection?
+                // User wants to skip review. So we proceed to generate using the single result.
+                const singleDesc = res.data.visual_description || "";
+                const singleTags = res.data.augmented_tags || tags;
+                
+                // Directly finalize
+                handleFinalize(name, mood, singleTags, singleDesc);
             }
         } catch (e) {
             console.error("Augment error", e);
             setError("Failed to augment text. Please try manual entry.");
-            setDescription(tags.join(", ") + " " + mood);
-            handleNextStep('augment'); // Skip selection if failed
+            setError("Failed to augment text. Please try manual entry.");
+            // If failed, just use what we have
+            handleFinalize(name, mood, tags, tags.join(", ") + " " + mood);
         } finally {
             setIsAugmenting(false);
         }
@@ -196,74 +196,48 @@ export default function CharacterCastingWizard({ projectId, stylePreset }: Chara
 
     const handleConfirmSelection = () => {
         if (selectedOptionIndex !== null) {
-            handleNextStep('augment');
+            const opt = conceptOptions[selectedOptionIndex];
+            handleFinalize(opt.name, mood, opt.features, opt.visual_description);
         }
     };
 
-    const handleGenerate = async () => {
-        setIsGenerating(true);
+    const handleFinalize = async (finalName: string, finalMood: string, finalTags: string[], finalDesc: string) => {
+        setIsGenerating(true); // Re-using state for loading UI on button
         setError(null);
         try {
             // Create Character
-            // Backend expects: name, project_id, appearance_tags, default_mood
             const charRes = await api.post(`/characters`, {
-                name,
+                name: finalName,
                 project_id: projectId,
-                default_mood: mood,
-                appearance_tags: tags,
-                // description: description, // Backend create_character doesn't take description in body yet? 
-                // Let's check CharacterCreate model in characters.py: name, project_id, appearance_tags, default_mood.
-                // Description is updated via UPDATE or separate logic? 
-                // Ah, backend create_character doesn't accept description.
-                // We should update it after creation if needed, OR just proceed since generate uses the passed description?
-                // Wait, generate_character_image task queries the character from DB.
-                // It uses character.description.
-                // So we MUST save description to DB.
-                // We need to UPDATE the character with description after creation.
+                default_mood: finalMood,
+                appearance_tags: finalTags,
             });
             const newCharId = charRes.data.id;
-            setCharacterId(newCharId);
 
             // Update description
             await api.patch(`/characters/${newCharId}`, {
-                description: description
+                description: finalDesc
             });
 
-            // Trigger Generation
-            await api.post(`/characters/${newCharId}/generate`, {});
+            // Trigger Generation Async
+            api.post(`/characters/${newCharId}/generate`, {});
 
-            handleNextStep('generate');
+            // Notify and Redirect
+            toast({
+                title: "Casting Complete!",
+                description: `${finalName} is arriving on set. We'll notify you when the image is ready.`,
+            });
+            
+            router.push(`/project/${projectId}`);
         } catch (e) {
-            console.error("Generation Start Error", e);
-            setError("Failed to start generation.");
+            console.error("Creation Error", e);
+            setError("Failed to create character.");
             setIsGenerating(false);
         }
     };
 
     // Polling Effect
-    useEffect(() => {
-        let interval: NodeJS.Timeout;
-        if (step === 'generate' && characterId) {
-            interval = setInterval(async () => {
-                try {
-                    const res = await api.get(`/characters/${characterId}`);
-                    const char = res.data;
-                    if (char.sheet_status === 'completed' && char.character_sheet_url) {
-                        setSheetUrl(char.character_sheet_url);
-                        setStep('result');
-                        setIsGenerating(false);
-                    } else if (char.sheet_status === 'failed') {
-                        setError("Generation Failed. Please try again.");
-                        setIsGenerating(false);
-                        // Stay on generate or go back? user choice usually, but let's show error
-                    }
-                } catch (e) {
-                    console.error("Polling error", e);
-                }
-            }, 3000);
-        }
-        return () => clearInterval(interval);
-    }, [step, characterId]);
+
 
 
     // --- Animations ---
@@ -405,70 +379,7 @@ export default function CharacterCastingWizard({ projectId, stylePreset }: Chara
         </motion.div>
     );
 
-    const renderAugmentStep = () => (
-        <motion.div
-            key="augment"
-            custom={direction}
-            variants={stepVariants}
-            initial="hidden" animate="visible" exit="exit"
-            className="flex flex-col h-full gap-4"
-        >
-            <div className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col flex-1 gap-2">
-                <div className="flex justify-between items-center mb-2">
-                    <Label className="text-white font-bold flex items-center gap-2">
-                        <Wand2 className="w-4 h-4 text-purple-400" /> AI Enhanced Description
-                    </Label>
-                    <span className="text-xs text-gray-500">Editable</span>
-                </div>
-                <Textarea
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    className="flex-1 w-full bg-black/20 border-white/10 p-4 text-white/90 leading-relaxed resize-none focus:ring-1 focus:ring-primary/50 font-mono text-sm rounded-lg"
-                    placeholder="Refine the character description here..."
-                />
-            </div>
-        </motion.div>
-    );
 
-    const renderGenerateStep = () => (
-        <motion.div
-            key="generate"
-            custom={direction}
-            variants={stepVariants}
-            initial="hidden" animate="visible" exit="exit"
-            className="flex flex-col items-center justify-center h-[400px]"
-        >
-            <div className="relative">
-                <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full animate-pulse"></div>
-                <Loader2 className="w-20 h-20 text-primary animate-spin relative z-10" />
-            </div>
-            <h2 className="mt-8 text-2xl font-bold text-white">Summoning {name}...</h2>
-            <p className="text-gray-400 mt-2 text-center max-w-sm">
-                Creating character sheet in <span className="text-white font-semibold">{stylePreset}</span> style.
-            </p>
-        </motion.div>
-    );
-
-    const renderResultStep = () => (
-        <motion.div
-            key="result"
-            custom={direction}
-            variants={stepVariants}
-            initial="hidden" animate="visible" exit="exit"
-            className="flex flex-col h-full items-center justify-center p-2"
-        >
-            <div className="relative group w-full max-h-[500px] flex items-center justify-center bg-black/40 rounded-xl border border-white/10 overflow-hidden">
-                {sheetUrl ? (
-                    <img src={sheetUrl} alt={name} className="max-w-full max-h-full object-contain shadow-2xl" />
-                ) : (
-                    <div className="text-gray-500 flex flex-col items-center">
-                        <ImageIcon className="w-12 h-12 mb-2 opacity-50" />
-                        <span>No Image Generated</span>
-                    </div>
-                )}
-            </div>
-        </motion.div>
-    );
 
     // --- Layout ---
 
@@ -486,33 +397,27 @@ export default function CharacterCastingWizard({ projectId, stylePreset }: Chara
                         {step === 'name' && 'Who are they?'}
                         {step === 'appearance' && `Define ${name}'s Look`}
                         {step === 'selection' && 'Choose a Direction'}
-                        {step === 'augment' && 'Review Concept'}
-                        {step === 'generate' && 'Magic in Progress'}
-                        {step === 'result' && `${name} is Ready!`}
                     </h1>
                     <p className="text-gray-400 text-sm font-light">
                         {step === 'name' && 'Every great story needs a protagonist.'}
                         {step === 'appearance' && 'Add traits and mood to guide the AI.'}
                         {step === 'selection' && 'Select the best profile match for your story.'}
-                        {step === 'augment' && 'Refine the description before generation.'}
-                        {step === 'generate' && 'Depending on complexity, this may take a moment.'}
-                        {step === 'result' && 'Your character has been cast successfully.'}
                     </p>
                 </div>
 
                 {/* Content Card */}
                 <div className="bg-[#1a1726]/90 backdrop-blur-md border border-white/10 rounded-2xl shadow-2xl p-8 flex-1 flex flex-col relative overflow-hidden transition-all duration-300">
 
-                    <StepIndicator currentStep={getStepNumber(step)} totalSteps={5} />
+                    <StepIndicator currentStep={getStepNumber(step)} totalSteps={3} />
 
                     <div className="flex-1 flex flex-col justify-center relative min-h-[300px]">
                         <AnimatePresence custom={direction} mode="wait">
                             {step === 'name' && renderNameStep()}
                             {step === 'appearance' && renderAppearanceStep()}
                             {step === 'selection' && renderSelectionStep()}
-                            {step === 'augment' && renderAugmentStep()}
-                            {step === 'generate' && renderGenerateStep()}
-                            {step === 'result' && renderResultStep()}
+                            {step === 'name' && renderNameStep()}
+                            {step === 'appearance' && renderAppearanceStep()}
+                            {step === 'selection' && renderSelectionStep()}
                         </AnimatePresence>
                     </div>
 
@@ -523,17 +428,16 @@ export default function CharacterCastingWizard({ projectId, stylePreset }: Chara
                     )}
 
                     {/* Footer Navigation */}
-                    {step !== 'generate' && (
+                    {(
                         <footer className="mt-8 flex justify-between items-center pt-6 border-t border-white/5">
                             {/* Back Button */}
                             <div className="flex-1">
-                                {step !== 'name' && step !== 'result' && (
+                                {step !== 'name' && (
                                     <Button
                                         variant="ghost"
                                         onClick={() => {
                                             if (step === 'appearance') handlePrevStep('name');
                                             if (step === 'selection') handlePrevStep('appearance');
-                                            if (step === 'augment') handlePrevStep('selection');
                                             // if step generate (hidden)
                                         }}
                                         className="text-gray-400 hover:text-white hover:bg-white/5 gap-2"
@@ -541,18 +445,9 @@ export default function CharacterCastingWizard({ projectId, stylePreset }: Chara
                                         <MoveLeft size={16} /> Back
                                     </Button>
                                 )}
-                                {step === 'result' && (
-                                    <Button
-                                        variant="ghost"
-                                        onClick={() => handlePrevStep('appearance')} // "Remake" logic
-                                        className="text-gray-400 hover:text-white hover:bg-white/5 gap-2"
-                                    >
-                                        <RefreshCw size={16} /> New Version
-                                    </Button>
-                                )}
+
                             </div>
 
-                            {/* Action Button */}
                             <div className="flex-1 flex justify-end">
                                 {step === 'name' && (
                                     <Button
@@ -576,26 +471,11 @@ export default function CharacterCastingWizard({ projectId, stylePreset }: Chara
                                 {step === 'selection' && (
                                     <Button
                                         onClick={handleConfirmSelection}
-                                        disabled={selectedOptionIndex === null}
+                                        disabled={selectedOptionIndex === null || isGenerating}
                                         className="bg-primary hover:bg-primary/90 text-white font-bold rounded-xl px-8 h-12 shadow-lg shadow-primary/20"
                                     >
-                                        Select & Review <MoveRight className="ml-2 w-4 h-4" />
-                                    </Button>
-                                )}
-                                {step === 'augment' && (
-                                    <Button
-                                        onClick={handleGenerate}
-                                        className="bg-primary hover:bg-primary/90 text-white font-bold rounded-xl px-8 h-12 shadow-lg shadow-primary/20"
-                                    >
-                                        Generate <Sparkles className="ml-2 w-4 h-4" />
-                                    </Button>
-                                )}
-                                {step === 'result' && (
-                                    <Button
-                                        onClick={() => router.push(`/project/${projectId}`)}
-                                        className="bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl px-8 h-12 shadow-lg shadow-green-900/20"
-                                    >
-                                        Finish <Check className="ml-2 w-4 h-4" />
+                                        {isGenerating ? <Loader2 className="animate-spin mr-2" /> : null}
+                                        Create Character <Sparkles className="ml-2 w-4 h-4" />
                                     </Button>
                                 )}
                             </div>
