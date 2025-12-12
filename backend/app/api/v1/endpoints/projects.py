@@ -233,26 +233,51 @@ def update_project(
     session.commit()
     session.refresh(project)
     
-    # Check if style was updated and trigger cover generation
-    if project_in.style_preset and project_in.style_preset != "anime_webtoon": # Trigger if style is set to something specific
-         # Extract worldview content safely
-         wv_content = ""
-         if project.worldview:
-             if isinstance(project.worldview, dict):
-                 wv_content = project.worldview.get("content", "") or project.worldview.get("description", "")
-             else:
-                 wv_content = str(project.worldview)
-         
-         background_tasks.add_task(
-             generate_project_cover_task, 
-             str(project.id), 
-             project.title, 
-             project.genre or "Fantasy", 
-             wv_content, 
-             project.style_preset
-         )
+    # Check if style was updated and trigger cover generation (REMOVED - Explicit generation only)
+    # if project_in.style_preset and project_in.style_preset != "anime_webtoon": 
+    #      ...
 
     return project
+
+@router.post("/{project_id}/cover", response_model=Any)
+def generate_cover(
+    *,
+    session: Session = Depends(deps.get_session),
+    project_id: str,
+    background_tasks: BackgroundTasks,
+    current_user_id: str = Depends(deps.get_current_user_id),
+) -> Any:
+    """
+    Trigger AI cover image generation for the project.
+    """
+    from uuid import UUID
+    try:
+        project_uuid = UUID(project_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid UUID")
+
+    project = session.get(Project, project_uuid)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    # Extract worldview content safely
+    wv_content = ""
+    if project.worldview:
+        if isinstance(project.worldview, dict):
+             wv_content = project.worldview.get("content", "") or project.worldview.get("description", "")
+        else:
+             wv_content = str(project.worldview)
+    
+    background_tasks.add_task(
+        generate_project_cover_task, 
+        str(project.id), 
+        project.title, 
+        project.genre or "Fantasy", 
+        wv_content, 
+        project.style_preset
+    )
+
+    return {"message": "Cover generation started"}
 
 @router.post("/styles/recommend")
 def recommend_styles(

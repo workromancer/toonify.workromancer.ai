@@ -132,7 +132,16 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                              <div className="absolute inset-0 flex items-center justify-center z-30">
                                 <Button 
                                     className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white font-bold py-6 px-8 rounded-xl shadow-2xl transition-all hover:scale-105 group/gen"
-                                    onClick={() => setIsArtStyleSetupOpen(true)}
+                                    onClick={async () => {
+                                        try {
+                                             await api.post(`/projects/${project.id}/cover`);
+                                             // Ideally show a toast here
+                                             alert("Cover generation started! It will appear shortly.");
+                                        } catch (e) {
+                                            console.error("Failed to start generation", e);
+                                            alert("Failed to start generation.");
+                                        }
+                                    }}
                                 >
                                     <Sparkles className="w-6 h-6 mr-3 text-purple-400 group-hover/gen:text-purple-300 group-hover/gen:animate-pulse" />
                                     <div className="flex flex-col items-start">
@@ -199,7 +208,22 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                             {/* Creator Actions Toolbar */}
                             <div className="flex flex-col items-end gap-3 shrink-0">
                                 <div className="flex items-center gap-2 p-1 rounded-full bg-black/20 backdrop-blur-md border border-white/10">
-                                    <Button size="icon" variant="ghost" className="w-8 h-8 rounded-full text-gray-400 hover:text-white hover:bg-white/10" title="Project Settings" onClick={() => setIsEditProjectOpen(true)}>
+                                    <Button 
+                                        size="icon" 
+                                        variant="ghost" 
+                                        className="w-8 h-8 rounded-full text-gray-400 hover:text-white hover:bg-white/10"
+                                        title="Art Style"
+                                        onClick={() => setIsArtStyleSetupOpen(true)}
+                                    >
+                                        <Palette size={16} />
+                                    </Button>
+                                    <Button 
+                                        size="icon" 
+                                        variant="ghost" 
+                                        className="w-8 h-8 rounded-full text-gray-400 hover:text-white hover:bg-white/10" 
+                                        title="Project Settings" 
+                                        onClick={() => setIsEditProjectOpen(true)}
+                                    >
                                         <Settings size={16} />
                                     </Button>
                                     <Button size="icon" variant="ghost" className="w-8 h-8 rounded-full text-gray-400 hover:text-white hover:bg-white/10" title="Manage Assets">
