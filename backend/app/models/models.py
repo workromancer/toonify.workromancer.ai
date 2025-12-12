@@ -90,6 +90,20 @@ class Project(SQLModel, table=True):
 
     workspace: Workspace = Relationship(back_populates="projects")
     genre: Optional[Genre] = Relationship(back_populates="projects")
+    
+    cover_image_asset: Optional["Asset"] = Relationship(
+        sa_relationship_kwargs={
+            "primaryjoin": "Project.cover_image_asset_id==Asset.id",
+            "uselist": False
+        }
+    )
+    thumbnail_asset: Optional["Asset"] = Relationship(
+        sa_relationship_kwargs={
+            "primaryjoin": "Project.thumbnail_asset_id==Asset.id",
+            "uselist": False
+        }
+    )
+
     characters: List["Character"] = Relationship(back_populates="project")
     episodes: List["Episode"] = Relationship(back_populates="project")
     clues: List["Clue"] = Relationship(back_populates="project")
@@ -120,6 +134,19 @@ class Character(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     project: Project = Relationship(back_populates="characters")
+    
+    profile_image_asset: Optional["Asset"] = Relationship(
+        sa_relationship_kwargs={
+            "primaryjoin": "Character.profile_image_asset_id==Asset.id",
+            "uselist": False
+        }
+    )
+    character_sheet_asset: Optional["Asset"] = Relationship(
+        sa_relationship_kwargs={
+            "primaryjoin": "Character.character_sheet_asset_id==Asset.id",
+            "uselist": False
+        }
+    )
 
 class Episode(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
@@ -151,6 +178,13 @@ class StoryCut(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     episode: Episode = Relationship(back_populates="cuts")
+
+    image_asset: Optional["Asset"] = Relationship(
+        sa_relationship_kwargs={
+            "primaryjoin": "StoryCut.image_asset_id==Asset.id",
+            "uselist": False
+        }
+    )
 
 class Clue(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)

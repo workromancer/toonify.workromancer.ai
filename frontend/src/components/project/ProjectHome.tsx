@@ -166,12 +166,20 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                         <div className="absolute bottom-0 left-0 w-full p-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
                             <div className="flex flex-col gap-4 max-w-4xl">
                                 {/* Tags / Badges / Worldview Data */}
+                                {/* Tags / Badges / Worldview Data */}
                                 <div className="flex items-center flex-wrap gap-2">
                                     {project.genre && (
                                         <span className="px-2.5 py-0.5 rounded-md bg-[#4a4aff] text-white text-[10px] font-bold uppercase tracking-wider shadow-lg border border-[#6b6bff]">
                                             {project.genre}
                                         </span>
                                     )}
+                                    {/* Render Tones */}
+                                    {project.worldview?.tone && Array.isArray(project.worldview.tone) && project.worldview.tone.map((t: string) => (
+                                         <span key={t} className="px-2.5 py-0.5 rounded-md bg-purple-500/20 text-purple-200 text-[10px] font-bold uppercase tracking-wider border border-purple-500/30">
+                                            {t}
+                                        </span>
+                                    ))}
+                                    
                                     <div className="relative group/style cursor-pointer" onClick={() => setIsArtStyleSetupOpen(true)}>
                                         <span className="px-2.5 py-0.5 rounded-md bg-black/40 hover:bg-black/60 text-white text-[10px] font-medium border border-white/10 backdrop-blur-md flex items-center gap-1.5 transition-all">
                                             <Palette size={10} className="text-[#a9a9d1]" /> 
@@ -199,8 +207,8 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                             Active
                                         </div>
                                     </div>
-                                    <p className="text-gray-300/80 text-sm md:text-base max-w-2xl line-clamp-2">
-                                        {project.subtitle || project.description || "No description provided."}
+                                    <p className="text-gray-300/80 text-sm md:text-base max-w-2xl line-clamp-3">
+                                        {project.subtitle || project.description || project.worldview?.content || project.worldview?.description || "No description provided."}
                                     </p>
                                 </div>
                             </div>
