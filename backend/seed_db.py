@@ -36,6 +36,23 @@ def seed():
                 session.refresh(user) # Ensure we have latest state
                 print("Password reset to 'password'.")
 
+            # Seed Genres
+            from app.models.models import Genre
+            genres = [
+                "Fantasy", "Sci-Fi", "Romance", "Slice of Life", "Thriller", 
+                "Action", "Comedy", "Horror", "Drama", "Mystery"
+            ]
+            genre_map = {}
+            for g_name in genres:
+                genre = session.exec(select(Genre).where(Genre.name == g_name)).first()
+                if not genre:
+                    genre = Genre(name=g_name, description=f"{g_name} genre")
+                    session.add(genre)
+                    session.commit()
+                    session.refresh(genre)
+                    print(f"Created Genre: {g_name}")
+                genre_map[g_name] = genre
+
             # Check for Test Project
             from app.models.models import Project, Episode
             project = session.exec(select(Project).where(Project.title == "Director AI Test")).first()
@@ -48,7 +65,16 @@ def seed():
                      session.commit()
                      session.refresh(workspace)
                 
-                project = Project(title="Director AI Test", workspace_id=workspace.id, owner_id=user.id, style_preset="anime_webtoon")
+                # Use Fantasy as default for test project
+                default_genre_id = genre_map.get("Fantasy").id if "Fantasy" in genre_map else None
+
+                project = Project(
+                    title="Director AI Test", 
+                    workspace_id=workspace.id, 
+                    owner_id=user.id, 
+                    style_preset="anime_webtoon",
+                    genre_id=default_genre_id
+                )
                 session.add(project)
                 session.commit()
                 session.refresh(project)

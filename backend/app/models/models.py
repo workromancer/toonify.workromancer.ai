@@ -34,16 +34,26 @@ class Workspace(SQLModel, table=True):
     transactions: List["CreditTransaction"] = Relationship(back_populates="workspace")
     assets: List["Asset"] = Relationship(back_populates="workspace")
 
+
+class Genre(SQLModel, table=True):
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    name: str = Field(unique=True)
+    description: Optional[str] = None
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    projects: List["Project"] = Relationship(back_populates="genre")
+
 class Asset(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
-    workspace_id: UUID = Field(foreign_key="workspace.id")
-    user_id: UUID
+    workspace_id: Optional[UUID] = Field(foreign_key="workspace.id", default=None) # Optional for system files
+    user_id: Optional[UUID] = None # Optional for system files
     filename: str
     file_url: str
     file_type: str # image/png, etc.
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
-    workspace: Workspace = Relationship(back_populates="assets")
+    workspace: Optional[Workspace] = Relationship(back_populates="assets")
 
 class CreditTransaction(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
@@ -59,19 +69,27 @@ class Project(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     title: str
     subtitle: Optional[str] = None
-    genre: Optional[str] = None
+    
+    # Genre link
+    genre_id: Optional[UUID] = Field(foreign_key="genre.id", default=None)
+    
     worldview: Optional[dict] = Field(default=None, sa_column=Column(JSON))
     workspace_id: UUID = Field(foreign_key="workspace.id")
     owner_id: UUID
     style_preset: str
     art_style: Optional[str] = None # Detailed style description or name
-    style_reference_url: Optional[str] = None # URL of the selected style image (preset or generated)
+    style_reference_url: Optional[str] = None # URL of the selected style image
+    
     cover_image_status: str = "pending" # pending, processing, completed, failed
-    cover_image_url: Optional[str] = None
-    thumbnail_url: Optional[str] = None
+    
+    # File References
+    cover_image_asset_id: Optional[UUID] = Field(foreign_key="asset.id", default=None)
+    thumbnail_asset_id: Optional[UUID] = Field(foreign_key="asset.id", default=None)
+
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     workspace: Workspace = Relationship(back_populates="projects")
+    genre: Optional[Genre] = Relationship(back_populates="projects")
     characters: List["Character"] = Relationship(back_populates="project")
     episodes: List["Episode"] = Relationship(back_populates="project")
     clues: List["Clue"] = Relationship(back_populates="project")
@@ -83,11 +101,14 @@ class Character(SQLModel, table=True):
     appearance_tags: List[str] = Field(sa_column=Column(JSON), default=[])
     default_mood: str
     consistency_seed: int
-    profile_image_url: Optional[str] = Field(default=None, sa_column=Column(Text))
+    
+    # File Reference
+    profile_image_asset_id: Optional[UUID] = Field(foreign_key="asset.id", default=None)
+    
     description: Optional[str] = Field(default=None, sa_column=Column(Text))
     
     # Character Sheet Generation
-    character_sheet_url: Optional[str] = Field(default=None, sa_column=Column(Text))
+    character_sheet_asset_id: Optional[UUID] = Field(foreign_key="asset.id", default=None)
     sheet_status: str = "pending" # pending, processing, completed, failed
     
     height_cm: Optional[int] = None
@@ -118,7 +139,10 @@ class StoryCut(SQLModel, table=True):
     script: str
     selected_layout: str
     aspect_ratio: str
-    image_path: Optional[str] = Field(default=None, sa_column=Column(Text))
+    
+    # File Reference
+    image_asset_id: Optional[UUID] = Field(foreign_key="asset.id", default=None)
+    
     dialogues: List[dict] = Field(sa_column=Column(JSON), default=[]) # JSON List of {speaker, text}
     
     # RAG Embedding (Stored as JSON array for compatibility)

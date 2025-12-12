@@ -145,7 +145,7 @@ class AIService:
                 {{
                     "id": "option_1",
                     "title": "Title (e.g., Gritty Realism)",
-                    "tone": "Dark / Serious / Whimsical",
+                    "tone": ["Tone 1", "Tone 2"], 
                     "key_features": ["Feature 1", "Feature 2", "Feature 3"],
                     "description": "Short summary of this direction",
                     "content": "Full detailed enhanced worldview description..."
@@ -413,8 +413,9 @@ class AIService:
     def generate_character_sheet_async(self, character_id: str, name: str, description: str, style: str):
         return self.generate_character_sheet(name, description, style)
 
-    def generate_project_cover_image(self, title: str, genre: str, worldview: str, style: str) -> bytes:
+    def generate_project_cover_image(self, title: str, genre: str, worldview: str, style: str, tones: List[str] = None) -> bytes:
 
+        tone_str = f"Tone: {', '.join(tones)}" if tones else ""
 
         prompt = f"""
         Create a high-quality webtoon cover illustration.
@@ -422,6 +423,7 @@ class AIService:
         Title: {title}
         Genre: {genre}
         Art Style: {style}
+        {tone_str}
         
         Worldview/Setting:
         {worldview}

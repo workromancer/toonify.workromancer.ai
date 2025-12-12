@@ -1,14 +1,14 @@
-from typing import Any, List
-from fastapi import APIRouter, Depends, HTTPException
+from typing import Any, List, Optional
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlmodel import Session, select, col
+from uuid import UUID
 
 from app.api import deps
 from app.core import security
-from app.models import Project, Workspace, WorkspaceMember, User, Character
+from app.models import Project, Workspace, WorkspaceMember, User, Character, Genre, Asset
 from app.services.ai import ai_service
-from pydantic import BaseModel
+from pydantic import BaseModel, root_validator
 from datetime import datetime
-from fastapi import BackgroundTasks
 from app.services.storage import storage
 from app.api.deps import engine
 
@@ -17,7 +17,7 @@ router = APIRouter()
 class ProjectCreate(BaseModel):
     title: str
     subtitle: str | None = None
-    genre: str | None = None
+    genre_id: UUID | None = None
     worldview: dict | str | None = None
     style_preset: str = "anime_webtoon" # Default
     style_reference_url: str | None = None
@@ -25,23 +25,50 @@ class ProjectCreate(BaseModel):
 class ProjectUpdate(BaseModel):
     title: str | None = None
     subtitle: str | None = None
-    genre: str | None = None
+    genre_id: UUID | None = None
     worldview: dict | str | None = None
     style_preset: str | None = None
     style_reference_url: str | None = None
-    description: str | None = None # For compatibility if description is added to model later or alias
+    description: str | None = None
 
 class ProjectOut(BaseModel):
     id: Any
     title: str
     subtitle: str | None
-    genre: str | None
+    genre: str | None = None # Resolved Name
+    genre_id: UUID | None = None
     worldview: dict | str | None
     style_preset: str
     style_reference_url: str | None = None
-    thumbnail_url: str | None
+    thumbnail_url: str | None = None
     created_at: datetime
     workspace_id: Any
+
+    @root_validator(pre=True)
+    def resolve_fields(cls, values):
+        # Handle SQLModel object or dict
+        # Ensure we extract values correctly
+        
+        # If 'values' is an ORM model
+        if hasattr(values, "genre") and values.genre:
+            values.genre_name = values.genre.name
+            # If the validator expects 'genre' field to be the name
+            # We can't easily mutate 'values' if it's an object unless we convert to dict.
+            # But Pydantic 'from_orm' usually handles mapping.
+            # Let's rely on manual mapping in response or property access if possible.
+            # Actually, simpler: define properties
+            pass
+        return values
+        
+    class Config:
+        orm_mode = True
+
+# Helper to map Project to ProjectOut manually if needed, or rely on ORM
+# We will intercept the response to ensure genre name and thumbnail_url are populated.
+# Since we can't easily add logic to Pydantic v1 ORM mode for computed fields without properties on model,
+# We will update the Project model to have properties or handle it in the endpoint.
+# Let's add properties to Project model? No, that's in models.py.
+# I'll modify the endpoint return values to ensure they are dicts with correct data.
 
 class ProjectDetailOut(ProjectOut):
     characters: List[Any] = []
@@ -55,14 +82,14 @@ class WorldviewAugmentRequest(BaseModel):
     subtitle: str | None = None
     genres: List[str] | None = None
 
-def generate_project_cover_task(project_id: str, title: str, genre: str, worldview_content: str, style: str):
+def generate_project_cover_task(project_id: str, title: str, genre_name: str, worldview_content: str, style: str, tones: List[str] = None):
     """
     Background task to generate and update project cover image.
     """
     try:
         print(f"Starting background cover generation for project {project_id}")
         # Generate Image
-        img_bytes = ai_service.generate_project_cover_image(title, genre, worldview_content, style)
+        img_bytes = ai_service.generate_project_cover_image(title, genre_name, worldview_content, style, tones)
         
         # Upload to Storage
         if img_bytes:
@@ -71,45 +98,70 @@ def generate_project_cover_task(project_id: str, title: str, genre: str, worldvi
             
             # Update Project in DB
             with Session(engine) as session:
-                # We need to convert project_id to UUID if it's str
-                from uuid import UUID
                 p_uuid = UUID(project_id)
                 project = session.get(Project, p_uuid)
                 if project:
-                    project.thumbnail_url = url
+                    # Create Asset
+                    asset = Asset(
+                        workspace_id=project.workspace_id,
+                        user_id=project.owner_id,
+                        filename=f"cover_{project_id}.png",
+                        file_url=url,
+                        file_type="image/png"
+                    )
+                    session.add(asset)
+                    session.commit()
+                    session.refresh(asset)
+
+                    # Update Project
+                    project.thumbnail_asset_id = asset.id
+                    project.cover_image_asset_id = asset.id
+                    project.cover_image_status = "completed"
                     session.add(project)
                     session.commit()
                     print(f"Project {project_id} thumbnail updated.")
     except Exception as e:
         print(f"Background Task Error: {e}")
+
 @router.get("/", response_model=List[ProjectOut])
 def list_projects(
     session: Session = Depends(deps.get_session),
-    current_user_id: str = Depends(deps.get_current_user_id), # We need a dep to get user ID from token
+    current_user_id: str = Depends(deps.get_current_user_id),
 ) -> Any:
     """
     List all projects in workspaces the user is a member of.
-    For MVP, we just list projects created by owner or in their workspaces.
     """
-    # 1. Get user workspaces
-    # SQLModel doesn't support easy many-to-many query in one go very intuitively compared to ORM, 
-    # but let's query WorkspaceMember
-    
-    # Simple query: Projects where owner_id == current_user
-    # Better: Projects in Workspaces I am a member of.
-    
-    # Get workspace IDs member is in
     statement = select(WorkspaceMember.workspace_id).where(WorkspaceMember.user_id == current_user_id)
     workspace_ids = session.exec(statement).all()
     
     if not workspace_ids:
         return []
 
-    # Get projects in these workspaces
     statement = select(Project).where(col(Project.workspace_id).in_(workspace_ids))
     projects = session.exec(statement).all()
+
+    # Manual mapping to valid dicts for ProjectOut
+    results = []
+    for p in projects:
+        # Resolve Genre
+        g_name = p.genre.name if p.genre else None
+        
+        # Resolve Thumbnail
+        thumb = None
+        # Explicitly load asset if needed or access lazy
+        # Note: Accessing p.genre might trigger lazy load if session is active.
+        if p.thumbnail_asset_id:
+             # Just in case it's not loaded
+             if not p.thumbnail_asset: # Attempt to access
+                 pass 
+             thumb = p.thumbnail_asset.file_url if p.thumbnail_asset else None
+        
+        p_dict = p.dict()
+        p_dict['genre'] = g_name
+        p_dict['thumbnail_url'] = thumb
+        results.append(p_dict)
     
-    return projects
+    return results
 
 @router.post("/", response_model=ProjectOut)
 def create_project(
@@ -120,10 +172,9 @@ def create_project(
 ) -> Any:
     """
     Create a new project.
-    For MVP, we assign it to the user's first Workspace (default).
     """
     try:
-        # Get user's default workspace (first one)
+        # Get user's default workspace
         ws_statement = select(WorkspaceMember).where(WorkspaceMember.user_id == current_user_id)
         member = session.exec(ws_statement).first()
         
@@ -132,15 +183,21 @@ def create_project(
         
         workspace_id = member.workspace_id
 
-        # Handle worldview: Project model expects dict, input might be str
+        # Handle worldview: Project model expects dict
         final_worldview = project_in.worldview
         if isinstance(final_worldview, str):
-            final_worldview = {"content": final_worldview, "title": f"{project_in.title} World"}
+            final_worldview = {"content": final_worldview, "title": f"{project_in.title} World", "tone": []}
+        elif isinstance(final_worldview, dict):
+             if "tone" not in final_worldview:
+                 final_worldview["tone"] = []
+             # Ensure tone is list if it's string (legacy?)
+             if isinstance(final_worldview.get("tone"), str):
+                  final_worldview["tone"] = [final_worldview["tone"]]
 
         project = Project(
             title=project_in.title,
             subtitle=project_in.subtitle,
-            genre=project_in.genre,
+            genre_id=project_in.genre_id,
             worldview=final_worldview,
             style_preset=project_in.style_preset,
             style_reference_url=project_in.style_reference_url,
@@ -151,7 +208,12 @@ def create_project(
         session.commit()
         session.refresh(project)
         
-        return project
+        # Prepare response
+        p_dict = project.dict()
+        p_dict['genre'] = project.genre.name if project.genre else None
+        p_dict['thumbnail_url'] = project.thumbnail_asset.file_url if project.thumbnail_asset else None
+
+        return p_dict
     except Exception as e:
         raise e
 
@@ -179,14 +241,12 @@ def augment_worldview(
 def get_project(
     *,
     session: Session = Depends(deps.get_session),
-    project_id: str, # Keep as str or change to UUID? Let's check imports first.
+    project_id: str,
     current_user_id: str = Depends(deps.get_current_user_id),
 ) -> Any:
     """
-    Get project details including characters.
+    Get project details.
     """
-    # Convert regex validation or type
-    from uuid import UUID
     try:
         project_uuid = UUID(project_id)
     except ValueError:
@@ -196,10 +256,21 @@ def get_project(
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     
-    # Check permissions (simplified)
-    # real app: check if user is in workspace of project
+    p_dict = project.dict()
+    p_dict['genre'] = project.genre.name if project.genre else None
+    p_dict['thumbnail_url'] = project.thumbnail_asset.file_url if project.thumbnail_asset else None
     
-    return project
+    # ProjectDetailOut needs characters (serialized)
+    # The default simple serialization might work if characters are loaded?
+    # Actually ProjectDetailOut defines characters: List[Any].
+    # p_dict might not include characters if we called .dict().
+    # .dict() on SQLModel only includes fields, not relationships unless we set exclude_unset=False etc?
+    # Relationships are not included in .dict() by default usually.
+    # We should populate characters manually.
+    
+    p_dict['characters'] = project.characters
+    
+    return p_dict
 
 @router.patch("/{project_id}", response_model=ProjectOut)
 def update_project(
@@ -213,7 +284,6 @@ def update_project(
     """
     Update a project.
     """
-    from uuid import UUID
     try:
         project_uuid = UUID(project_id)
     except ValueError:
@@ -225,6 +295,17 @@ def update_project(
 
     # Update fields
     project_data = project_in.dict(exclude_unset=True)
+    
+    # Handle worldview tone normalization if present
+    if 'worldview' in project_data and project_data['worldview']:
+         wv = project_data['worldview']
+         if isinstance(wv, dict):
+             if "tone" not in wv:
+                 wv["tone"] = []
+             if isinstance(wv.get("tone"), str):
+                  wv["tone"] = [wv["tone"]]
+         project_data['worldview'] = wv
+
     for key, value in project_data.items():
         if hasattr(project, key):
             setattr(project, key, value)
@@ -233,11 +314,11 @@ def update_project(
     session.commit()
     session.refresh(project)
     
-    # Check if style was updated and trigger cover generation (REMOVED - Explicit generation only)
-    # if project_in.style_preset and project_in.style_preset != "anime_webtoon": 
-    #      ...
+    p_dict = project.dict()
+    p_dict['genre'] = project.genre.name if project.genre else None
+    p_dict['thumbnail_url'] = project.thumbnail_asset.file_url if project.thumbnail_asset else None
 
-    return project
+    return p_dict
 
 @router.post("/{project_id}/cover", response_model=Any)
 def generate_cover(
@@ -250,7 +331,6 @@ def generate_cover(
     """
     Trigger AI cover image generation for the project.
     """
-    from uuid import UUID
     try:
         project_uuid = UUID(project_id)
     except ValueError:
@@ -260,21 +340,28 @@ def generate_cover(
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
-    # Extract worldview content safely
+    # Extract worldview content
     wv_content = ""
+    tones = []
     if project.worldview:
         if isinstance(project.worldview, dict):
              wv_content = project.worldview.get("content", "") or project.worldview.get("description", "")
+             tones = project.worldview.get("tone", [])
+             if isinstance(tones, str): # Legacy check
+                 tones = [tones]
         else:
              wv_content = str(project.worldview)
     
+    genre_name = project.genre.name if project.genre else "Fantasy"
+
     background_tasks.add_task(
         generate_project_cover_task, 
         str(project.id), 
         project.title, 
-        project.genre or "Fantasy", 
+        genre_name, 
         wv_content, 
-        project.style_preset
+        project.style_preset,
+        tones
     )
 
     return {"message": "Cover generation started"}
