@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Sparkles, Lock, Plus, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -69,6 +70,7 @@ export default function ArtStyleSetupModal({
     projectTitle,
     projectGenre
 }: ArtStyleSetupModalProps) {
+    const router = useRouter(); // Hook
     const [selectedStyleId, setSelectedStyleId] = useState<string>(currentStyle || 'standard-webtoon');
     const [saving, setSaving] = useState(false);
     const [customStyles, setCustomStyles] = useState<ArtStyle[]>([]);
@@ -141,6 +143,11 @@ export default function ArtStyleSetupModal({
             setSaving(false);
         }
     };
+    
+    // Redirect to Styles Page
+    const handleCreateRedirect = () => {
+        router.push(`/dashboard/styles?from=project_setup&projectId=${projectId}&title=${encodeURIComponent(projectTitle)}`);
+    };
 
     const renderCustomModels = () => {
          // Empty State
@@ -154,7 +161,7 @@ export default function ArtStyleSetupModal({
                      
                      <div 
                         className="border border-dashed border-gray-800 rounded-lg p-8 flex flex-col items-center justify-center text-center hover:bg-[#0F0F12] hover:border-gray-700 transition-colors cursor-pointer group"
-                        onClick={() => setIsCreateModalOpen(true)}
+                        onClick={handleCreateRedirect}
                      >
                          <div className="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                              <Plus className="text-purple-400" />
@@ -182,7 +189,7 @@ export default function ArtStyleSetupModal({
                         variant="ghost" 
                         size="sm" 
                         className="h-6 text-[10px] text-gray-500 hover:text-white gap-1"
-                        onClick={() => setIsCreateModalOpen(true)}
+                        onClick={handleCreateRedirect}
                     >
                         <Plus size={12} /> New Style
                      </Button>
