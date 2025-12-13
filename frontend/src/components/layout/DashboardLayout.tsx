@@ -6,7 +6,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useWorkspaceStore } from '@/store/useWorkspaceStore';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { LayoutDashboard, LayoutTemplate, Image as ImageIcon, Settings, LogOut, HelpCircle, Coins, Plus, ChevronDown, Check } from 'lucide-react';
+import { LayoutDashboard, LayoutTemplate, Image as ImageIcon, Settings, LogOut, HelpCircle, Coins, Plus, ChevronDown, Check, Palette } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 import CreateWorkspaceModal from '@/components/dashboard/CreateWorkspaceModal';
 
@@ -37,6 +37,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     const navItems = [
         { name: 'My Projects', href: '/dashboard', icon: LayoutDashboard },
+        { name: 'My Art Styles', href: '/dashboard/styles', icon: Palette },
         { name: 'Templates', href: '/templates', icon: LayoutTemplate },
         { name: 'Assets', href: '/assets', icon: ImageIcon },
         { name: 'Settings', href: '/dashboard/settings', icon: Settings },
