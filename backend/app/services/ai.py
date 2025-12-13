@@ -240,11 +240,11 @@ class AIService:
         Composition Requirements:
         - Vertical Layout (9:16 Portrait aspect ratio).
         - TOP HALF: High-quality detailed Portrait/Close-up of the character's face (showing expression and facial features).
-        - BOTTOM HALF: Full body view showing character's physique, costume, and posture.
-        - Background: Neutral, simple (solid color or gradient) to focus on the design.
+        - BOTTOM HALF: Horizontally divided into 4 equal vertical sections (side-by-side). Each section must show the character in a DIFFERENT outfit and DIFFERENT pose to showcase their personality and fashion versatility.
+        - Background: Pure white, empty, whitespace. No background elements.
         - Style: {style} (High quality, professional concept art).
         
-        NEGATIVE PROMPT: Do NOT include any text, logos, watermarks, signature, or charts.
+        NEGATIVE PROMPT: Do NOT include any text, logos, watermarks, signature, charts, buildings, scenery, trees, furniture, or complex background.
         """
         # Using 9:16 ratio for vertical character sheet (576x1024)
         return self.generate_image(prompt, width=576, height=1024) 

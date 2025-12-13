@@ -29,20 +29,20 @@ export default function CharacterDetailModal({ isOpen, onClose, character, onRet
     const isGenerating = character.sheet_status === 'pending' || character.sheet_status === 'processing';
     const isFailed = character.sheet_status === 'failed';
 
-    const moodDisplay = Array.isArray(character.default_mood) 
-        ? character.default_mood.join(", ") 
+    const moodDisplay = Array.isArray(character.default_mood)
+        ? character.default_mood.join(", ")
         : (character.default_mood || "Neutral");
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent hideCloseButton className="max-w-4xl p-0 overflow-hidden bg-[#13111C] border border-white/10 text-white sm:rounded-2xl">
                 <div className="flex flex-col md:flex-row h-full max-h-[85vh]">
-                    
+
                     {/* Left: Image / Status Area */}
                     <div className="w-full md:w-1/2 relative bg-black/40 min-h-[400px] md:min-h-full flex items-center justify-center border-b md:border-b-0 md:border-r border-white/10">
                         {character.profile_image_url && !isGenerating ? (
-                            <div 
-                                className="absolute inset-0 bg-cover bg-center"
+                            <div
+                                className="absolute inset-0 bg-contain bg-no-repeat bg-center"
                                 style={{ backgroundImage: `url("${character.profile_image_url}")` }}
                             />
                         ) : (
@@ -63,8 +63,8 @@ export default function CharacterDetailModal({ isOpen, onClose, character, onRet
                                         <h3 className="text-xl font-bold text-white">Generation Failed</h3>
                                         <p className="text-sm text-gray-400 max-w-xs mb-4">Something went wrong while creating the character.</p>
                                         {onRetry && (
-                                            <Button 
-                                                onClick={() => onRetry(character.id!)} 
+                                            <Button
+                                                onClick={() => onRetry(character.id!)}
                                                 className="bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-900/20"
                                             >
                                                 <Sparkles size={16} className="mr-2" /> Retry Generation
@@ -95,7 +95,7 @@ export default function CharacterDetailModal({ isOpen, onClose, character, onRet
                                 <div className="flex items-center gap-2">
                                     <span className={cn(
                                         "px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider border",
-                                        isGenerating 
+                                        isGenerating
                                             ? "bg-blue-500/20 text-blue-300 border-blue-500/30 animate-pulse"
                                             : isFailed
                                                 ? "bg-red-500/20 text-red-300 border-red-500/30"
@@ -105,9 +105,9 @@ export default function CharacterDetailModal({ isOpen, onClose, character, onRet
                                     </span>
                                 </div>
                             </div>
-                            <Button 
-                                variant="ghost" 
-                                size="icon" 
+                            <Button
+                                variant="ghost"
+                                size="icon"
                                 onClick={onClose}
                                 className="text-gray-400 hover:text-white hover:bg-white/10 rounded-full -mr-2 -mt-2"
                             >
@@ -117,7 +117,7 @@ export default function CharacterDetailModal({ isOpen, onClose, character, onRet
 
                         {/* Scrollable Content */}
                         <div className="flex-1 overflow-y-auto p-6 custom-scrollbar space-y-8">
-                            
+
                             {/* Moods */}
                             <section>
                                 <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
