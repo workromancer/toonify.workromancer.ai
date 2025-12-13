@@ -91,6 +91,10 @@ else
     echo "WARNING: gcloud credentials not found at $GCLOUD_CRED_PATH"
 fi
 
+# Run Database Seeding
+echo -e "${GREEN}Seeding Database...${NC}"
+./venv/bin/python seed_db.py
+
 ./venv/bin/uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 --log-level $LOG_LEVEL &
 BACKEND_PID=$!
 echo "Backend started (PID: $BACKEND_PID)"

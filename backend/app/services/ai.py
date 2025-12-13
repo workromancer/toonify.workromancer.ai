@@ -421,7 +421,32 @@ class AIService:
     def generate_character_sheet_async(self, character_id: str, name: str, description: str, style: str):
         return self.generate_character_sheet(name, description, style)
 
-    def generate_project_cover_image(self, title: str, genre: str, worldview: str, style: str, tones: List[str] = None) -> bytes:
+    def _download_image(self, url: str) -> bytes:
+        if not url:
+            return None
+        try:
+            if url.startswith("data:image"):
+                # Decode Base64
+                try:
+                    header, encoded = url.split(",", 1)
+                    return base64.b64decode(encoded)
+                except Exception:
+                    # Maybe it's raw base64?
+                    return base64.b64decode(url)
+            elif url.startswith("http"):
+                # Download
+                res = requests.get(url)
+                if res.status_code == 200:
+                    return res.content
+                else:
+                     print(f"Failed to download image from {url}: {res.status_code}")
+                     return None
+            return None
+        except Exception as e:
+            print(f"Error downloading image: {e}")
+            return None
+
+    def generate_project_cover_image(self, title: str, genre: str, worldview: str, style: str, tones: List[str] = None, style_ref_url: str = None) -> bytes:
 
         tone_str = f"Tone: {', '.join(tones)}" if tones else ""
 
@@ -444,6 +469,46 @@ class AIService:
         - No text overlay.
         """
         
+        try:
+            # If reference image is provided, use multimodal input
+            if style_ref_url:
+                print(f"Using style reference image: {style_ref_url}")
+                ref_img_bytes = self._download_image(style_ref_url)
+                
+                if ref_img_bytes:
+                    print("Reference image downloaded successfully. Generating with multimodal input.")
+                    image_part = types.Part.from_bytes(data=ref_img_bytes, mime_type="image/png")
+                    text_part = types.Part.from_text(text=f"{prompt}\n\nIMPORTANT: Mimic the art style of the provided reference image exactly.")
+                    
+                    contents = [
+                        types.Content(
+                            role="user",
+                            parts=[image_part, text_part]
+                        )
+                    ]
+                    
+                    config = types.GenerateContentConfig(
+                        response_modalities=['IMAGE'], 
+                        image_config=types.ImageConfig(
+                            aspect_ratio="16:9",
+                        )
+                    )
+
+                    response = self.client.models.generate_content(
+                        model=self.model_config["image"],
+                        contents=contents,
+                        config=config,
+                    )
+                    
+                    if response.candidates and response.candidates[0].content and response.candidates[0].content.parts:
+                        for part in response.candidates[0].content.parts:
+                            if part.inline_data:
+                                return part.inline_data.data
+                    
+                    print("Multimodal generation returned no image, falling back to text-only.")
+        except Exception as e:
+             print(f"Multimodal Cover Generation Error: {e}. Falling back to text-only.")
+
         # Requesting 16:9 as it's standard wide
         return self.generate_image(prompt, width=1920, height=1080) 
 

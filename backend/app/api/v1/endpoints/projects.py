@@ -83,14 +83,14 @@ class WorldviewAugmentRequest(BaseModel):
     subtitle: str | None = None
     genres: List[str] | None = None
 
-def generate_project_cover_task(project_id: str, title: str, genre_name: str, worldview_content: str, style: str, tones: List[str] = None):
+def generate_project_cover_task(project_id: str, title: str, genre_name: str, worldview_content: str, style: str, tones: List[str] = None, style_ref_url: str = None):
     """
     Background task to generate and update project cover image.
     """
     try:
         print(f"Starting background cover generation for project {project_id}")
         # Generate Image
-        img_bytes = ai_service.generate_project_cover_image(title, genre_name, worldview_content, style, tones)
+        img_bytes = ai_service.generate_project_cover_image(title, genre_name, worldview_content, style, tones, style_ref_url)
         
         # Upload to Storage
         if img_bytes:
@@ -383,7 +383,8 @@ def generate_cover(
         genre_name, 
         wv_content, 
         project.style_preset,
-        tones
+        tones,
+        project.style_reference_url if project.style_reference_url else None
     )
 
     return {"message": "Cover generation started"}

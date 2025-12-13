@@ -121,9 +121,10 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
         if (!project.genre || !project.worldview) {
             toast({
                 title: "Missing Information",
-                description: "Please set a genre and worldview first.",
-                variant: 'destructive',
+                description: "Please set a genre and worldview first. Opening settings...",
+                // variant: 'default', // Changed from destructive to friendly
             });
+            setIsEditModalOpen(true);
             return;
         }
 
@@ -309,7 +310,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                             {/* Worldview Key Features */}
                             {project.worldview?.key_features && Array.isArray(project.worldview.key_features) && (
                                 <section className="mb-4">
-                                     <SectionLabel icon={<Sparkles size={12} />} className="mb-3 text-gray-400">Key Features</SectionLabel>
+                                    <SectionLabel icon={<Sparkles size={12} />} className="mb-3 text-gray-400">Key Features</SectionLabel>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                                         {project.worldview.key_features.map((feature: string, idx: number) => (
                                             <div key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-[#0F0F12] border border-gray-800">
