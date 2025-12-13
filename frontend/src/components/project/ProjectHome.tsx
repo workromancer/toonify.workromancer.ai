@@ -12,8 +12,9 @@ import EditProjectModal from './modals/EditProjectModal';
 import GenerateEpisodeModal from './modals/GenerateEpisodeModal';
 import ArtStyleSetupModal from './modals/ArtStyleSetupModal';
 import CharacterDetailModal from './modals/CharacterDetailModal';
-import { Plus, Sparkles, Clapperboard, Edit2, Palette, ArrowRight, Settings, FolderOpen, Upload, Database, Zap, Code, AlertCircle, Play } from 'lucide-react';
+import { Plus, Sparkles, Clapperboard, Edit2, Palette, ArrowRight, Settings, Play, AlertCircle, Database } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { SectionLabel } from '@/components/ui/section-label';
 import ImageGeneratingPlaceholder from '@/components/ui/ImageGeneratingPlaceholder';
 
 interface Character {
@@ -308,9 +309,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                             {/* Worldview Key Features */}
                             {project.worldview?.key_features && Array.isArray(project.worldview.key_features) && (
                                 <section className="mb-4">
-                                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                                        <Sparkles size={12} /> Key Features
-                                    </h3>
+                                     <SectionLabel icon={<Sparkles size={12} />} className="mb-3 text-gray-400">Key Features</SectionLabel>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                                         {project.worldview.key_features.map((feature: string, idx: number) => (
                                             <div key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-white/[0.03] border border-white/5">
