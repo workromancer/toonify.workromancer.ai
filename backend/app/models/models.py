@@ -128,6 +128,9 @@ class Character(SQLModel, table=True):
     height_cm: Optional[int] = None
     body_type: Optional[str] = None
     
+    # Structured Profile
+    profile: Optional[dict] = Field(sa_column=Column(JSON), default={})
+    
     # RAG Embedding
     embedding: List[float] = Field(sa_column=Column(JSON), default=None)
     

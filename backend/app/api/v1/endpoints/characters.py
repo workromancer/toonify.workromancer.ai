@@ -21,6 +21,7 @@ class CharacterCreate(BaseModel):
     appearance_tags: List[str] = []
     default_mood: List[str] = []
     description: Optional[str] = None
+    profile: Optional[dict] = {}
 
 class CharacterUpdate(BaseModel):
     name: Optional[str] = None
@@ -28,6 +29,7 @@ class CharacterUpdate(BaseModel):
     default_mood: Optional[List[str]] = None
     profile_image_url: Optional[str] = None
     description: Optional[str] = None
+    profile: Optional[dict] = None
 
 class CharacterAugmentRequest(BaseModel):
     name: str
@@ -43,6 +45,7 @@ class CharacterOut(BaseModel):
     default_mood: Any = [] # Handle list or json string
     profile_image_url: Optional[str] = None
     description: Optional[str] = None
+    profile: Optional[dict] = {}
     sheet_status: Optional[str] = "pending"
     created_at: datetime
 
@@ -88,7 +91,8 @@ def create_character(
 
         consistency_seed=0,
         profile_image_url=None,
-        description=character_in.description
+        description=character_in.description,
+        profile=character_in.profile
     )
     # Generate Embedding
     mood_str = " ".join(character_in.default_mood)

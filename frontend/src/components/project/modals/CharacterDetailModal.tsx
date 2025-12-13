@@ -14,6 +14,14 @@ interface Character {
     default_mood?: string | string[];
     sheet_status?: 'pending' | 'processing' | 'completed' | 'failed';
     appearance_tags?: string[];
+    profile?: {
+        age?: string;
+        personality?: string;
+        pros?: string[];
+        cons?: string[];
+        background?: string;
+        features?: string[];
+    };
 }
 
 interface CharacterDetailModalProps {
@@ -118,34 +126,75 @@ export default function CharacterDetailModal({ isOpen, onClose, character, onRet
                         {/* Scrollable Content */}
                         <div className="flex-1 overflow-y-auto p-6 custom-scrollbar space-y-8">
 
-                            {/* Moods */}
+                            {/* Basic Info Row */}
+                            {(character.profile?.age || character.profile?.personality) && (
+                                <section className="grid grid-cols-2 gap-4">
+                                    {character.profile?.age && (
+                                        <div className="bg-white/5 border border-white/10 rounded-xl p-3">
+                                            <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Age</h4>
+                                            <p className="text-white font-medium">{character.profile.age}</p>
+                                        </div>
+                                    )}
+                                </section>
+                            )}
+
+                            {/* Moods / Personality */}
                             <section>
                                 <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
                                     <Sparkles size={12} /> Personality & Mood
                                 </h4>
-                                <div className="flex flex-wrap gap-2">
-                                    {moodDisplay.split(", ").map((mood, i) => (
-                                        <span key={i} className="px-3 py-1.5 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-medium">
-                                            {mood}
-                                        </span>
-                                    ))}
+                                <div className="flex flex-col gap-3">
+                                    {character.profile?.personality && (
+                                        <p className="text-sm text-gray-300 italic">
+                                            "{character.profile.personality}"
+                                        </p>
+                                    )}
+                                    <div className="flex flex-wrap gap-2">
+                                        {moodDisplay.split(", ").map((mood, i) => (
+                                            <span key={i} className="px-3 py-1.5 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-medium">
+                                                {mood}
+                                            </span>
+                                        ))}
+                                    </div>
                                 </div>
                             </section>
 
-                            {/* Description */}
-                            {character.description && (
+                            {/* Strengths & Weaknesses */}
+                            {(character.profile?.pros || character.profile?.cons) && (
+                                <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {character.profile?.pros && (
+                                        <div className="bg-green-500/5 border border-green-500/10 rounded-xl p-4">
+                                            <h4 className="text-xs font-bold text-green-400 uppercase tracking-widest mb-2">Strengths</h4>
+                                            <ul className="list-disc list-inside text-sm text-gray-400 space-y-1">
+                                                {character.profile.pros.map((p, i) => <li key={i}>{p}</li>)}
+                                            </ul>
+                                        </div>
+                                    )}
+                                    {character.profile?.cons && (
+                                        <div className="bg-red-500/5 border border-red-500/10 rounded-xl p-4">
+                                            <h4 className="text-xs font-bold text-red-400 uppercase tracking-widest mb-2">Weaknesses</h4>
+                                            <ul className="list-disc list-inside text-sm text-gray-400 space-y-1">
+                                                {character.profile.cons.map((p, i) => <li key={i}>{p}</li>)}
+                                            </ul>
+                                        </div>
+                                    )}
+                                </section>
+                            )}
+
+                            {/* Description / Background */}
+                            {(character.profile?.background || character.description) && (
                                 <section>
                                     <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
                                         <FileText size={12} /> Bio / Description
                                     </h4>
                                     <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap rounded-xl bg-white/[0.03] p-4 border border-white/5">
-                                        {character.description}
+                                        {character.profile?.background || character.description}
                                     </p>
                                 </section>
                             )}
 
-                            {/* Appearance Tags if available on character (optional property) */}
-                            {character.appearance_tags && character.appearance_tags.length > 0 && (
+                            {/* Appearance Tags */}
+                            {(character.appearance_tags && character.appearance_tags.length > 0) && (
                                 <section>
                                     <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
                                         <Tag size={12} /> Visual Traits

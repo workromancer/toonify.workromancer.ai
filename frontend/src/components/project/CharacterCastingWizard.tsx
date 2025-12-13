@@ -168,7 +168,7 @@ export default function CharacterCastingWizard({ projectId, stylePreset }: Chara
                 // User wants to skip review. So we proceed to generate using the single result.
                 const singleDesc = res.data.visual_description || "";
                 const singleTags = res.data.augmented_tags || tags;
-                
+
                 // Directly finalize
                 handleFinalize(name, moods, singleTags, singleDesc);
             }
@@ -202,11 +202,18 @@ export default function CharacterCastingWizard({ projectId, stylePreset }: Chara
     const handleConfirmSelection = () => {
         if (selectedOptionIndex !== null) {
             const opt = conceptOptions[selectedOptionIndex];
-            handleFinalize(opt.name, moods, opt.features, opt.visual_description);
+            const profileData = {
+                age: opt.age,
+                personality: opt.personality,
+                pros: opt.pros,
+                cons: opt.cons,
+                background: opt.reason
+            };
+            handleFinalize(opt.name, moods, opt.features, opt.visual_description, profileData);
         }
     };
 
-    const handleFinalize = async (finalName: string, finalMoods: string[], finalTags: string[], finalDesc: string) => {
+    const handleFinalize = async (finalName: string, finalMoods: string[], finalTags: string[], finalDesc: string, profileData: any = {}) => {
         setIsGenerating(true); // Re-using state for loading UI on button
         setError(null);
         try {
@@ -217,7 +224,8 @@ export default function CharacterCastingWizard({ projectId, stylePreset }: Chara
                 project_id: projectId,
                 default_mood: finalMoods,
                 appearance_tags: finalTags,
-                description: finalDesc
+                description: finalDesc,
+                profile: profileData
             });
             const newCharId = charRes.data.id;
 
@@ -229,7 +237,7 @@ export default function CharacterCastingWizard({ projectId, stylePreset }: Chara
                 title: "Casting Complete!",
                 description: `${finalName} is arriving on set. We'll notify you when the image is ready.`,
             });
-            
+
             router.push(`/project/${projectId}`);
         } catch (e) {
             console.error("Creation Error", e);
@@ -421,10 +429,10 @@ export default function CharacterCastingWizard({ projectId, stylePreset }: Chara
 
                 {/* Right Content: Detail View */}
                 <div className="flex-1 h-full pl-2">
-                     <CharacterConceptCard
+                    <CharacterConceptCard
                         option={currentOption}
                         isSelected={true}
-                        onSelect={() => {}} // Already selected
+                        onSelect={() => { }} // Already selected
                     />
                 </div>
             </motion.div>
