@@ -521,6 +521,81 @@ class AIService:
         except Exception as e:
             print(f"Cut Gen Failed: {e}")
             raise e
+    def get_character_suggestion(self, suggestion_type: str, project_context: str, current_data: dict) -> dict:
+        """
+        Generates character suggestions based on project context using a lightweight model.
+        """
+        if not self.client:
+             raise Exception("AI Service not initialized")
+
+        # User requested "gemini-2.5-flash-lite".
+        target_model = "gemini-2.5-flash-lite"
+
+        prompt = ""
+        if suggestion_type == "name":
+            prompt = f"""
+            Suggest a creative character name and a suitable age fitting for this Webtoon Project.
+            Project Context:
+            {project_context}
+            
+            Format: JSON object with "name" and "age" (int or string). Example: {{"name": "Jiwoo", "age": "19"}}
+            """
+        elif suggestion_type == "visuals":
+            prompt = f"""
+            Suggest 5-7 visual appearance keywords/tags for a character in this Webtoon.
+            Project Context: {project_context}
+            Character Name: {current_data.get('name', 'Unknown')}
+            Age: {current_data.get('age', 'Unknown')}
+            
+            Format: JSON list of strings. Example: ["Tall", "Scarred eye", "Hoodie"]
+            """
+        elif suggestion_type == "lore":
+             prompt = f"""
+            Write a compelling, short character description/lore (2-3 sentences) fitting the archetype and world.
+            Project Context: {project_context}
+            Character: {current_data.get('name', 'Unknown')}, {current_data.get('age', 'Unknown')} years old.
+            Archetype: {current_data.get('role', 'Unknown')}
+            Personality: {current_data.get('personality', 'Unknown')}
+            Visuals: {', '.join(current_data.get('visual_keywords', []))}
+            
+            Format: Just the description text.
+            """
+        
+        try:
+            response = self.client.models.generate_content(
+                model=target_model,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json" if suggestion_type in ["visuals", "name"] else "text/plain"
+                )
+            )
+            
+            if suggestion_type in ["visuals", "name"]:
+                cleaned = self._clean_json_text(response.text)
+                return json.loads(cleaned)
+            else:
+                return {"suggestion": response.text.strip()}
+                
+        except Exception as e:
+            # Fallback to standard model if lite fails (likely due to name mismatch)
+            print(f"Suggestion Error with {target_model}: {e}. Retrying with gemini-2.0-flash.")
+            try:
+                response = self.client.models.generate_content(
+                    model="gemini-2.0-flash",
+                    contents=prompt,
+                     config=types.GenerateContentConfig(
+                        response_mime_type="application/json" if suggestion_type in ["visuals", "name"] else "text/plain"
+                    )
+                )
+                if suggestion_type in ["visuals", "name"]:
+                    cleaned = self._clean_json_text(response.text)
+                    return json.loads(cleaned)
+                else:
+                    return {"suggestion": response.text.strip()}
+                    
+            except Exception as e2:
+                print(f"Fallback suggestion failed: {e2}")
+                raise e2
 
 
 ai_service = AIService()

@@ -7,119 +7,110 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import {
     Loader2,
-    ArrowRight,
-    X,
-    Wand2,
-    RefreshCw,
-    Download,
-    Check,
     MoveLeft,
     MoveRight,
-    User,
-    Palette,
     Sparkles,
-    Image as ImageIcon
+    Check,
+    X,
+    Palette,
+    Wand2,
 } from 'lucide-react';
 import api from '@/lib/api';
-import CharacterConceptCard from './CharacterConceptCard';
 import { useToast } from '@/hooks/use-toast';
 
 interface CharacterCastingWizardProps {
     projectId: string;
-    stylePreset: string;
+    projectTitle?: string;
+    projectGenre?: string;
 }
 
-type StepName = 'name' | 'appearance' | 'selection';
-
-interface ConceptOption {
-    name: string;
-    age: string;
-    personality: string;
-    features: string[];
-    pros: string[];
-    cons: string[];
-    visual_description: string;
-    reason?: string;
-}
+type StepName = 'concept' | 'style' | 'analyzing' | 'role';
 
 // Inline StepIndicator component
 const StepIndicator = ({ currentStep, totalSteps }: { currentStep: number; totalSteps: number }) => {
     return (
-        <div className="w-full relative mb-8 px-4">
-            <div className="absolute top-1/2 left-4 right-4 h-[1px] bg-white/10 -translate-y-1/2 z-0"></div>
-            <motion.div
-                className="absolute top-1/2 left-4 h-[1px] bg-primary -translate-y-1/2 z-1 shadow-[0_0_10px_rgba(55,19,236,0.6)]"
-                initial={{ width: '0%' }}
-                animate={{ width: `${Math.max(0, ((currentStep - 1) / (totalSteps - 1))) * 100}%` }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-                style={{ maxWidth: 'calc(100% - 2rem)' }}
-            />
+        <div className="w-full relative mb-8 px-4 flex justify-center">
+             <div className="relative w-full max-w-lg">
+                <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-white/10 -translate-y-1/2 z-0"></div>
+                <motion.div
+                    className="absolute top-1/2 left-0 h-[1px] bg-primary -translate-y-1/2 z-1 shadow-[0_0_10px_rgba(55,19,236,0.6)]"
+                    initial={{ width: '0%' }}
+                    animate={{ width: `${Math.max(0, ((currentStep - 1) / (totalSteps - 1))) * 100}%` }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                />
 
-            <div className="relative z-10 flex justify-between">
-                {/* 5 Total Steps: Name(1), Traits(2), Concepts(3), Review(4), Gen(5) */}
-                {[...Array(totalSteps)].map((_, index) => {
-                    const stepNum = index + 1;
-                    const isActive = stepNum <= currentStep;
-                    const isCurrent = stepNum === currentStep;
+                <div className="relative z-10 flex justify-between w-full">
+                    {/* Steps: Concept(1), Style(2), Role(3) */}
+                     {['CONCEPT', 'STYLE', 'ROLE'].map((label, index) => {
+                        const stepNum = index + 1;
+                        const isActive = stepNum <= currentStep;
+                        const isCurrent = stepNum === currentStep;
 
-                    return (
-                        <div key={index} className="flex flex-col items-center gap-2 relative group">
-                            <div
-                                className={cn(
-                                    "w-3 h-3 rounded-full transition-all duration-300 border-2",
-                                    isActive ? "bg-primary border-primary shadow-[0_0_10px_rgba(55,19,236,0.8)]" : "bg-background-dark border-white/20",
-                                    isCurrent && "scale-150 ring-4 ring-primary/20 bg-white border-white"
-                                )}
-                            ></div>
-                            <span className={cn(
-                                "text-[10px] uppercase tracking-widest font-bold transition-all duration-300 absolute -bottom-6 w-24 text-center select-none",
-                                isActive ? "text-white opacity-100" : "text-gray-500 opacity-0 group-hover:opacity-50"
-                            )}>
-                                {stepNum === 1 && 'Name'}
-                                {stepNum === 2 && 'Traits'}
-                                {stepNum === 3 && 'Cast'}
-                            </span>
-                        </div>
-                    );
-                })}
+                        return (
+                            <div key={index} className="flex flex-col items-center gap-3 relative group cursor-default">
+                                <div
+                                    className={cn(
+                                        "w-4 h-4 rounded-full transition-all duration-300 border-2 box-content",
+                                        isActive ? "bg-primary border-primary shadow-[0_0_10px_rgba(168,85,247,0.8)]" : "bg-[#0f0a1e] border-white/20", // Custom dark bg color for unactive
+                                        isCurrent && "ring-4 ring-primary/20 bg-primary border-white"
+                                    )}
+                                ></div>
+                                <span className={cn(
+                                    "text-[10px] uppercase tracking-widest font-bold transition-all duration-300 absolute top-8 w-24 text-center select-none",
+                                    isActive ? "text-purple-300/90" : "text-gray-600"
+                                )}>
+                                    {label}
+                                </span>
+                            </div>
+                        );
+                    })}
+                </div>
             </div>
         </div>
     );
 };
 
-export default function CharacterCastingWizard({ projectId, stylePreset }: CharacterCastingWizardProps) {
+export default function CharacterCastingWizard({ projectId, projectTitle, projectGenre }: CharacterCastingWizardProps) {
     const router = useRouter();
     const { toast } = useToast();
 
-    // State
-    const [step, setStep] = useState<StepName>('name');
-    const [direction, setDirection] = useState(0); // For animation direction
+    // Steps state
+    const [step, setStep] = useState<StepName>('concept');
+    const [direction, setDirection] = useState(0);
 
+    // Concept Step Data
     const [name, setName] = useState('');
-    const [moods, setMoods] = useState<string[]>(['Neutral']);
-    const [tags, setTags] = useState<string[]>([]);
-    const [currentTag, setCurrentTag] = useState('');
-    const [description, setDescription] = useState('');
-    const [isAugmenting, setIsAugmenting] = useState(false);
+    const [age, setAge] = useState('');
+
+    // Style Step Data
+    const [visualKeywords, setVisualKeywords] = useState<string[]>([]);
+    const [currentKeyword, setCurrentKeyword] = useState('');
+    const [themeColor, setThemeColor] = useState<string>('#3b82f6'); // Default Blue
+    const [personalityTypes, setPersonalityTypes] = useState<string[]>([]);
+    
+    // Role Step Data - Initialized later or here? 
+    // Typescript might complain if I use variable before declaration. 
+    // I will use a hardcoded default string that matches the first archetype title.
+    const [selectedRole, setSelectedRole] = useState<string>('The Protagonist');
+
+
+    // Processing State
     const [isGenerating, setIsGenerating] = useState(false);
-    const [characterId, setCharacterId] = useState<string | null>(null);
-    const [sheetUrl, setSheetUrl] = useState<string | null>(null);
+
     const [error, setError] = useState<string | null>(null);
+    const [suggestionLoading, setSuggestionLoading] = useState<string | null>(null);
+    const [roleDescription, setRoleDescription] = useState<string>('');
 
-    const [conceptOptions, setConceptOptions] = useState<ConceptOption[]>([]);
-    const [selectedOptionIndex, setSelectedOptionIndex] = useState<number | null>(null);
-
-    // Helpers to map step name to number for indicator
+    // Helpers
     const getStepNumber = (s: StepName) => {
         switch (s) {
-            case 'name': return 1;
-            case 'appearance': return 2;
-            case 'selection': return 3;
-            case 'selection': return 3;
+            case 'concept': return 1;
+            case 'style': return 2;
+            case 'analyzing': return 2; // Conceptually between 2 and 3
+            case 'role': return 3;
             default: return 1;
         }
     };
@@ -135,96 +126,100 @@ export default function CharacterCastingWizard({ projectId, stylePreset }: Chara
         setStep(prev);
         setError(null);
     };
-
+    
     // --- Logic Handlers ---
 
-    const handleNameSubmit = () => {
-        if (name.trim()) handleNextStep('appearance');
+    const handleConceptSubmit = () => {
+        if (name.trim()) handleNextStep('style');
     };
 
-    const handleAddTag = () => {
-        if (currentTag.trim() && !tags.includes(currentTag.trim())) {
-            setTags([...tags, currentTag.trim()]);
-            setCurrentTag('');
+    const handleAddKeyword = () => {
+        if (currentKeyword.trim() && !visualKeywords.includes(currentKeyword.trim())) {
+            setVisualKeywords([...visualKeywords, currentKeyword.trim()]);
+            setCurrentKeyword('');
         }
     };
 
-    const handleAugment = async () => {
-        setIsAugmenting(true);
-        setError(null);
-        try {
-            const res = await api.post(`/characters/augment`, {
-                name,
-                tags,
-                mood: moods,
-                project_id: projectId
-            });
-            // Handle new list response
-            if (res.data.options && Array.isArray(res.data.options)) {
-                setConceptOptions(res.data.options);
-                handleNextStep('selection');
-            } else {
-                // Fallback for single object -> Finalize immediately or treated as selection?
-                // User wants to skip review. So we proceed to generate using the single result.
-                const singleDesc = res.data.visual_description || "";
-                const singleTags = res.data.augmented_tags || tags;
+    const handleStyleSubmit = () => {
+        handleNextStep('analyzing');
+    };
 
-                // Directly finalize
-                handleFinalize(name, moods, singleTags, singleDesc);
+    const handleSuggestion = async (type: 'name' | 'visuals' | 'lore') => {
+        if (suggestionLoading) return;
+        setSuggestionLoading(type);
+        try {
+            const res = await api.post('/characters/suggest', {
+                project_id: projectId,
+                type: type,
+                current_name: name,
+                age: age,
+                role: selectedRole,
+                visual_keywords: visualKeywords,
+                personality: personalityTypes.join(', ')
+            });
+            
+            if (type === 'name' && res.data) {
+                if (res.data.name) setName(res.data.name);
+                if (res.data.age) setAge(res.data.age.toString());
+            } else if (type === 'visuals') {
+                 // Check if list or wrapped
+                 let newKeywords: string[] = [];
+                 if (Array.isArray(res.data)) newKeywords = res.data;
+                 else if (res.data.suggestion && Array.isArray(res.data.suggestion)) newKeywords = res.data.suggestion;
+                 else if (typeof res.data.suggestion === 'string') {
+                    // Try parsing if string
+                    try { newKeywords = JSON.parse(res.data.suggestion); } catch(e) {}
+                 }
+
+                 if (newKeywords.length > 0) {
+                     const unique = newKeywords.filter((k: string) => !visualKeywords.includes(k));
+                     setVisualKeywords([...visualKeywords, ...unique]);
+                 }
+            } else if (type === 'lore' && res.data.suggestion) {
+                setRoleDescription(res.data.suggestion);
             }
         } catch (e) {
-            console.error("Augment error", e);
-            // Don't show error, just finalize with what we have
-            handleFinalize(name, moods, tags, tags.join(", ") + " " + moods.join(", "));
+            console.error(e);
+            toast({ title: "Suggestion Failed", description: "AI could not generate a suggestion.", variant: "destructive" });
         } finally {
-            setIsAugmenting(false);
+            setSuggestionLoading(null);
         }
     };
 
-    // Auto-select first option when options appear
+    // Analyzing Effect
     useEffect(() => {
-        if (step === 'selection' && conceptOptions.length > 0 && selectedOptionIndex === null) {
-            setSelectedOptionIndex(0);
+        if (step === 'analyzing') {
+            const timer = setTimeout(() => {
+                handleNextStep('role');
+            }, 3000); // 3 seconds fake Analysis
+            return () => clearTimeout(timer);
         }
-    }, [step, conceptOptions, selectedOptionIndex]);
+    }, [step]);
 
-    const handleSelectOption = (idx: number) => {
-        setSelectedOptionIndex(idx);
-        const opt = conceptOptions[idx];
-        if (opt) {
-            setName(opt.name); // Usually same, but maybe varied
-            setTags(opt.features); // Update tags from features
-            setDescription(opt.visual_description);
-            // Mood stays as Default Mood setting unless we want to override? Let's keep user selection for mood unless option specifies.
-        }
-    };
 
-    const handleConfirmSelection = () => {
-        if (selectedOptionIndex !== null) {
-            const opt = conceptOptions[selectedOptionIndex];
-            const profileData = {
-                age: opt.age,
-                personality: opt.personality,
-                pros: opt.pros,
-                cons: opt.cons,
-                background: opt.reason
-            };
-            handleFinalize(opt.name, moods, opt.features, opt.visual_description, profileData);
-        }
-    };
-
-    const handleFinalize = async (finalName: string, finalMoods: string[], finalTags: string[], finalDesc: string, profileData: any = {}) => {
-        setIsGenerating(true); // Re-using state for loading UI on button
+    const handleFinalize = async () => {
+         if (!selectedRole) return;
+        setIsGenerating(true);
         setError(null);
+
+        // Gather Data
+        const descriptionComplete = roleDescription ? `Age: ${age}. Role: ${selectedRole}. Personality: ${personalityTypes.join(', ')}. Visuals: ${visualKeywords.join(', ')}. Lore: ${roleDescription}` : `Age: ${age}. Role: ${selectedRole}. Personality: ${personalityTypes.join(', ')}. Visuals: ${visualKeywords.join(', ')}.`;
+
+        const profileData = {
+            age: age,
+            role: selectedRole,
+            theme_color: themeColor,
+            personality_type: personalityTypes.join(', '),
+            lore: roleDescription
+        };
+
         try {
-            // Create Character
-            // Create Character with description in one go
             const charRes = await api.post(`/characters`, {
-                name: finalName,
+                name: name,
                 project_id: projectId,
-                default_mood: finalMoods,
-                appearance_tags: finalTags,
-                description: finalDesc,
+                default_mood: personalityTypes.length > 0 ? personalityTypes : ['Neutral'],
+                appearance_tags: visualKeywords,
+                description: descriptionComplete,
                 profile: profileData
             });
             const newCharId = charRes.data.id;
@@ -232,10 +227,9 @@ export default function CharacterCastingWizard({ projectId, stylePreset }: Chara
             // Trigger Generation Async
             api.post(`/characters/${newCharId}/generate`, {});
 
-            // Notify and Redirect
             toast({
-                title: "Casting Complete!",
-                description: `${finalName} is arriving on set. We'll notify you when the image is ready.`,
+                title: "Character Created!",
+                description: `${name} has been cast as the ${selectedRole}.`,
             });
 
             router.push(`/project/${projectId}`);
@@ -246,130 +240,199 @@ export default function CharacterCastingWizard({ projectId, stylePreset }: Chara
         }
     };
 
-    // Polling Effect
-
-
 
     // --- Animations ---
     const stepVariants = {
         hidden: (dir: number) => ({
             opacity: 0,
             x: dir > 0 ? 30 : -30,
-            scale: 0.95
+            scale: 0.98
         }),
         visible: {
             opacity: 1,
             x: 0,
             scale: 1,
-            transition: { type: "spring", stiffness: 300, damping: 30 } as any
+            transition: { type: "spring", stiffness: 300, damping: 30 } as any // eslint-disable-line @typescript-eslint/no-explicit-any
         },
         exit: (dir: number) => ({
             opacity: 0,
             x: dir < 0 ? 30 : -30,
-            scale: 0.95,
-            transition: { duration: 0.2 } as any
+            scale: 0.98,
+            transition: { duration: 0.2 } as any // eslint-disable-line @typescript-eslint/no-explicit-any
         })
     };
 
-    // --- Steps Rendering ---
 
-    const renderNameStep = () => (
+    // --- Render Steps ---
+
+    const renderConceptStep = () => (
         <motion.div
-            key="name"
+            key="concept"
             custom={direction}
             variants={stepVariants}
             initial="hidden" animate="visible" exit="exit"
-            className="flex flex-col gap-6"
+            className="flex flex-col gap-8 py-4 px-12"
         >
-            <div className="flex flex-col items-center">
-                <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-6 border border-primary/20">
-                    <User className="w-10 h-10 text-primary" />
+            <div className="space-y-6 max-w-md mx-auto w-full">
+                <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                        <Label className="text-[#d8b4fe] text-xs font-bold font-mono tracking-wider uppercase">Character Name</Label>
+                        <Badge 
+                            variant="outline" 
+                            className="border-purple-500/30 text-purple-300 bg-purple-500/10 text-[10px] px-2 py-0.5 cursor-pointer hover:bg-purple-500/20 transition-colors"
+                            onClick={() => handleSuggestion('name')}
+                        >
+                            {suggestionLoading === 'name' ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Sparkles className="w-3 h-3 mr-1" />}
+                            AI Suggestion
+                        </Badge>
+                    </div>
+                    <Input
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Park Dohyun"
+                        className="h-14 bg-[#0B0d12] border-[#2a2f3a] text-white text-lg placeholder:text-white/20 rounded-lg focus-visible:ring-1 focus-visible:ring-purple-500 focus-visible:border-purple-500 transition-all text-center"
+                        autoFocus
+                    />
                 </div>
-                <Input
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Enter Character Name..."
-                    className="h-20 text-3xl font-bold bg-black/20 border-white/10 focus-visible:ring-primary text-center text-white placeholder:text-white/20 rounded-xl px-6 max-w-md mx-auto"
-                    onKeyDown={(e) => e.key === 'Enter' && handleNameSubmit()}
-                    autoFocus
-                />
+
+                <div className="space-y-3">
+                    <Label className="text-[#d8b4fe] text-xs font-bold font-mono tracking-wider uppercase">Age (approx)</Label>
+                    <Input
+                        value={age}
+                        onChange={(e) => setAge(e.target.value)}
+                        placeholder="Age (e.g., 18)"
+                        className="h-14 bg-[#0B0d12] border-[#2a2f3a] text-white text-lg placeholder:text-white/20 rounded-lg focus-visible:ring-1 focus-visible:ring-purple-500 focus-visible:border-purple-500 transition-all text-center"
+                    />
+                </div>
             </div>
         </motion.div>
     );
 
-    const renderAppearanceStep = () => (
+    const renderStyleStep = () => (
         <motion.div
-            key="appearance"
+            key="style"
             custom={direction}
             variants={stepVariants}
             initial="hidden" animate="visible" exit="exit"
-            className="flex flex-col gap-6 h-full"
+            className="flex flex-col h-full w-full px-4"
         >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
-                {/* Tags Section */}
-                <div className="bg-white/5 border border-white/10 rounded-xl p-5 flex flex-col gap-3">
-                    <div className="flex items-center gap-2 mb-1">
-                        <Palette className="w-4 h-4 text-purple-400" />
-                        <Label className="text-white font-bold">Visual Tags</Label>
-                    </div>
-
-                    <div className="flex-1 bg-black/20 rounded-lg p-3 content-start flex flex-wrap gap-2 min-h-[120px]">
-                        {tags.map((tag, i) => (
-                            <Badge key={i} variant="secondary" className="px-2 py-1 bg-primary/20 hover:bg-primary/30 text-primary-foreground gap-1 border border-primary/30">
-                                {tag}
-                                <button onClick={() => setTags(tags.filter((_, idx) => idx !== i))} className="hover:text-red-400">
-                                    <X className="w-3 h-3" />
-                                </button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-full">
+                {/* LEFT COLUMN: Visuals */}
+                <div className="flex flex-col gap-8">
+                     {/* Keywords */}
+                    <div className="space-y-3">
+                         <div className="flex justify-between items-center">
+                            <Label className="text-[#d8b4fe] text-xs font-bold font-mono tracking-wider uppercase flex items-center gap-2">
+                                <Sparkles className="w-3 h-3" /> Visual Keywords
+                            </Label>
+                            <Badge 
+                                variant="outline" 
+                                className="border-purple-500/30 text-purple-300 bg-purple-500/10 text-[10px] px-2 py-0.5 cursor-pointer hover:bg-purple-500/20 transition-colors"
+                                onClick={() => handleSuggestion('visuals')}
+                            >
+                                {suggestionLoading === 'visuals' ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Wand2 className="w-3 h-3 mr-1" />}
+                                AI Style Suggestion
                             </Badge>
-                        ))}
+                        </div>
+                        
+                        <div className="bg-[#0B0d12] border border-[#2a2f3a] rounded-xl p-4 min-h-[140px] flex flex-col gap-3 transition-all focus-within:border-purple-500/50 focus-within:ring-1 focus-within:ring-purple-500/50">
+                             <div className="flex flex-wrap gap-2">
+                                {visualKeywords.map((tag, i) => (
+                                    <Badge key={i} variant="secondary" className="px-2.5 py-1 bg-[#1c162e] text-purple-200 border border-purple-500/20 hover:bg-[#251d3d] transition-colors gap-1.5 font-normal">
+                                        {tag}
+                                        <button onClick={() => setVisualKeywords(visualKeywords.filter((_, idx) => idx !== i))} className="text-purple-400 hover:text-white transition-colors ml-0.5">
+                                            <X className="w-3 h-3" />
+                                        </button>
+                                    </Badge>
+                                ))}
+                            </div>
+                            <div className="relative mt-auto">
+                                 <Input
+                                    className="bg-transparent border-none text-white placeholder:text-white/20 p-0 focus-visible:ring-0 h-auto text-sm"
+                                    placeholder="Add keywords (e.g., Uniform, Sword)..."
+                                    value={currentKeyword}
+                                    onChange={(e) => setCurrentKeyword(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleAddKeyword()}
+                                />
+                                {currentKeyword && (
+                                    <button
+                                        onClick={handleAddKeyword}
+                                        className="absolute right-0 top-1/2 -translate-y-1/2 text-purple-400 hover:text-white transition-colors"
+                                    >
+                                        <Check className="w-4 h-4" />
+                                    </button>
+                                )}
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="relative">
-                        <Input
-                            className="bg-black/20 border-white/10 text-white placeholder:text-white/20 pr-10"
-                            placeholder="Add trait (e.g. Blue Hair)..."
-                            value={currentTag}
-                            onChange={(e) => setCurrentTag(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
-                        />
-                        <button
-                            onClick={handleAddTag}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
-                        >
-                            <Check className="w-4 h-4" />
-                        </button>
+                    {/* Theme Color */}
+                    <div className="space-y-3">
+                         <Label className="text-[#d8b4fe] text-xs font-bold font-mono tracking-wider uppercase flex items-center gap-2">
+                            <Palette className="w-3 h-3" /> Theme Color
+                        </Label>
+                        <div className="flex gap-3">
+                            {['#ef4444', '#3b82f6', '#10b981', '#B49221', '#8b5cf6', '#252830', '#9ca3af', '#be185d'].map((color) => {
+                                const isSelected = themeColor === color;
+                                return (
+                                    <button
+                                        key={color}
+                                        onClick={() => setThemeColor(color)}
+                                        className={cn(
+                                            "w-8 h-8 rounded-full border-2 transition-all relative",
+                                            isSelected ? "border-white scale-110 shadow-[0_0_10px_rgba(255,255,255,0.5)]" : "border-transparent opacity-80 hover:opacity-100 hover:scale-105"
+                                        )}
+                                        style={{ backgroundColor: color }}
+                                    >
+                                        {isSelected && <Check className="w-4 h-4 text-white absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 drop-shadow-md" />}
+                                    </button>
+                                )
+                            })}
+                        </div>
                     </div>
                 </div>
 
-                {/* Mood Section */}
-                <div className="bg-white/5 border border-white/10 rounded-xl p-5 flex flex-col gap-3">
-                    <div className="flex items-center gap-2 mb-1">
-                        <Sparkles className="w-4 h-4 text-yellow-400" />
-                        <Label className="text-white font-bold">Default Mood</Label>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3 flex-1 content-start">
-                        {['Happy', 'Neutral', 'Sad', 'Angry', 'Serious', 'Mysterious'].map((m) => {
-                            const isSelected = moods.includes(m);
+                {/* RIGHT COLUMN: Personality */}
+                <div className="flex flex-col gap-3">
+                    <Label className="text-[#fbbf24] text-xs font-bold font-mono tracking-wider uppercase flex items-center gap-2">
+                         <span className='w-3 h-3 text-center leading-3'>☺</span> Personality Type
+                    </Label>
+                    
+                    <div className="grid grid-cols-2 gap-3 h-full">
+                         {[
+                            'Cheerful', 'Serious', 
+                            'Cold', 'Tsundere', 
+                            'Mysterious', 'Melancholic',
+                            'Pure', 'Madness'
+                        ].map((pType) => {
+                            const isSelected = personalityTypes.includes(pType);
+                            let colorClass = "text-gray-400 border-white/5 bg-[#0B0d12]"; // Default
+
+                            if (isSelected) {
+                                // Dynamic color based on selection could be nice, but keeping it simple orange/active style for now
+                                colorClass = "border-[#ea580c] bg-[#ea580c] text-white shadow-[0_0_15px_rgba(234,88,12,0.4)]";
+                            } else {
+                                colorClass = "text-gray-400 border-white/5 bg-[#0B0d12] hover:bg-white/5 hover:border-white/10 hover:text-white";
+                            }
+
                             return (
                                 <button
-                                    key={m}
+                                    key={pType}
                                     onClick={() => {
                                         if (isSelected) {
-                                            setMoods(moods.filter(x => x !== m));
+                                            setPersonalityTypes(personalityTypes.filter(t => t !== pType));
                                         } else {
-                                            setMoods([...moods, m]);
+                                            setPersonalityTypes([...personalityTypes, pType]);
                                         }
                                     }}
                                     className={cn(
-                                        "flex items-center justify-center p-3 rounded-lg border transition-all h-12",
-                                        isSelected
-                                            ? "border-primary bg-primary/20 text-white shadow-sm shadow-primary/20"
-                                            : "border-white/5 bg-black/20 text-gray-400 hover:bg-white/10 hover:text-white"
+                                        "rounded-xl border font-medium text-sm transition-all duration-200 flex items-center justify-center p-4",
+                                        colorClass
                                     )}
                                 >
-                                    <span className="text-sm font-medium">{m}</span>
+                                    {pType}
                                 </button>
-                            );
+                            )
                         })}
                     </div>
                 </div>
@@ -377,168 +440,294 @@ export default function CharacterCastingWizard({ projectId, stylePreset }: Chara
         </motion.div>
     );
 
-    const renderSelectionStep = () => {
-        if (!conceptOptions.length) return null;
+    // --- Archetypes Data ---
+    const archetypes = [
+        {
+            id: 'protagonist',
+            title: 'The Protagonist',
+            subtitle: 'Center of the Story',
+            tags: ['Determined', 'Main Character'],
+            description: 'The core figure driving the story. A character designed to garner reader empathy or admiration.',
+            stats: { charisma: 85, strength: 70, luck: 80 }
+        },
+        {
+            id: 'antagonist',
+            title: 'The Antagonist',
+            subtitle: 'The Opposing Force',
+            tags: ['Charismatic', 'Ambitious'],
+            description: 'The primary obstacle for the protagonist. Often mirrors the hero but with twisted ideals.',
+            stats: { charisma: 90, strength: 85, luck: 40 }
+        },
+        {
+            id: 'second_lead',
+            title: 'The Second Lead',
+            subtitle: 'The Devoted Support',
+            tags: ['Devoted', 'Talented'],
+            description: 'A key character who often rivals the protagonist in skill or love, but tragically falls short.',
+            stats: { charisma: 75, strength: 60, luck: 50 }
+        },
+        {
+            id: 'scene_stealer',
+            title: 'The Scene Stealer',
+            subtitle: 'Comic Relief / Wildcard',
+            tags: ['Funny', 'Loyal'],
+            description: 'A character with a distinct personality that brightens the mood or adds chaos to the plot.',
+            stats: { charisma: 95, strength: 40, luck: 90 }
+        }
+    ];
 
-        const currentOption = conceptOptions[selectedOptionIndex || 0];
+    // Role Step Data
 
-        return (
-            <motion.div
-                key="selection"
-                custom={direction}
-                variants={stepVariants}
-                initial="hidden" animate="visible" exit="exit"
-                className="flex gap-6 h-full w-full"
-            >
-                {/* Left Sidebar: Bookmarks */}
-                <div className="w-1/3 flex flex-col gap-3 pr-2 border-r border-white/5 overflow-y-auto custom-scrollbar">
-                    <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest pl-1 mb-2">Candidates</h3>
-                    {conceptOptions.map((opt, idx) => (
-                        <div
-                            key={idx}
-                            onClick={() => setSelectedOptionIndex(idx)}
-                            className={cn(
-                                "cursor-pointer p-4 rounded-xl border transition-all duration-200 group relative overflow-hidden",
-                                selectedOptionIndex === idx
-                                    ? "bg-white/10 border-primary/50 text-white shadow-lg shadow-primary/10"
-                                    : "bg-black/20 border-white/5 text-gray-400 hover:bg-white/5 hover:border-white/20"
-                            )}
-                        >
-                            {selectedOptionIndex === idx && (
-                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
-                            )}
-                            <div className="flex justify-between items-center mb-1">
-                                <span className={cn("font-bold transition-colors", selectedOptionIndex === idx ? "text-primary-foreground" : "")}>
-                                    {opt.name}
-                                </span>
-                                {selectedOptionIndex === idx && <Sparkles className="w-3 h-3 text-primary animate-pulse" />}
-                            </div>
-                            <div className="flex flex-wrap gap-1 mt-2">
-                                {opt.features.slice(0, 3).map((f, i) => (
-                                    <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-black/40 border border-white/10 text-gray-500">
-                                        {f}
-                                    </span>
-                                ))}
-                                {opt.features.length > 3 && (
-                                    <span className="text-[10px] px-1.5 py-0.5 text-gray-600">+{opt.features.length - 3}</span>
-                                )}
+    
+    const currentArchetype = archetypes.find(a => a.title === selectedRole) || archetypes[0];
+
+    useEffect(() => {
+        if (step === 'role' && !selectedRole) {
+            setSelectedRole(archetypes[0].title);
+        }
+    }, [step]);
+
+    // Update role description when archetype changes (if not edited or generic way to update?)
+    // Actually, we want to set it initially when selectedRole changes, unless we customized it?
+    // For simplicity, whenever selectedRole changes, we reset description to archetype default.
+    useEffect(() => {
+        if (currentArchetype) {
+            setRoleDescription(currentArchetype.description);
+        }
+    }, [currentArchetype]);
+
+
+    const renderRoleStep = () => (
+        <motion.div
+            key="role"
+            custom={direction}
+            variants={stepVariants}
+            initial="hidden" animate="visible" exit="exit"
+            className="flex gap-6 h-full w-full px-4"
+        >
+            {/* Left Sidebar: Roles List */}
+            <div className="w-1/3 flex flex-col gap-3 pr-2 overflow-y-auto custom-scrollbar">
+                <Label className="text-gray-500 text-[10px] font-bold tracking-widest uppercase mb-2">Select Role</Label>
+                {archetypes.map((arch) => (
+                    <div
+                        key={arch.id}
+                        onClick={() => setSelectedRole(arch.title)}
+                        className={cn(
+                            "cursor-pointer p-4 rounded-xl border transition-all duration-200 group relative",
+                            selectedRole === arch.title
+                                ? "bg-[#1c162e] border-purple-500/50 shadow-[0_0_15px_rgba(147,51,234,0.15)]"
+                                : "bg-[#0B0d12] border-[#2a2f3a] hover:bg-white/5 hover:border-white/10"
+                        )}
+                    >
+                        <h4 className={cn("font-bold text-sm mb-2", selectedRole === arch.title ? "text-white" : "text-gray-400")}>
+                            {arch.title}
+                        </h4>
+                        <div className="flex gap-1.5 flex-wrap">
+                            {arch.tags.map(t => (
+                                <Badge key={t} variant="secondary" className="bg-black/40 text-[10px] px-1.5 py-0.5 text-gray-500 border border-white/5">
+                                    {t}
+                                </Badge>
+                            ))}
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Right Panel: Details */}
+            <div className="flex-1 bg-[#0B0d12] border border-[#2a2f3a] rounded-xl p-6 flex flex-col gap-6 relative overflow-hidden">
+                {/* Header */}
+                <div className="flex justify-between items-start z-10">
+                    <div>
+                         <div className="text-purple-400 text-xs font-mono font-bold tracking-wider mb-1">{currentArchetype.subtitle}</div>
+                         <h2 className="text-2xl font-bold text-white">{currentArchetype.title}</h2>
+                    </div>
+                    {age && <Badge variant="outline" className="text-gray-400 border-white/10">{age} yrs</Badge>}
+                </div>
+                
+                 {/* Description Box */}
+                <div className="space-y-2 z-10">
+                    <div className="flex justify-between items-center">
+                         <Label className="text-gray-500 text-[10px] font-bold tracking-widest uppercase">Character Profile</Label>
+                         <Badge 
+                            variant="outline" 
+                            className="border-purple-500/30 text-purple-300 bg-purple-500/10 text-[10px] px-2 py-0.5 cursor-pointer hover:bg-purple-500/20 transition-colors"
+                            onClick={() => handleSuggestion('lore')}
+                         >
+                            {suggestionLoading === 'lore' ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Wand2 className="w-3 h-3 mr-1" />}
+                            AI Lore Expansion
+                        </Badge>
+                    </div>
+                    <div className="bg-[#151921] rounded-lg p-4 text-gray-300 text-sm leading-relaxed border border-white/5 min-h-[80px]">
+                        {roleDescription}
+                    </div>
+                </div>
+
+                {/* Stats */}
+                <div className="space-y-4 mt-2 z-10">
+                    {Object.entries(currentArchetype.stats).map(([stat, value]) => (
+                        <div key={stat} className="flex items-center text-xs gap-4">
+                            <span className="w-16 uppercase font-bold text-gray-500 text-[10px]">{stat}</span>
+                            <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
+                                <motion.div 
+                                    className="h-full bg-blue-500 rounded-full"
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${value}%` }}
+                                    transition={{ duration: 0.5, delay: 0.2 }}
+                                />
                             </div>
                         </div>
                     ))}
                 </div>
+                
+                {/* Background Decoration */}
+                <div className="absolute -bottom-10 -right-10 w-64 h-64 bg-purple-500/5 blur-[80px] rounded-full pointer-events-none"></div>
+            </div>
+        </motion.div>
+    );
 
-                {/* Right Content: Detail View */}
-                <div className="flex-1 h-full pl-2">
-                    <CharacterConceptCard
-                        option={currentOption}
-                        isSelected={true}
-                        onSelect={() => { }} // Already selected
-                    />
+    // Placeholder for other steps to avoid errors during incremental rebuild
+    const renderOtherSteps = () => (
+       <div className='text-center text-white/50 w-full h-full'>
+            {step === 'style' && renderStyleStep()}
+            {step === 'role' && renderRoleStep()}
+            {step === 'analyzing' && (
+                <div className="flex flex-col items-center justify-center h-full gap-6 animate-in fade-in duration-700">
+                    <div className="relative w-24 h-24">
+                        <div className="absolute inset-0 rounded-full border-t-2 border-purple-500 animate-spin"></div>
+                        <div className="absolute inset-2 rounded-full border-r-2 border-indigo-500 animate-spin [animation-duration:1.5s]"></div>
+                        <div className="absolute inset-4 rounded-full border-b-2 border-blue-500 animate-spin [animation-duration:2s]"></div>
+                    </div>
+                    <div className="text-center space-y-2">
+                        <h3 className="text-xl font-bold tracking-tight text-white/80">ANALYZING WEBTOON DATA...</h3>
+                        <p className="text-gray-500 text-sm">Matching {name} with best archetypes...</p>
+                    </div>
                 </div>
-            </motion.div>
-        );
-    };
+            )}
+       </div> 
+    );
 
-
-
-    // --- Layout ---
 
     return (
-        <div className="min-h-screen bg-background-dark text-white flex items-center justify-center p-4 font-display overflow-hidden relative">
-            {/* Ambient Background */}
-            <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-primary/20 blur-[150px] rounded-full pointer-events-none mix-blend-screen" />
-            <div className="absolute bottom-[-20%] right-[-10%] w-[40%] h-[40%] bg-purple-500/10 blur-[150px] rounded-full pointer-events-none mix-blend-screen" />
+        <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center p-4 font-sans selection:bg-purple-500/30">
+             {/* Header */}
+             <header className="absolute top-0 left-0 w-full p-6 flex justify-between items-center z-50 border-b border-white/5 bg-[#050505]/80 backdrop-blur-sm">
+                <div className="flex items-center gap-4 text-gray-400 hover:text-white transition-colors cursor-pointer" onClick={() => router.back()}>
+                    <MoveLeft className="w-5 h-5" />
+                    <span className="font-medium">Back to Project</span>
+                </div>
+                
+                 {/* Project Metatdata Header */}
+                 <div className="flex flex-col items-center gap-1 justify-center">
+                      {projectTitle && (
+                          <div className="flex items-center gap-2">
+                              <span className="font-bold text-white text-lg tracking-tight">{projectTitle}</span>
+                              {projectGenre && (
+                                  <Badge variant="outline" className="text-[10px] h-5 px-1.5 py-0 border-white/10 bg-white/5 text-gray-400 font-normal">
+                                      {projectGenre}
+                                  </Badge>
+                              )}
+                          </div>
+                      )}
+                 </div>
 
-            <main className="w-full max-w-4xl relative z-10 flex flex-col min-h-[600px] gap-6">
+                <div className="text-xs font-mono text-gray-600">v.2.2.1 (Eng/Fix)</div>
+            </header>
 
-                {/* Header */}
-                <div className="text-center bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl animate-in slide-in-from-top-5 duration-500">
-                    <h1 className="text-3xl font-black tracking-tight text-white mb-2">
-                        {step === 'name' && 'Who are they?'}
-                        {step === 'appearance' && `Define ${name}'s Look`}
-                        {step === 'selection' && 'Choose a Direction'}
-                    </h1>
-                    <p className="text-gray-400 text-sm font-light">
-                        {step === 'name' && 'Every great story needs a protagonist.'}
-                        {step === 'appearance' && 'Add traits and mood to guide the AI.'}
-                        {step === 'selection' && 'Select the best profile match for your story.'}
-                    </p>
+            <main className="w-full max-w-5xl relative z-10 flex flex-col gap-8 mt-16">
+                 {/* Title Section */}
+                <div className="text-center space-y-2 mb-4">
+                     {step === 'concept' && (
+                        <>
+                            <h1 className="text-3xl font-bold tracking-tight text-white/90">Basic Concept Setting</h1>
+                            <p className="text-gray-500 text-sm">Establish the basic settings of the character based on &#123;world_context&#125;.</p>
+                        </>
+                     )}
+                     {step === 'style' && (
+                         <>
+                             <h1 className="text-3xl font-bold tracking-tight text-white/90">Visuals & Personality</h1>
+                             <p className="text-gray-500 text-sm">AI can suggest visuals and personality fitting the &#123;world_context&#125;.</p>
+                         </>
+                     )}
+                     {step === 'role' && (
+                         <>
+                            <h1 className="text-3xl font-bold tracking-tight text-white/90">Determine Role (Archetype)</h1>
+                             <p className="text-gray-500 text-sm">Select and refine the role this character plays in the story.</p>
+                         </>
+                     )}
+                     {step === 'analyzing' && (<div className='h-16'></div>)}
                 </div>
 
-                {/* Content Card */}
-                <div className="bg-[#1a1726]/90 backdrop-blur-md border border-white/10 rounded-2xl shadow-2xl p-8 flex-1 flex flex-col relative overflow-hidden transition-all duration-300">
+                {/* Main Card */}
+                <div className="bg-[#0f0b15] border border-white/5 rounded-3xl shadow-2xl relative overflow-hidden min-h-[500px] flex flex-col">
+                    
+                    {/* Inner Content Padding */}
+                    <div className="p-8 pb-32 flex-1 flex flex-col">
+                        
+                        {step !== 'analyzing' && (
+                            <StepIndicator currentStep={getStepNumber(step)} totalSteps={3} />
+                        )}
 
-                    <StepIndicator currentStep={getStepNumber(step)} totalSteps={3} />
-
-                    <div className="flex-1 flex flex-col relative h-0 min-h-0">
-                        <AnimatePresence custom={direction} mode="wait">
-                            {step === 'name' && renderNameStep()}
-                            {step === 'appearance' && renderAppearanceStep()}
-                            {step === 'selection' && renderSelectionStep()}
-
-                        </AnimatePresence>
+                        <div className="flex-1 flex flex-col justify-center relative">
+                             <AnimatePresence custom={direction} mode="wait">
+                                {step === 'concept' && renderConceptStep()}
+                                {step !== 'concept' && renderOtherSteps()}
+                            </AnimatePresence>
+                        </div>
                     </div>
 
-                    {error && (
-                        <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-200 text-sm flex items-center gap-2 animate-in fade-in">
-                            <span className="font-bold text-red-500">Error:</span> {error}
-                        </div>
-                    )}
-
-                    {/* Footer Navigation */}
-                    {(
-                        <footer className="mt-8 flex justify-between items-center pt-6 border-t border-white/5">
-                            {/* Back Button */}
-                            <div className="flex-1">
-                                {step !== 'name' && (
-                                    <Button
+                    {/* Footer / Actions */}
+                     {step !== 'analyzing' && (
+                        <div className="absolute bottom-0 left-0 right-0 p-8 border-t border-white/5 bg-[#0f0b15]/50 backdrop-blur-sm flex justify-between items-center">
+                             {/* Back Button or Divider */}
+                            <div>
+                                {step !== 'concept' && (
+                                     <Button
                                         variant="ghost"
                                         onClick={() => {
-                                            if (step === 'appearance') handlePrevStep('name');
-                                            if (step === 'selection') handlePrevStep('appearance');
-                                            // if step generate (hidden)
+                                             if (step === 'style') handlePrevStep('concept');
+                                             if (step === 'role') handlePrevStep('style');
                                         }}
-                                        className="text-gray-400 hover:text-white hover:bg-white/5 gap-2"
+                                        className="text-gray-400 hover:text-white hover:bg-white/5 gap-2 pl-0 hover:pl-2 transition-all"
                                     >
                                         <MoveLeft size={16} /> Back
                                     </Button>
                                 )}
-
                             </div>
 
-                            <div className="flex-1 flex justify-end">
-                                {step === 'name' && (
+                            {/* Next Button */}
+                            <div>
+                                {step === 'concept' && (
                                     <Button
-                                        onClick={handleNameSubmit}
+                                        onClick={handleConceptSubmit}
                                         disabled={!name.trim()}
-                                        className="bg-primary hover:bg-primary/90 text-white font-bold rounded-xl px-8 h-12 shadow-lg shadow-primary/20"
+                                        className="bg-[#2a2e3b] hover:bg-[#353a49] text-white/90 font-medium rounded-xl px-8 h-12 border border-white/5 transition-all w-32"
                                     >
                                         Next <MoveRight className="ml-2 w-4 h-4" />
                                     </Button>
                                 )}
-                                {step === 'appearance' && (
+                                {step === 'style' && (
                                     <Button
-                                        onClick={handleAugment}
-                                        disabled={isAugmenting}
-                                        className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-xl px-8 h-12 shadow-lg shadow-purple-900/20"
+                                        onClick={handleStyleSubmit}
+                                        disabled={personalityTypes.length === 0}
+                                        className="bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl px-8 h-12 shadow-[0_0_20px_rgba(147,51,234,0.3)] transition-all w-32"
                                     >
-                                        {isAugmenting ? <Loader2 className="animate-spin" /> : <Wand2 className="mr-2 w-4 h-4" />}
-                                        Enhance
+                                        Next <MoveRight className="ml-2 w-4 h-4" />
                                     </Button>
                                 )}
-                                {step === 'selection' && (
+                                {step === 'role' && (
                                     <Button
-                                        onClick={handleConfirmSelection}
-                                        disabled={selectedOptionIndex === null || isGenerating}
-                                        className="bg-primary hover:bg-primary/90 text-white font-bold rounded-xl px-8 h-12 shadow-lg shadow-primary/20"
+                                        onClick={handleFinalize}
+                                        disabled={isGenerating}
+                                        className="bg-[#8b5cf6] hover:bg-[#7c3aed] text-white font-bold rounded-xl px-8 h-12 shadow-[0_0_20px_rgba(139,92,246,0.5)] transition-all"
                                     >
-                                        {isGenerating ? <Loader2 className="animate-spin mr-2" /> : null}
-                                        Create Character <Sparkles className="ml-2 w-4 h-4" />
+                                        {isGenerating ? <Loader2 className="animate-spin mr-2" /> : <Sparkles className="mr-2 w-4 h-4" />}
+                                        Create Character
                                     </Button>
                                 )}
+                                 {/* Placeholders for buttons of other steps */}
                             </div>
-                        </footer>
-                    )}
+                        </div>
+                     )}
                 </div>
             </main>
         </div>

@@ -299,3 +299,58 @@ def generate_character_image(
     background_tasks.add_task(generate_character_image_task, character_id, "")
     
     return character
+
+class SuggestionRequest(BaseModel):
+    project_id: UUID
+    type: str # "name", "visuals", "lore"
+    current_name: Optional[str] = None
+    age: Optional[str] = None
+    role: Optional[str] = None
+    visual_keywords: Optional[List[str]] = []
+    personality: Optional[str] = None
+
+@router.post("/suggest", response_model=Any)
+def suggest_character_attribute(
+    *,
+    request: SuggestionRequest,
+    session: Session = Depends(deps.get_session),
+    current_user_id: str = Depends(deps.get_current_user_id),
+):
+    """
+    Get AI suggestion for character attributes.
+    """
+    project = session.get(Project, request.project_id)
+    if not project:
+         raise HTTPException(status_code=404, detail="Project not found")
+
+    # Construct Context
+    wv_desc = ""
+    if project.worldview:
+        if isinstance(project.worldview, dict):
+            wv_desc = project.worldview.get("content") or project.worldview.get("description") or ""
+        else:
+             wv_desc = str(project.worldview)
+
+    project_context = f"""
+    Title: {project.title}
+    Genre: {project.genre.name if project.genre else 'Unknown'}
+    Worldview: {wv_desc}
+    """
+
+    current_data = {
+        "name": request.current_name,
+        "age": request.age,
+        "role": request.role,
+        "visual_keywords": request.visual_keywords,
+        "personality": request.personality
+    }
+
+    try:
+        result = ai_service.get_character_suggestion(
+            suggestion_type=request.type,
+            project_context=project_context,
+            current_data=current_data
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
