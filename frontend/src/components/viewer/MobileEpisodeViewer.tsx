@@ -1,7 +1,8 @@
-import { X, Smartphone, Check, XCircle } from 'lucide-react';
+import { X, Smartphone, Check, XCircle, Loader2, Wand2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import React from 'react';
+import api from '@/lib/api';
+import React, { useState } from 'react';
 
 interface StoryCut {
     id: string;
@@ -11,7 +12,14 @@ interface StoryCut {
     dialogues: any[];
 }
 
-mode ?: 'view' | 'review';
+interface MobileEpisodeViewerProps {
+    isOpen: boolean;
+    onClose: () => void;
+    title: string;
+    episodeId: string;
+    cuts: StoryCut[];
+    onUpdateCut?: (cutId: string, imagePath: string) => void;
+    mode?: 'view' | 'review';
 }
 
 export default function MobileEpisodeViewer({ isOpen, onClose, title, episodeId, cuts, onUpdateCut, mode = 'view' }: MobileEpisodeViewerProps) {

@@ -1,5 +1,6 @@
 
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -15,6 +16,7 @@ import GenerateEpisodeModal from './modals/GenerateEpisodeModal';
 import ArtStyleSetupModal from './modals/ArtStyleSetupModal';
 import CharacterDetailModal from './modals/CharacterDetailModal';
 import { Plus, Sparkles, Clapperboard, Edit2, Palette, ArrowLeft, Play, ArrowRight, Settings, FolderOpen, Upload, Database, Zap, Code, AlertCircle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface Character {
     id?: string;
@@ -65,6 +67,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
     const [isGenerateEpisodeOpen, setIsGenerateEpisodeOpen] = useState(false);
     const [isArtStyleSetupOpen, setIsArtStyleSetupOpen] = useState(false);
     const [isViewStyleOpen, setIsViewStyleOpen] = useState(false);
+    const { toast } = useToast();
 
     const handleStyleClick = () => {
         if (project.style_preset && project.style_preset !== 'anime_webtoon') {
@@ -163,14 +166,18 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
             await api.post(`/characters/${charId}/generate`);
             // Optimistic update
             if (onRefreshCharacters) onRefreshCharacters();
-            
+
             // Also update selected character if open
             if (selectedCharacter && selectedCharacter.id === charId) {
                 setSelectedCharacter({ ...selectedCharacter, sheet_status: 'processing' });
             }
         } catch (e) {
             console.error("Retry failed", e);
-            alert("Retry failed. Please try again.");
+            toast({
+                title: "Retry Failed",
+                description: "Please try again.",
+                variant: 'destructive',
+            });
         }
     };
 
@@ -186,14 +193,14 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
             <div className="flex h-full relative overflow-y-auto bg-[#13111C]">
                 {/* Main Content Scrollable Area */}
                 <div className="flex-1 flex flex-col min-h-0 relative z-10 custom-scrollbar">
-                    
+
                     {/* Immersive Hero Banner */}
                     <div className="relative w-full h-[400px] shrink-0 group border-b border-white/5">
                         {/* Background Image */}
-                        <div 
+                        <div
                             className="absolute inset-0 bg-cover bg-center"
-                            style={{ 
-                                backgroundImage: `url("${project.thumbnail_url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=2564&ixlib=rb-4.0.3'}")` 
+                            style={{
+                                backgroundImage: `url("${project.thumbnail_url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=2564&ixlib=rb-4.0.3'}")`
                             }}
                         />
                         {/* Gradient Overlays */}
@@ -202,17 +209,24 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
 
                         {/* Generate AI Cover Button (if missing) */}
                         {!project.thumbnail_url && (
-                             <div className="absolute inset-0 flex items-center justify-center z-30">
-                                <Button 
+                            <div className="absolute inset-0 flex items-center justify-center z-30">
+                                <Button
                                     className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white font-bold py-6 px-8 rounded-xl shadow-2xl transition-all hover:scale-105 group/gen"
                                     onClick={async () => {
                                         try {
-                                             await api.post(`/projects/${project.id}/cover`);
-                                             // Ideally show a toast here
-                                             alert("Cover generation started! It will appear shortly.");
+                                            await api.post(`/projects/${project.id}/cover`);
+                                            // Ideally show a toast here
+                                            toast({
+                                                title: "Cover Generation Started",
+                                                description: "It will appear shortly.",
+                                            });
                                         } catch (e) {
                                             console.error("Failed to start generation", e);
-                                            alert("Failed to start generation.");
+                                            toast({
+                                                title: "Generation Failed",
+                                                description: "Failed to start generation.",
+                                                variant: 'destructive',
+                                            });
                                         }
                                     }}
                                 >
@@ -240,14 +254,14 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                     )}
                                     {/* Render Tones */}
                                     {project.worldview?.tone && Array.isArray(project.worldview.tone) && project.worldview.tone.map((t: string) => (
-                                         <span key={t} className="px-2.5 py-0.5 rounded-md bg-purple-500/20 text-purple-200 text-[10px] font-bold uppercase tracking-wider border border-purple-500/30">
+                                        <span key={t} className="px-2.5 py-0.5 rounded-md bg-purple-500/20 text-purple-200 text-[10px] font-bold uppercase tracking-wider border border-purple-500/30">
                                             {t}
                                         </span>
                                     ))}
-                                    
+
                                     <div className="relative group/style cursor-pointer" onClick={handleStyleClick}>
                                         <span className="px-2.5 py-0.5 rounded-md bg-black/40 hover:bg-black/60 text-white text-[10px] font-medium border border-white/10 backdrop-blur-md flex items-center gap-1.5 transition-all">
-                                            <Palette size={10} className="text-[#a9a9d1]" /> 
+                                            <Palette size={10} className="text-[#a9a9d1]" />
                                             {project.style_preset || "Setup Style"}
                                         </span>
                                     </div>
@@ -281,44 +295,44 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                             {/* Creator Actions Toolbar */}
                             <div className="flex flex-col items-end gap-3 shrink-0">
                                 <div className="flex items-center gap-2 p-1 rounded-full bg-black/20 backdrop-blur-md border border-white/10">
-                                    <Button 
-                                        size="icon" 
-                                        variant="ghost" 
+                                    <Button
+                                        size="icon"
+                                        variant="ghost"
                                         className="w-8 h-8 rounded-full text-gray-400 hover:text-white hover:bg-white/10"
                                         title="Art Style"
                                         onClick={handleStyleClick}
                                     >
                                         <Palette size={16} />
                                     </Button>
-                                    <Button 
-                                        size="icon" 
-                                        variant="ghost" 
-                                        className="w-8 h-8 rounded-full text-gray-400 hover:text-white hover:bg-white/10" 
-                                        title="Project Settings" 
+                                    <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className="w-8 h-8 rounded-full text-gray-400 hover:text-white hover:bg-white/10"
+                                        title="Project Settings"
                                         onClick={() => setIsEditProjectOpen(true)}
                                     >
                                         <Settings size={16} />
                                     </Button>
-                                    <Button size="icon" variant="ghost" className="w-8 h-8 rounded-full text-gray-400 hover:text-white hover:bg-white/10" title="Manage Assets" onClick={() => alert("Asset Manager: Coming Soon")}>
+                                    <Button size="icon" variant="ghost" className="w-8 h-8 rounded-full text-gray-400 hover:text-white hover:bg-white/10" title="Manage Assets" onClick={() => toast({ title: "Asset Manager", description: "Coming Soon" })}>
                                         <FolderOpen size={16} />
                                     </Button>
-                                    <Button size="icon" variant="ghost" className="w-8 h-8 rounded-full text-gray-400 hover:text-white hover:bg-white/10" title="Generator Options" onClick={() => alert("Generator Options: Coming Soon")}>
+                                    <Button size="icon" variant="ghost" className="w-8 h-8 rounded-full text-gray-400 hover:text-white hover:bg-white/10" title="Generator Options" onClick={() => toast({ title: "Generator Options", description: "Coming Soon" })}>
                                         <Code size={16} />
                                     </Button>
                                     <div className="w-px h-4 bg-white/10 mx-1" />
-                                    <Button size="icon" variant="ghost" className="w-8 h-8 rounded-full text-gray-400 hover:text-white hover:bg-white/10" title="Export Project" onClick={() => alert("Export started!")}>
+                                    <Button size="icon" variant="ghost" className="w-8 h-8 rounded-full text-gray-400 hover:text-white hover:bg-white/10" title="Export Project" onClick={() => toast({ title: "Export Started", description: "Your project is being exported." })}>
                                         <Upload size={16} />
                                     </Button>
                                 </div>
-                                
+
                                 <div className="flex items-center gap-3">
-                                     <Button 
+                                    <Button
                                         className="h-10 px-6 rounded-full bg-white text-black hover:bg-white/90 font-bold border border-transparent shadow-lg"
                                         onClick={() => setIsEditProjectOpen(true)}
                                     >
                                         <Edit2 size={16} className="mr-2" /> Edit Details
                                     </Button>
-                                    <Button 
+                                    <Button
                                         className="h-10 px-6 rounded-full bg-[#4a4aff] hover:bg-[#3d3dcc] text-white font-bold shadow-lg shadow-blue-900/20"
                                         onClick={() => setIsGenerateEpisodeOpen(true)}
                                     >
@@ -332,7 +346,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                     {/* Content Section (Episodes & Characters) */}
                     <div className="flex-1 p-6 md:p-8 bg-[#13111C]">
                         <div className="max-w-7xl mx-auto flex flex-col gap-12">
-                            
+
                             {/* Worldview Key Features (If available) */}
                             {project.worldview?.key_features && Array.isArray(project.worldview.key_features) && (
                                 <section className="mb-4">
@@ -349,7 +363,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                     </div>
                                 </section>
                             )}
-                            
+
                             {/* Episodes List - Studio Mode */}
                             <section>
                                 <div className="flex items-center justify-between mb-6">
@@ -426,7 +440,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                     </Link>
                                 </div>
                                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                                    <div 
+                                    <div
                                         onClick={() => router.push(`/project/${project.id}/casting`)}
                                         className="aspect-[3/4] cursor-pointer rounded-xl border border-dashed border-white/10 bg-white/[0.02] flex flex-col items-center justify-center gap-2 hover:bg-white/[0.05] hover:border-white/20 transition-all group"
                                     >
@@ -441,19 +455,19 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                         const isGenerating = char.sheet_status === 'pending' || char.sheet_status === 'processing';
                                         const isFailed = char.sheet_status === 'failed';
                                         return (
-                                            <div 
-                                                key={char.id || char.name} 
+                                            <div
+                                                key={char.id || char.name}
                                                 onClick={() => handleCharacterClick(char)}
                                                 className={cn(
                                                     "group relative rounded-xl overflow-hidden bg-[#1d1c27] border transition-all cursor-pointer",
-                                                    isFailed 
-                                                        ? "border-red-500/50 hover:border-red-500" 
+                                                    isFailed
+                                                        ? "border-red-500/50 hover:border-red-500"
                                                         : "border-white/5 hover:border-white/20"
                                                 )}
                                             >
                                                 <div className="aspect-[3/4] bg-cover bg-center relative" style={char.profile_image_url && !isGenerating ? { backgroundImage: `url("${char.profile_image_url}")` } : {}}>
                                                     {(!char.profile_image_url || isGenerating || isFailed) && (
-                                                         <div className="w-full h-full bg-slate-800 flex flex-col items-center justify-center text-gray-600 gap-2">
+                                                        <div className="w-full h-full bg-slate-800 flex flex-col items-center justify-center text-gray-600 gap-2">
                                                             {isGenerating ? (
                                                                 <>
                                                                     <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -469,7 +483,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                                             ) : (
                                                                 <span className="font-bold text-xl">{char.name[0]}</span>
                                                             )}
-                                                         </div>
+                                                        </div>
                                                     )}
                                                 </div>
                                                 <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/90 to-transparent">
@@ -487,7 +501,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
             </div>
 
             {/* Modals - Kept same */}
-            <CharacterDetailModal 
+            <CharacterDetailModal
                 isOpen={isDetailOpen}
                 onClose={() => setIsDetailOpen(false)}
                 character={selectedCharacter}

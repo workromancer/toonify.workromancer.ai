@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -7,6 +8,7 @@ import ProjectLayout from '@/components/layout/ProjectLayout';
 import CharacterDetailModal from '@/components/project/modals/CharacterDetailModal';
 import { Plus, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 interface Character {
     id: string;
@@ -31,6 +33,7 @@ export default function CharacterListPage() {
     const [characters, setCharacters] = useState<Character[]>([]);
     const [project, setProject] = useState<Project | null>(null);
     const [loading, setLoading] = useState(true);
+    const { toast } = useToast();
 
     // Modal State
     const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
@@ -67,7 +70,7 @@ export default function CharacterListPage() {
                     const res = await api.get(`/characters/?project_id=${projectId}`);
                     // Only update if changed to avoid unnecessary re-renders, or just simple set
                     setCharacters(res.data);
-                    
+
                     // Also update selected character if it's open
                     if (selectedCharacter && isDetailOpen) {
                         const updatedSelected = res.data.find((c: Character) => c.id === selectedCharacter.id);
@@ -90,16 +93,20 @@ export default function CharacterListPage() {
         try {
             await api.post(`/characters/${charId}/generate`);
             // Optimistic update
-            setCharacters(prev => prev.map(c => 
+            setCharacters(prev => prev.map(c =>
                 c.id === charId ? { ...c, sheet_status: 'processing', profile_image_url: undefined } : c
             ));
-            
+
             if (selectedCharacter && selectedCharacter.id === charId) {
                 setSelectedCharacter({ ...selectedCharacter, sheet_status: 'processing' });
             }
         } catch (e) {
             console.error("Retry failed", e);
-            alert("Failed to retry character generation.");
+            toast({
+                title: "Retry Failed",
+                description: "Failed to retry character generation.",
+                variant: 'destructive',
+            });
         }
     };
 
@@ -155,17 +162,17 @@ export default function CharacterListPage() {
                                 const isGenerating = char.sheet_status === 'pending' || char.sheet_status === 'processing';
                                 const isFailed = char.sheet_status === 'failed';
                                 return (
-                                    <div 
-                                        key={char.id} 
+                                    <div
+                                        key={char.id}
                                         onClick={() => handleCharacterClick(char)}
                                         className={cn(
                                             "group relative rounded-xl overflow-hidden bg-[#1d1c27] border transition-all cursor-pointer",
-                                            isFailed 
-                                                ? "border-red-500/50 hover:border-red-500" 
+                                            isFailed
+                                                ? "border-red-500/50 hover:border-red-500"
                                                 : "border-white/5 hover:border-white/20"
                                         )}
                                     >
-                                        <div className="aspect-[3/4] bg-cover bg-center relative" 
+                                        <div className="aspect-[3/4] bg-cover bg-center relative"
                                             style={char.profile_image_url && !isGenerating ? { backgroundImage: `url("${char.profile_image_url}")` } : {}}
                                         >
                                             {(!char.profile_image_url || isGenerating || isFailed) && (
@@ -202,7 +209,7 @@ export default function CharacterListPage() {
                 </div>
             </div>
 
-            <CharacterDetailModal 
+            <CharacterDetailModal
                 isOpen={isDetailOpen}
                 onClose={() => setIsDetailOpen(false)}
                 character={selectedCharacter}

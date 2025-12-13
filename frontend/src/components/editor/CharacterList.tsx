@@ -15,7 +15,8 @@ interface Character {
 }
 
 export default function CharacterList() {
-    const { projectId } = useParams();
+    const params = useParams();
+    const projectId = params?.projectId as string;
     const [characters, setCharacters] = useState<Character[]>([]);
     const [loading, setLoading] = useState(true);
     const [generatingId, setGeneratingId] = useState<string | null>(null); // Added state

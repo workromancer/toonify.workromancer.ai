@@ -23,7 +23,8 @@ interface CharacterCreateModalProps {
 }
 
 export default function CharacterCreateModal({ onCharacterCreated }: CharacterCreateModalProps) {
-    const { projectId } = useParams();
+    const params = useParams();
+    const projectId = params?.projectId as string;
     const [open, setOpen] = useState(false);
     const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm();
     const [tags, setTags] = useState<string[]>([]);
