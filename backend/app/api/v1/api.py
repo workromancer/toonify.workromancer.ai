@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import auth, projects, episodes, ai, characters, cuts, scenes, clues, workspaces, templates, assets, project_workflow, genres
+from app.api.v1.endpoints import auth, projects, episodes, ai, characters, cuts, scenes, clues, workspaces, templates, assets, project_workflow, genres, styles
 
 api_router = APIRouter()
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
@@ -14,4 +14,5 @@ api_router.include_router(workspaces.router, prefix="/workspaces", tags=["worksp
 api_router.include_router(templates.router, prefix="/templates", tags=["templates"])
 api_router.include_router(assets.router, prefix="/assets", tags=["assets"])
 api_router.include_router(genres.router, prefix="/genres", tags=["genres"])
+api_router.include_router(styles.router, prefix="/styles", tags=["styles"])
 api_router.include_router(project_workflow.router, prefix="", tags=["workflow"]) # No prefix or shared prefix, as the endpoints are /projects/...

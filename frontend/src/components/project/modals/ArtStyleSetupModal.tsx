@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Sparkles, Lock } from 'lucide-react';
+import { Sparkles, Lock, Plus, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { SelectionCard } from '@/components/ui/selection-card';
 import { SectionLabel } from '@/components/ui/section-label';
 import api from '@/lib/api';
+import CreateStyleModal from './CreateStyleModal';
 
 interface ArtStyleSetupModalProps {
     isOpen: boolean;
@@ -70,6 +71,47 @@ export default function ArtStyleSetupModal({
 }: ArtStyleSetupModalProps) {
     const [selectedStyleId, setSelectedStyleId] = useState<string>(currentStyle || 'standard-webtoon');
     const [saving, setSaving] = useState(false);
+    const [customStyles, setCustomStyles] = useState<ArtStyle[]>([]);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+    // Fetch custom styles
+    const fetchCustomStyles = async () => {
+        try {
+            const res = await api.get('/styles');
+            const mapped: ArtStyle[] = res.data.map((s: any) => ({
+                id: s.id,
+                name: s.name,
+                description: s.description,
+                previewColor: 'bg-gray-800', // Default fallback
+                imageUrl: s.image_url,
+                category: 'MY_MODELS',
+                status: s.status, // Custom field
+                isLocked: false 
+            }));
+            setCustomStyles(mapped);
+        } catch (err) {
+            console.error("Failed to fetch custom styles", err);
+        }
+    };
+
+    React.useEffect(() => {
+        if (isOpen) {
+            fetchCustomStyles();
+        }
+    }, [isOpen]);
+
+    // Polling for processing styles
+    React.useEffect(() => {
+        if (!isOpen) return;
+
+        const hasProcessing = customStyles.some(s => (s as any).status === 'processing' || (s as any).status === 'pending');
+        if (hasProcessing) {
+            const timer = setTimeout(() => {
+                fetchCustomStyles();
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [customStyles, isOpen]);
 
     const handleSelect = (style: ArtStyle) => {
         if (style.isLocked) return;
@@ -79,10 +121,13 @@ export default function ArtStyleSetupModal({
     const handleSave = async () => {
         setSaving(true);
         try {
-            const styleObj = STYLES.find(s => s.id === selectedStyleId);
+            // Check both static and custom styles
+            const allStyles = [...customStyles, ...STYLES];
+            const styleObj = allStyles.find(s => s.id === selectedStyleId);
+            
             // Construct a fake reference URL or use a placeholder if none exists in the mocked data
             // In a real app, STYLES would come from DB with real URLs.
-            const styleReferenceUrl = styleObj?.imageUrl || `https://placeholder.com/${styleObj?.id}`;
+            const styleReferenceUrl = styleObj?.imageUrl || `https://placeholder.com/${styleObj?.id || 'unknown'}`;
 
             await api.patch(`/projects/${projectId}`, { 
                 style_preset: selectedStyleId,
@@ -95,6 +140,105 @@ export default function ArtStyleSetupModal({
         } finally {
             setSaving(false);
         }
+    };
+
+    const renderCustomModels = () => {
+         // Empty State
+         if (customStyles.length === 0) {
+             return (
+                 <div className="mb-8">
+                     <div className="flex items-center gap-2 mb-4">
+                         <Sparkles size={14} className="text-yellow-400" fill="currentColor" />
+                         <SectionLabel className="text-gray-400">My AI Models</SectionLabel>
+                     </div>
+                     
+                     <div 
+                        className="border border-dashed border-gray-800 rounded-lg p-8 flex flex-col items-center justify-center text-center hover:bg-[#0F0F12] hover:border-gray-700 transition-colors cursor-pointer group"
+                        onClick={() => setIsCreateModalOpen(true)}
+                     >
+                         <div className="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                             <Plus className="text-purple-400" />
+                         </div>
+                         <h3 className="text-sm font-semibold text-white mb-1">Create Your Own Style</h3>
+                         <p className="text-xs text-gray-500 max-w-[200px]">Define a custom art style using AI and apply it to your project.</p>
+                         <Button variant="link" className="text-purple-400 mt-2 h-auto p-0 text-xs">
+                            Create & Set Style
+                         </Button>
+                     </div>
+                 </div>
+             );
+         }
+
+         // List State
+         return (
+             <div className="mb-8">
+                <div className="flex items-center justify-between mb-4">
+                     <div className="flex items-center gap-2">
+                         <Sparkles size={14} className="text-yellow-400" fill="currentColor" />
+                         <SectionLabel className="text-gray-400">My AI Models</SectionLabel>
+                         <span className="px-1.5 py-0.5 rounded text-[10px] bg-indigo-500/20 text-indigo-300 font-medium">Private</span>
+                     </div>
+                     <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-6 text-[10px] text-gray-500 hover:text-white gap-1"
+                        onClick={() => setIsCreateModalOpen(true)}
+                    >
+                        <Plus size={12} /> New Style
+                     </Button>
+                </div>
+                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                     {customStyles.map((style) => (
+                         <SelectionCard
+                             key={style.id}
+                             selected={selectedStyleId === style.id}
+                             showCheck={true}
+                             onClick={() => handleSelect(style)}
+                             className={cn(
+                                 "flex flex-col h-full hover:-translate-y-1"
+                             )}
+                         >
+                             {/* Card Image Area */}
+                             <div className={cn(
+                                 "aspect-square rounded-lg mb-3 overflow-hidden relative transition-all bg-gray-800",
+                             )}>
+                                 {style.imageUrl ? (
+                                     <img src={style.imageUrl} alt={style.name} className="w-full h-full object-cover" />
+                                 ) : (
+                                     <div className="absolute inset-0 flex items-center justify-center flex-col gap-2 p-4 text-center">
+                                         {(style as any).status === 'processing' || (style as any).status === 'pending' ? (
+                                             <>
+                                                 <Loader2 size={16} className="animate-spin text-purple-500" />
+                                                 <p className="text-[10px] text-gray-500">Generating...</p>
+                                             </>
+                                         ) : (
+                                             <p className="text-[10px] font-mono text-white/60 uppercase tracking-wider leading-relaxed">
+                                                {style.name}<br/>Preview
+                                            </p>
+                                         )}
+                                     </div>
+                                 )}
+                             </div>
+
+                             {/* Card Content */}
+                             <div className="flex items-start justify-between min-h-[48px]">
+                                 <div className="flex flex-col">
+                                     <h4 className={cn(
+                                         "text-sm font-semibold transition-colors",
+                                         selectedStyleId === style.id ? "text-white" : "text-gray-300 group-hover:text-white"
+                                     )}>
+                                         {style.name}
+                                     </h4>
+                                     {style.description && (
+                                         <p className="text-xs text-gray-500 line-clamp-2">{style.description}</p>
+                                     )}
+                                 </div>
+                             </div>
+                         </SelectionCard>
+                     ))}
+                 </div>
+             </div>
+         )
     };
 
     const renderCategory = (title: string, category: ArtStyle['category'], icon?: React.ReactNode) => {
@@ -176,7 +320,8 @@ export default function ArtStyleSetupModal({
                 </DialogHeader>
 
                 <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
-                    {renderCategory('My AI Models', 'MY_MODELS', <Sparkles size={14} className="text-yellow-400" fill="currentColor" />)}
+                    {renderCustomModels()}
+                    
                     {renderCategory('Classic & Webtoon', 'CLASSIC_WEBTOON')}
                     {renderCategory('Artistic & Painterly', 'ARTISTIC_PAINTERLY')}
                     {renderCategory('Stylized & Graphic', 'STYLIZED_GRAPHIC')}
@@ -185,7 +330,7 @@ export default function ArtStyleSetupModal({
 
                 <div className="flex-none p-4 bg-[#0F0F12] border-t border-gray-800 flex items-center justify-between">
                     <div className="text-xs font-mono text-gray-500">
-                        Total Styles: {STYLES.length}
+                        Total Styles: {STYLES.length + customStyles.length}
                     </div>
                     <div className="flex items-center gap-3">
                         <Button 
@@ -206,6 +351,15 @@ export default function ArtStyleSetupModal({
                         </Button>
                     </div>
                 </div>
+
+                <CreateStyleModal 
+                    isOpen={isCreateModalOpen} 
+                    onClose={() => setIsCreateModalOpen(false)}
+                    onCreated={() => {
+                        fetchCustomStyles();
+                        setIsCreateModalOpen(false);
+                    }}
+                />
             </DialogContent>
         </Dialog>
     );

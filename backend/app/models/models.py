@@ -33,6 +33,7 @@ class Workspace(SQLModel, table=True):
     projects: List["Project"] = Relationship(back_populates="workspace")
     transactions: List["CreditTransaction"] = Relationship(back_populates="workspace")
     assets: List["Asset"] = Relationship(back_populates="workspace")
+    custom_styles: List["CustomStyle"] = Relationship(back_populates="workspace")
 
 
 class Genre(SQLModel, table=True):
@@ -217,3 +218,14 @@ class ProjectTemplate(SQLModel, table=True):
     category: str = "general" # webtoon, insta, 4koma, etc.
     is_premium: bool = False
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class CustomStyle(SQLModel, table=True):
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    workspace_id: UUID = Field(foreign_key="workspace.id")
+    name: str
+    description: str # Used as prompt
+    image_url: Optional[str] = None # Generated preview
+    status: str = "pending" # pending, processing, completed, failed
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    workspace: Workspace = Relationship(back_populates="custom_styles")
