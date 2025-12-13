@@ -123,11 +123,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     )}
 
                     {/* Global New Project Button */}
-                    <div className="px-1 mt-3 mb-1">
+                    <div className="px-1 mt-3 mb-6">
                         <Link href="/new-project">
-                            <div className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90 text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-primary/20 transition-all cursor-pointer hover:scale-[1.02]">
-                                <Plus size={18} />
-                                <span>New Project</span>
+                            <div className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white p-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-purple-900/20 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer">
+                                <Plus size={16} strokeWidth={3} />
+                                <span className="pt-[1px]">New Project</span>
                             </div>
                         </Link>
                     </div>

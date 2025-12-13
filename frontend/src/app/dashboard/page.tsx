@@ -1,14 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import ProjectCard from '@/components/dashboard/ProjectCard';
 import api from '@/lib/api';
-import TemplateList from '@/components/dashboard/TemplateList';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Plus, Search, Wand2, ArrowRight } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
+import {
+    LayoutGrid, Paintbrush, LayoutTemplate, FolderOpen, Settings,
+    Plus, Search, MoreVertical, Clock, LogOut, User,
+    HelpCircle, ChevronDown, Sparkles, Image as ImageIcon,
+    Zap, Bell, Wand2, ArrowRight
+} from 'lucide-react';
+
+// --- Interfaces ---
 
 interface Project {
     id: string;
@@ -16,50 +20,231 @@ interface Project {
     style_preset: string;
     created_at: string;
     thumbnail_url?: string;
+    [key: string]: any;
 }
+
+interface Template {
+    id: string;
+    title: string;
+    description: string;
+    style_preset: string;
+    category: string;
+    is_premium: boolean;
+    image_url?: string;
+    isAction?: boolean; // For "Start from Scratch"
+}
+
+// --- Components (Inline to match Ref style and ensure exact look) ---
+
+const ProjectCard = ({ project }: { project: Project }) => {
+    const router = useRouter();
+
+    return (
+        <div
+            onClick={() => router.push(`/project/${project.id}`)}
+            className="group relative w-full aspect-[3/4] bg-[#0f0f16] rounded-2xl border border-slate-800 hover:border-purple-500/50 transition-all duration-300 ease-out overflow-hidden flex flex-col cursor-pointer hover:-translate-y-1.5 shadow-lg hover:shadow-purple-900/20"
+        >
+            {/* Thumbnail Area */}
+            <div className="flex-1 bg-slate-900/50 relative flex items-center justify-center overflow-hidden">
+                {project.thumbnail_url ? (
+                    <div className="w-full h-full relative">
+                        <img src={project.thumbnail_url} alt={project.title} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f16] via-transparent to-transparent opacity-60" />
+                    </div>
+                ) : (
+                    <div className="flex flex-col items-center justify-center gap-3 h-full w-full bg-slate-900 group-hover:bg-slate-800 transition-colors relative overflow-hidden">
+                        {/* Abstract Pattern BG */}
+                        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-purple-500 via-slate-900 to-black" />
+
+                        {/* Dynamic Character */}
+                        <span className="text-6xl font-black text-slate-700 group-hover:text-slate-600 transition-colors select-none">
+                            {project.title.charAt(0).toUpperCase()}
+                        </span>
+                    </div>
+                )}
+
+                {/* Overlay Actions */}
+                <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-10 translate-y-2 group-hover:translate-y-0 duration-300">
+                    <button className="p-2 bg-black/60 backdrop-blur-md rounded-full text-white hover:bg-purple-600 transition-colors border border-white/10">
+                        <MoreVertical size={16} />
+                    </button>
+                </div>
+
+                {/* Hover Play/Open Hint */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-0">
+                    <div className="bg-purple-600/90 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg backdrop-blur-sm transform scale-90 group-hover:scale-100 transition-transform">
+                        Open Editor
+                    </div>
+                </div>
+            </div>
+
+            {/* Info Area */}
+            <div className="p-5 border-t border-slate-800 bg-[#0f0f16] group-hover:bg-[#13131c] transition-colors relative z-10">
+                <h3 className="text-white font-bold truncate mb-1.5 text-sm">{project.title}</h3>
+                <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-mono">
+                        <Clock size={10} />
+                        <span>{new Date(project.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700 max-w-[80px] truncate">
+                        {project.style_preset || "Webtoon"}
+                    </span>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const TemplateCard = ({ template, onSelect }: { template: Template; onSelect: (t: Template | null) => void }) => (
+    <div
+        onClick={() => onSelect(template.isAction ? null : template)}
+        className={`
+        group relative w-full aspect-square rounded-2xl border overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1.5 shadow-md hover:shadow-xl
+        ${template.isAction
+                ? 'border-dashed border-slate-700 bg-slate-900/30 hover:border-purple-500 hover:bg-purple-900/10 flex flex-col items-center justify-center gap-4'
+                : 'border-slate-800 bg-[#0f0f16] hover:border-slate-600'
+            }
+    `}>
+        {template.isAction ? (
+            <>
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-purple-900/40 group-hover:scale-110 transition-transform duration-300">
+                    <Plus size={28} className="text-white" />
+                </div>
+                <div className="text-center">
+                    <span className="block text-sm font-bold text-slate-300 group-hover:text-white transition-colors">{template.title}</span>
+                    <span className="block text-[10px] text-slate-500 mt-1">{template.description}</span>
+                </div>
+            </>
+        ) : (
+            <>
+                <div className="w-full h-full relative">
+                    {/* Use placebo/placeholder if no image */}
+                    <img
+                        src={template.image_url || `https://picsum.photos/seed/${template.id}/300/300`}
+                        alt={template.title}
+                        className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-all duration-500 scale-100 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f16] via-transparent to-transparent opacity-90" />
+                </div>
+
+                <div className="absolute bottom-0 left-0 w-full p-4 transform translate-y-1 group-hover:translate-y-0 transition-transform">
+                    <span className="text-xs font-bold text-slate-200 group-hover:text-white block truncate mb-0.5">
+                        {template.title}
+                    </span>
+                    <span className="text-[10px] text-purple-400 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                        Use Template <ChevronDown size={10} className="-rotate-90" />
+                    </span>
+                </div>
+            </>
+        )}
+    </div>
+);
+
+// --- Draft Card Component ---
+const DraftCard = ({ draft, onClick }: { draft: any, onClick: () => void }) => (
+    <div
+        onClick={onClick}
+        className="group relative w-full aspect-[3/4] bg-[#0f0f16] rounded-2xl border-2 border-dashed border-purple-500/30 hover:border-purple-500 transition-all duration-300 ease-out overflow-hidden flex flex-col cursor-pointer hover:-translate-y-1.5 shadow-lg hover:shadow-purple-900/20"
+    >
+        <div className="absolute top-3 left-3 z-20">
+            <span className="bg-purple-600/90 text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider animate-pulse shadow-lg">In Progress</span>
+        </div>
+
+        {/* Thumbnail Area - Placeholder for Draft */}
+        <div className="flex-1 bg-slate-900/50 relative flex items-center justify-center overflow-hidden">
+            <div className="flex flex-col items-center justify-center gap-3 h-full w-full bg-slate-900 group-hover:bg-slate-800 transition-colors relative">
+                {/* Abstract Pattern */}
+                <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-purple-900/40 via-slate-900 to-black" />
+
+                <div className="w-16 h-16 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform duration-500 border border-purple-500/20">
+                    <Wand2 size={32} />
+                </div>
+            </div>
+
+            {/* Hover Action */}
+            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                <div className="bg-purple-600 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg flex items-center gap-2 transform translate-y-2 group-hover:translate-y-0 transition-all">
+                    Resume <ArrowRight size={12} />
+                </div>
+            </div>
+        </div>
+
+        {/* Info Area */}
+        <div className="p-5 border-t border-slate-800 bg-[#0f0f16] group-hover:bg-[#13131c] transition-colors relative z-10">
+            <h3 className="text-white font-bold truncate mb-1.5 text-sm">{draft.title || "Untitled Draft"}</h3>
+            <div className="flex justify-between items-center">
+                <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-mono">
+                    <Clock size={10} />
+                    <span>Just Now</span>
+                </div>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-900/20 text-purple-400 border border-purple-500/30">
+                    Draft
+                </span>
+            </div>
+        </div>
+    </div>
+);
+
+// --- Main Page ---
 
 export default function DashboardPage() {
     const [projects, setProjects] = useState<Project[]>([]);
+    const [templates, setTemplates] = useState<Template[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [draftProject, setDraftProject] = useState<any>(null);
     const { user } = useAuthStore();
+    const router = useRouter();
 
     const fetchProjects = async () => {
         try {
-            if (projects.length === 0) setLoading(true); // Only show loading on initial fetch or empty
             const res = await api.get('/projects/');
             setProjects(res.data);
         } catch (err) {
             console.error(err);
-        } finally {
-            setLoading(false);
+        }
+    };
+
+    const fetchTemplates = async () => {
+        try {
+            const res = await api.get('/templates/');
+            // Add "Scratch" as first item
+            const scratch: Template = {
+                id: 'scratch',
+                title: 'Start Empty',
+                description: 'Create from scratch',
+                style_preset: '',
+                category: '',
+                is_premium: false,
+                isAction: true
+            };
+            setTemplates([scratch, ...res.data]);
+        } catch (err) {
+            // Fallback
+            setTemplates([
+                { id: 'scratch', title: 'Start Empty', description: 'Create from scratch', style_preset: '', category: '', is_premium: false, isAction: true },
+                { id: 'webtoon_std', title: 'Standard Scroll', description: 'Standard Webtoon Format', style_preset: 'webtoon', category: 'webtoon', is_premium: false, image_url: 'https://picsum.photos/seed/webtoon1/300/300' },
+                { id: 'action_pack', title: 'Action Pack', description: 'High Octane Action', style_preset: 'action', category: 'webtoon', is_premium: false, image_url: 'https://picsum.photos/seed/action/300/300' },
+            ]);
         }
     };
 
     useEffect(() => {
-        fetchProjects();
-        
+        Promise.all([fetchProjects(), fetchTemplates()]).finally(() => setLoading(false));
+
         // Load Draft
         const savedDraft = localStorage.getItem('toontune_project_draft');
         if (savedDraft) {
             try {
-                const parsed = JSON.parse(savedDraft);
-                setDraftProject(parsed);
+                setDraftProject(JSON.parse(savedDraft));
             } catch (e) {
-                console.error("Failed to parse draft for dashboard", e);
+                console.error("Failed to parse draft", e);
             }
         }
     }, []);
 
-    const router = useRouter();
-
-    const handleTemplateSelect = (template: any | null) => {
-        if (template) {
-            router.push('/new-project');
-        } else {
-            router.push('/new-project');
-        }
+    const handleTemplateSelect = (template: Template | null) => {
+        router.push('/new-project');
     };
 
     const filteredProjects = projects.filter(p =>
@@ -68,110 +253,120 @@ export default function DashboardPage() {
 
     return (
         <DashboardLayout>
-            <div className="max-w-7xl mx-auto p-6 md:p-8 relative z-10">
-                {/* Ambient Background for Dashboard */}
-                <div className="absolute top-[-200px] left-[-200px] w-[500px] h-[500px] bg-primary/10 blur-[120px] rounded-full pointer-events-none mix-blend-screen" />
+            <div className="flex-1 min-h-screen bg-[#05050a] text-slate-200 font-sans relative selection:bg-purple-500/30">
 
-                {/* Header with Search and New Project */}
-                <header className="flex flex-wrap items-center justify-between gap-4 mb-10 relative">
-                    <div className="flex min-w-72 flex-col gap-2">
-                        <h1 className="text-white text-3xl md:text-5xl font-black leading-tight tracking-[-0.033em] mb-1">
-                            Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">{user?.email?.split('@')[0] || "Artist"}</span>!
+                {/* Background Ambience */}
+                <div className="fixed top-[-20%] right-[-10%] w-[1000px] h-[1000px] bg-purple-900/5 rounded-full blur-[150px] pointer-events-none" />
+                <div className="fixed bottom-[-20%] left-[-10%] w-[800px] h-[800px] bg-indigo-900/5 rounded-full blur-[150px] pointer-events-none" />
+
+                {/* Top Header */}
+                <header className="h-20 flex items-center justify-between px-10 sticky top-0 bg-[#05050a]/80 backdrop-blur-md z-30 border-b border-slate-800/30">
+                    <div>
+                        <h1 className="text-2xl font-bold text-white leading-tight flex items-center gap-2">
+                            Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400">{user?.email?.split('@')[0] || "Artist"}!</span>
+                            <span className="animate-pulse text-xl">👋</span>
                         </h1>
-                        <p className="text-gray-400 text-lg font-light">
-                            Start a new webtoon or pick up where you left off.
-                        </p>
+                        <p className="text-sm text-slate-500 mt-0.5 font-medium">Ready to create something amazing today?</p>
                     </div>
-                    <div className="flex items-center gap-4 w-full md:w-auto">
-                        {/* Search Bar */}
-                        <div className="flex-1 md:flex-initial md:w-80">
-                            <div className="relative flex items-center w-full h-14 rounded-2xl bg-[#0F0F12] border border-gray-800 backdrop-blur-md focus-within:ring-2 focus-within:ring-primary/50 transition-all shadow-lg hover:bg-[#15151A]">
-                                <div className="grid place-items-center h-full w-14 text-gray-400">
-                                    <Search size={22} />
-                                </div>
-                                <input
-                                    className="peer h-full w-full outline-none text-base text-white pr-4 bg-transparent placeholder-gray-500"
-                                    type="text"
-                                    placeholder="Search projects..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                />
-                            </div>
+
+                    <div className="flex items-center gap-4">
+                        {/* Notification Bell */}
+                        <button className="w-10 h-10 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:border-slate-600 transition-all relative">
+                            <Bell size={18} />
+                            <span className="absolute top-2.5 right-3 w-2 h-2 bg-red-500 rounded-full border border-slate-900" />
+                        </button>
+
+                        <div className="h-6 w-px bg-slate-800" />
+
+                        {/* Search */}
+                        <div className="relative group">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-purple-400 transition-colors" size={16} />
+                            <input
+                                type="text"
+                                placeholder="Search projects..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="bg-slate-900 border border-slate-700/50 rounded-full pl-10 pr-4 py-2.5 text-sm text-white focus:border-purple-500 outline-none w-64 transition-all placeholder:text-slate-600 focus:w-80 focus:bg-slate-900/80"
+                            />
                         </div>
-                        {/* New Project Button */}
-                        <Button
-                            onClick={() => handleTemplateSelect(null)}
-                            className="h-14 px-8 rounded-2xl bg-primary hover:bg-primary/90 text-white font-bold text-base gap-2 shadow-lg shadow-primary/25 transition-all hover:scale-105"
-                        >
-                            <Plus size={22} />
-                            <span className="truncate">New Project</span>
-                        </Button>
                     </div>
                 </header>
 
-                {/* Recent Projects Section */}
-                <section>
-                    <h2 className="text-white text-2xl font-bold leading-tight tracking-[-0.015em] pb-6 pt-2 flex items-center gap-3">
-                        <span className="w-2 h-8 bg-primary rounded-full"></span>
-                        Recent Projects
-                    </h2>
-                    {loading ? (
-                        <div className="text-gray-500 animate-pulse">Loading projects...</div>
-                    ) : (
-                        <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-8">
-                            {/* Draft Card - Only show if draft exists */}
-                            {draftProject && (
-                                <button
-                                    onClick={() => router.push('/new-project')}
-                                    className="group relative flex flex-col justify-between h-72 w-full bg-[#15151A] rounded-3xl p-6 text-left border-2 border-dashed border-purple-500/50 hover:border-purple-500 transition-all hover:-translate-y-1 hover:shadow-[0_0_30px_rgba(168,85,247,0.15)]"
-                                >
-                                    <div className="absolute top-4 right-4 bg-purple-500 text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider animate-pulse">
-                                        In Progress
-                                    </div>
-                                    <div className="mt-2">
-                                        <div className="w-12 h-12 rounded-xl bg-purple-900/30 text-purple-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                                            <Wand2 size={24} />
-                                        </div>
-                                        <h3 className="text-xl font-bold text-white mb-1 group-hover:text-purple-400 transition-colors line-clamp-1">
-                                            {draftProject.title || "Untitled Draft"}
-                                        </h3>
-                                        <p className="text-sm text-gray-500 line-clamp-2">
-                                            {draftProject.subtitle || "Continue where you left off..."}
-                                        </p>
-                                    </div>
-                                    <div className="text-xs font-bold text-purple-500 flex items-center gap-2">
-                                        Resume Creation <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-                                    </div>
-                                </button>
-                            )}
+                {/* Dashboard Content */}
+                <div className="p-10 max-w-[1600px] mx-auto space-y-14 pb-20 relative z-10">
 
-                            {filteredProjects.length === 0 && !draftProject ? (
-                                <div className="col-span-full text-center py-16 text-gray-400 bg-[#0F0F12] backdrop-blur-sm rounded-3xl border border-dashed border-gray-800">
-                                    <p className="text-xl font-medium">No projects found.</p>
-                                    <Button variant="link" onClick={() => handleTemplateSelect(null)} className="text-primary mt-2">
-                                        Create your first project
-                                    </Button>
-                                </div>
-                            ) : (
-                                filteredProjects.map((project) => (
-                                    <ProjectCard key={project.id} project={project} />
-                                ))
-                            )}
+                    {/* Section: Recent Projects */}
+                    <section className="animate-fade-in-up">
+                        <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center gap-3">
+                                <div className="w-1.5 h-6 bg-purple-600 rounded-full shadow-[0_0_12px_rgba(147,51,234,0.6)]" />
+                                <h2 className="text-xl font-bold text-white tracking-wide">Recent Projects</h2>
+                            </div>
+                            <button className="text-xs font-bold text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1">
+                                View All <ChevronDown size={12} className="-rotate-90" />
+                            </button>
                         </div>
-                    )}
-                </section>
 
-                {/* Start New Toon Section */}
-                <section className="mt-16">
-                    <h2 className="text-white text-2xl font-bold leading-tight tracking-[-0.015em] pb-6 flex items-center gap-3">
-                        <span className="w-2 h-8 bg-purple-500 rounded-full"></span>
-                        Start a New Toon
-                    </h2>
-                    <TemplateList onSelect={handleTemplateSelect} />
-                </section>
+                        {loading ? (
+                            <div className="w-full h-40 flex items-center justify-center text-slate-600">
+                                <span className="animate-pulse">Loading projects...</span>
+                            </div>
+                        ) : (filteredProjects.length > 0 || draftProject) ? (
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6">
+                                {draftProject && (
+                                    <DraftCard draft={draftProject} onClick={() => router.push('/new-project')} />
+                                )}
+                                {filteredProjects.map(project => (
+                                    <ProjectCard key={project.id} project={project} />
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="w-full h-40 border border-dashed border-slate-800 rounded-2xl flex flex-col items-center justify-center text-slate-600 bg-slate-900/20">
+                                <FolderOpen size={32} className="mb-2 opacity-50" />
+                                <p className="text-sm">No recent projects found.</p>
+                            </div>
+                        )}
+                    </section>
 
+                    {/* Section: Start New */}
+                    <section className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="w-1.5 h-6 bg-indigo-500 rounded-full shadow-[0_0_12px_rgba(99,102,241,0.6)]" />
+                            <h2 className="text-xl font-bold text-white tracking-wide">Start a New Toon</h2>
+                        </div>
 
+                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+                            {templates.map(template => (
+                                <TemplateCard key={template.id} template={template} onSelect={handleTemplateSelect} />
+                            ))}
+                        </div>
+                    </section>
+                </div>
+
+                <style jsx global>{`
+                    .custom-scrollbar::-webkit-scrollbar {
+                        width: 6px;
+                    }
+                    .custom-scrollbar::-webkit-scrollbar-track {
+                        background: transparent;
+                    }
+                    .custom-scrollbar::-webkit-scrollbar-thumb {
+                        background: #334155;
+                        border-radius: 3px;
+                    }
+                    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                        background: #475569;
+                    }
+                    @keyframes fadeInUp {
+                        from { opacity: 0; transform: translateY(15px); }
+                        to { opacity: 1; transform: translateY(0); }
+                    }
+                    .animate-fade-in-up {
+                        animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+                    }
+                `}</style>
             </div>
         </DashboardLayout>
     );
 }
+

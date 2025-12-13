@@ -35,30 +35,30 @@ const STYLES: ArtStyle[] = [
     { id: 'my-project-necro', name: 'Project: Necromancer', description: 'Fine-tuned v2.4 (Main)', previewColor: 'bg-gradient-to-br from-violet-600 to-indigo-600', category: 'MY_MODELS' },
     { id: 'my-sketch-lora', name: 'My Sketch LoRA', description: 'Rough pencil style', previewColor: 'bg-slate-700', category: 'MY_MODELS', isLocked: true },
     { id: 'sd-chibi-mix', name: 'SD Chibi Mix', description: 'Custom merge model', previewColor: 'bg-pink-600', category: 'MY_MODELS', isLocked: true },
-    
+
     // CLASSIC & WEBTOON
-    { id: 'standard-webtoon', name: 'Standard Webtoon', description: 'Clean lines, vibrant colors', previewColor: 'bg-blue-600', category: 'CLASSIC_WEBTOON' },
-    { id: 'classic-manhwa', name: 'Classic Manhwa', description: 'Detailed B&W inking', previewColor: 'bg-slate-600', category: 'CLASSIC_WEBTOON' },
-    { id: 'anime-style', name: 'Anime Style', description: 'Large eyes, cel shading', previewColor: 'bg-pink-500', category: 'CLASSIC_WEBTOON' },
-    { id: 'semi-realism', name: 'Semi-Realism', description: 'Balanced proportions', previewColor: 'bg-indigo-500', category: 'CLASSIC_WEBTOON' },
+    { id: 'standard-webtoon', name: 'Standard Webtoon', description: 'Clean lines, vibrant colors', previewColor: 'bg-blue-600', imageUrl: '/images/styles/standard-webtoon.png', category: 'CLASSIC_WEBTOON' },
+    { id: 'classic-manhwa', name: 'Classic Manhwa', description: 'Detailed B&W inking', previewColor: 'bg-slate-600', imageUrl: '/images/styles/classic-manhwa.png', category: 'CLASSIC_WEBTOON' },
+    { id: 'anime-style', name: 'Anime Style', description: 'Large eyes, cel shading', previewColor: 'bg-pink-500', imageUrl: '/images/styles/anime-style.png', category: 'CLASSIC_WEBTOON' },
+    { id: 'semi-realism', name: 'Semi-Realism', description: 'Balanced proportions', previewColor: 'bg-indigo-500', imageUrl: '/images/styles/semi-realism.png', category: 'CLASSIC_WEBTOON' },
 
     // ARTISTIC & PAINTERLY
-    { id: 'watercolor', name: 'Watercolor', description: 'Soft edges, wet texture', previewColor: 'bg-cyan-500', category: 'ARTISTIC_PAINTERLY' },
-    { id: 'oil-painting', name: 'Oil Painting', description: 'Rich texture, heavy strokes', previewColor: 'bg-orange-700', category: 'ARTISTIC_PAINTERLY' },
-    { id: 'impasto', name: 'Impasto', description: 'Thick, 3D paint texture', previewColor: 'bg-red-700', category: 'ARTISTIC_PAINTERLY' },
-    { id: 'ink-wash', name: 'Ink Wash (Sumi-e)', description: 'Traditional asian ink', previewColor: 'bg-stone-600', category: 'ARTISTIC_PAINTERLY' },
+    { id: 'watercolor', name: 'Watercolor', description: 'Soft edges, wet texture', previewColor: 'bg-cyan-500', imageUrl: '/images/styles/watercolor.png', category: 'ARTISTIC_PAINTERLY' },
+    { id: 'oil-painting', name: 'Oil Painting', description: 'Rich texture, heavy strokes', previewColor: 'bg-orange-700', imageUrl: '/images/styles/oil-painting.png', category: 'ARTISTIC_PAINTERLY' },
+    { id: 'impasto', name: 'Impasto', description: 'Thick, 3D paint texture', previewColor: 'bg-red-700', imageUrl: '/images/styles/impasto.png', category: 'ARTISTIC_PAINTERLY' },
+    { id: 'ink-wash', name: 'Ink Wash (Sumi-e)', description: 'Traditional asian ink', previewColor: 'bg-stone-600', imageUrl: '/images/styles/ink-wash.png', category: 'ARTISTIC_PAINTERLY' },
 
     // STYLIZED & GRAPHIC
-    { id: 'flat-vector', name: 'Flat Vector', description: 'Minimalist, no outlines', previewColor: 'bg-emerald-500', category: 'STYLIZED_GRAPHIC' },
-    { id: 'pixel-art', name: 'Pixel Art', description: 'Retro 8-bit aesthetic', previewColor: 'bg-purple-600', category: 'STYLIZED_GRAPHIC' },
-    { id: 'chibi-sd', name: 'Chibi (SD)', description: 'Cute, small proportions', previewColor: 'bg-yellow-500', category: 'STYLIZED_GRAPHIC' },
-    { id: 'pop-art', name: 'Pop Art', description: 'Halftones, bold contrast', previewColor: 'bg-fuchsia-600', category: 'STYLIZED_GRAPHIC' },
+    { id: 'flat-vector', name: 'Flat Vector', description: 'Minimalist, no outlines', previewColor: 'bg-emerald-500', imageUrl: '/images/styles/flat-vector.png', category: 'STYLIZED_GRAPHIC' },
+    { id: 'pixel-art', name: 'Pixel Art', description: 'Retro 8-bit aesthetic', previewColor: 'bg-purple-600', imageUrl: '/images/styles/pixel-art.png', category: 'STYLIZED_GRAPHIC' },
+    { id: 'chibi-sd', name: 'Chibi (SD)', description: 'Cute, small proportions', previewColor: 'bg-yellow-500', imageUrl: '/images/styles/chibi-sd.png', category: 'STYLIZED_GRAPHIC' },
+    { id: 'pop-art', name: 'Pop Art', description: 'Halftones, bold contrast', previewColor: 'bg-fuchsia-600', imageUrl: '/images/styles/pop-art.png', category: 'STYLIZED_GRAPHIC' },
 
     // GENRE SPECIFIC
-    { id: 'noir', name: 'Noir / Dark', description: 'High contrast shadows', previewColor: 'bg-slate-800', category: 'GENRE_SPECIFIC' },
-    { id: 'cyberpunk', name: 'Cyberpunk', description: 'Neon lights, futuristic', previewColor: 'bg-violet-600', category: 'GENRE_SPECIFIC' },
-    { id: 'eldritch', name: 'Eldritch Horror', description: 'Gritty, unsettling lines', previewColor: 'bg-rose-900', category: 'GENRE_SPECIFIC' },
-    { id: 'vintage-comic', name: 'Vintage Comic', description: 'Retro paper texture', previewColor: 'bg-amber-700', category: 'GENRE_SPECIFIC' },
+    { id: 'noir', name: 'Noir / Dark', description: 'High contrast shadows', previewColor: 'bg-slate-800', imageUrl: '/images/styles/noir.png', category: 'GENRE_SPECIFIC' },
+    { id: 'cyberpunk', name: 'Cyberpunk', description: 'Neon lights, futuristic', previewColor: 'bg-violet-600', imageUrl: '/images/styles/cyberpunk.png', category: 'GENRE_SPECIFIC' },
+    { id: 'eldritch', name: 'Eldritch Horror', description: 'Gritty, unsettling lines', previewColor: 'bg-rose-900', imageUrl: '/images/styles/eldritch.png', category: 'GENRE_SPECIFIC' },
+    { id: 'vintage-comic', name: 'Vintage Comic', description: 'Retro paper texture', previewColor: 'bg-amber-700', imageUrl: '/images/styles/vintage-comic.png', category: 'GENRE_SPECIFIC' },
 ];
 
 export default function ArtStyleSetupModal({
@@ -88,7 +88,7 @@ export default function ArtStyleSetupModal({
                 imageUrl: s.image_url,
                 category: 'MY_MODELS',
                 status: s.status, // Custom field
-                isLocked: false 
+                isLocked: false
             }));
             setCustomStyles(mapped);
         } catch (err) {
@@ -126,12 +126,12 @@ export default function ArtStyleSetupModal({
             // Check both static and custom styles
             const allStyles = [...customStyles, ...STYLES];
             const styleObj = allStyles.find(s => s.id === selectedStyleId);
-            
+
             // Construct a fake reference URL or use a placeholder if none exists in the mocked data
             // In a real app, STYLES would come from DB with real URLs.
             const styleReferenceUrl = styleObj?.imageUrl || `https://placeholder.com/${styleObj?.id || 'unknown'}`;
 
-            await api.patch(`/projects/${projectId}`, { 
+            await api.patch(`/projects/${projectId}`, {
                 style_preset: selectedStyleId,
                 style_reference_url: styleReferenceUrl
             });
@@ -143,109 +143,109 @@ export default function ArtStyleSetupModal({
             setSaving(false);
         }
     };
-    
+
     // Redirect to Styles Page
     const handleCreateRedirect = () => {
         router.push(`/dashboard/styles?from=project_setup&projectId=${projectId}&title=${encodeURIComponent(projectTitle)}`);
     };
 
     const renderCustomModels = () => {
-         // Empty State
-         if (customStyles.length === 0) {
-             return (
-                 <div className="mb-8">
-                     <div className="flex items-center gap-2 mb-4">
-                         <Sparkles size={14} className="text-yellow-400" fill="currentColor" />
-                         <SectionLabel className="text-gray-400">My AI Models</SectionLabel>
-                     </div>
-                     
-                     <div 
+        // Empty State
+        if (customStyles.length === 0) {
+            return (
+                <div className="mb-8">
+                    <div className="flex items-center gap-2 mb-4">
+                        <Sparkles size={14} className="text-yellow-400" fill="currentColor" />
+                        <SectionLabel className="text-gray-400">My AI Models</SectionLabel>
+                    </div>
+
+                    <div
                         className="border border-dashed border-gray-800 rounded-lg p-8 flex flex-col items-center justify-center text-center hover:bg-[#0F0F12] hover:border-gray-700 transition-colors cursor-pointer group"
                         onClick={handleCreateRedirect}
-                     >
-                         <div className="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                             <Plus className="text-purple-400" />
-                         </div>
-                         <h3 className="text-sm font-semibold text-white mb-1">Create Your Own Style</h3>
-                         <p className="text-xs text-gray-500 max-w-[200px]">Define a custom art style using AI and apply it to your project.</p>
-                         <Button variant="link" className="text-purple-400 mt-2 h-auto p-0 text-xs">
+                    >
+                        <div className="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                            <Plus className="text-purple-400" />
+                        </div>
+                        <h3 className="text-sm font-semibold text-white mb-1">Create Your Own Style</h3>
+                        <p className="text-xs text-gray-500 max-w-[200px]">Define a custom art style using AI and apply it to your project.</p>
+                        <Button variant="link" className="text-purple-400 mt-2 h-auto p-0 text-xs">
                             Create & Set Style
-                         </Button>
-                     </div>
-                 </div>
-             );
-         }
+                        </Button>
+                    </div>
+                </div>
+            );
+        }
 
-         // List State
-         return (
-             <div className="mb-8">
+        // List State
+        return (
+            <div className="mb-8">
                 <div className="flex items-center justify-between mb-4">
-                     <div className="flex items-center gap-2">
-                         <Sparkles size={14} className="text-yellow-400" fill="currentColor" />
-                         <SectionLabel className="text-gray-400">My AI Models</SectionLabel>
-                         <span className="px-1.5 py-0.5 rounded text-[10px] bg-indigo-500/20 text-indigo-300 font-medium">Private</span>
-                     </div>
-                     <Button 
-                        variant="ghost" 
-                        size="sm" 
+                    <div className="flex items-center gap-2">
+                        <Sparkles size={14} className="text-yellow-400" fill="currentColor" />
+                        <SectionLabel className="text-gray-400">My AI Models</SectionLabel>
+                        <span className="px-1.5 py-0.5 rounded text-[10px] bg-indigo-500/20 text-indigo-300 font-medium">Private</span>
+                    </div>
+                    <Button
+                        variant="ghost"
+                        size="sm"
                         className="h-6 text-[10px] text-gray-500 hover:text-white gap-1"
                         onClick={handleCreateRedirect}
                     >
                         <Plus size={12} /> New Style
-                     </Button>
+                    </Button>
                 </div>
-                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                     {customStyles.map((style) => (
-                         <SelectionCard
-                             key={style.id}
-                             selected={selectedStyleId === style.id}
-                             showCheck={true}
-                             onClick={() => handleSelect(style)}
-                             className={cn(
-                                 "flex flex-col h-full hover:-translate-y-1"
-                             )}
-                         >
-                             {/* Card Image Area */}
-                             <div className={cn(
-                                 "aspect-square rounded-lg mb-3 overflow-hidden relative transition-all bg-gray-800",
-                             )}>
-                                 {style.imageUrl ? (
-                                     <img src={style.imageUrl} alt={style.name} className="w-full h-full object-cover" />
-                                 ) : (
-                                     <div className="absolute inset-0 flex items-center justify-center flex-col gap-2 p-4 text-center">
-                                         {(style as any).status === 'processing' || (style as any).status === 'pending' ? (
-                                             <>
-                                                 <Loader2 size={16} className="animate-spin text-purple-500" />
-                                                 <p className="text-[10px] text-gray-500">Generating...</p>
-                                             </>
-                                         ) : (
-                                             <p className="text-[10px] font-mono text-white/60 uppercase tracking-wider leading-relaxed">
-                                                {style.name}<br/>Preview
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {customStyles.map((style) => (
+                        <SelectionCard
+                            key={style.id}
+                            selected={selectedStyleId === style.id}
+                            showCheck={true}
+                            onClick={() => handleSelect(style)}
+                            className={cn(
+                                "flex flex-col h-full hover:-translate-y-1"
+                            )}
+                        >
+                            {/* Card Image Area */}
+                            <div className={cn(
+                                "aspect-square rounded-lg mb-3 overflow-hidden relative transition-all bg-gray-800",
+                            )}>
+                                {style.imageUrl ? (
+                                    <img src={style.imageUrl} alt={style.name} className="w-full h-full object-cover" />
+                                ) : (
+                                    <div className="absolute inset-0 flex items-center justify-center flex-col gap-2 p-4 text-center">
+                                        {(style as any).status === 'processing' || (style as any).status === 'pending' ? (
+                                            <>
+                                                <Loader2 size={16} className="animate-spin text-purple-500" />
+                                                <p className="text-[10px] text-gray-500">Generating...</p>
+                                            </>
+                                        ) : (
+                                            <p className="text-[10px] font-mono text-white/60 uppercase tracking-wider leading-relaxed">
+                                                {style.name}<br />Preview
                                             </p>
-                                         )}
-                                     </div>
-                                 )}
-                             </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
 
-                             {/* Card Content */}
-                             <div className="flex items-start justify-between min-h-[48px]">
-                                 <div className="flex flex-col">
-                                     <h4 className={cn(
-                                         "text-sm font-semibold transition-colors",
-                                         selectedStyleId === style.id ? "text-white" : "text-gray-300 group-hover:text-white"
-                                     )}>
-                                         {style.name}
-                                     </h4>
-                                     {style.description && (
-                                         <p className="text-xs text-gray-500 line-clamp-2">{style.description}</p>
-                                     )}
-                                 </div>
-                             </div>
-                         </SelectionCard>
-                     ))}
-                 </div>
-             </div>
-         )
+                            {/* Card Content */}
+                            <div className="flex items-start justify-between min-h-[48px]">
+                                <div className="flex flex-col">
+                                    <h4 className={cn(
+                                        "text-sm font-semibold transition-colors",
+                                        selectedStyleId === style.id ? "text-white" : "text-gray-300 group-hover:text-white"
+                                    )}>
+                                        {style.name}
+                                    </h4>
+                                    {style.description && (
+                                        <p className="text-xs text-gray-500 line-clamp-2">{style.description}</p>
+                                    )}
+                                </div>
+                            </div>
+                        </SelectionCard>
+                    ))}
+                </div>
+            </div>
+        )
     };
 
     const renderCategory = (title: string, category: ArtStyle['category'], icon?: React.ReactNode) => {
@@ -275,22 +275,26 @@ export default function ArtStyleSetupModal({
                         >
                             {/* Card Image Area */}
                             <div className={cn(
-                                "aspect-square rounded-lg mb-3 overflow-hidden relative transition-all",
-                                style.previewColor
+                                "aspect-square rounded-lg mb-3 overflow-hidden relative transition-all bg-gray-800",
+                                !style.imageUrl && style.previewColor
                             )}>
+                                {style.imageUrl ? (
+                                    <img src={style.imageUrl} alt={style.name} className="w-full h-full object-cover" />
+                                ) : (
+                                    <div className="absolute inset-0 flex items-center justify-center p-4">
+                                        <div className="text-center">
+                                            <p className="text-[10px] font-mono text-white/60 uppercase tracking-wider leading-relaxed">
+                                                {style.name}<br />Preview
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {style.isLocked && (
-                                    <div className="absolute top-2 right-2 text-white/50">
+                                    <div className="absolute top-2 right-2 text-white/50 bg-black/50 p-1 rounded-full">
                                         <Lock size={14} />
                                     </div>
                                 )}
-                                
-                                <div className="absolute inset-0 flex items-center justify-center p-4">
-                                     <div className="text-center">
-                                        <p className="text-[10px] font-mono text-white/60 uppercase tracking-wider leading-relaxed">
-                                            {style.name}<br/>Preview
-                                        </p>
-                                     </div>
-                                </div>
                             </div>
 
                             {/* Card Content */}
@@ -328,7 +332,7 @@ export default function ArtStyleSetupModal({
 
                 <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
                     {renderCustomModels()}
-                    
+
                     {renderCategory('Classic & Webtoon', 'CLASSIC_WEBTOON')}
                     {renderCategory('Artistic & Painterly', 'ARTISTIC_PAINTERLY')}
                     {renderCategory('Stylized & Graphic', 'STYLIZED_GRAPHIC')}
@@ -340,16 +344,16 @@ export default function ArtStyleSetupModal({
                         Total Styles: {STYLES.length + customStyles.length}
                     </div>
                     <div className="flex items-center gap-3">
-                        <Button 
-                            variant="ghost" 
+                        <Button
+                            variant="ghost"
                             size="sm"
                             onClick={onClose}
                             className="text-gray-400 hover:text-white"
                         >
                             Cancel
                         </Button>
-                        <Button 
-                            variant="default" 
+                        <Button
+                            variant="default"
                             size="sm"
                             onClick={handleSave}
                             disabled={saving}
@@ -359,8 +363,8 @@ export default function ArtStyleSetupModal({
                     </div>
                 </div>
 
-                <CreateStyleModal 
-                    isOpen={isCreateModalOpen} 
+                <CreateStyleModal
+                    isOpen={isCreateModalOpen}
                     onClose={() => setIsCreateModalOpen(false)}
                     onCreated={() => {
                         fetchCustomStyles();
