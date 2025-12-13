@@ -1,6 +1,3 @@
-
-
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -15,8 +12,9 @@ import EditProjectModal from './modals/EditProjectModal';
 import GenerateEpisodeModal from './modals/GenerateEpisodeModal';
 import ArtStyleSetupModal from './modals/ArtStyleSetupModal';
 import CharacterDetailModal from './modals/CharacterDetailModal';
-import { Plus, Sparkles, Clapperboard, Edit2, Palette, ArrowLeft, Play, ArrowRight, Settings, FolderOpen, Upload, Database, Zap, Code, AlertCircle } from 'lucide-react';
+import { Plus, Sparkles, Clapperboard, Edit2, Palette, ArrowRight, Settings, FolderOpen, Upload, Database, Zap, Code, AlertCircle, Play } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import ImageGeneratingPlaceholder from '@/components/ui/ImageGeneratingPlaceholder';
 
 interface Character {
     id?: string;
@@ -33,11 +31,12 @@ interface Project {
     description?: string;
     style_preset: string;
     thumbnail_url?: string;
+    cover_image_status?: string | null;
     subtitle?: string;
     genre?: string;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     worldview?: any;
-    art_style?: string; // Should be consistent with interface
+    art_style?: string;
     style_reference_url?: string;
 }
 
@@ -60,22 +59,120 @@ interface ProjectHomeProps {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onEpisodeAdd: (e: any) => void;
     onRefreshCharacters?: () => void;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key: string]: any;
 }
 
-export default function ProjectHome({ project, characters, episodes, onProjectUpdate, onCharacterAdd, onEpisodeAdd, onRefreshCharacters }: ProjectHomeProps) {
-    const [isEditProjectOpen, setIsEditProjectOpen] = useState(false);
-    const [isGenerateEpisodeOpen, setIsGenerateEpisodeOpen] = useState(false);
-    const [isArtStyleSetupOpen, setIsArtStyleSetupOpen] = useState(false);
+export default function ProjectHome({ project, characters, episodes, onProjectUpdate, onCharacterAdd, onEpisodeAdd, onRefreshCharacters, ...props }: ProjectHomeProps) {
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isEpisodeModalOpen, setIsEpisodeModalOpen] = useState(false);
+    const [isArtStyleOpen, setIsArtStyleOpen] = useState(false);
     const [isViewStyleOpen, setIsViewStyleOpen] = useState(false);
+    const [isCharacterDetailOpen, setIsCharacterDetailOpen] = useState(false);
+    const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
     const { toast } = useToast();
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const pathname = usePathname();
 
-    const handleStyleClick = () => {
-        if (project.style_preset && project.style_preset !== 'anime_webtoon') {
-            setIsViewStyleOpen(true);
-        } else {
-            setIsArtStyleSetupOpen(true);
+    // Polling for cover image status
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (project.cover_image_status === 'processing') {
+            interval = setInterval(async () => {
+                try {
+                    const res = await api.get(`/projects/${project.id}`);
+                    const updatedProject = res.data;
+
+                    if (updatedProject.cover_image_status !== 'processing') {
+                        onProjectUpdate(updatedProject);
+                        clearInterval(interval);
+
+                        if (updatedProject.cover_image_status === 'completed') {
+                            toast({
+                                title: "Cover Generated",
+                                description: "Your project cover has been successfully created.",
+                            });
+                        } else if (updatedProject.cover_image_status === 'failed') {
+                            toast({
+                                title: "Generation Failed",
+                                description: "Failed to generate project cover.",
+                                variant: 'destructive'
+                            });
+                        }
+                    }
+                } catch (e) {
+                    console.error("Polling error", e);
+                }
+            }, 3000);
+        }
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [project.cover_image_status, project.id, onProjectUpdate, toast]);
+
+    const handleUpdateProject = async (data: Partial<Project>) => {
+        try {
+            const res = await api.patch(`/projects/${project.id}`, data);
+            onProjectUpdate(res.data);
+            setIsEditModalOpen(false);
+        } catch (error) {
+            console.error(error);
+            toast({
+                title: "Update Failed",
+                description: "Failed to update project settings.",
+                variant: 'destructive'
+            });
         }
     };
+
+    const handleGenerateCover = async () => {
+        if (!project.genre || !project.worldview) {
+            toast({
+                title: "Missing Information",
+                description: "Please set a genre and worldview first.",
+                variant: 'destructive',
+            });
+            return;
+        }
+
+        try {
+            // Optimistic update
+            onProjectUpdate({ ...project, cover_image_status: 'processing' });
+
+            await api.post(`/projects/${project.id}/cover`);
+
+            toast({
+                title: "Generation Started",
+                description: "AI is creating your cover art...",
+            });
+        } catch (e) {
+            console.error(e);
+            toast({
+                title: "Request Failed",
+                description: "Failed to start cover generation.",
+                variant: 'destructive',
+            });
+            onProjectUpdate({ ...project, cover_image_status: 'failed' });
+        }
+    };
+
+    const handleCharacterRetry = async (charId: string) => {
+        try {
+            await api.post(`/characters/${charId}/generate`);
+            // Trigger refresh via prop if available
+            if (onRefreshCharacters) onRefreshCharacters();
+        } catch (e) {
+            console.error(e);
+            toast({
+                title: "Retry Failed",
+                description: "Failed to retry character generation.",
+                variant: 'destructive',
+            });
+        }
+    }
+
+    const isCoverProcessing = project.cover_image_status === 'processing';
 
     // Poll for pending characters
     useEffect(() => {
@@ -91,66 +188,26 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
         };
     }, [characters, onRefreshCharacters]);
 
-    // Detail Modal Logic
-    const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
-    const [isDetailOpen, setIsDetailOpen] = useState(false);
-
     // Update selected character when list updates (polling)
     useEffect(() => {
-        if (selectedCharacter && isDetailOpen) {
+        if (selectedCharacter && isCharacterDetailOpen) {
             const upToDateChar = characters.find(c => c.id === selectedCharacter.id || c.name === selectedCharacter.name);
             if (upToDateChar) {
                 setSelectedCharacter(upToDateChar);
             }
         }
-    }, [characters, selectedCharacter, isDetailOpen]);
+    }, [characters, selectedCharacter, isCharacterDetailOpen]);
 
     const handleCharacterClick = (char: Character) => {
         setSelectedCharacter(char);
-        setIsDetailOpen(true);
+        setIsCharacterDetailOpen(true);
     };
-
-    // Poll for cover image... logic remains same
-    useEffect(() => {
-        let intervalId: NodeJS.Timeout;
-
-        const checkCoverStatus = async () => {
-            if (project.thumbnail_url) return; // Already has thumbnail
-
-            // Assume 'anime_webtoon' is default/unset for this logic, or just check if user initiated
-            if (!project.style_preset || project.style_preset === 'anime_webtoon') return;
-
-            try {
-                const res = await api.get(`/projects/${project.id}`);
-                if (res.data.thumbnail_url) {
-                    onProjectUpdate(res.data);
-                }
-            } catch (e) {
-                console.error("Polling error", e);
-            }
-        };
-
-        if (!project.thumbnail_url && project.style_preset && project.style_preset !== 'anime_webtoon') {
-            checkCoverStatus(); // Check immediately
-            intervalId = setInterval(checkCoverStatus, 5000); // Check every 5s
-        }
-
-        return () => {
-            if (intervalId) clearInterval(intervalId);
-        };
-    }, [project.id, project.thumbnail_url, project.style_preset, onProjectUpdate]);
-
-    const searchParams = useSearchParams();
-    const router = useRouter();
-    const pathname = usePathname();
 
     // Check for setup query param
     useEffect(() => {
         if (searchParams && searchParams.get('setup') === 'true') {
-            // Use setTimeout to avoid synchronous state update warning during render phase
             const timer = setTimeout(() => {
-                setIsArtStyleSetupOpen(true);
-                // Remove query param without refreshing
+                setIsArtStyleOpen(true);
                 const params = new URLSearchParams(searchParams);
                 params.delete('setup');
                 router.replace(`${pathname}?${params.toString()}`);
@@ -159,187 +216,98 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
         }
     }, [searchParams, router, pathname]);
 
-
-
-    const handleRetryCharacter = async (charId: string) => {
-        try {
-            await api.post(`/characters/${charId}/generate`);
-            // Optimistic update
-            if (onRefreshCharacters) onRefreshCharacters();
-
-            // Also update selected character if open
-            if (selectedCharacter && selectedCharacter.id === charId) {
-                setSelectedCharacter({ ...selectedCharacter, sheet_status: 'processing' });
-            }
-        } catch (e) {
-            console.error("Retry failed", e);
-            toast({
-                title: "Retry Failed",
-                description: "Please try again.",
-                variant: 'destructive',
-            });
+    const handleStyleClick = () => {
+        if (project.style_preset && project.style_preset !== 'anime_webtoon') {
+            setIsViewStyleOpen(true);
+        } else {
+            setIsArtStyleOpen(true);
         }
     };
 
     return (
         <ProjectLayout projectId={project.id} projectTitle={project.title}>
-            <ViewStyleModal
-                isOpen={isViewStyleOpen}
-                onClose={() => setIsViewStyleOpen(false)}
-                styleName={project.style_preset}
-                styleImageUrl={project.style_reference_url}
-                description={project.art_style}
-            />
             <div className="flex h-full relative overflow-y-auto bg-[#13111C]">
-                {/* Main Content Scrollable Area */}
-                <div className="flex-1 flex flex-col min-h-0 relative z-10 custom-scrollbar">
-
-                    {/* Immersive Hero Banner */}
-                    <div className="relative w-full h-[400px] shrink-0 group border-b border-white/5">
-                        {/* Background Image */}
+                {/* Main Content */}
+                <div className="flex-1 flex flex-col min-w-0">
+                    {/* Hero Section */}
+                    <div className="relative w-full aspect-[21/9] max-h-[400px] bg-black group overflow-hidden">
                         <div
-                            className="absolute inset-0 bg-cover bg-center"
+                            className={cn(
+                                "absolute inset-0 bg-cover bg-center transition-all duration-700",
+                                isCoverProcessing && "opacity-50 filter blur-sm"
+                            )}
                             style={{
-                                backgroundImage: `url("${project.thumbnail_url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=2564&ixlib=rb-4.0.3'}")`
+                                backgroundImage: project.thumbnail_url ? `url("${project.thumbnail_url}")` : undefined,
                             }}
                         />
-                        {/* Gradient Overlays */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#13111C] via-[#13111C]/40 to-[#13111C]/20" />
-                        <div className="absolute inset-0 bg-black/20" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#13111C] via-[#13111C]/60 to-transparent" />
 
-                        {/* Generate AI Cover Button (if missing) */}
-                        {!project.thumbnail_url && (
-                            <div className="absolute inset-0 flex items-center justify-center z-30">
-                                <Button
-                                    className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white font-bold py-6 px-8 rounded-xl shadow-2xl transition-all hover:scale-105 group/gen"
-                                    onClick={async () => {
-                                        try {
-                                            await api.post(`/projects/${project.id}/cover`);
-                                            // Ideally show a toast here
-                                            toast({
-                                                title: "Cover Generation Started",
-                                                description: "It will appear shortly.",
-                                            });
-                                        } catch (e) {
-                                            console.error("Failed to start generation", e);
-                                            toast({
-                                                title: "Generation Failed",
-                                                description: "Failed to start generation.",
-                                                variant: 'destructive',
-                                            });
-                                        }
-                                    }}
-                                >
-                                    <Sparkles className="w-6 h-6 mr-3 text-purple-400 group-hover/gen:text-purple-300 group-hover/gen:animate-pulse" />
-                                    <div className="flex flex-col items-start">
-                                        <span className="text-lg">Generate AI Cover</span>
-                                        <span className="text-xs text-gray-300 font-normal">Create a unique style & cover art</span>
-                                    </div>
-                                </Button>
-                            </div>
+                        {/* Status Overlay for Processing */}
+                        {isCoverProcessing && (
+                            <ImageGeneratingPlaceholder text="GENERATING COVER ART..." />
                         )}
 
-                        {/* Removed Floating Back Button as Sidebar handles it */}
-
-                        {/* Banner Content (Bottom Left) */}
-                        <div className="absolute bottom-0 left-0 w-full p-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
-                            <div className="flex flex-col gap-4 max-w-4xl">
-                                {/* Tags / Badges / Worldview Data */}
-                                {/* Tags / Badges / Worldview Data */}
-                                <div className="flex items-center flex-wrap gap-2">
-                                    {project.genre && (
-                                        <span className="px-2.5 py-0.5 rounded-md bg-[#4a4aff] text-white text-[10px] font-bold uppercase tracking-wider shadow-lg border border-[#6b6bff]">
-                                            {project.genre}
-                                        </span>
-                                    )}
-                                    {/* Render Tones */}
+                        <div className="absolute bottom-0 left-0 w-full p-8 sm:p-12 flex flex-col sm:flex-row items-start sm:items-end justify-between gap-6 z-10">
+                            <div className="flex flex-col gap-4 max-w-2xl">
+                                <div className="flex items-center gap-3">
+                                    <span className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-xs font-bold text-white border border-white/20">
+                                        {project.genre || "Genre Not Set"}
+                                    </span>
                                     {project.worldview?.tone && Array.isArray(project.worldview.tone) && project.worldview.tone.map((t: string) => (
-                                        <span key={t} className="px-2.5 py-0.5 rounded-md bg-purple-500/20 text-purple-200 text-[10px] font-bold uppercase tracking-wider border border-purple-500/30">
+                                        <span key={t} className="px-3 py-1 rounded-full bg-purple-500/20 backdrop-blur-md text-xs font-bold text-purple-200 border border-purple-500/30">
                                             {t}
                                         </span>
                                     ))}
-
-                                    <div className="relative group/style cursor-pointer" onClick={handleStyleClick}>
-                                        <span className="px-2.5 py-0.5 rounded-md bg-black/40 hover:bg-black/60 text-white text-[10px] font-medium border border-white/10 backdrop-blur-md flex items-center gap-1.5 transition-all">
-                                            <Palette size={10} className="text-[#a9a9d1]" />
-                                            {project.style_preset || "Setup Style"}
-                                        </span>
-                                    </div>
-                                    <div className="w-px h-3 bg-white/20 mx-1" />
-                                    <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-white/5 border border-white/5 text-[10px] font-mono text-gray-300">
-                                        <Database size={10} className="text-[#4a4aff]" /> Synced
-                                    </span>
-                                    <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-white/5 border border-white/5 text-[10px] font-mono text-gray-300">
-                                        <Zap size={10} className="text-yellow-400" /> Fast Prod.
-                                    </span>
                                 </div>
-
-                                {/* Title & Meta */}
-                                <div>
-                                    <div className="flex items-baseline gap-4 mb-1">
-                                        <h1 className="text-3xl md:text-5xl font-black text-white leading-tight tracking-[-0.02em] drop-shadow-xl">
-                                            {project.title}
-                                        </h1>
-                                        {/* Status Badge */}
-                                        <div className="hidden md:flex items-center gap-2 text-xs font-medium text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full border border-green-400/20">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-current shimmer"></div>
-                                            Active
-                                        </div>
-                                    </div>
-                                    <p className="text-gray-300/80 text-sm md:text-base max-w-2xl line-clamp-3">
-                                        {project.subtitle || project.description || project.worldview?.content || project.worldview?.description || "No description provided."}
-                                    </p>
-                                </div>
+                                <h1 className="text-4xl sm:text-6xl font-black text-white leading-tight tracking-tight drop-shadow-2xl">
+                                    {project.title}
+                                </h1>
+                                <p className="text-lg text-gray-300 font-medium line-clamp-2 max-w-xl">
+                                    {project.description || project.worldview?.content || project.worldview?.description || "No description yet."}
+                                </p>
                             </div>
 
-                            {/* Creator Actions Toolbar */}
-                            <div className="flex flex-col items-end gap-3 shrink-0">
-                                <div className="flex items-center gap-2 p-1 rounded-full bg-black/20 backdrop-blur-md border border-white/10">
-                                    <Button
-                                        size="icon"
-                                        variant="ghost"
-                                        className="w-8 h-8 rounded-full text-gray-400 hover:text-white hover:bg-white/10"
-                                        title="Art Style"
-                                        onClick={handleStyleClick}
-                                    >
-                                        <Palette size={16} />
-                                    </Button>
-                                    <Button
-                                        size="icon"
-                                        variant="ghost"
-                                        className="w-8 h-8 rounded-full text-gray-400 hover:text-white hover:bg-white/10"
-                                        title="Project Settings"
-                                        onClick={() => setIsEditProjectOpen(true)}
-                                    >
-                                        <Settings size={16} />
-                                    </Button>
-                                    <Button size="icon" variant="ghost" className="w-8 h-8 rounded-full text-gray-400 hover:text-white hover:bg-white/10" title="Manage Assets" onClick={() => toast({ title: "Asset Manager", description: "Coming Soon" })}>
-                                        <FolderOpen size={16} />
-                                    </Button>
-                                    <Button size="icon" variant="ghost" className="w-8 h-8 rounded-full text-gray-400 hover:text-white hover:bg-white/10" title="Generator Options" onClick={() => toast({ title: "Generator Options", description: "Coming Soon" })}>
-                                        <Code size={16} />
-                                    </Button>
-                                    <div className="w-px h-4 bg-white/10 mx-1" />
-                                    <Button size="icon" variant="ghost" className="w-8 h-8 rounded-full text-gray-400 hover:text-white hover:bg-white/10" title="Export Project" onClick={() => toast({ title: "Export Started", description: "Your project is being exported." })}>
-                                        <Upload size={16} />
-                                    </Button>
-                                </div>
-
-                                <div className="flex items-center gap-3">
-                                    <Button
-                                        className="h-10 px-6 rounded-full bg-white text-black hover:bg-white/90 font-bold border border-transparent shadow-lg"
-                                        onClick={() => setIsEditProjectOpen(true)}
-                                    >
-                                        <Edit2 size={16} className="mr-2" /> Edit Details
-                                    </Button>
-                                    <Button
-                                        className="h-10 px-6 rounded-full bg-[#4a4aff] hover:bg-[#3d3dcc] text-white font-bold shadow-lg shadow-blue-900/20"
-                                        onClick={() => setIsGenerateEpisodeOpen(true)}
-                                    >
-                                        <Sparkles size={16} className="mr-2" /> New Episode
-                                    </Button>
-                                </div>
+                            <div className="flex gap-3">
+                                <Button
+                                    size="lg"
+                                    onClick={handleGenerateCover}
+                                    disabled={isCoverProcessing}
+                                    className={cn(
+                                        "bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-sm transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1",
+                                        isCoverProcessing && "cursor-not-allowed opacity-70"
+                                    )}
+                                >
+                                    <Sparkles className={cn("mr-2 h-4 w-4", isCoverProcessing && "animate-spin")} />
+                                    {isCoverProcessing ? "Generating..." : "Generate AI Cover"}
+                                </Button>
+                                <Button
+                                    size="lg"
+                                    onClick={() => setIsEditModalOpen(true)}
+                                    className="bg-white text-black hover:bg-gray-100 transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1"
+                                >
+                                    <Settings className="mr-2 h-4 w-4" />
+                                    Project Settings
+                                </Button>
                             </div>
+                        </div>
+
+                        {/* Quick Actions / Stats Overlay */}
+                        <div className="absolute top-8 right-8 flex flex-col items-end gap-3 z-20">
+                            <div className="flex items-center gap-2 p-1 rounded-full bg-black/20 backdrop-blur-md border border-white/10">
+                                <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="w-8 h-8 rounded-full text-gray-400 hover:text-white hover:bg-white/10"
+                                    title="Art Style"
+                                    onClick={handleStyleClick}
+                                >
+                                    <Palette size={16} />
+                                </Button>
+                            </div>
+                            {/* Sync Status */}
+                            <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/5 text-[10px] font-mono text-gray-300 backdrop-blur-sm">
+                                <Database size={10} className="text-[#4a4aff]" /> Synced
+                            </span>
                         </div>
                     </div>
 
@@ -347,7 +315,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                     <div className="flex-1 p-6 md:p-8 bg-[#13111C]">
                         <div className="max-w-7xl mx-auto flex flex-col gap-12">
 
-                            {/* Worldview Key Features (If available) */}
+                            {/* Worldview Key Features */}
                             {project.worldview?.key_features && Array.isArray(project.worldview.key_features) && (
                                 <section className="mb-4">
                                     <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
@@ -364,7 +332,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                 </section>
                             )}
 
-                            {/* Episodes List - Studio Mode */}
+                            {/* Episodes List */}
                             <section>
                                 <div className="flex items-center justify-between mb-6">
                                     <div className="flex items-center gap-3">
@@ -372,7 +340,12 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                         <span className="px-2 py-0.5 bg-white/5 rounded-full text-xs text-gray-400 font-mono">{episodes?.length || 0}</span>
                                     </div>
                                     <div className="flex gap-2">
-                                        <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white h-8 text-xs">Ascending</Button>
+                                        <Button
+                                            className="h-9 px-4 rounded-full bg-[#4a4aff] hover:bg-[#3d3dcc] text-white font-bold shadow-lg shadow-blue-900/20 text-xs"
+                                            onClick={() => setIsEpisodeModalOpen(true)}
+                                        >
+                                            <Sparkles size={14} className="mr-2" /> New Episode
+                                        </Button>
                                     </div>
                                 </div>
 
@@ -418,7 +391,6 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                             </div>
                                         ))
                                     ) : (
-                                        // Empty State
                                         <div className="py-12 flex flex-col items-center justify-center text-center gap-3 border border-dashed border-white/5 rounded-xl bg-white/[0.02]">
                                             <div className="p-3 rounded-full bg-white/5 text-gray-500">
                                                 <Clapperboard size={24} />
@@ -466,23 +438,22 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                                 )}
                                             >
                                                 <div className="aspect-[3/4] bg-cover bg-center relative" style={char.profile_image_url && !isGenerating ? { backgroundImage: `url("${char.profile_image_url}")` } : {}}>
-                                                    {(!char.profile_image_url || isGenerating || isFailed) && (
+                                                    {isGenerating && (
+                                                        <ImageGeneratingPlaceholder text="CREATING..." />
+                                                    )}
+
+                                                    {(!char.profile_image_url && !isGenerating && !isFailed) && (
                                                         <div className="w-full h-full bg-slate-800 flex flex-col items-center justify-center text-gray-600 gap-2">
-                                                            {isGenerating ? (
-                                                                <>
-                                                                    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                                                                    <span className="text-[10px] text-primary font-mono animate-pulse">CREATING...</span>
-                                                                </>
-                                                            ) : isFailed ? (
-                                                                <>
-                                                                    <div className="w-8 h-8 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center">
-                                                                        <AlertCircle size={16} />
-                                                                    </div>
-                                                                    <span className="text-[10px] text-red-400 font-bold">FAILED</span>
-                                                                </>
-                                                            ) : (
-                                                                <span className="font-bold text-xl">{char.name[0]}</span>
-                                                            )}
+                                                            <span className="font-bold text-xl">{char.name[0]}</span>
+                                                        </div>
+                                                    )}
+
+                                                    {isFailed && (
+                                                        <div className="w-full h-full bg-slate-800 flex flex-col items-center justify-center text-gray-600 gap-2">
+                                                            <div className="w-8 h-8 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center">
+                                                                <AlertCircle size={16} />
+                                                            </div>
+                                                            <span className="text-[10px] text-red-400 font-bold">FAILED</span>
                                                         </div>
                                                     )}
                                                 </div>
@@ -500,35 +471,41 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                 </div>
             </div>
 
-            {/* Modals - Kept same */}
-            <CharacterDetailModal
-                isOpen={isDetailOpen}
-                onClose={() => setIsDetailOpen(false)}
-                character={selectedCharacter}
-                onRetry={handleRetryCharacter}
-            />
-            <ArtStyleSetupModal
-                isOpen={isArtStyleSetupOpen}
-                onClose={() => setIsArtStyleSetupOpen(false)}
-                projectId={project.id}
-                currentStyle={project.style_preset}
-                projectTitle={project.title}
-                projectGenre={project.genre}
-                onStyleUpdate={(newStyle: string) => onProjectUpdate({ ...project, style_preset: newStyle })}
+            {/* Modals */}
+            <ViewStyleModal
+                isOpen={isViewStyleOpen}
+                onClose={() => setIsViewStyleOpen(false)}
+                styleName={project.style_preset}
+                styleImageUrl={project.style_reference_url}
+                description={project.art_style}
             />
             <EditProjectModal
-                isOpen={isEditProjectOpen}
-                onClose={() => setIsEditProjectOpen(false)}
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
                 project={project}
-                onUpdate={onProjectUpdate}
+                onUpdate={handleUpdateProject}
             />
-
             <GenerateEpisodeModal
-                isOpen={isGenerateEpisodeOpen}
-                onClose={() => setIsGenerateEpisodeOpen(false)}
+                isOpen={isEpisodeModalOpen}
+                onClose={() => setIsEpisodeModalOpen(false)}
                 projectId={project.id}
                 onGenerate={onEpisodeAdd}
                 nextOrder={episodes ? episodes.length + 1 : 1}
+            />
+            <ArtStyleSetupModal
+                isOpen={isArtStyleOpen}
+                onClose={() => setIsArtStyleOpen(false)}
+                projectId={project.id}
+                currentStyle={project.style_preset}
+                onStyleUpdate={(newStyle: string) => onProjectUpdate({ ...project, style_preset: newStyle })}
+                projectTitle={project.title}
+                projectGenre={project.genre}
+            />
+            <CharacterDetailModal
+                isOpen={isCharacterDetailOpen}
+                onClose={() => setIsCharacterDetailOpen(false)}
+                character={selectedCharacter}
+                onRetry={handleCharacterRetry}
             />
         </ProjectLayout>
     );

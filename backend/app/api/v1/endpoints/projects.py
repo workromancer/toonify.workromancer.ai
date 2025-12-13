@@ -41,6 +41,7 @@ class ProjectOut(BaseModel):
     style_preset: str
     style_reference_url: str | None = None
     thumbnail_url: str | None = None
+    cover_image_status: str | None = None
     created_at: datetime
     workspace_id: Any
 
@@ -122,6 +123,17 @@ def generate_project_cover_task(project_id: str, title: str, genre_name: str, wo
                     print(f"Project {project_id} thumbnail updated.")
     except Exception as e:
         print(f"Background Task Error: {e}")
+        # Update status to failed
+        with Session(engine) as session:
+            try:
+                p_uuid = UUID(project_id)
+                project = session.get(Project, p_uuid)
+                if project:
+                    project.cover_image_status = "failed"
+                    session.add(project)
+                    session.commit()
+            except Exception as db_e:
+                print(f"Failed to update error status: {db_e}")
 
 @router.get("/", response_model=List[ProjectOut])
 def list_projects(
@@ -159,6 +171,7 @@ def list_projects(
         p_dict = p.dict()
         p_dict['genre'] = g_name
         p_dict['thumbnail_url'] = thumb
+        p_dict['cover_image_status'] = p.cover_image_status
         results.append(p_dict)
     
     return results
@@ -212,6 +225,7 @@ def create_project(
         p_dict = project.dict()
         p_dict['genre'] = project.genre.name if project.genre else None
         p_dict['thumbnail_url'] = project.thumbnail_asset.file_url if project.thumbnail_asset else None
+        p_dict['cover_image_status'] = project.cover_image_status
 
         return p_dict
     except Exception as e:
@@ -259,6 +273,7 @@ def get_project(
     p_dict = project.dict()
     p_dict['genre'] = project.genre.name if project.genre else None
     p_dict['thumbnail_url'] = project.thumbnail_asset.file_url if project.thumbnail_asset else None
+    p_dict['cover_image_status'] = project.cover_image_status
     
     # ProjectDetailOut needs characters (serialized)
     # The default simple serialization might work if characters are loaded?
@@ -317,6 +332,7 @@ def update_project(
     p_dict = project.dict()
     p_dict['genre'] = project.genre.name if project.genre else None
     p_dict['thumbnail_url'] = project.thumbnail_asset.file_url if project.thumbnail_asset else None
+    p_dict['cover_image_status'] = project.cover_image_status
 
     return p_dict
 
@@ -353,6 +369,12 @@ def generate_cover(
              wv_content = str(project.worldview)
     
     genre_name = project.genre.name if project.genre else "Fantasy"
+
+    # Set status to processing immediately
+    project.cover_image_status = "processing"
+    session.add(project)
+    session.commit()
+    session.refresh(project)
 
     background_tasks.add_task(
         generate_project_cover_task, 

@@ -43,6 +43,7 @@ class CharacterOut(BaseModel):
     default_mood: Any = [] # Handle list or json string
     profile_image_url: Optional[str] = None
     description: Optional[str] = None
+    sheet_status: Optional[str] = "pending"
     created_at: datetime
 
 @router.get("/", response_model=List[CharacterOut])
@@ -283,6 +284,12 @@ def generate_character_image(
     project = session.get(Project, character.project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+
+    # Set status to processing immediately
+    character.sheet_status = "processing"
+    session.add(character)
+    session.commit()
+    session.refresh(character)
 
     # Add background task
     background_tasks.add_task(generate_character_image_task, character_id, "")
