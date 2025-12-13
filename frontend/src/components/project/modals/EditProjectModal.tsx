@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { X, Sparkles, Tag, Layers, FileText } from 'lucide-react';
+import { SectionLabel } from '@/components/ui/section-label';
 import api from '@/lib/api';
 
 interface Genre {
@@ -146,9 +147,7 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate }:
                     
                     {/* Basic Info Section */}
                     <div className="space-y-4">
-                        <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                            <FileText size={14} /> Basic Info
-                        </h4>
+                        <SectionLabel icon={<FileText size={14} />}>Basic Info</SectionLabel>
                         <div className="grid gap-4">
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="title" className="text-right text-gray-300">Title</Label>
@@ -193,9 +192,7 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate }:
 
                     {/* Worldview Section */}
                     <div className="space-y-4">
-                        <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                             <Layers size={14} /> Worldview & Tone
-                        </h4>
+                        <SectionLabel icon={<Layers size={14} />}>Worldview & Tone</SectionLabel>
                         
                         {/* Description */}
                         <div>

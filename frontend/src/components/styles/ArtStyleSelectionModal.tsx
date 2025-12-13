@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
-import { X, Lock, Check, Sparkles, Plus } from 'lucide-react';
+import { X, Lock, Sparkles, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { SelectionCard } from '@/components/ui/selection-card';
+import { SectionLabel } from '@/components/ui/section-label';
 
 interface ArtStyle {
     id: string;
@@ -68,28 +70,27 @@ export default function ArtStyleSelectionModal({ open, onOpenChange, onSelect }:
             <div className="mb-8 last:mb-0">
                 <div className="flex items-center gap-2 mb-4">
                     {icon}
-                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest">{title}</h3>
+                    <SectionLabel className="text-gray-400">{title}</SectionLabel>
                     {category === 'MY_MODELS' && (
                         <span className="px-1.5 py-0.5 rounded text-[10px] bg-indigo-500/20 text-indigo-300 font-medium">Private</span>
                     )}
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {styles.map((style) => (
-                        <div
+                        <SelectionCard
                             key={style.id}
+                            selected={selectedStyleId === style.id}
+                            showCheck={true}
                             onClick={() => handleSelect(style)}
                             className={cn(
-                                "group relative flex flex-col cursor-pointer transition-all duration-200",
+                                "flex flex-col h-full",
                                 style.isLocked ? "opacity-60 cursor-not-allowed" : "hover:-translate-y-1"
                             )}
                         >
                             {/* Card Image Area */}
                             <div className={cn(
-                                "aspect-square rounded-lg mb-3 overflow-hidden relative border-2 transition-all",
-                                style.previewColor,
-                                selectedStyleId === style.id
-                                    ? "border-primary ring-2 ring-primary/20 shadow-lg shadow-primary/20"
-                                    : "border-transparent group-hover:border-white/20"
+                                "aspect-square rounded-lg mb-3 overflow-hidden relative transition-all",
+                                style.previewColor
                             )}>
                                 {style.isLocked && (
                                     <div className="absolute top-2 right-2 text-white/50">
@@ -119,13 +120,8 @@ export default function ArtStyleSelectionModal({ open, onOpenChange, onSelect }:
                                         <p className="text-xs text-gray-500 line-clamp-2">{style.description}</p>
                                     )}
                                 </div>
-                                {selectedStyleId === style.id && (
-                                    <div className="text-primary shrink-0 ml-2">
-                                        <Check size={16} />
-                                    </div>
-                                )}
                             </div>
-                        </div>
+                        </SelectionCard>
                     ))}
                 </div>
             </div>

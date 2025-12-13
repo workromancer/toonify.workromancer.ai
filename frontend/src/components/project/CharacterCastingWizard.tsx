@@ -18,6 +18,8 @@ import {
     Palette,
     Wand2,
 } from 'lucide-react';
+import { SectionLabel } from '@/components/ui/section-label';
+import { SelectionCard } from '@/components/ui/selection-card';
 import api from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
@@ -276,7 +278,7 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
             <div className="space-y-6 max-w-md mx-auto w-full">
                 <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                        <Label className="text-[#d8b4fe] text-xs font-bold font-mono tracking-wider uppercase">Character Name</Label>
+                        <SectionLabel className="text-[#d8b4fe]">Character Name</SectionLabel>
                         <Badge 
                             variant="outline" 
                             className="border-purple-500/30 text-purple-300 bg-purple-500/10 text-[10px] px-2 py-0.5 cursor-pointer hover:bg-purple-500/20 transition-colors"
@@ -290,18 +292,20 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder="Park Dohyun"
-                        className="h-14 bg-[#0B0d12] border-[#2a2f3a] text-white text-lg placeholder:text-white/20 rounded-lg focus-visible:ring-1 focus-visible:ring-purple-500 focus-visible:border-purple-500 transition-all text-center"
+                        size="xl"
+                        className="text-center"
                         autoFocus
                     />
                 </div>
 
                 <div className="space-y-3">
-                    <Label className="text-[#d8b4fe] text-xs font-bold font-mono tracking-wider uppercase">Age (approx)</Label>
+                    <SectionLabel className="text-[#d8b4fe]">Age (approx)</SectionLabel>
                     <Input
                         value={age}
                         onChange={(e) => setAge(e.target.value)}
                         placeholder="Age (e.g., 18)"
-                        className="h-14 bg-[#0B0d12] border-[#2a2f3a] text-white text-lg placeholder:text-white/20 rounded-lg focus-visible:ring-1 focus-visible:ring-purple-500 focus-visible:border-purple-500 transition-all text-center"
+                        size="xl"
+                        className="text-center"
                     />
                 </div>
             </div>
@@ -321,10 +325,10 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                 <div className="flex flex-col gap-8">
                      {/* Keywords */}
                     <div className="space-y-3">
-                         <div className="flex justify-between items-center">
-                            <Label className="text-[#d8b4fe] text-xs font-bold font-mono tracking-wider uppercase flex items-center gap-2">
-                                <Sparkles className="w-3 h-3" /> Visual Keywords
-                            </Label>
+                        <div className="flex justify-between items-center">
+                            <SectionLabel className="text-[#d8b4fe]" icon={<Sparkles className="w-3 h-3" />}>
+                                Visual Keywords
+                            </SectionLabel>
                             <Badge 
                                 variant="outline" 
                                 className="border-purple-500/30 text-purple-300 bg-purple-500/10 text-[10px] px-2 py-0.5 cursor-pointer hover:bg-purple-500/20 transition-colors"
@@ -368,9 +372,9 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
 
                     {/* Theme Color */}
                     <div className="space-y-3">
-                         <Label className="text-[#d8b4fe] text-xs font-bold font-mono tracking-wider uppercase flex items-center gap-2">
-                            <Palette className="w-3 h-3" /> Theme Color
-                        </Label>
+                         <SectionLabel className="text-[#d8b4fe]" icon={<Palette className="w-3 h-3" />}>
+                            Theme Color
+                        </SectionLabel>
                         <div className="flex gap-3">
                             {['#ef4444', '#3b82f6', '#10b981', '#B49221', '#8b5cf6', '#252830', '#9ca3af', '#be185d'].map((color) => {
                                 const isSelected = themeColor === color;
@@ -394,9 +398,9 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
 
                 {/* RIGHT COLUMN: Personality */}
                 <div className="flex flex-col gap-3">
-                    <Label className="text-[#fbbf24] text-xs font-bold font-mono tracking-wider uppercase flex items-center gap-2">
-                         <span className='w-3 h-3 text-center leading-3'>☺</span> Personality Type
-                    </Label>
+                    <SectionLabel className="text-[#fbbf24]" icon={<span className='w-3 h-3 text-center leading-3'>☺</span>}>
+                         Personality Type
+                    </SectionLabel>
                     
                     <div className="grid grid-cols-2 gap-3 h-full">
                          {[
@@ -406,32 +410,26 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                             'Pure', 'Madness'
                         ].map((pType) => {
                             const isSelected = personalityTypes.includes(pType);
-                            let colorClass = "text-gray-400 border-white/5 bg-[#0B0d12]"; // Default
-
-                            if (isSelected) {
-                                // Dynamic color based on selection could be nice, but keeping it simple orange/active style for now
-                                colorClass = "border-[#ea580c] bg-[#ea580c] text-white shadow-[0_0_15px_rgba(234,88,12,0.4)]";
-                            } else {
-                                colorClass = "text-gray-400 border-white/5 bg-[#0B0d12] hover:bg-white/5 hover:border-white/10 hover:text-white";
-                            }
-
+                            // We use custom class for orange override if needed, or stick to 'filled' which defaults to primary (purple).
+                            // The original had orange. Let's try to override via className to keep the ID "orange" feeling if desired, or let it be purple.
+                            // I'll stick to 'filled' but override the selected style to be orange to match original design.
+                            
                             return (
-                                <button
+                                <SelectionCard
                                     key={pType}
+                                    variant="filled"
+                                    selected={isSelected}
                                     onClick={() => {
-                                        if (isSelected) {
-                                            setPersonalityTypes(personalityTypes.filter(t => t !== pType));
-                                        } else {
-                                            setPersonalityTypes([...personalityTypes, pType]);
-                                        }
+                                        if (isSelected) setPersonalityTypes(personalityTypes.filter(t => t !== pType));
+                                        else setPersonalityTypes([...personalityTypes, pType]);
                                     }}
                                     className={cn(
-                                        "rounded-xl border font-medium text-sm transition-all duration-200 flex items-center justify-center p-4",
-                                        colorClass
+                                        "flex items-center justify-center font-medium",
+                                        isSelected && "bg-[#ea580c] border-[#ea580c] shadow-[0_0_15px_rgba(234,88,12,0.4)]"
                                     )}
                                 >
                                     {pType}
-                                </button>
+                                </SelectionCard>
                             )
                         })}
                     </div>
@@ -507,17 +505,13 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
         >
             {/* Left Sidebar: Roles List */}
             <div className="w-1/3 flex flex-col gap-3 pr-2 overflow-y-auto custom-scrollbar">
-                <Label className="text-gray-500 text-[10px] font-bold tracking-widest uppercase mb-2">Select Role</Label>
+                <SectionLabel className="mb-2 text-gray-500">Select Role</SectionLabel>
                 {archetypes.map((arch) => (
-                    <div
+                    <SelectionCard
                         key={arch.id}
+                        selected={selectedRole === arch.title}
                         onClick={() => setSelectedRole(arch.title)}
-                        className={cn(
-                            "cursor-pointer p-4 rounded-xl border transition-all duration-200 group relative",
-                            selectedRole === arch.title
-                                ? "bg-[#1c162e] border-purple-500/50 shadow-[0_0_15px_rgba(147,51,234,0.15)]"
-                                : "bg-[#0B0d12] border-[#2a2f3a] hover:bg-white/5 hover:border-white/10"
-                        )}
+                        className="flex flex-col items-start"
                     >
                         <h4 className={cn("font-bold text-sm mb-2", selectedRole === arch.title ? "text-white" : "text-gray-400")}>
                             {arch.title}
@@ -529,7 +523,7 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                                 </Badge>
                             ))}
                         </div>
-                    </div>
+                    </SelectionCard>
                 ))}
             </div>
 
@@ -547,7 +541,7 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                  {/* Description Box */}
                 <div className="space-y-2 z-10">
                     <div className="flex justify-between items-center">
-                         <Label className="text-gray-500 text-[10px] font-bold tracking-widest uppercase">Character Profile</Label>
+                         <SectionLabel className="text-gray-500">Character Profile</SectionLabel>
                          <Badge 
                             variant="outline" 
                             className="border-purple-500/30 text-purple-300 bg-purple-500/10 text-[10px] px-2 py-0.5 cursor-pointer hover:bg-purple-500/20 transition-colors"
@@ -700,7 +694,9 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                                     <Button
                                         onClick={handleConceptSubmit}
                                         disabled={!name.trim()}
-                                        className="bg-[#2a2e3b] hover:bg-[#353a49] text-white/90 font-medium rounded-xl px-8 h-12 border border-white/5 transition-all w-32"
+                                        variant="dark"
+                                        size="xl"
+                                        className="w-32"
                                     >
                                         Next <MoveRight className="ml-2 w-4 h-4" />
                                     </Button>
@@ -709,7 +705,9 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                                     <Button
                                         onClick={handleStyleSubmit}
                                         disabled={personalityTypes.length === 0}
-                                        className="bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl px-8 h-12 shadow-[0_0_20px_rgba(147,51,234,0.3)] transition-all w-32"
+                                        variant="glow"
+                                        size="xl"
+                                        className="w-32"
                                     >
                                         Next <MoveRight className="ml-2 w-4 h-4" />
                                     </Button>
@@ -718,7 +716,8 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                                     <Button
                                         onClick={handleFinalize}
                                         disabled={isGenerating}
-                                        className="bg-[#8b5cf6] hover:bg-[#7c3aed] text-white font-bold rounded-xl px-8 h-12 shadow-[0_0_20px_rgba(139,92,246,0.5)] transition-all"
+                                        variant="glow"
+                                        size="xl"
                                     >
                                         {isGenerating ? <Loader2 className="animate-spin mr-2" /> : <Sparkles className="mr-2 w-4 h-4" />}
                                         Create Character
