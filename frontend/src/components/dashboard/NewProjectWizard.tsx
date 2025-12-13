@@ -2,433 +2,458 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  ArrowLeft, ArrowRight, BookOpen, ChevronRight, ChevronLeft,
+  Type, Hash, Sparkles, Check, X,
+  Ghost, Heart, Sword, Skull, Smile, Monitor, Clock, 
+  Wand2, RefreshCw
+} from 'lucide-react';
 import api from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { cn } from '@/lib/utils';
-import { Check, MoveRight, MoveLeft, Sparkles, AlertCircle, Wand2 } from 'lucide-react';
-import { WorldviewCarousel } from '@/components/ui/carousel-custom';
-import { SelectionCard } from '@/components/ui/selection-card';
+import { AiSuggestionCard } from '@/components/project/AiSuggestionCard';
 
-const StepIndicator = ({ currentStep, totalSteps }: { currentStep: number; totalSteps: number }) => {
-    return (
-        <div className="w-full relative mb-12">
-            <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-white/10 -translate-y-1/2 z-0"></div>
-            <motion.div
-                className="absolute top-1/2 left-0 h-[1px] bg-primary -translate-y-1/2 z-1 shadow-[0_0_10px_rgba(55,19,236,0.6)]"
-                initial={{ width: '0%' }}
-                animate={{ width: `${((currentStep - 1) / (totalSteps - 1)) * 100}%` }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
+const GENRES = [
+  { id: 'fantasy', label: 'Fantasy', icon: Sparkles, color: 'bg-amber-600' },
+  { id: 'romance', label: 'Romance', icon: Heart, color: 'bg-pink-600' },
+  { id: 'sci-fi', label: 'Sci-Fi', icon: Monitor, color: 'bg-cyan-600' },
+  { id: 'slice_of_life', label: 'Slice of Life', icon: BookOpen, color: 'bg-orange-500' },
+  { id: 'action', label: 'Action', icon: Sword, color: 'bg-red-600' },
+  { id: 'thriller', label: 'Thriller', icon: Skull, color: 'bg-purple-600' },
+  { id: 'historical', label: 'Historical', icon: Clock, color: 'bg-stone-600' },
+  { id: 'comedy', label: 'Comedy', icon: Smile, color: 'bg-yellow-500' },
+  { id: 'mystery', label: 'Mystery', icon: Ghost, color: 'bg-indigo-600' },
+  { id: 'horror', label: 'Horror', icon: Ghost, color: 'bg-slate-700' },
+];
+
+const ProgressBar = ({ currentStep }: { currentStep: number }) => {
+  const steps = ['TITLE', 'SUBTITLE', 'GENRE', 'WORLD'];
+  
+  return (
+    <div className="w-full max-w-xl mx-auto mb-8 px-4">
+      <div className="flex items-center justify-between relative">
+        <div className="absolute top-1/2 left-0 w-full h-[2px] bg-slate-800 -z-0 -translate-y-1/2" />
+        <div 
+          className="absolute top-1/2 left-0 h-[2px] bg-purple-600 -z-0 -translate-y-1/2 transition-all duration-500 ease-out"
+          style={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
+        />
+        {steps.map((label, idx) => (
+          <div key={idx} className="relative z-10 flex flex-col items-center">
+            <div 
+              className={`w-4 h-4 rounded-full border-2 transition-all duration-300 mb-2 ${
+                idx <= currentStep 
+                  ? 'bg-purple-600 border-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.6)] scale-110' 
+                  : 'bg-slate-900 border-slate-700'
+              }`} 
             />
-
-            <div className="relative z-10 flex justify-between">
-                {[...Array(totalSteps)].map((_, index) => {
-                    const stepNum = index + 1;
-                    const isActive = stepNum <= currentStep;
-                    const isCurrent = stepNum === currentStep;
-
-                    return (
-                        <div key={index} className="flex flex-col items-center gap-2 relative group">
-                            <div
-                                className={cn(
-                                    "w-3 h-3 rounded-full transition-all duration-300 border-2",
-                                    isActive ? "bg-primary border-primary shadow-[0_0_10px_rgba(55,19,236,0.8)]" : "bg-background-dark border-white/20",
-                                    isCurrent && "scale-150 ring-4 ring-primary/20 bg-white border-white"
-                                )}
-                            ></div>
-                            <span className={cn(
-                                "text-[10px] uppercase tracking-widest font-bold transition-all duration-300 absolute -bottom-8 w-24 text-center",
-                                isActive ? "text-white opacity-100" : "text-gray-500 opacity-0 group-hover:opacity-50"
-                            )}>
-                                {stepNum === 1 && 'Title'}
-                                {stepNum === 2 && 'Subtitle'}
-                                {stepNum === 3 && 'Genre'}
-                                {stepNum === 4 && 'World'}
-                            </span>
-                        </div>
-                    );
-                })}
-            </div>
-        </div>
-    );
+            <span className={`text-[10px] font-mono font-bold tracking-wider absolute top-6 ${
+              idx <= currentStep ? 'text-white' : 'text-slate-600'
+            }`}>
+              {label}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 };
 
 export default function NewProjectWizard() {
-    const router = useRouter();
-    const [step, setStep] = useState(1);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-    const [formData, setFormData] = useState<{
-        title: string;
-        subtitle: string;
-        genre: string[];
-        worldview: string | any;
-    }>({
-        title: '',
-        subtitle: '',
-        genre: [],
-        worldview: ''
-    });
-    const [augmentOptions, setAugmentOptions] = useState<any[]>([]);
+  const router = useRouter();
+  const [step, setStep] = useState(0);
+  const [isProcessing, setIsProcessing] = useState(false);
+  
+  // Form State
+  const [title, setTitle] = useState('');
+  const [subtitle, setSubtitle] = useState('');
+  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const [worldDesc, setWorldDesc] = useState<string | any>('');
+  
+  // AI State
+  const [showAiResults, setShowAiResults] = useState(false);
+  const [augmentOptions, setAugmentOptions] = useState<any[]>([]);
+  const [currentAiIndex, setCurrentAiIndex] = useState(0);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [error, setError] = useState('');
 
-    const genres = [
-        { label: 'Fantasy', icon: '🧙' },
-        { label: 'Romance', icon: '❤️' },
-        { label: 'Sci-Fi', icon: '🤖' },
-        { label: 'Slice of Life', icon: '🍰' },
-        { label: 'Action', icon: '💥' },
-        { label: 'Thriller', icon: '🔪' },
-        { label: 'Historical', icon: '📜' },
-        { label: 'Comedy', icon: '😂' },
-        { label: 'Drama', icon: '🎭' },
-        { label: 'Mystery', icon: '🕵️' },
-        { label: 'Horror', icon: '👻' },
-        { label: 'Sports', icon: '⚽' },
-    ];
+  // Handlers
+  const handleNext = () => {
+    if (step < 3) setStep(step + 1);
+    else {
+      createProject();
+    }
+  };
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-    };
+  const handleBack = () => {
+    if (step > 0) setStep(step - 1);
+    else {
+      router.push('/dashboard');
+    }
+  };
 
-    const handleGenreSelect = (genre: string) => {
-        setFormData(prev => {
-            const currentGenres = prev.genre;
-            if (currentGenres.includes(genre)) {
-                return { ...prev, genre: currentGenres.filter(g => g !== genre) };
-            } else {
-                return { ...prev, genre: [...currentGenres, genre] };
-            }
+  const toggleGenre = (label: string) => {
+    if (selectedGenres.includes(label)) {
+      setSelectedGenres(selectedGenres.filter(g => g !== label));
+    } else {
+      if (selectedGenres.length < 3) {
+        setSelectedGenres([...selectedGenres, label]);
+      }
+    }
+  };
+
+  // AI Logic
+  const handleAugmentWorldview = async () => {
+    setAiLoading(true);
+    setError('');
+    // Clear previous options
+    setAugmentOptions([]);
+    setCurrentAiIndex(0);
+
+    try {
+        const desc = typeof worldDesc === 'string' ? worldDesc : worldDesc.content || JSON.stringify(worldDesc);
+
+        const response = await api.post('/projects/worldview/augment', {
+            description: desc,
+            title: title,
+            subtitle: subtitle,
+            genres: selectedGenres
         });
-    };
 
-    const nextStep = () => setStep(prev => Math.min(prev + 1, 4));
-    const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
-
-    const handleAugmentWorldview = async () => {
-        setLoading(true);
-        setError('');
-        setAugmentOptions([]);
-        try {
-            const desc = typeof formData.worldview === 'string' ? formData.worldview : formData.worldview.content || JSON.stringify(formData.worldview);
-
-            const response = await api.post('/projects/worldview/augment', {
-                description: desc,
-                title: formData.title,
-                subtitle: formData.subtitle,
-                genres: formData.genre
-            });
-
-            if (response.data.options) {
-                setAugmentOptions(response.data.options);
-            } else if (response.data.augmented_worldview) {
-                setFormData(prev => ({ ...prev, worldview: response.data.augmented_worldview }));
-            }
-        } catch (error: any) {
-            console.error("Augmentation failed", error);
-            setError("Failed to augment worldview. Please check API Key configuration.");
-        } finally {
-            setLoading(false);
+        if (response.data.options && response.data.options.length > 0) {
+            setAugmentOptions(response.data.options);
+            setShowAiResults(true);
+        } else if (response.data.augmented_worldview) {
+             // Fallback for single response
+             setWorldDesc(response.data.augmented_worldview);
+        } else {
+             setError("No suggestions generated.");
         }
-    };
 
-    const handleSelectAugmentedOption = async (option: any) => {
-        const finalWorldview = {
-            ...option,
-            meta_type: "augmented_v1"
-        };
-        setFormData(prev => ({ ...prev, worldview: finalWorldview }));
-        await submitProject({ ...formData, worldview: finalWorldview });
-    };
+    } catch (error: any) {
+        console.error("Augmentation failed", error);
+        setError("Failed to generate suggestions. Please check API Key.");
+    } finally {
+        setAiLoading(false);
+    }
+  };
 
-    const submitProject = async (data: typeof formData) => {
-        setLoading(true);
-        setError('');
-        try {
-            let finalWorldview = data.worldview;
-            if (typeof finalWorldview === 'string') {
-                finalWorldview = {
-                    title: data.title + " World",
-                    content: finalWorldview,
-                    tone: "General",
-                    key_features: []
-                };
-            }
+  const createProject = async (overrideData?: any) => {
+    setIsProcessing(true);
+    setError('');
+    
+    // Use override data or state data
+    const dataTitle = overrideData?.title || title;
+    const dataSubtitle = overrideData?.subtitle || subtitle;
+    const dataGenre = overrideData?.genre || selectedGenres;
+    let dataWorldview = overrideData?.worldview || worldDesc;
 
-            const response = await api.post('/projects/', {
-                title: data.title,
-                subtitle: data.subtitle,
-                genre: data.genre.join(', '),
-                worldview: finalWorldview,
-                style_preset: "anime_webtoon"
-            });
-            // Redirect to project page with setup=true to trigger Art Style modal
-            router.push(`/project/${response.data.id}?setup=true`);
-        } catch (error: any) {
-            console.error("Error creating project", error);
-            const msg = error.response?.data?.detail
-                ? (typeof error.response.data.detail === 'object' ? JSON.stringify(error.response.data.detail) : error.response.data.detail)
-                : error.message;
-            setError(`Failed: ${msg}`);
-            setLoading(false);
+    try {
+        let finalWorldview: any = dataWorldview;
+        // Ensure format
+        if (typeof dataWorldview === 'string') {
+            finalWorldview = {
+                title: dataTitle + " World",
+                content: dataWorldview,
+                tone: "General",
+                key_features: []
+            };
+        } else if (typeof dataWorldview === 'object' && dataWorldview !== null) {
+            finalWorldview = dataWorldview;
         }
-    };
 
-    const handleSubmit = () => {
-        submitProject(formData);
-    };
+        const response = await api.post('/projects/', {
+            title: dataTitle,
+            subtitle: dataSubtitle,
+            genre: dataGenre,
+            worldview: finalWorldview,
+            style_preset: "anime_webtoon"
+        });
+        const projectId = response.data.id;
+        router.push(`/project/${projectId}?setup=true`);
+    } catch (err: any) {
+        console.error("Failed to create project", err);
+        const msg = err.response?.data?.detail
+            ? (typeof err.response.data.detail === 'object' ? JSON.stringify(err.response.data.detail) : err.response.data.detail)
+            : err.message;
+        setError(`Failed: ${msg}`);
+        setIsProcessing(false); // Only unset processing if error, otherwise we are navigating
+    }
+  };
 
-    const stepVariants = {
-        hidden: (direction: number) => ({
-            opacity: 0,
-            x: direction > 0 ? 30 : -30,
-            scale: 0.95
-        }),
-        visible: {
-            opacity: 1,
-            x: 0,
-            scale: 1,
-            transition: { type: "spring", stiffness: 300, damping: 30 } as any
-        },
-        exit: (direction: number) => ({
-            opacity: 0,
-            x: direction < 0 ? 30 : -30,
-            scale: 0.95,
-            transition: { duration: 0.2 } as any
-        })
-    };
+  const handleAiSelect = async (suggestion: any) => {
+      // Logic: Update state AND instantly create project
+      const desc = suggestion.content || suggestion.description || "";
+      setWorldDesc(desc);
+      let newTitle = title;
+      if(suggestion.title && (!title || title.length < 3)) {
+          newTitle = suggestion.title;
+          setTitle(newTitle);
+      }
+      setShowAiResults(false);
+      
+      await createProject({
+          title: newTitle,
+          subtitle: subtitle,
+          genre: selectedGenres,
+          worldview: desc // Pass simple string, createProject normalizes it
+      });
+  };
 
-    const [direction, setDirection] = useState(0);
+  const handleAiPrev = () => {
+      setCurrentAiIndex(prev => (prev === 0 ? augmentOptions.length - 1 : prev - 1));
+  };
 
-    const handleNext = () => {
-        setDirection(1);
-        nextStep();
-    };
+  const handleAiNext = () => {
+      setCurrentAiIndex(prev => (prev === augmentOptions.length - 1 ? 0 : prev + 1));
+  };
+  
+  // Mapping for AiSuggestionCard
+  const currentSuggestion = augmentOptions[currentAiIndex];
+  const mappedSuggestion = currentSuggestion ? {
+      id: currentAiIndex,
+      title: currentSuggestion.title,
+      tagline: currentSuggestion.tone || "AI GENERATED", 
+      logline: currentSuggestion.description || "No summary available.",
+      tags: currentSuggestion.key_features || [],
+      description: currentSuggestion.content || currentSuggestion.description || "",
+      accentColor: "purple"
+  } : null;
 
-    const handlePrev = () => {
-        setDirection(-1);
-        prevStep();
-    };
 
-    return (
-        <div className="min-h-screen bg-[#0A0A0B] text-white flex items-center justify-center p-4 font-display overflow-y-auto relative">
-            {/* Ambient Background */}
-            <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-primary/20 blur-[150px] rounded-full pointer-events-none mix-blend-screen" />
-            <div className="absolute bottom-[-20%] right-[-10%] w-[40%] h-[40%] bg-purple-500/10 blur-[150px] rounded-full pointer-events-none mix-blend-screen" />
+  return (
+    <div className="min-h-screen w-full bg-[#05050a] text-slate-200 font-sans flex flex-col items-center justify-center p-6 relative selection:bg-purple-500/30 overflow-hidden">
+      
+      {/* Background Ambience */}
+      <div className="absolute top-[-20%] left-[-10%] w-[800px] h-[800px] bg-purple-900/10 rounded-full blur-[120px]" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-blue-900/10 rounded-full blur-[120px]" />
 
-            <main className="w-full max-w-3xl relative z-10 flex flex-col min-h-[600px]">
+      {/* Header */}
+      <div className="absolute top-8 left-8 z-20">
+         <button 
+           onClick={() => router.push('/dashboard')}
+           className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
+         >
+            <ArrowLeft size={20} />
+            <span className="text-sm font-medium">Back to Dashboard</span>
+         </button>
+      </div>
 
-                {/* Header Section with Glass effect */}
-                <div className="mb-8 text-center bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
-                    <h1 className="text-4xl font-black tracking-tight text-white mb-3">
-                        {step === 1 && 'Name Your Story'}
-                        {step === 2 && 'Add a Tagline'}
-                        {step === 3 && 'Choose Genre'}
-                        {step === 4 && 'Build the World'}
-                    </h1>
-                    <p className="text-gray-400 text-lg font-light">
-                        {step === 1 && 'Every great webtoon starts with a memorable title.'}
-                        {step === 2 && 'Give your readers a hint of what\'s coming.'}
-                        {step === 3 && 'Select one or more genres that fit your story.'}
-                        {step === 4 && 'Describe the setting and let AI enhance it for you.'}
-                    </p>
+      {/* Main Content Container */}
+      <div className="w-full max-w-3xl flex flex-col items-center relative z-10">
+        
+        {/* Dynamic Header Text */}
+        {!showAiResults && (
+            <div className="text-center mb-8 animate-fade-in-up">
+            <h1 className="text-4xl font-bold text-white mb-3 tracking-tight">
+                {step === 0 && "Name Your Story"}
+                {step === 1 && "Add a Tagline"}
+                {step === 2 && "Choose Genre"}
+                {step === 3 && "Build the World"}
+            </h1>
+            <p className="text-slate-500 text-lg">
+                {step === 0 && "Every great webtoon starts with a memorable title."}
+                {step === 1 && "Give your readers a hint of what's coming."}
+                {step === 2 && "Select one or more genres that fit your story."}
+                {step === 3 && "Describe the setting and let AI enhance it for you."}
+            </p>
+            </div>
+        )}
+
+        {/* AI Suggestions Overlay Mode */}
+        {showAiResults && mappedSuggestion ? (
+            <div className="w-full animate-fade-in-up my-10">
+                <div className="flex justify-between items-center mb-4 px-2">
+                    <h2 className="text-sm font-bold text-purple-400 tracking-wider uppercase">AI Suggestions</h2>
+                    <button onClick={() => setShowAiResults(false)} className="text-xs text-slate-500 hover:text-white">Dismiss</button>
                 </div>
+                <AiSuggestionCard 
+                    suggestion={mappedSuggestion} 
+                    index={currentAiIndex}
+                    total={augmentOptions.length}
+                    onNext={handleAiNext}
+                    onPrev={handleAiPrev}
+                    onSelect={handleAiSelect}
+                    onDismiss={() => setShowAiResults(false)}
+                />
+            </div>
+        ) : (
+            /* Standard Wizard Card */
+            <div className="w-full bg-[#0f0f16] border border-slate-800 rounded-3xl p-10 shadow-2xl relative overflow-hidden min-h-[400px] flex flex-col">
+            
+            <ProgressBar currentStep={step} />
 
-                {/* Main Content Card */}
-                <div className="bg-[#0F0F12] border border-gray-800 rounded-2xl shadow-2xl p-8 md:p-12 flex-1 flex flex-col relative overflow-hidden">
-
-                    <StepIndicator currentStep={step} totalSteps={4} />
-
-                    <div className="flex-1 flex flex-col justify-center relative">
-                        <AnimatePresence custom={direction} mode="wait">
-                            {step === 1 && (
-                                <motion.div
-                                    key="step1"
-                                    custom={direction}
-                                    variants={stepVariants}
-                                    initial="hidden"
-                                    animate="visible"
-                                    exit="exit"
-                                    className="flex flex-col gap-6"
-                                >
-                                    <Input
-                                        name="title"
-                                        value={formData.title}
-                                        onChange={handleInputChange}
-                                        placeholder="Enter title here..."
-                                        className="h-20 text-3xl font-bold bg-[#15151A] border-gray-800 focus-visible:ring-purple-500 placeholder:text-gray-600 rounded-xl px-6"
-                                        autoFocus
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter' && formData.title) {
-                                                e.preventDefault();
-                                                handleNext();
-                                            }
-                                        }}
-                                    />
-                                </motion.div>
-                            )}
-
-                            {step === 2 && (
-                                <motion.div
-                                    key="step2"
-                                    custom={direction}
-                                    variants={stepVariants}
-                                    initial="hidden"
-                                    animate="visible"
-                                    exit="exit"
-                                    className="flex flex-col gap-6"
-                                >
-                                    <Input
-                                        name="subtitle"
-                                        value={formData.subtitle}
-                                        onChange={handleInputChange}
-                                        placeholder="Enter subtitle (optional)..."
-                                        className="h-16 text-xl bg-[#15151A] border-gray-800 focus-visible:ring-purple-500 placeholder:text-gray-600 rounded-xl px-6"
-                                        autoFocus
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter') {
-                                                e.preventDefault();
-                                                handleNext();
-                                            }
-                                        }}
-                                    />
-                                </motion.div>
-                            )}
-
-                            {step === 3 && (
-                                <motion.div
-                                    key="step3"
-                                    custom={direction}
-                                    variants={stepVariants}
-                                    initial="hidden"
-                                    animate="visible"
-                                    exit="exit"
-                                    className="h-full"
-                                >
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                        {genres.map((g) => (
-                                            <SelectionCard
-                                                key={g.label}
-                                                selected={formData.genre.includes(g.label)}
-                                                onClick={() => handleGenreSelect(g.label)}
-                                                variant="filled"
-                                                className="h-full py-4 text-left"
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <span className="text-2xl">{g.icon}</span>
-                                                    <span className="font-bold text-sm">{g.label}</span>
-                                                </div>
-                                            </SelectionCard>
-                                        ))}
-                                    </div>
-                                </motion.div>
-                            )}
-
-                            {step === 4 && (
-                                <motion.div
-                                    key="step4"
-                                    custom={direction}
-                                    variants={stepVariants}
-                                    initial="hidden"
-                                    animate="visible"
-                                    exit="exit"
-                                    className="flex flex-col gap-4 h-full"
-                                >
-                                    <div className="flex justify-between items-center bg-[#15151A] p-4 rounded-xl border border-gray-800">
-                                        <div>
-                                            <h3 className="text-sm font-bold text-white">Project Worldview</h3>
-                                            <p className="text-xs text-gray-500">Describe your setting for better AI results.</p>
-                                        </div>
-                                        <Button
-                                            size="sm"
-                                            onClick={handleAugmentWorldview}
-                                            disabled={loading}
-                                            variant="glow"
-                                            className="gap-2 font-bold px-4 h-9"
-                                        >
-                                            {loading ? <span className="animate-spin"><Wand2 size={16} /></span> : <Sparkles size={16} />}
-                                            AI Augment
-                                        </Button>
-                                    </div>
-
-                                    <Textarea
-                                        name="worldview"
-                                        value={typeof formData.worldview === 'string' ? formData.worldview : (formData.worldview.content || '')}
-                                        onChange={handleInputChange}
-                                        placeholder="E.g. A dystopian cyberpunk city where rain never stops and neon lights control people's emotions..."
-                                        className="flex-1 min-h-[150px] bg-[#15151A] border-gray-800 focus-visible:ring-purple-500 placeholder:text-gray-600 resize-none text-base leading-relaxed p-6 rounded-xl"
-                                    />
-
-                                    {augmentOptions.length > 0 && (
-                                        <motion.div
-                                            initial={{ opacity: 0, y: 20 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            className="mt-4"
-                                        >
-                                            <div className="flex justify-between items-center mb-3 px-1">
-                                                <span className="text-xs font-bold text-blue-400 uppercase tracking-widest">AI Suggestions</span>
-                                                <button
-                                                    onClick={() => setAugmentOptions([])}
-                                                    className="text-xs text-gray-500 hover:text-white transition-colors"
-                                                >
-                                                    Dismiss
-                                                </button>
-                                            </div>
-                                            <WorldviewCarousel
-                                                options={augmentOptions}
-                                                onSelect={handleSelectAugmentedOption}
-                                                onDismiss={() => setAugmentOptions([])}
-                                            />
-                                        </motion.div>
-                                    )}
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+            {/* Content Area */}
+            <div className="flex-1 flex flex-col justify-center mb-8 animate-fade-in">
+                
+                {/* Step 0: Title */}
+                {step === 0 && (
+                <div className="space-y-4">
+                    <label className="text-xs font-mono font-bold text-slate-500 ml-1 uppercase">Webtoon Title</label>
+                    <div className="relative group">
+                        <input 
+                        type="text" 
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        placeholder="e.g. Workromancer"
+                        className="w-full bg-transparent border-2 border-slate-700 rounded-xl px-6 py-5 text-2xl font-bold text-white placeholder-slate-700 focus:border-purple-500 outline-none transition-all group-hover:border-slate-600"
+                        autoFocus
+                        onKeyDown={(e) => e.key === 'Enter' && title && handleNext()}
+                        />
+                        <Type className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-600" />
                     </div>
-
-                    {error && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="mt-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-200 text-sm flex items-center gap-3"
-                        >
-                            <AlertCircle size={18} className="text-red-500" />
-                            {error}
-                        </motion.div>
-                    )}
-
-                    <footer className="mt-12 flex justify-between items-center pt-8 border-t border-gray-800">
-                        <Button
-                            variant="dark"
-                            onClick={handlePrev}
-                            disabled={step === 1 || loading}
-                            className="gap-2"
-                        >
-                            <MoveLeft size={16} /> Back
-                        </Button>
-
-                        <Button
-                            onClick={step < 4 ? handleNext : handleSubmit}
-                            disabled={loading || (step === 1 && !formData.title)}
-                            variant={step === 4 ? "glow" : "glow"}
-                            className={cn(
-                                "min-w-[140px] h-14 rounded-xl text-base font-bold shadow-xl gap-2 transition-all duration-300",
-                                loading && "opacity-80 scale-95"
-                            )}
-                        >
-                            {loading ? (
-                                'Processing...'
-                            ) : step < 4 ? (
-                                <>Next <MoveRight size={18} /></>
-                            ) : (
-                                <>Create Project <Check size={18} /></>
-                            )}
-                        </Button>
-                    </footer>
                 </div>
-            </main>
-        </div>
-    );
+                )}
+
+                {/* Step 1: Subtitle */}
+                {step === 1 && (
+                <div className="space-y-4">
+                    <label className="text-xs font-mono font-bold text-slate-500 ml-1 uppercase">Subtitle / Tagline</label>
+                    <div className="relative group">
+                        <input 
+                        type="text" 
+                        value={subtitle}
+                        onChange={(e) => setSubtitle(e.target.value)}
+                        placeholder="e.g. The Ghost of Pangyo"
+                        className="w-full bg-transparent border-2 border-slate-700 rounded-xl px-6 py-5 text-xl font-medium text-white placeholder-slate-700 focus:border-purple-500 outline-none transition-all group-hover:border-slate-600"
+                        autoFocus
+                        onKeyDown={(e) => e.key === 'Enter' && handleNext()}
+                        />
+                        <Hash className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-600" />
+                    </div>
+                </div>
+                )}
+
+                {/* Step 2: Genre */}
+                {step === 2 && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {GENRES.map((genre) => {
+                    const isSelected = selectedGenres.includes(genre.label);
+                    return (
+                        <button
+                            key={genre.id}
+                            onClick={() => toggleGenre(genre.label)}
+                            className={`p-4 rounded-xl border-2 text-left transition-all flex items-center gap-3 group relative overflow-hidden ${
+                            isSelected 
+                                ? 'bg-purple-900/20 border-purple-500' 
+                                : 'bg-slate-900/30 border-slate-800 hover:border-slate-600'
+                            }`}
+                        >
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                            isSelected ? 'bg-purple-600 text-white' : 'bg-slate-800 text-slate-500 group-hover:bg-slate-700'
+                            }`}>
+                                <genre.icon size={16} />
+                            </div>
+                            <span className={`font-bold text-sm ${isSelected ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}`}>
+                                {genre.label}
+                            </span>
+                            {isSelected && (
+                                <div className="absolute top-2 right-2 w-2 h-2 bg-purple-500 rounded-full shadow-[0_0_8px_rgba(168,85,247,0.8)]" />
+                            )}
+                        </button>
+                    );
+                    })}
+                </div>
+                )}
+
+                {/* Step 3: Worldview */}
+                {step === 3 && (
+                <div className="space-y-4 h-full flex flex-col">
+                    <div className="flex justify-between items-center">
+                        <label className="text-xs font-mono font-bold text-slate-500 ml-1 uppercase">Project Worldview</label>
+                        <button 
+                            onClick={handleAugmentWorldview}
+                            disabled={aiLoading}
+                            className={`
+                                text-xs font-bold flex items-center gap-1 transition-colors px-3 py-1.5 rounded-full border 
+                                ${aiLoading 
+                                    ? 'bg-purple-900/50 border-purple-500/50 text-purple-300 cursor-wait'
+                                    : 'bg-purple-900/30 border-purple-500/30 text-purple-400 hover:bg-purple-500 hover:border-purple-500 hover:text-white'
+                                }
+                            `}
+                        >
+                            {aiLoading ? (
+                                <RefreshCw size={12} className="animate-spin" />
+                            ) : (
+                                <Wand2 size={12} />
+                            )}
+                            {aiLoading ? "Generating..." : "AI Augment"}
+                        </button>
+                    </div>
+                    
+                    <div className="relative flex-1">
+                        <textarea 
+                        value={typeof worldDesc === 'string' ? worldDesc : (worldDesc.content || JSON.stringify(worldDesc))}
+                        onChange={(e) => setWorldDesc(e.target.value)}
+                        placeholder="E.g. A dystopian cyberpunk city where rain never stops and neon lights control people's emotions..."
+                        className="w-full h-40 bg-slate-900/30 border-2 border-slate-700 rounded-xl p-5 text-base text-white placeholder-slate-700 focus:border-purple-500 outline-none resize-none transition-all leading-relaxed"
+                        autoFocus
+                        />
+                    </div>
+                    {error && (
+                        <p className="text-red-500 text-xs mt-2">{error}</p>
+                    )}
+                </div>
+                )}
+            </div>
+
+            {/* Navigation Footer */}
+            <div className="pt-6 border-t border-slate-800 flex justify-between items-center">
+                <button 
+                onClick={handleBack}
+                disabled={step === 0}
+                className={`
+                    px-6 py-3 rounded-xl font-bold text-sm transition-all flex items-center gap-2
+                    ${step === 0 
+                    ? 'text-slate-700 cursor-not-allowed' 
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                    }
+                `}
+                >
+                <ArrowLeft size={18} /> Back
+                </button>
+
+                <button 
+                onClick={handleNext}
+                disabled={
+                    (step === 0 && !title) || 
+                    (step === 2 && selectedGenres.length === 0)
+                }
+                className={`
+                    px-8 py-3 rounded-xl font-bold text-sm shadow-lg flex items-center gap-2 transition-all
+                    ${(step === 0 && !title) || (step === 2 && selectedGenres.length === 0)
+                    ? 'bg-slate-800 text-slate-600 cursor-not-allowed' 
+                    : 'bg-purple-600 hover:bg-purple-500 text-white shadow-purple-900/30 hover:translate-y-[-1px]'
+                    }
+                `}
+                >
+                {isProcessing ? (
+                    <>Processing...</>
+                ) : step === 3 ? (
+                    <>Create Project <Check size={18} /></>
+                ) : (
+                    <>Next <ArrowRight size={18} /></>
+                )}
+                </button>
+            </div>
+
+            </div>
+        )}
+      </div>
+
+      <style>{`
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-up {
+            animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+      `}</style>
+    </div>
+  );
 }
