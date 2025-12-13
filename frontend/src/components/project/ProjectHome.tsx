@@ -217,7 +217,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
 
     return (
         <ProjectLayout projectId={project.id} projectTitle={project.title}>
-            <div className="flex h-full relative overflow-y-auto bg-[#13111C]">
+            <div className="flex h-full relative overflow-y-auto bg-[#0A0A0B]">
                 {/* Main Content */}
                 <div className="flex-1 flex flex-col min-w-0">
                     {/* Hero Section */}
@@ -231,7 +231,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                 backgroundImage: project.thumbnail_url ? `url("${project.thumbnail_url}")` : undefined,
                             }}
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#13111C] via-[#13111C]/60 to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0B] via-[#0A0A0B]/60 to-transparent" />
 
                         {/* Status Overlay for Processing */}
                         {isCoverProcessing && (
@@ -303,7 +303,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                     </div>
 
                     {/* Content Section (Episodes & Characters) */}
-                    <div className="flex-1 p-6 md:p-8 bg-[#13111C]">
+                    <div className="flex-1 p-6 md:p-8 bg-[#0A0A0B]">
                         <div className="max-w-7xl mx-auto flex flex-col gap-12">
 
                             {/* Worldview Key Features */}
@@ -312,7 +312,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                      <SectionLabel icon={<Sparkles size={12} />} className="mb-3 text-gray-400">Key Features</SectionLabel>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                                         {project.worldview.key_features.map((feature: string, idx: number) => (
-                                            <div key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-white/[0.03] border border-white/5">
+                                            <div key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-[#0F0F12] border border-gray-800">
                                                 <div className="w-1.5 h-1.5 rounded-full bg-purple-500 mt-2 shrink-0" />
                                                 <span className="text-sm text-gray-300 leading-relaxed">{feature}</span>
                                             </div>
@@ -341,7 +341,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                 <div className="flex flex-col gap-3">
                                     {episodes && episodes.length > 0 ? (
                                         episodes.map((ep, idx) => (
-                                            <div key={ep.id} className="group relative flex items-center gap-4 p-3 pr-4 rounded-xl bg-[#1d1c27] border border-white/5 hover:border-white/10 transition-all hover:bg-[#252433]">
+                                            <div key={ep.id} className="group relative flex items-center gap-4 p-3 pr-4 rounded-xl bg-[#0F0F12] border border-gray-800 hover:border-gray-700 transition-all hover:bg-[#15151A]">
                                                 {/* Episode Thumbnail */}
                                                 <div className="w-32 aspect-video rounded-md bg-black/40 overflow-hidden relative shrink-0 border border-white/5">
                                                     {ep.thumbnail_url ? (
@@ -403,7 +403,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                                     <div
                                         onClick={() => router.push(`/project/${project.id}/casting`)}
-                                        className="aspect-[3/4] cursor-pointer rounded-xl border border-dashed border-white/10 bg-white/[0.02] flex flex-col items-center justify-center gap-2 hover:bg-white/[0.05] hover:border-white/20 transition-all group"
+                                        className="aspect-[3/4] cursor-pointer rounded-xl border border-dashed border-gray-800 bg-[#0F0F12] flex flex-col items-center justify-center gap-2 hover:bg-[#15151A] hover:border-gray-700 transition-all group"
                                     >
                                         <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-gray-400 group-hover:text-white transition-colors">
                                             <Plus size={16} />
@@ -420,10 +420,10 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                                 key={char.id || char.name}
                                                 onClick={() => handleCharacterClick(char)}
                                                 className={cn(
-                                                    "group relative rounded-xl overflow-hidden bg-[#1d1c27] border transition-all cursor-pointer",
+                                                    "group relative rounded-xl overflow-hidden bg-[#0F0F12] border transition-all cursor-pointer",
                                                     isFailed
                                                         ? "border-red-500/50 hover:border-red-500"
-                                                        : "border-white/5 hover:border-white/20"
+                                                        : "border-gray-800 hover:border-gray-700"
                                                 )}
                                             >
                                                 <div className="aspect-[3/4] bg-cover bg-center relative" style={char.profile_image_url && !isGenerating ? { backgroundImage: `url("${char.profile_image_url}")` } : {}}>

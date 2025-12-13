@@ -44,9 +44,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     ];
 
     return (
-        <div className="flex h-screen w-full bg-background-light dark:bg-background-dark font-display text-gray-900 dark:text-white">
+        <div className="flex h-screen w-full bg-[#0A0A0B] font-display text-gray-900 dark:text-white">
             {/* Sidebar */}
-            <aside className="w-64 bg-[#13111C] border-r border-white/10 flex flex-col sticky top-0 h-screen p-4">
+            <aside className="w-64 bg-[#0F0F12] border-r border-gray-800 flex flex-col sticky top-0 h-screen p-4">
                 <div className="flex flex-col gap-4">
                     {/* Logo Area */}
                     <Link href="/dashboard" className="flex items-center gap-3 px-3 hover:opacity-80 transition-opacity">
@@ -63,7 +63,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         <div className="relative mx-1" ref={dropdownRef}>
                             <button
                                 onClick={() => setIsWorkspaceOpen(!isWorkspaceOpen)}
-                                className="w-full flex items-center justify-between text-left bg-white/50 dark:bg-gray-800/30 rounded-lg p-3 border border-gray-200 dark:border-gray-700 backdrop-blur-sm hover:bg-white/80 dark:hover:bg-gray-800/50 transition-colors"
+                                className="w-full flex items-center justify-between text-left bg-[#15151A] dark:bg-gray-800/30 rounded-lg p-3 border border-gray-800 dark:border-gray-700 backdrop-blur-sm hover:bg-[#1A1A20] dark:hover:bg-gray-800/50 transition-colors"
                             >
                                 <div className="min-w-0 flex-1">
                                     <div className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate mb-1">
@@ -141,12 +141,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             return (
                                 <Link key={item.href} href={item.href}>
                                     <div className={cn(
-                                        "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm font-medium",
+                                        "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm font-medium border border-transparent",
                                         isActive
-                                            ? "bg-primary/10 dark:bg-primary/20 text-primary"
-                                            : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-white"
+                                            ? "bg-purple-500/10 text-purple-400 border-purple-500/20"
+                                            : "text-gray-500 hover:bg-[#15151A] hover:text-white"
                                     )}>
-                                        <Icon size={20} className={cn(isActive ? "text-primary" : "text-gray-500 dark:text-gray-500")} />
+                                        <Icon size={20} className={cn(isActive ? "text-purple-400" : "text-gray-500")} />
                                         <span>{item.name}</span>
                                     </div>
                                 </Link>
@@ -164,7 +164,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </Link>
 
                     {/* Profile Section */}
-                    <div className="flex items-center justify-between p-3 mt-2 border-t border-gray-200 dark:border-gray-800">
+                    <div className="flex items-center justify-between p-3 mt-2 border-t border-gray-800">
                         <Link href="/dashboard/settings" className="flex items-center gap-3 min-w-0 hover:opacity-80 transition-opacity">
                             <div className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-9 shrink-0" style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuDt162HoprwUvAfkIffAk7g_psL0UaRy25zgFtGaXcXyJz630egcVpIYDzYA0ixPxpVPquJLNEx4ZV74u4Bz7hTYnD9FqwuLTBLiyiG10hudXU1ScUybYIokJira71mt4ZaujtmgVCAKCBS2OanpmP0MIDIKs4x2kA6x9M1Es0Tyrvy12jCdsCzHFNSK9bNSsG4vcsF_ZAc6ynihPA35wHzJSvE4ybOejxdtr5pKz7E5E3jnU-92N1dtbTLPiYpcvKnPAZzjRGsc3U")' }}></div>
                             <div className="flex flex-col min-w-0">
@@ -190,7 +190,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 overflow-auto bg-[#13111C]">
+            <main className="flex-1 overflow-auto bg-[#0A0A0B]">
                 {children}
             </main>
         </div>

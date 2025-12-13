@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { Check, MoveRight, MoveLeft, Sparkles, AlertCircle, Wand2 } from 'lucide-react';
 import { WorldviewCarousel } from '@/components/ui/carousel-custom';
+import { SelectionCard } from '@/components/ui/selection-card';
 
 const StepIndicator = ({ currentStep, totalSteps }: { currentStep: number; totalSteps: number }) => {
     return (
@@ -212,7 +213,7 @@ export default function NewProjectWizard() {
     };
 
     return (
-        <div className="min-h-screen bg-background-dark text-white flex items-center justify-center p-4 font-display overflow-y-auto relative">
+        <div className="min-h-screen bg-[#0A0A0B] text-white flex items-center justify-center p-4 font-display overflow-y-auto relative">
             {/* Ambient Background */}
             <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-primary/20 blur-[150px] rounded-full pointer-events-none mix-blend-screen" />
             <div className="absolute bottom-[-20%] right-[-10%] w-[40%] h-[40%] bg-purple-500/10 blur-[150px] rounded-full pointer-events-none mix-blend-screen" />
@@ -236,7 +237,7 @@ export default function NewProjectWizard() {
                 </div>
 
                 {/* Main Content Card */}
-                <div className="bg-[#1a1726]/80 backdrop-blur-md border border-white/10 rounded-2xl shadow-2xl p-8 md:p-12 flex-1 flex flex-col relative overflow-hidden">
+                <div className="bg-[#0F0F12] border border-gray-800 rounded-2xl shadow-2xl p-8 md:p-12 flex-1 flex flex-col relative overflow-hidden">
 
                     <StepIndicator currentStep={step} totalSteps={4} />
 
@@ -257,7 +258,7 @@ export default function NewProjectWizard() {
                                         value={formData.title}
                                         onChange={handleInputChange}
                                         placeholder="Enter title here..."
-                                        className="h-20 text-3xl font-bold bg-black/20 border-white/10 focus-visible:ring-primary focus-visible:border-primary/50 text-white placeholder:text-white/20 rounded-xl px-6"
+                                        className="h-20 text-3xl font-bold bg-[#15151A] border-gray-800 focus-visible:ring-purple-500 placeholder:text-gray-600 rounded-xl px-6"
                                         autoFocus
                                         onKeyDown={(e) => {
                                             if (e.key === 'Enter' && formData.title) {
@@ -284,7 +285,7 @@ export default function NewProjectWizard() {
                                         value={formData.subtitle}
                                         onChange={handleInputChange}
                                         placeholder="Enter subtitle (optional)..."
-                                        className="h-16 text-xl bg-black/20 border-white/10 focus-visible:ring-primary focus-visible:border-primary/50 text-white placeholder:text-white/20 rounded-xl px-6"
+                                        className="h-16 text-xl bg-[#15151A] border-gray-800 focus-visible:ring-purple-500 placeholder:text-gray-600 rounded-xl px-6"
                                         autoFocus
                                         onKeyDown={(e) => {
                                             if (e.key === 'Enter') {
@@ -308,27 +309,18 @@ export default function NewProjectWizard() {
                                 >
                                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                         {genres.map((g) => (
-                                            <button
+                                            <SelectionCard
                                                 key={g.label}
+                                                selected={formData.genre.includes(g.label)}
                                                 onClick={() => handleGenreSelect(g.label)}
-                                                className={cn(
-                                                    "flex items-center gap-3 px-4 py-4 rounded-xl border transition-all duration-200 text-left group relative overflow-hidden",
-                                                    formData.genre.includes(g.label)
-                                                        ? "bg-primary border-primary text-white shadow-[0_0_20px_rgba(55,19,236,0.4)]"
-                                                        : "bg-white/5 border-white/5 text-gray-400 hover:bg-white/10 hover:border-white/20 hover:text-white"
-                                                )}
+                                                variant="filled"
+                                                className="h-full py-4 text-left"
                                             >
-                                                <span className="text-2xl group-hover:scale-110 transition-transform duration-300">{g.icon}</span>
-                                                <span className="font-bold text-sm">{g.label}</span>
-                                                {formData.genre.includes(g.label) && (
-                                                    <motion.div
-                                                        layoutId="genre-check"
-                                                        className="absolute right-2 top-2 text-white/50"
-                                                    >
-                                                        <Check size={14} />
-                                                    </motion.div>
-                                                )}
-                                            </button>
+                                                <div className="flex items-center gap-3">
+                                                    <span className="text-2xl">{g.icon}</span>
+                                                    <span className="font-bold text-sm">{g.label}</span>
+                                                </div>
+                                            </SelectionCard>
                                         ))}
                                     </div>
                                 </motion.div>
@@ -344,7 +336,7 @@ export default function NewProjectWizard() {
                                     exit="exit"
                                     className="flex flex-col gap-4 h-full"
                                 >
-                                    <div className="flex justify-between items-center bg-white/5 p-4 rounded-xl border border-white/10">
+                                    <div className="flex justify-between items-center bg-[#15151A] p-4 rounded-xl border border-gray-800">
                                         <div>
                                             <h3 className="text-sm font-bold text-white">Project Worldview</h3>
                                             <p className="text-xs text-gray-500">Describe your setting for better AI results.</p>
@@ -353,7 +345,8 @@ export default function NewProjectWizard() {
                                             size="sm"
                                             onClick={handleAugmentWorldview}
                                             disabled={loading}
-                                            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white border-0 shadow-lg shadow-purple-500/20 gap-2 font-bold px-4 h-9"
+                                            variant="glow"
+                                            className="gap-2 font-bold px-4 h-9"
                                         >
                                             {loading ? <span className="animate-spin"><Wand2 size={16} /></span> : <Sparkles size={16} />}
                                             AI Augment
@@ -365,7 +358,7 @@ export default function NewProjectWizard() {
                                         value={typeof formData.worldview === 'string' ? formData.worldview : (formData.worldview.content || '')}
                                         onChange={handleInputChange}
                                         placeholder="E.g. A dystopian cyberpunk city where rain never stops and neon lights control people's emotions..."
-                                        className="flex-1 min-h-[150px] bg-black/20 border-white/10 focus-visible:ring-primary focus-visible:border-primary/50 text-white placeholder:text-white/20 resize-none text-base leading-relaxed p-6 rounded-xl"
+                                        className="flex-1 min-h-[150px] bg-[#15151A] border-gray-800 focus-visible:ring-purple-500 placeholder:text-gray-600 resize-none text-base leading-relaxed p-6 rounded-xl"
                                     />
 
                                     {augmentOptions.length > 0 && (
@@ -406,12 +399,12 @@ export default function NewProjectWizard() {
                         </motion.div>
                     )}
 
-                    <footer className="mt-12 flex justify-between items-center pt-8 border-t border-white/5">
+                    <footer className="mt-12 flex justify-between items-center pt-8 border-t border-gray-800">
                         <Button
-                            variant="ghost"
+                            variant="dark"
                             onClick={handlePrev}
                             disabled={step === 1 || loading}
-                            className="text-gray-400 hover:text-white hover:bg-white/5 gap-2"
+                            className="gap-2"
                         >
                             <MoveLeft size={16} /> Back
                         </Button>
@@ -419,9 +412,9 @@ export default function NewProjectWizard() {
                         <Button
                             onClick={step < 4 ? handleNext : handleSubmit}
                             disabled={loading || (step === 1 && !formData.title)}
+                            variant={step === 4 ? "glow" : "glow"}
                             className={cn(
                                 "min-w-[140px] h-14 rounded-xl text-base font-bold shadow-xl gap-2 transition-all duration-300",
-                                step === 4 ? "bg-green-600 hover:bg-green-500 shadow-green-500/20" : "bg-primary hover:bg-primary/90 shadow-primary/20",
                                 loading && "opacity-80 scale-95"
                             )}
                         >

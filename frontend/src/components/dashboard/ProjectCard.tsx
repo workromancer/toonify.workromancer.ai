@@ -18,7 +18,7 @@ export default function ProjectCard({ project }: { project: Project }) {
         <div className="flex flex-col gap-3 group cursor-pointer">
             <Link href={`/project/${project.id}`} className="block">
                 <div
-                    className="w-full bg-center bg-no-repeat bg-cover rounded-xl aspect-[4/5] transition-all duration-300 group-hover:scale-[1.02] shadow-sm group-hover:shadow-[0_0_20px_rgba(55,19,236,0.2)] relative overflow-hidden bg-white/5 border border-white/10 group-hover:border-primary/50"
+                    className="w-full bg-center bg-no-repeat bg-cover rounded-xl aspect-[4/5] transition-all duration-300 group-hover:scale-[1.02] shadow-sm group-hover:shadow-[0_0_20px_rgba(55,19,236,0.2)] relative overflow-hidden bg-[#0F0F12] border border-gray-800 group-hover:border-primary/50"
                     style={{ backgroundImage: project.thumbnail_url ? `url("${project.thumbnail_url}")` : undefined }}
                 >
                     {!project.thumbnail_url && (

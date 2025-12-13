@@ -22,12 +22,12 @@ export default function ProjectLayout({ children, projectId, projectTitle }: Pro
     ];
 
     return (
-        <div className="flex h-full min-h-screen bg-[#13111C]">
+        <div className="flex h-full min-h-screen bg-[#0A0A0B]">
             {/* Project Sidebar */}
-            <aside className="w-64 bg-[#0F0D15] border-r border-white/5 flex flex-col sticky top-0 h-screen shrink-0">
+            <aside className="w-64 bg-[#0F0F12] border-r border-gray-800 flex flex-col sticky top-0 h-screen shrink-0">
                 
                 {/* Header / Back */}
-                <div className="p-4 border-b border-white/5">
+                <div className="p-4 border-b border-gray-800">
                     <Link href="/dashboard" className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm font-medium mb-4">
                         <ArrowLeft size={16} />
                         <span>Back to Dashboard</span>
@@ -52,16 +52,16 @@ export default function ProjectLayout({ children, projectId, projectTitle }: Pro
                                 <div className={cn(
                                     "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
                                     isActive
-                                        ? "bg-[#4a4aff]/10 text-[#4a4aff] font-semibold border border-[#4a4aff]/20"
-                                        : "text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"
+                                        ? "bg-purple-500/10 text-purple-400 font-semibold border border-purple-500/20"
+                                        : "text-gray-400 hover:text-white hover:bg-[#15151A] border border-transparent"
                                 )}>
                                     <Icon size={18} className={cn(
                                         "transition-colors",
-                                        isActive ? "text-[#4a4aff]" : "text-gray-500 group-hover:text-gray-300"
+                                        isActive ? "text-purple-400" : "text-gray-500 group-hover:text-gray-300"
                                     )} />
                                     <span className="text-sm">{item.name}</span>
                                     {isActive && (
-                                        <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#4a4aff] shadow-[0_0_8px_rgba(74,74,255,0.8)]" />
+                                        <div className="ml-auto w-1.5 h-1.5 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.8)]" />
                                     )}
                                 </div>
                             </Link>
@@ -70,9 +70,9 @@ export default function ProjectLayout({ children, projectId, projectTitle }: Pro
                 </nav>
 
                 {/* Footer Settings? */}
-                <div className="p-3 border-t border-white/5">
+                <div className="p-3 border-t border-gray-800">
                     <div className={cn(
-                        "flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 cursor-pointer transition-colors"
+                        "flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-400 hover:text-white hover:bg-[#15151A] cursor-pointer transition-colors"
                     )}>
                          <Settings size={18} />
                          <span className="text-sm">Project Settings</span>
@@ -81,7 +81,7 @@ export default function ProjectLayout({ children, projectId, projectTitle }: Pro
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 min-w-0 bg-[#13111C] relative">
+            <main className="flex-1 min-w-0 bg-[#0A0A0B] relative">
                {children}
             </main>
         </div>

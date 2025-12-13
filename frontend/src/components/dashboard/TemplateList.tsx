@@ -60,7 +60,7 @@ export default function TemplateList({ onSelect }: { onSelect: (template: Templa
             {/* Start from Scratch Card */}
             <div
                 onClick={handleStartScratch}
-                className="flex flex-col items-center justify-center p-6 gap-4 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800/20 hover:border-primary hover:bg-primary/10 dark:hover:bg-primary/20 cursor-pointer transition-colors h-full min-h-[220px]"
+                className="flex flex-col items-center justify-center p-6 gap-4 border-2 border-dashed border-gray-800 dark:border-gray-800 rounded-xl bg-[#0F0F12] dark:bg-[#0F0F12] hover:border-primary hover:bg-[#15151A] dark:hover:bg-[#15151A] cursor-pointer transition-colors h-full min-h-[220px]"
             >
                 <div className="flex items-center justify-center size-16 bg-primary/20 dark:bg-primary/30 text-primary rounded-full mb-1">
                     <Plus size={32} />

@@ -73,7 +73,7 @@ export default function DashboardPage() {
                     <div className="flex items-center gap-4 w-full md:w-auto">
                         {/* Search Bar */}
                         <div className="flex-1 md:flex-initial md:w-80">
-                            <div className="relative flex items-center w-full h-14 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md focus-within:ring-2 focus-within:ring-primary/50 transition-all shadow-lg hover:bg-white/10">
+                            <div className="relative flex items-center w-full h-14 rounded-2xl bg-[#0F0F12] border border-gray-800 backdrop-blur-md focus-within:ring-2 focus-within:ring-primary/50 transition-all shadow-lg hover:bg-[#15151A]">
                                 <div className="grid place-items-center h-full w-14 text-gray-400">
                                     <Search size={22} />
                                 </div>
@@ -106,7 +106,7 @@ export default function DashboardPage() {
                     {loading ? (
                         <div className="text-gray-500 animate-pulse">Loading projects...</div>
                     ) : filteredProjects.length === 0 ? (
-                        <div className="text-center py-16 text-gray-400 bg-white/5 backdrop-blur-sm rounded-3xl border border-dashed border-white/10">
+                        <div className="text-center py-16 text-gray-400 bg-[#0F0F12] backdrop-blur-sm rounded-3xl border border-dashed border-gray-800">
                             <p className="text-xl font-medium">No projects found.</p>
                             <Button variant="link" onClick={() => handleTemplateSelect(null)} className="text-primary mt-2">
                                 Create your first project
