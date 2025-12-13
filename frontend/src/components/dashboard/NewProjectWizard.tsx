@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   ArrowLeft, ArrowRight, BookOpen, ChevronRight, ChevronLeft,
@@ -74,6 +74,44 @@ export default function NewProjectWizard() {
   const [aiLoading, setAiLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Local Storage Logic: Load Draft
+  useEffect(() => {
+    const savedDraft = localStorage.getItem('toontune_project_draft');
+    if (savedDraft) {
+      try {
+        const parsed = JSON.parse(savedDraft);
+        // Only restore if valid data exists
+        if (parsed.title) setTitle(parsed.title);
+        if (parsed.subtitle) setSubtitle(parsed.subtitle);
+        if (parsed.selectedGenres) setSelectedGenres(parsed.selectedGenres);
+        if (parsed.worldDesc) setWorldDesc(parsed.worldDesc);
+        if (typeof parsed.step === 'number') setStep(parsed.step);
+      } catch (e) {
+        console.error("Failed to parse draft", e);
+      }
+    }
+  }, []);
+
+  // Local Storage Logic: Save Draft
+  useEffect(() => {
+    // Debounce or just save on every change (simple for now)
+    // Don't save if empty to avoid overwriting with empty state initially if not careful, 
+    // but the initial state is empty so it's fine.
+    // We only save if there is at least SOME data to save to avoid clearing a valid draft with a fresh reload race condition
+    if (title || subtitle || selectedGenres.length > 0 || worldDesc) {
+        const draftData = {
+            step,
+            title,
+            subtitle,
+            selectedGenres,
+            worldDesc,
+            updatedAt: new Date().toISOString()
+        };
+        localStorage.setItem('toontune_project_draft', JSON.stringify(draftData));
+    }
+  }, [step, title, subtitle, selectedGenres, worldDesc]);
+
+
   // Handlers
   const handleNext = () => {
     if (step < 3) setStep(step + 1);
@@ -90,6 +128,7 @@ export default function NewProjectWizard() {
   };
 
   const toggleGenre = (label: string) => {
+    if (isProcessing || aiLoading || showAiResults) return; // Locking
     if (selectedGenres.includes(label)) {
       setSelectedGenres(selectedGenres.filter(g => g !== label));
     } else {
@@ -101,6 +140,7 @@ export default function NewProjectWizard() {
 
   // AI Logic
   const handleAugmentWorldview = async () => {
+    if (isProcessing || aiLoading || showAiResults) return; // Locking
     setAiLoading(true);
     setError('');
     // Clear previous options
@@ -166,6 +206,10 @@ export default function NewProjectWizard() {
             worldview: finalWorldview,
             style_preset: "anime_webtoon"
         });
+        
+        // Clear Draft on Success
+        localStorage.removeItem('toontune_project_draft');
+
         const projectId = response.data.id;
         router.push(`/project/${projectId}?setup=true`);
     } catch (err: any) {
@@ -216,6 +260,9 @@ export default function NewProjectWizard() {
       description: currentSuggestion.content || currentSuggestion.description || "",
       accentColor: "purple"
   } : null;
+  
+  // UI Locking State
+  const isLocked = isProcessing || aiLoading || showAiResults;
 
 
   return (
@@ -228,8 +275,9 @@ export default function NewProjectWizard() {
       {/* Header */}
       <div className="absolute top-8 left-8 z-20">
          <button 
-           onClick={() => router.push('/dashboard')}
-           className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
+           onClick={handleBack}
+           disabled={isLocked}
+           className={`flex items-center gap-2 transition-colors ${isLocked ? 'text-slate-700 cursor-not-allowed' : 'text-slate-400 hover:text-white'}`}
          >
             <ArrowLeft size={20} />
             <span className="text-sm font-medium">Back to Dashboard</span>
@@ -241,7 +289,7 @@ export default function NewProjectWizard() {
         
         {/* Dynamic Header Text */}
         {!showAiResults && (
-            <div className="text-center mb-8 animate-fade-in-up">
+            <div className={`text-center mb-8 animate-fade-in-up ${isLocked ? 'opacity-50 blur-sm duration-500' : ''}`}>
             <h1 className="text-4xl font-bold text-white mb-3 tracking-tight">
                 {step === 0 && "Name Your Story"}
                 {step === 1 && "Add a Tagline"}
@@ -259,7 +307,7 @@ export default function NewProjectWizard() {
 
         {/* AI Suggestions Overlay Mode */}
         {showAiResults && mappedSuggestion ? (
-            <div className="w-full animate-fade-in-up my-10">
+            <div className="w-full animate-fade-in-up my-10 relative z-50">
                 <div className="flex justify-between items-center mb-4 px-2">
                     <h2 className="text-sm font-bold text-purple-400 tracking-wider uppercase">AI Suggestions</h2>
                     <button onClick={() => setShowAiResults(false)} className="text-xs text-slate-500 hover:text-white">Dismiss</button>
@@ -276,7 +324,7 @@ export default function NewProjectWizard() {
             </div>
         ) : (
             /* Standard Wizard Card */
-            <div className="w-full bg-[#0f0f16] border border-slate-800 rounded-3xl p-10 shadow-2xl relative overflow-hidden min-h-[400px] flex flex-col">
+            <div className={`w-full bg-[#0f0f16] border border-slate-800 rounded-3xl p-10 shadow-2xl relative overflow-hidden min-h-[400px] flex flex-col transition-all duration-300 ${isLocked ? 'opacity-50 grayscale-[0.5] pointer-events-none' : ''}`}>
             
             <ProgressBar currentStep={step} />
 
@@ -293,7 +341,8 @@ export default function NewProjectWizard() {
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
                         placeholder="e.g. Workromancer"
-                        className="w-full bg-transparent border-2 border-slate-700 rounded-xl px-6 py-5 text-2xl font-bold text-white placeholder-slate-700 focus:border-purple-500 outline-none transition-all group-hover:border-slate-600"
+                        disabled={isLocked}
+                        className="w-full bg-transparent border-2 border-slate-700 rounded-xl px-6 py-5 text-2xl font-bold text-white placeholder-slate-700 focus:border-purple-500 outline-none transition-all group-hover:border-slate-600 disabled:opacity-50"
                         autoFocus
                         onKeyDown={(e) => e.key === 'Enter' && title && handleNext()}
                         />
@@ -312,7 +361,8 @@ export default function NewProjectWizard() {
                         value={subtitle}
                         onChange={(e) => setSubtitle(e.target.value)}
                         placeholder="e.g. The Ghost of Pangyo"
-                        className="w-full bg-transparent border-2 border-slate-700 rounded-xl px-6 py-5 text-xl font-medium text-white placeholder-slate-700 focus:border-purple-500 outline-none transition-all group-hover:border-slate-600"
+                        disabled={isLocked}
+                        className="w-full bg-transparent border-2 border-slate-700 rounded-xl px-6 py-5 text-xl font-medium text-white placeholder-slate-700 focus:border-purple-500 outline-none transition-all group-hover:border-slate-600 disabled:opacity-50"
                         autoFocus
                         onKeyDown={(e) => e.key === 'Enter' && handleNext()}
                         />
@@ -330,11 +380,12 @@ export default function NewProjectWizard() {
                         <button
                             key={genre.id}
                             onClick={() => toggleGenre(genre.label)}
+                            disabled={isLocked}
                             className={`p-4 rounded-xl border-2 text-left transition-all flex items-center gap-3 group relative overflow-hidden ${
                             isSelected 
                                 ? 'bg-purple-900/20 border-purple-500' 
                                 : 'bg-slate-900/30 border-slate-800 hover:border-slate-600'
-                            }`}
+                            } ${isLocked ? 'cursor-not-allowed opacity-70' : ''}`}
                         >
                             <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
                             isSelected ? 'bg-purple-600 text-white' : 'bg-slate-800 text-slate-500 group-hover:bg-slate-700'
@@ -360,13 +411,14 @@ export default function NewProjectWizard() {
                         <label className="text-xs font-mono font-bold text-slate-500 ml-1 uppercase">Project Worldview</label>
                         <button 
                             onClick={handleAugmentWorldview}
-                            disabled={aiLoading}
+                            disabled={aiLoading || isLocked}
                             className={`
                                 text-xs font-bold flex items-center gap-1 transition-colors px-3 py-1.5 rounded-full border 
                                 ${aiLoading 
                                     ? 'bg-purple-900/50 border-purple-500/50 text-purple-300 cursor-wait'
                                     : 'bg-purple-900/30 border-purple-500/30 text-purple-400 hover:bg-purple-500 hover:border-purple-500 hover:text-white'
                                 }
+                                ${isLocked && !aiLoading ? 'opacity-50 cursor-not-allowed' : ''}
                             `}
                         >
                             {aiLoading ? (
@@ -383,7 +435,8 @@ export default function NewProjectWizard() {
                         value={typeof worldDesc === 'string' ? worldDesc : (worldDesc.content || JSON.stringify(worldDesc))}
                         onChange={(e) => setWorldDesc(e.target.value)}
                         placeholder="E.g. A dystopian cyberpunk city where rain never stops and neon lights control people's emotions..."
-                        className="w-full h-40 bg-slate-900/30 border-2 border-slate-700 rounded-xl p-5 text-base text-white placeholder-slate-700 focus:border-purple-500 outline-none resize-none transition-all leading-relaxed"
+                        disabled={isLocked}
+                        className="w-full h-40 bg-slate-900/30 border-2 border-slate-700 rounded-xl p-5 text-base text-white placeholder-slate-700 focus:border-purple-500 outline-none resize-none transition-all leading-relaxed disabled:opacity-50"
                         autoFocus
                         />
                     </div>
@@ -398,10 +451,10 @@ export default function NewProjectWizard() {
             <div className="pt-6 border-t border-slate-800 flex justify-between items-center">
                 <button 
                 onClick={handleBack}
-                disabled={step === 0}
+                disabled={step === 0 || isLocked}
                 className={`
                     px-6 py-3 rounded-xl font-bold text-sm transition-all flex items-center gap-2
-                    ${step === 0 
+                    ${step === 0 || isLocked
                     ? 'text-slate-700 cursor-not-allowed' 
                     : 'text-slate-400 hover:text-white hover:bg-slate-800'
                     }
@@ -414,11 +467,12 @@ export default function NewProjectWizard() {
                 onClick={handleNext}
                 disabled={
                     (step === 0 && !title) || 
-                    (step === 2 && selectedGenres.length === 0)
+                    (step === 2 && selectedGenres.length === 0) ||
+                    isLocked
                 }
                 className={`
                     px-8 py-3 rounded-xl font-bold text-sm shadow-lg flex items-center gap-2 transition-all
-                    ${(step === 0 && !title) || (step === 2 && selectedGenres.length === 0)
+                    ${(step === 0 && !title) || (step === 2 && selectedGenres.length === 0) || isLocked
                     ? 'bg-slate-800 text-slate-600 cursor-not-allowed' 
                     : 'bg-purple-600 hover:bg-purple-500 text-white shadow-purple-900/30 hover:translate-y-[-1px]'
                     }

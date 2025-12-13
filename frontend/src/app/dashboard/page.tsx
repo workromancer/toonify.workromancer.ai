@@ -7,7 +7,7 @@ import api from '@/lib/api';
 import TemplateList from '@/components/dashboard/TemplateList';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Wand2, ArrowRight } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 
 interface Project {
@@ -22,6 +22,7 @@ export default function DashboardPage() {
     const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
+    const [draftProject, setDraftProject] = useState<any>(null);
     const { user } = useAuthStore();
 
     const fetchProjects = async () => {
@@ -38,6 +39,17 @@ export default function DashboardPage() {
 
     useEffect(() => {
         fetchProjects();
+        
+        // Load Draft
+        const savedDraft = localStorage.getItem('toontune_project_draft');
+        if (savedDraft) {
+            try {
+                const parsed = JSON.parse(savedDraft);
+                setDraftProject(parsed);
+            } catch (e) {
+                console.error("Failed to parse draft for dashboard", e);
+            }
+        }
     }, []);
 
     const router = useRouter();
@@ -105,18 +117,46 @@ export default function DashboardPage() {
                     </h2>
                     {loading ? (
                         <div className="text-gray-500 animate-pulse">Loading projects...</div>
-                    ) : filteredProjects.length === 0 ? (
-                        <div className="text-center py-16 text-gray-400 bg-[#0F0F12] backdrop-blur-sm rounded-3xl border border-dashed border-gray-800">
-                            <p className="text-xl font-medium">No projects found.</p>
-                            <Button variant="link" onClick={() => handleTemplateSelect(null)} className="text-primary mt-2">
-                                Create your first project
-                            </Button>
-                        </div>
                     ) : (
                         <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-8">
-                            {filteredProjects.map((project) => (
-                                <ProjectCard key={project.id} project={project} />
-                            ))}
+                            {/* Draft Card - Only show if draft exists */}
+                            {draftProject && (
+                                <button
+                                    onClick={() => router.push('/new-project')}
+                                    className="group relative flex flex-col justify-between h-72 w-full bg-[#15151A] rounded-3xl p-6 text-left border-2 border-dashed border-purple-500/50 hover:border-purple-500 transition-all hover:-translate-y-1 hover:shadow-[0_0_30px_rgba(168,85,247,0.15)]"
+                                >
+                                    <div className="absolute top-4 right-4 bg-purple-500 text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider animate-pulse">
+                                        In Progress
+                                    </div>
+                                    <div className="mt-2">
+                                        <div className="w-12 h-12 rounded-xl bg-purple-900/30 text-purple-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                                            <Wand2 size={24} />
+                                        </div>
+                                        <h3 className="text-xl font-bold text-white mb-1 group-hover:text-purple-400 transition-colors line-clamp-1">
+                                            {draftProject.title || "Untitled Draft"}
+                                        </h3>
+                                        <p className="text-sm text-gray-500 line-clamp-2">
+                                            {draftProject.subtitle || "Continue where you left off..."}
+                                        </p>
+                                    </div>
+                                    <div className="text-xs font-bold text-purple-500 flex items-center gap-2">
+                                        Resume Creation <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                                    </div>
+                                </button>
+                            )}
+
+                            {filteredProjects.length === 0 && !draftProject ? (
+                                <div className="col-span-full text-center py-16 text-gray-400 bg-[#0F0F12] backdrop-blur-sm rounded-3xl border border-dashed border-gray-800">
+                                    <p className="text-xl font-medium">No projects found.</p>
+                                    <Button variant="link" onClick={() => handleTemplateSelect(null)} className="text-primary mt-2">
+                                        Create your first project
+                                    </Button>
+                                </div>
+                            ) : (
+                                filteredProjects.map((project) => (
+                                    <ProjectCard key={project.id} project={project} />
+                                ))
+                            )}
                         </div>
                     )}
                 </section>
