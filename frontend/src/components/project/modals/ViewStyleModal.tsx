@@ -1,6 +1,8 @@
 import React from 'react';
-import { X, Palette } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Sparkles, Palette, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface ViewStyleModalProps {
     isOpen: boolean;
@@ -17,67 +19,70 @@ export default function ViewStyleModal({
     styleImageUrl,
     description
 }: ViewStyleModalProps) {
-    if (!isOpen) return null;
+    // Helper to get formatted name
+    const formattedName = styleName ? styleName.replace(/_/g, ' ').replace(/-/g, ' ') : 'Unknown Style';
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 transition-opacity backdrop-blur-sm">
-            <div className="w-full max-w-2xl bg-[#2c2c44] rounded-xl shadow-2xl relative text-white border border-[#5a5a7d] overflow-hidden flex flex-col">
-                
-                {/* Header */}
-                <header className="bg-[#2c2c44] px-6 py-4 border-b border-[#5a5a7d]/50 flex justify-between items-center">
+        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+            <DialogContent className="max-w-[500px] p-0 gap-0 bg-[#0A0A0B] border-gray-800 text-white overflow-hidden flex flex-col">
+                <DialogHeader className="px-6 py-4 flex-none border-b border-gray-800 flex flex-row items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <Palette className="text-[#8e44ad]" size={20} />
-                        <h2 className="text-xl font-bold">Project Art Style</h2>
+                        <DialogTitle className="flex items-center gap-2 text-lg font-bold">
+                            <span className="text-purple-500"><Palette size={18} fill="currentColor" /></span>
+                            Current Art Style
+                        </DialogTitle>
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="rounded-full p-2 hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
-                    >
-                        <X size={20} />
-                    </button>
-                </header>
+                </DialogHeader>
 
-                <div className="p-6 flex flex-col gap-6">
-                    {/* Style Image */}
-                    <div className="w-full aspect-video rounded-lg overflow-hidden bg-black/40 border border-white/10 relative group">
-                        {styleImageUrl ? (
-                            <img 
+                <div className="p-6 overflow-y-auto">
+                    <div className="relative group rounded-xl overflow-hidden aspect-square border-2 border-primary/50 shadow-[0_0_30px_rgba(142,68,173,0.3)] mb-6">
+                        {styleImageUrl && !styleImageUrl.includes('placeholder.com') ? (
+                             <img 
                                 src={styleImageUrl} 
-                                alt={styleName} 
+                                alt={formattedName} 
                                 className="w-full h-full object-cover transition-transform duration-700 hover:scale-105" 
                             />
                         ) : (
-                            <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 gap-2">
-                                <Palette size={48} className="opacity-20" />
-                                <span className="text-sm">No Preview Image Available</span>
+                            <div className={cn(
+                                "w-full h-full flex flex-col items-center justify-center gap-3",
+                                // Generate a deterministic color based on name if no image
+                                "bg-gradient-to-br from-indigo-900 via-purple-900 to-black"
+                            )}>
+                                <Sparkles className="text-white/20 w-16 h-16" />
+                                <span className="text-white/40 font-mono text-sm uppercase tracking-wider">{formattedName}</span>
                             </div>
                         )}
-                        <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
-                            <span className="text-xs font-mono text-gray-300 uppercase tracking-widest">Selected Style</span>
+                        <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black/90 via-black/60 to-transparent">
+                            <h3 className="text-2xl font-bold text-white capitalize shadow-black drop-shadow-md">
+                                {formattedName}
+                            </h3>
+                            {description && (
+                                <p className="text-gray-300 text-sm mt-1 line-clamp-2">
+                                    {description}
+                                </p>
+                            )}
                         </div>
                     </div>
 
-                    {/* Info */}
-                    <div>
-                        <h3 className="text-2xl font-bold text-white mb-2 capitalize">{styleName.replace(/_/g, ' ')}</h3>
-                        <p className="text-gray-300 leading-relaxed">
-                            {description || "The visual identity chosen for this project."}
-                        </p>
-                    </div>
-
-                    {/* Footer / Info Note */}
-                    <div className="p-4 rounded-lg bg-[#8e44ad]/10 border border-[#8e44ad]/20 text-xs text-[#d2b4de]">
-                        <strong>Note:</strong> The art style is fixed for consistency across all episodes and characters in this project.
+                    <div className="flex gap-3 p-4 rounded-lg bg-[#0F0F12] border border-gray-800">
+                        <Info className="shrink-0 text-blue-400 mt-0.5" size={16} />
+                        <div className="text-xs text-gray-400 leading-relaxed">
+                            <span className="text-gray-200 font-semibold block mb-1">Style Consistency Active</span>
+                            All episodes and characters in this project are generated using this art style to ensure a cohesive visual identity.
+                        </div>
                     </div>
                 </div>
 
-                <footer className="px-6 py-4 bg-[#232336] border-t border-[#5a5a7d]/30 flex justify-end">
-                    <Button onClick={onClose} variant="ghost" className="text-white hover:bg-white/10">
+                <div className="flex-none p-4 bg-[#0F0F12] border-t border-gray-800 flex justify-end">
+                    <Button 
+                        variant="ghost" 
+                        onClick={onClose}
+                        className="text-gray-400 hover:text-white hover:bg-white/5"
+                    >
                         Close
                     </Button>
-                </footer>
-
-            </div>
-        </div>
+                </div>
+            </DialogContent>
+        </Dialog>
     );
 }
