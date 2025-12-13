@@ -111,19 +111,9 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
         };
     }, [project.cover_image_status, project.id, onProjectUpdate, toast]);
 
-    const handleUpdateProject = async (data: Partial<Project>) => {
-        try {
-            const res = await api.patch(`/projects/${project.id}`, data);
-            onProjectUpdate(res.data);
-            setIsEditModalOpen(false);
-        } catch (error) {
-            console.error(error);
-            toast({
-                title: "Update Failed",
-                description: "Failed to update project settings.",
-                variant: 'destructive'
-            });
-        }
+    const handleUpdateProject = (updatedProject: Project) => {
+        onProjectUpdate(updatedProject);
+        setIsEditModalOpen(false);
     };
 
     const handleGenerateCover = async () => {
