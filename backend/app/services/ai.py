@@ -455,7 +455,7 @@ class AIService:
             print(f"Error downloading image: {e}")
             return None
 
-    def generate_project_cover_image(self, title: str, genre: str, worldview: str, style: str, tones: List[str] = None, style_ref_url: str = None) -> bytes:
+    def generate_project_cover_image(self, title: str, genre: str, worldview: str, style: str, tones: List[str] = None, style_ref_url: str = None, character_image_urls: List[str] = None) -> bytes:
 
         tone_str = f"Tone: {', '.join(tones)}" if tones else ""
 
@@ -473,48 +473,67 @@ class AIService:
         Requirements:
         - The image should be eye-catching and representative of the genre and story.
         - Use the user-defined art style: {style}.
-        - Aspect Ratio: Wide (21:9 or 16:9).
+        - Aspect Ratio: Wide (16:9).
         - Composition: Cinematic, showing the atmosphere.
         - No text overlay.
         """
         
+        if character_image_urls:
+            prompt += f"\n- INCLUDE the characters provided in the reference images. Place them naturally in the scene according to the worldview."
+        
         try:
-            # If reference image is provided, use multimodal input
+            # Prepare Multimodal Input
+            parts = []
+            
+            # 1. Style Reference
             if style_ref_url:
                 print(f"Using style reference image: {style_ref_url}")
                 ref_img_bytes = self._download_image(style_ref_url)
-                
                 if ref_img_bytes:
-                    print("Reference image downloaded successfully. Generating with multimodal input.")
-                    image_part = types.Part.from_bytes(data=ref_img_bytes, mime_type="image/png")
-                    text_part = types.Part.from_text(text=f"{prompt}\n\nIMPORTANT: Mimic the art style of the provided reference image exactly.")
-                    
-                    contents = [
-                        types.Content(
-                            role="user",
-                            parts=[image_part, text_part]
-                        )
-                    ]
-                    
-                    config = types.GenerateContentConfig(
-                        response_modalities=['IMAGE'], 
-                        image_config=types.ImageConfig(
-                            aspect_ratio="16:9",
-                        )
-                    )
+                    parts.append(types.Part.from_bytes(data=ref_img_bytes, mime_type="image/png"))
+                    prompt += "\nIMPORTANT: Mimic the art style of the first provided image exactly."
 
-                    response = self.client.models.generate_content(
-                        model=self.model_config["image"],
-                        contents=contents,
-                        config=config,
+            # 2. Character Images
+            if character_image_urls:
+                print(f"Using {len(character_image_urls)} character reference images.")
+                for idx, url in enumerate(character_image_urls):
+                     char_bytes = self._download_image(url)
+                     if char_bytes:
+                         parts.append(types.Part.from_bytes(data=char_bytes, mime_type="image/png"))
+                         prompt += f"\n[Reference Image {idx+1}] is a main character. Include them."
+
+            # If we have any image inputs, use multimodal generation
+            if parts:
+                 print(f"Generating multimodal cover with {len(parts)} images.")
+                 text_part = types.Part.from_text(text=prompt)
+                 
+                 contents = [
+                    types.Content(
+                        role="user",
+                        parts=parts + [text_part] # Images first, then text
                     )
-                    
-                    if response.candidates and response.candidates[0].content and response.candidates[0].content.parts:
-                        for part in response.candidates[0].content.parts:
-                            if part.inline_data:
-                                return part.inline_data.data
-                    
-                    print("Multimodal generation returned no image, falling back to text-only.")
+                 ]
+                 
+                 config = types.GenerateContentConfig(
+                    response_modalities=['IMAGE'], 
+                    image_config=types.ImageConfig(
+                        aspect_ratio="16:9",
+                    )
+                 )
+
+                 response = self.client.models.generate_content(
+                    model=self.model_config["image"],
+                    contents=contents,
+                    config=config,
+                 )
+                 
+                 if response.candidates and response.candidates[0].content and response.candidates[0].content.parts:
+                    for part in response.candidates[0].content.parts:
+                        if part.inline_data:
+                            return part.inline_data.data
+                 
+                 print("Multimodal generation returned no image, falling back to text-only.")
+
         except Exception as e:
              print(f"Multimodal Cover Generation Error: {e}. Falling back to text-only.")
 

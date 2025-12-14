@@ -83,14 +83,14 @@ class WorldviewAugmentRequest(BaseModel):
     subtitle: str | None = None
     genres: List[str] | None = None
 
-def generate_project_cover_task(project_id: str, title: str, genre_name: str, worldview_content: str, style: str, tones: List[str] = None, style_ref_url: str = None):
+def generate_project_cover_task(project_id: str, title: str, genre_name: str, worldview_content: str, style: str, tones: List[str] = None, style_ref_url: str = None, character_image_urls: List[str] = None):
     """
     Background task to generate and update project cover image.
     """
     try:
         print(f"Starting background cover generation for project {project_id}")
         # Generate Image
-        img_bytes = ai_service.generate_project_cover_image(title, genre_name, worldview_content, style, tones, style_ref_url)
+        img_bytes = ai_service.generate_project_cover_image(title, genre_name, worldview_content, style, tones, style_ref_url, character_image_urls)
         
         # Upload to Storage
         if img_bytes:
@@ -369,6 +369,16 @@ def generate_cover(
              wv_content = str(project.worldview)
     
     genre_name = project.genre.name if project.genre else "Fantasy"
+    
+    # Fetch Characters for Multimodal Input (Max 6)
+    char_statement = select(Character).where(Character.project_id == project.id).limit(6)
+    chars = session.exec(char_statement).all()
+    char_urls = []
+    for c in chars:
+        if c.profile_image_url:
+            char_urls.append(c.profile_image_url)
+    
+    print(f"Found {len(char_urls)} character images for cover generation.")
 
     # Set status to processing immediately
     project.cover_image_status = "processing"
@@ -384,7 +394,8 @@ def generate_cover(
         wv_content, 
         project.style_preset,
         tones,
-        project.style_reference_url if project.style_reference_url else None
+        project.style_reference_url if project.style_reference_url else None,
+        char_urls
     )
 
     return {"message": "Cover generation started"}
