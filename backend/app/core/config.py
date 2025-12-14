@@ -1,3 +1,4 @@
+from typing import List, Union
 from pydantic import AnyHttpUrl, validator
 from pydantic_settings import BaseSettings
 import os
@@ -9,7 +10,7 @@ class Settings(BaseSettings):
     DEBUG: bool
     
     # CORS
-    BACKEND_CORS_ORIGINS: Union[List[str], str]
+    BACKEND_CORS_ORIGINS: Union[List[str], str] = []
     SECRET_KEY: str
 
     @validator("BACKEND_CORS_ORIGINS", pre=True)
