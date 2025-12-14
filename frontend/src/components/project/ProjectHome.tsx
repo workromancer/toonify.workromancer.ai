@@ -253,6 +253,10 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
         }
 
         // Priority 4: Missing or Failed Cover (Default Action)
+        if (project.thumbnail_url && !isCoverProcessing) {
+            return null;
+        }
+
         return {
             label: isCoverProcessing ? "Generating..." : "Generate AI Cover",
             icon: <Sparkles className={cn("mr-2 h-4 w-4", isCoverProcessing && "animate-spin")} />,
@@ -310,24 +314,26 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
 
                             <div className="flex items-center gap-2 relative">
                                 {/* Primary CTA */}
-                                <Button
-                                    size="lg"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        heroAction.onClick();
-                                    }}
-                                    disabled={heroAction.disabled}
-                                    className={cn(
-                                        "h-12 px-6 text-base font-bold shadow-xl transition-all hover:shadow-2xl hover:-translate-y-1",
-                                        heroAction.variant === 'magic'
-                                            ? "bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-sm"
-                                            : "bg-white text-black hover:bg-gray-100",
-                                        heroAction.disabled && "cursor-not-allowed opacity-70"
-                                    )}
-                                >
-                                    {heroAction.icon}
-                                    {heroAction.label}
-                                </Button>
+                                {heroAction && (
+                                    <Button
+                                        size="lg"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            heroAction.onClick();
+                                        }}
+                                        disabled={heroAction.disabled}
+                                        className={cn(
+                                            "h-12 px-6 text-base font-bold shadow-xl transition-all hover:shadow-2xl hover:-translate-y-1",
+                                            heroAction.variant === 'magic'
+                                                ? "bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-sm"
+                                                : "bg-white text-black hover:bg-gray-100",
+                                            heroAction.disabled && "cursor-not-allowed opacity-70"
+                                        )}
+                                    >
+                                        {heroAction.icon}
+                                        {heroAction.label}
+                                    </Button>
+                                )}
 
                                 {/* Tooltip Menu Trigger */}
                                 <div className="relative">
