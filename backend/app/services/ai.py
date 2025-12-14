@@ -765,4 +765,108 @@ class AIService:
             }
 
 
+
+    def generate_panel_image(self, 
+                             prompt: str, 
+                             width: int = 1024, 
+                             height: int = 1024, 
+                             style_ref_url: str = None, 
+                             character_data: List[dict] = None, 
+                             prev_scene_url: str = None) -> bytes:
+        """
+        Generates a webtoon panel with maximum context:
+        - Style Reference (Project Style)
+        - Character References (Visual consistency)
+        - Previous Scene (Visual consistency)
+        """
+        if not self.client:
+             raise Exception("AI Service not initialized")
+
+        # 1. Base Text Prompt Construction
+        full_prompt = f"""
+        Create a high-quality webtoon panel.
+        
+        Scene Description:
+        {prompt}
+        
+        Requirements:
+        - Match the art style of the provided Style Reference (if any).
+        - Maintain visual consistency with the Previous Scene (if any).
+        - Include the specific characters provided (if mentioned in scene).
+        """
+        
+        try:
+            parts = []
+            
+            # 2. Add Style Reference
+            if style_ref_url:
+                print(f"Adding Style Reference: {style_ref_url}")
+                style_bytes = self._download_image(style_ref_url)
+                if style_bytes:
+                    parts.append(types.Part.from_bytes(data=style_bytes, mime_type="image/png"))
+                    full_prompt += "\n[Reference Image 1] is the ART STYLE. Mimic it exactly."
+
+            # 3. Add Previous Scene (for continuity)
+            if prev_scene_url:
+                print(f"Adding Previous Scene: {prev_scene_url}")
+                prev_bytes = self._download_image(prev_scene_url)
+                if prev_bytes:
+                    parts.append(types.Part.from_bytes(data=prev_bytes, mime_type="image/png"))
+                    full_prompt += f"\n[Reference Image {len(parts)}] is the PREVIOUS SCENE. Maintain continuity (lighting, colors, environment)."
+
+            # 4. Add Characters
+            if character_data:
+                print(f"Adding {len(character_data)} Character References")
+                for char in character_data:
+                    c_url = char.get("url")
+                    c_name = char.get("name")
+                    if c_url:
+                        c_bytes = self._download_image(c_url)
+                        if c_bytes:
+                            parts.append(types.Part.from_bytes(data=c_bytes, mime_type="image/png"))
+                            full_prompt += f"\n[Reference Image {len(parts)}] is character '{c_name}'. Include them if relevant to the scene."
+
+            # 5. Determine Aspect Ratio
+            ratio_val = width / height
+            aspect_ratio = "1:1"
+            if abs(ratio_val - 3/4) < 0.01: aspect_ratio = "3:4"
+            elif abs(ratio_val - 9/16) < 0.01: aspect_ratio = "9:16"
+            elif abs(ratio_val - 4/3) < 0.01: aspect_ratio = "4:3"
+            elif abs(ratio_val - 16/9) < 0.01: aspect_ratio = "16:9"
+
+            # 6. Call API
+            print(f"Generating Panel with {len(parts)} images. Ratio: {aspect_ratio}")
+            
+            text_part = types.Part.from_text(text=full_prompt)
+            
+            contents = [
+                types.Content(
+                    role="user",
+                    parts=parts + [text_part] # Images first
+                )
+            ]
+            
+            config = types.GenerateContentConfig(
+                response_modalities=['IMAGE'], 
+                image_config=types.ImageConfig(aspect_ratio=aspect_ratio)
+            )
+
+            response = self.client.models.generate_content(
+                model=self.model_config["image"],
+                contents=contents,
+                config=config,
+            )
+            
+            if response.candidates and response.candidates[0].content and response.candidates[0].content.parts:
+                for part in response.candidates[0].content.parts:
+                    if part.inline_data:
+                        return part.inline_data.data
+            
+            raise Exception("No image returned from Multimodal Generation")
+
+        except Exception as e:
+            print(f"Panel Generation Error: {e}. Falling back to text-only.")
+            # Fallback
+            return self.generate_image(prompt, width, height)
+
 ai_service = AIService()

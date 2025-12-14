@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, select, col
 
 from app.api import deps
-from app.models import Episode, Project, WorkspaceMember, StoryCut
+from app.models import Episode, Project, WorkspaceMember, StoryCut, Character
 from pydantic import BaseModel
 from datetime import datetime
 from uuid import UUID
@@ -12,6 +12,9 @@ from uuid import UUID
 import json
 from app.services.ai import ai_service
 from app.services.storage import storage
+from fastapi import BackgroundTasks
+from app.db.engine import engine # Need engine for background task session
+
 
 router = APIRouter()
 
@@ -230,53 +233,100 @@ def generate_cut_image(
     episode_id: UUID,
     cut_id: UUID,
     request: GenerateImageRequest,
+    background_tasks: BackgroundTasks,
     session: Session = Depends(deps.get_session),
     current_user_id: str = Depends(deps.get_current_user_id),
 ):
     """
-    Generate image for a specific cut.
+    Start background image generation for a specific cut.
     """
     cut = session.get(StoryCut, cut_id)
     if not cut:
         raise HTTPException(status_code=404, detail="Cut not found")
+
+    # Pass everything needed to background task
+    prompt_override = request.prompt_override
+    
+    background_tasks.add_task(generate_cut_task, cut_id, prompt_override)
+    
+    return {"message": "Generation started", "cut_id": cut_id}
+
+def generate_cut_task(cut_id: UUID, prompt_override: Optional[str]):
+    print(f"Background Task: Generating image for cut {cut_id}")
+    with Session(engine) as session:
+        cut = session.get(StoryCut, cut_id)
+        if not cut: return
         
-    episode = session.get(Episode, episode_id) # Just to verify hierarchy if needed
-    
-    project = session.get(Project, episode.project_id)
-    style = project.style_preset
-    
-    # Construct prompt
-    prompt = request.prompt_override
-    if not prompt:
-        dialogue_text = " ".join([d.get("text", "") for d in cut.dialogues])
-        prompt = f"""
-        Webtoon Panel, Style: {style}
-        Scene: {cut.script}
-        Dialogues (Context): {dialogue_text}
+        episode = session.get(Episode, cut.episode_id)
+        project = session.get(Project, episode.project_id)
         
-        Ensure the composition fits a {cut.aspect_ratio} panel.
-        """
-    
-    try:
-        # Determine dimensions based on Aspect Ratio
+        # 1. Context Gathering
+        
+        # A. Style Reference
+        style_ref_url = project.style_reference_url
+        if not style_ref_url and project.projects: # Just in case data model is weird, but typically project.style_reference_url is correct
+             pass 
+
+        # B. Previous Scene (for continuity)
+        prev_scene_url = None
+        if cut.cut_order > 1:
+            prev_cut = session.exec(
+                select(StoryCut)
+                .where(StoryCut.episode_id == cut.episode_id)
+                .where(StoryCut.cut_order == cut.cut_order - 1)
+            ).first()
+            if prev_cut and prev_cut.image_path:
+                prev_scene_url = prev_cut.image_path
+        
+        # C. Characters (Max 6)
+        # Assuming we send ALL project characters that have profile images
+        # In a refined version, we would check which characters are actually IN the scene script/dialogue.
+        # For now, let's send the top 6 characters with images to give the AI a "cast list".
+        chars = session.exec(select(Character).where(Character.project_id == project.id).limit(6)).all()
+        char_data = []
+        for c in chars:
+            if c.profile_image_url:
+                char_data.append({
+                    "name": c.name,
+                    "url": c.profile_image_url
+                })
+        
+        # 2. Prompt Construction
+        prompt = prompt_override
+        if not prompt:
+            dialogue_text = " ".join([f"{d.get('speaker', 'Unknown')}: {d.get('text', '')}" for d in cut.dialogues])
+            prompt = f"""
+            Style: {project.style_preset} {f'({project.art_style})' if project.art_style else ''}
+            Action/Scene: {cut.script}
+            Dialogues: {dialogue_text}
+            """
+
+        # 3. Determine Dimensions
         width, height = 1024, 1024
         if cut.aspect_ratio == "Wide":
             width, height = 1536, 1024 # 3:2
         elif cut.aspect_ratio == "Vertical":
             width, height = 1024, 1536 # 2:3
+        
+        try:
+            img_bytes = ai_service.generate_panel_image(
+                prompt=prompt,
+                width=width,
+                height=height,
+                style_ref_url=style_ref_url,
+                character_data=char_data,
+                prev_scene_url=prev_scene_url
+            )
             
-        img_bytes = ai_service.generate_image(prompt, width=width, height=height)
-        
-        url = storage.upload_image(img_bytes)
-        cut.image_path = url
-        session.add(cut)
-        session.commit()
-        session.refresh(cut)
-        
-        return cut
-    except Exception as e:
-        print(f"Image Gen Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+            url = storage.upload_image(img_bytes)
+            cut.image_path = url
+            session.add(cut)
+            session.commit()
+            print(f"Task Complete: Image saved to {url}")
+            
+        except Exception as e:
+            print(f"Background Cut Gen Error: {e}")
+            # Could update cut status to 'failed' if we had a status field
 
 
 @router.post("/{episode_id}/export")
