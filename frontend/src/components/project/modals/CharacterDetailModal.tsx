@@ -318,9 +318,6 @@ export default function CharacterDetailModal({ isOpen, onClose, character, onRet
                             <Button variant="ghost" onClick={onClose} className="hover:bg-white/5 text-gray-400 hover:text-white">
                                 Close
                             </Button>
-                            <Button className="bg-[#4a4aff] hover:bg-[#3d3dcc] text-white shadow-lg shadow-blue-900/20">
-                                <User size={16} className="mr-2" /> Full Profile
-                            </Button>
                         </div>
                     </div>
                 </div>
