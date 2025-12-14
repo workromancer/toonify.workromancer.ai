@@ -1,14 +1,19 @@
 import io
+import os
+from abc import ABC, abstractmethod
 from minio import Minio
 from minio.error import S3Error
 from app.core.config import settings
 import uuid
 
-class StorageService:
+class StorageService(ABC):
+    @abstractmethod
+    def upload_image(self, image_data: bytes, content_type: str = "image/png") -> str:
+        pass
+
+class MinIOStorage(StorageService):
     def __init__(self):
         # Initialize MinIO client
-        # Note: In docker-compose, hostname is 'minio', but from host it's 'localhost'.
-        # Assuming backend runs locally (not in docker), we use localhost settings.
         self.client = Minio(
             settings.MINIO_ENDPOINT,
             access_key=settings.MINIO_ACCESS_KEY,
@@ -29,32 +34,46 @@ class StorageService:
             print(f"Error checking/creating bucket: {e}")
 
     def upload_image(self, image_data: bytes, content_type: str = "image/png") -> str:
-        """
-        Uploads bytes to MinIO and returns the public URL.
-        """
         filename = f"{uuid.uuid4()}.png"
         try:
-            result = self.client.put_object(
+            self.client.put_object(
                 self.bucket_name,
                 filename,
                 io.BytesIO(image_data),
                 len(image_data),
                 content_type=content_type
             )
-            # Return URL. For local dev, we might need a way to reach this.
-            # If using MinIO Console on 9001 and API on 9000.
-            # Accessing from browser: http://localhost:9000/bucket/filename
-            
             # Use settings for base URL if constructed, else default behavior
             base_url = f"http://{settings.MINIO_ENDPOINT}"
             if not settings.MINIO_SECURE:
                 url = f"{base_url}/{self.bucket_name}/{filename}"
             else:
                 url = f"https://{settings.MINIO_ENDPOINT}/{self.bucket_name}/{filename}"
-            
             return url
         except S3Error as e:
             print(f"Error uploading file: {e}")
             raise e
 
-storage = StorageService()
+class GCSStorage(StorageService):
+    def __init__(self):
+        from google.cloud import storage
+        self.client = storage.Client()
+        # Default bucket from env or settings if added, currently assuming env GCS_BUCKET_NAME
+        self.bucket_name = os.getenv("GCS_BUCKET_NAME", "toonify-assets")
+        self.bucket = self.client.bucket(self.bucket_name)
+
+    def upload_image(self, image_data: bytes, content_type: str = "image/png") -> str:
+        filename = f"{uuid.uuid4()}.png"
+        blob = self.bucket.blob(filename)
+        blob.upload_from_string(image_data, content_type=content_type)
+        # Assuming bucket is public or we use signed URLs (public for now based on MinIO logic)
+        # Note: Bucket must be configured to be public readable
+        return blob.public_url
+
+def get_storage_service() -> StorageService:
+    env = os.getenv("APP_ENV", "local")
+    if env == "production":
+        return GCSStorage()
+    return MinIOStorage()
+
+storage = get_storage_service()

@@ -14,3 +14,6 @@ requests
 pydantic[email]
 alembic
 greenlet
+google-cloud-storage
+google-cloud-aiplatform
+gunicorn
