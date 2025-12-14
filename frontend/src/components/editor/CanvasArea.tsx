@@ -45,25 +45,25 @@ export default function CanvasArea() {
     return (
         <div className="h-full flex flex-col relative" onClick={() => selectElement(null)}>
             {/* Canvas Toolbar overlay */}
-            <div className="absolute top-4 left-4 z-10 flex flex-col gap-2 bg-gray-800/80 p-1 rounded-md backdrop-blur-sm border border-gray-700">
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-300 hover:text-white" title="Move">
+            <div className="absolute top-4 left-4 z-10 flex flex-col gap-1 bg-[#13131c] p-1 rounded-lg backdrop-blur-sm border border-slate-700/50 shadow-xl">
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-white hover:bg-white/10" title="Move">
                     <Move size={16} />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-300 hover:text-white" title="Hand Tool">
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-white hover:bg-white/10" title="Hand Tool">
                     <Hand size={16} />
                 </Button>
-                <div className="h-px bg-gray-700 my-1" />
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-300 hover:text-white" title="Zoom In">
+                <div className="h-px bg-slate-800 my-1" />
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-white hover:bg-white/10" title="Zoom In">
                     <ZoomIn size={16} />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-300 hover:text-white" title="Zoom Out">
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-white hover:bg-white/10" title="Zoom Out">
                     <ZoomOut size={16} />
                 </Button>
-                <div className="h-px bg-gray-700 my-1" />
+                <div className="h-px bg-slate-800 my-1" />
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-gray-300 hover:text-white"
+                    className="h-8 w-8 text-slate-400 hover:text-white hover:bg-white/10"
                     title="Add Panel"
                     onClick={() => useCanvasStore.getState().addElement('panel')}
                 >
@@ -72,7 +72,7 @@ export default function CanvasArea() {
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-gray-300 hover:text-white"
+                    className="h-8 w-8 text-slate-400 hover:text-white hover:bg-white/10"
                     title="Add Text"
                     onClick={() => useCanvasStore.getState().addElement('text')}
                 >
@@ -80,8 +80,11 @@ export default function CanvasArea() {
                 </Button>
             </div>
 
-            <div className="flex-1 bg-gray-950 flex items-center justify-center p-8 overflow-auto">
-                <div className="w-[800px] h-[2000px] bg-white text-black shadow-2xl relative" // Increased height for scrolling
+            <div className="flex-1 bg-[#0a0a10] flex items-center justify-center p-8 overflow-auto custom-scrollbar">
+                {/* Background Grid for Canvas Area too? Maybe subtle dots. */}
+                <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(#ffffff05_1px,transparent_1px)] [background-size:20px_20px]"></div>
+
+                <div className="w-[800px] h-[2000px] bg-white text-black shadow-2xl relative z-0" // Increased height for scrolling
                     onClick={(e) => { e.stopPropagation(); selectElement(null); }}>
                     {elements.map((el) => (
                         <CanvasElementRenderer

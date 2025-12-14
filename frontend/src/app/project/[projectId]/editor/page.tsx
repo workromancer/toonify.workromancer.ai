@@ -5,15 +5,13 @@ import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import EpisodeList from '@/components/editor/EpisodeList';
-import CharacterList from '@/components/editor/CharacterList';
 
 import CanvasArea from '@/components/editor/CanvasArea';
 import InspectorPanel from '@/components/editor/InspectorPanel';
 import StoryboardView from '@/components/editor/StoryboardView';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import api from '@/lib/api';
-import { ArrowLeft, Play, Save, Users, Clapperboard, Loader2, Download, Cloud } from 'lucide-react';
+import { ArrowLeft, Save, Download, Cloud, Layers, Users, Image as ImageIcon, Settings, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function EditorPage() {
@@ -21,7 +19,6 @@ export default function EditorPage() {
     const searchParams = useSearchParams();
     const projectId = params?.projectId as string;
     const [activeSegment, setActiveSegment] = useState('storyboard'); // canvas, script, storyboard
-    const [sidebarTab, setSidebarTab] = useState<'episodes' | 'characters'>('episodes');
     const { activeEpisodeId, setActiveEpisode } = useCanvasStore();
     const [exporting, setExporting] = useState(false);
     const { toast } = useToast();
@@ -116,95 +113,88 @@ export default function EditorPage() {
             </header>
 
             {/* Main Workspace */}
-            <div className="flex-1 overflow-hidden">
-                <PanelGroup direction="horizontal">
-                    {/* Left Sidebar: Navigation / Assets */}
-                    <Panel defaultSize={20} minSize={15} maxSize={30} className="bg-[#0f0f16] border-r border-slate-800 flex flex-col">
-                        <div className="flex border-b border-slate-800 p-1 mx-2 mt-2 bg-slate-900/50 rounded-lg">
-                            <button
-                                data-testid="tab-episodes"
-                                className={`flex-1 py-1.5 text-xs font-bold rounded-md flex items-center justify-center gap-2 transition-all ${sidebarTab === 'episodes' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
-                                onClick={() => setSidebarTab('episodes')}
-                            >
-                                <Clapperboard size={14} /> Episodes
-                            </button>
-                            <button
-                                data-testid="tab-casting"
-                                className={`flex-1 py-1.5 text-xs font-bold rounded-md flex items-center justify-center gap-2 transition-all ${sidebarTab === 'characters' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
-                                onClick={() => setSidebarTab('characters')}
-                            >
-                                <Users size={14} /> Casting
-                            </button>
-                        </div>
+            <div className="flex-1 overflow-hidden flex">
+                {/* 2. Left Sidebar: Navigation (Fixed Icon Bar) */}
+                <aside className="w-16 bg-[#0a0a10] border-r border-slate-800 flex flex-col items-center py-4 gap-4 z-40">
+                    <button className="p-3 bg-purple-600/20 text-purple-400 rounded-xl border border-purple-500/30 hover:bg-purple-600/30 transition-colors">
+                        <Layers size={20} />
+                    </button>
+                    <button className="p-3 text-slate-500 hover:text-white hover:bg-slate-800 rounded-xl transition-colors">
+                        <Users size={20} />
+                    </button>
+                    <button className="p-3 text-slate-500 hover:text-white hover:bg-slate-800 rounded-xl transition-colors">
+                        <ImageIcon size={20} />
+                    </button>
+                    <div className="flex-1" />
+                    <button className="p-3 text-slate-500 hover:text-white hover:bg-slate-800 rounded-xl transition-colors">
+                        <Settings size={20} />
+                    </button>
+                </aside>
 
-                        <div className="flex-1 overflow-hidden p-2">
-                            {sidebarTab === 'episodes' ? <EpisodeList /> : <CharacterList />}
-                        </div>
-                    </Panel>
+                <div className="flex-1 overflow-hidden">
+                    <PanelGroup direction="horizontal">
+                        {/* Center: Canvas / Editor */}
+                        <Panel defaultSize={75} minSize={30}>
+                            <div className="h-full flex flex-col bg-[#05050a]">
+                                {/* Toolbar */}
+                                <div className="h-12 border-b border-slate-800 flex items-center px-4 gap-2 bg-[#05050a]">
+                                    <Button
+                                        data-testid="view-storyboard-btn"
+                                        variant="ghost"
+                                        size="sm"
+                                        className={`text-xs font-medium ${activeSegment === 'storyboard' ? 'bg-purple-500/10 text-purple-400' : 'text-slate-500 hover:text-slate-300'}`}
+                                        onClick={() => setActiveSegment('storyboard')}
+                                    >
+                                        Storyboard
+                                    </Button>
+                                    <Button
+                                        data-testid="view-canvas-btn"
+                                        variant="ghost"
+                                        size="sm"
+                                        className={`text-xs font-medium ${activeSegment === 'canvas' ? 'bg-purple-500/10 text-purple-400' : 'text-slate-500 hover:text-slate-300'}`}
+                                        onClick={() => setActiveSegment('canvas')}
+                                    >
+                                        Canvas
+                                    </Button>
+                                    <Button
+                                        data-testid="view-script-btn"
+                                        variant="ghost"
+                                        size="sm"
+                                        className={`text-xs font-medium ${activeSegment === 'script' ? 'bg-purple-500/10 text-purple-400' : 'text-slate-500 hover:text-slate-300'}`}
+                                        onClick={() => setActiveSegment('script')}
+                                    >
+                                        Script
+                                    </Button>
+                                </div>
 
-                    <PanelResizeHandle className="w-[1px] bg-slate-800 hover:bg-purple-500 transition-colors" />
-
-                    {/* Center: Canvas / Editor */}
-                    <Panel defaultSize={60} minSize={30}>
-                        <div className="h-full flex flex-col bg-[#05050a]">
-                            {/* Toolbar */}
-                            <div className="h-12 border-b border-slate-800 flex items-center px-4 gap-2 bg-[#05050a]">
-                                <Button
-                                    data-testid="view-storyboard-btn"
-                                    variant="ghost"
-                                    size="sm"
-                                    className={`text-xs font-medium ${activeSegment === 'storyboard' ? 'bg-purple-500/10 text-purple-400' : 'text-slate-500 hover:text-slate-300'}`}
-                                    onClick={() => setActiveSegment('storyboard')}
-                                >
-                                    Storyboard
-                                </Button>
-                                <Button
-                                    data-testid="view-canvas-btn"
-                                    variant="ghost"
-                                    size="sm"
-                                    className={`text-xs font-medium ${activeSegment === 'canvas' ? 'bg-purple-500/10 text-purple-400' : 'text-slate-500 hover:text-slate-300'}`}
-                                    onClick={() => setActiveSegment('canvas')}
-                                >
-                                    Canvas
-                                </Button>
-                                <Button
-                                    data-testid="view-script-btn"
-                                    variant="ghost"
-                                    size="sm"
-                                    className={`text-xs font-medium ${activeSegment === 'script' ? 'bg-purple-500/10 text-purple-400' : 'text-slate-500 hover:text-slate-300'}`}
-                                    onClick={() => setActiveSegment('script')}
-                                >
-                                    Script
-                                </Button>
+                                {/* Content Area */}
+                                <div className="flex-1 overflow-hidden relative">
+                                    {activeSegment === 'canvas' ? (
+                                        <CanvasArea />
+                                    ) : activeSegment === 'storyboard' ? (
+                                        <StoryboardView
+                                            projectId={projectId?.toString() || ''}
+                                            onEditCut={() => setActiveSegment('canvas')}
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full max-w-3xl bg-[#0f0f16] p-12 border border-slate-800 text-slate-300 font-mono text-sm mx-auto my-8 overflow-auto shadow-2xl rounded-xl">
+                                            <p className="text-slate-500 mb-6"># SCRIPT EDITOR (Read-Only)</p>
+                                            <p className="font-bold text-white mb-2">EXT. CITY STREET - DAY</p>
+                                            <p className="leading-relaxed">The HERO looks up at the sky, eyes narrowing against the glare of the dual suns.</p>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
+                        </Panel>
 
-                            {/* Content Area */}
-                            <div className="flex-1 overflow-hidden relative">
-                                {activeSegment === 'canvas' ? (
-                                    <CanvasArea />
-                                ) : activeSegment === 'storyboard' ? (
-                                    <StoryboardView
-                                        projectId={projectId?.toString() || ''}
-                                        onEditCut={() => setActiveSegment('canvas')}
-                                    />
-                                ) : (
-                                    <div className="w-full h-full max-w-3xl bg-[#0f0f16] p-12 border border-slate-800 text-slate-300 font-mono text-sm mx-auto my-8 overflow-auto shadow-2xl rounded-xl">
-                                        <p className="text-slate-500 mb-6"># SCRIPT EDITOR (Read-Only)</p>
-                                        <p className="font-bold text-white mb-2">EXT. CITY STREET - DAY</p>
-                                        <p className="leading-relaxed">The HERO looks up at the sky, eyes narrowing against the glare of the dual suns.</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </Panel>
+                        <PanelResizeHandle className="w-[1px] bg-slate-800 hover:bg-purple-500 transition-colors" />
 
-                    <PanelResizeHandle className="w-[1px] bg-slate-800 hover:bg-purple-500 transition-colors" />
-
-                    {/* Right Sidebar: Inspector */}
-                    <Panel defaultSize={20} minSize={15} maxSize={30} className="bg-[#0f0f16] border-l border-slate-800">
-                        <InspectorPanel />
-                    </Panel>
-                </PanelGroup>
+                        {/* Right Sidebar: Inspector */}
+                        <Panel defaultSize={25} minSize={15} maxSize={30} className="bg-[#0f0f16] border-l border-slate-800">
+                            <InspectorPanel />
+                        </Panel>
+                    </PanelGroup>
+                </div>
             </div>
         </div>
     );

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Plus, Image as ImageIcon, MessageSquare, Trash2, Clapperboard, Loader2, Wand2, Sparkles, Smartphone } from 'lucide-react';
+import { Plus, Image as ImageIcon, Trash2, Clapperboard, Loader2, Wand2, Sparkles, Smartphone, Maximize2, RefreshCw } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import DirectorCutModal from './DirectorCutModal';
 import { useToast } from '@/hooks/use-toast';
@@ -34,7 +34,7 @@ interface StoryboardViewProps {
 }
 
 export default function StoryboardView({ projectId, onEditCut }: StoryboardViewProps) {
-    const { activeEpisodeId, setActiveCut } = useCanvasStore();
+    const { activeEpisodeId, setActiveCut, activeCutId } = useCanvasStore(); // Added activeCutId to track selection
     const [cuts, setCuts] = useState<StoryCut[]>([]);
     const [loading, setLoading] = useState(false);
     const { toast } = useToast();
@@ -48,6 +48,7 @@ export default function StoryboardView({ projectId, onEditCut }: StoryboardViewP
     const [modifyingCut, setModifyingCut] = useState<StoryCut | null>(null); // For Director's Cut modal
     const [isMobileViewerOpen, setIsMobileViewerOpen] = useState(false);
 
+    // Reuse existing handlers...
     const handleGenerateAll = async () => {
         const cutsToGenerate = cuts.filter(c => !c.image_path && !generatingIds.has(c.id));
         if (cutsToGenerate.length === 0) {
@@ -57,7 +58,6 @@ export default function StoryboardView({ projectId, onEditCut }: StoryboardViewP
 
         toast({ title: "Starting Batch Generation", description: `Generating images for ${cutsToGenerate.length} cuts...` });
 
-        // Trigger all (in parallel or sequence? Parallel is fine for async backend)
         for (const cut of cutsToGenerate) {
             handleGenerateImage(cut.id);
         }
@@ -162,7 +162,6 @@ export default function StoryboardView({ projectId, onEditCut }: StoryboardViewP
         }
     };
 
-    // New function to handle generation for existing cuts (bulk created)
     const [generatingIds, setGeneratingIds] = useState<Set<string>>(new Set());
 
     const handleGenerateImage = async (cutId: string) => {
@@ -173,16 +172,13 @@ export default function StoryboardView({ projectId, onEditCut }: StoryboardViewP
                 title: "Generation Started",
                 description: "AI is generating the image. This may take a moment.",
             });
-            // Poll for update or just let user refresh?
-            // Simple poll for this specific cut
+
             const poll = setInterval(async () => {
-                const res = await api.get(`/cuts/${cutId}`);
-                // Assuming GET /cuts/{id} exists, if not we fall back to refreshing list
-                // Since fetching single cut might not be exposed, let's just refresh the whole list after delay
+                const res = await api.get(`/cuts/${cutId}`); // Assuming this endpoint exists, or verify with backend
+                // Since this might not be standard, let's just refresh the list which is safer
                 fetchCuts();
             }, 3000);
 
-            // Stop polling after 30s
             setTimeout(() => {
                 clearInterval(poll);
                 setGeneratingIds(prev => {
@@ -214,226 +210,234 @@ export default function StoryboardView({ projectId, onEditCut }: StoryboardViewP
 
     if (!activeEpisodeId) {
         return (
-            <div className="h-full flex items-center justify-center text-gray-500">
+            <div className="h-full flex items-center justify-center text-slate-500 bg-[#05050a] font-mono text-sm">
                 Select an episode to view storyboard.
             </div>
         );
     }
 
     return (
-        <div className="h-full flex flex-col bg-gray-900 overflow-hidden relative">
+        <div className="h-full flex flex-col bg-[#05050a] relative overflow-hidden">
+            {/* Background Grid Pattern */}
+            <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px] opacity-50 z-0" />
+
             {/* Header */}
-            <div className="p-4 border-b border-gray-700 flex justify-between items-center bg-gray-800 shrink-0">
-                <h2 className="font-semibold text-white flex items-center gap-2">
-                    <Clapperboard size={18} className="text-purple-400" />
-                    Storyboard
+            <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-[#0f0f16] shrink-0 z-10">
+                <h2 className="font-bold text-white flex items-center gap-2 text-sm">
+                    <Clapperboard size={16} className="text-purple-500" />
                     Storyboard
                 </h2>
                 <div className="flex gap-2">
                     {cuts.some(c => !c.image_path) && (
-                        <Button variant="outline" size="sm" onClick={handleGenerateAll} className="h-8 text-xs border-purple-500/50 text-purple-400 hover:bg-purple-500/10">
-                            <Sparkles size={14} className="mr-1" /> Generate All
+                        <Button variant="outline" size="sm" onClick={handleGenerateAll} className="h-7 text-xs border-purple-500/30 text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 hover:text-purple-300">
+                            <Sparkles size={12} className="mr-1" /> Generate All
                         </Button>
                     )}
-                    <Button variant="outline" size="sm" onClick={() => setIsMobileViewerOpen(true)} className="h-8 text-xs bg-gray-800 border-gray-600 hover:bg-gray-700">
-                        <Smartphone size={14} className="mr-1" /> Review
+                    <Button variant="outline" size="sm" onClick={() => setIsMobileViewerOpen(true)} className="h-7 text-xs bg-slate-800 border-slate-700 hover:bg-slate-700 text-slate-300">
+                        <Smartphone size={12} className="mr-1" /> Review
                     </Button>
                 </div>
             </div>
 
             {/* Main Content Area */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {/* Director Mode Input Section - Always visible at bottom or top? Let's put it at the top for "What's Next?" flow or bottom for "Append"? 
-                    Let's use the 'Add Cut' area at the bottom.
-                */}
+            <div className="flex-1 overflow-y-auto p-8 relative z-10 custom-scrollbar">
+                <div className="w-full max-w-2xl mx-auto space-y-6 pb-20">
 
-                {/* Existing Cuts List */}
-                <div className="space-y-8 pb-32"> {/* Padding for fixed bottom bar if needed, or just spacing */}
                     {loading ? (
-                        <div className="text-gray-500 text-center py-10">Loading cuts...</div>
+                        <div className="text-slate-500 text-center py-10 flex flex-col items-center">
+                            <Loader2 className="animate-spin mb-2 text-slate-600" />
+                            <span className="text-xs">Loading scenes...</span>
+                        </div>
                     ) : cuts.length === 0 && !isDirectorMode ? (
-                        <div className="text-center py-10">
-                            <div className="text-gray-500 italic mb-4">No cuts yet.</div>
+                        <div className="text-center py-12 border border-dashed border-slate-800 rounded-xl bg-[#0f0f16]">
+                            <div className="text-slate-500 italic mb-4 text-sm">No scenes created yet.</div>
                             <Button
                                 onClick={() => setIsDirectorMode(true)}
-                                className="bg-purple-600 hover:bg-purple-700"
+                                className="bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-900/20 font-bold"
                             >
                                 <Wand2 size={16} className="mr-2" /> Start Director Mode
                             </Button>
                         </div>
                     ) : (
-                        cuts.map((cut) => (
-                            <div key={cut.id} className="flex gap-4 items-start group animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                <div className="w-8 pt-2 text-center text-gray-500 font-mono text-xs">
-                                    #{cut.cut_order}
+                        cuts.map((cut, index) => (
+                            <div
+                                key={cut.id}
+                                onClick={() => setActiveCut(cut.id)}
+                                className={`
+                                    group relative bg-[#0f0f16] border rounded-xl overflow-hidden transition-all cursor-pointer
+                                    ${activeCutId === cut.id
+                                        ? 'border-purple-500 ring-1 ring-purple-500/50 shadow-2xl scale-[1.01]'
+                                        : 'border-slate-800 hover:border-slate-600 opacity-90 hover:opacity-100'}
+                                `}
+                            >
+                                {/* Header */}
+                                <div className="flex items-center justify-between px-4 py-3 bg-[#13131c] border-b border-slate-800">
+                                    <span className="text-xs font-bold text-slate-400 font-mono">SCENE #{String(cut.cut_order).padStart(2, '0')}</span>
+                                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button
+                                            className="p-1 hover:text-purple-400 text-slate-500 transition-colors"
+                                            onClick={(e) => { e.stopPropagation(); setModifyingCut(cut); }}
+                                            title="Refine with AI"
+                                        >
+                                            <Sparkles size={12} />
+                                        </button>
+                                        <button
+                                            className="p-1 hover:text-white text-slate-500 transition-colors"
+                                            onClick={(e) => { e.stopPropagation(); onEditCut(); setActiveCut(cut.id); }}
+                                            title="Edit in Canvas"
+                                        >
+                                            <Maximize2 size={12} />
+                                        </button>
+                                        <ConfirmationDialog
+                                            open={deleteConfirmationId === cut.id}
+                                            onOpenChange={(open) => !open && setDeleteConfirmationId(null)}
+                                            title="Delete Scene?"
+                                            description="Are you sure?"
+                                            onConfirm={() => handleDeleteConfirm(cut.id)}
+                                            variant="destructive"
+                                            trigger={
+                                                <button
+                                                    className="p-1 hover:text-red-400 text-slate-500 transition-colors"
+                                                    onClick={(e) => { e.stopPropagation(); setDeleteConfirmationId(cut.id); }}
+                                                >
+                                                    <Trash2 size={12} />
+                                                </button>
+                                            }
+                                        />
+                                    </div>
                                 </div>
 
-                                <div className="flex-1 bg-gray-800 rounded-lg border border-gray-700 overflow-hidden hover:border-purple-500/50 transition-colors shadow-lg">
-                                    {/* Header / Script Preview */}
-                                    <div className="p-3 border-b border-gray-700 bg-gray-800/50 flex justify-between items-start">
-                                        <p className="text-sm text-gray-300 italic">"{cut.script}"</p>
-                                        <div className="flex gap-1">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-6 w-6 text-gray-400 hover:text-purple-400 hover:bg-gray-700"
-                                                title="Director's Cut (Refine)"
-                                                onClick={() => setModifyingCut(cut)}
-                                            >
-                                                <Sparkles size={14} />
-                                            </Button>
-                                            <ConfirmationDialog
-                                                open={deleteConfirmationId === cut.id}
-                                                onOpenChange={(open) => !open && setDeleteConfirmationId(null)}
-                                                title="Delete Scene?"
-                                                description="Are you sure you want to delete this scene?"
-                                                onConfirm={() => handleDeleteConfirm(cut.id)}
-                                                variant="destructive"
-                                                trigger={
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-6 w-6 text-gray-400 hover:text-red-400"
-                                                        onClick={() => setDeleteConfirmationId(cut.id)}
-                                                    >
-                                                        <Trash2 size={14} />
-                                                    </Button>
-                                                }
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* Visual Preview area */}
-                                    <div className="bg-black flex items-center justify-center relative group-hover:bg-gray-900 overflow-hidden">
+                                {/* Content Grid */}
+                                <div className="flex min-h-[160px]">
+                                    {/* Image Area */}
+                                    <div className={`w-1/2 bg-slate-900 relative flex items-center justify-center border-r border-slate-800 overflow-hidden`}>
                                         {cut.image_path ? (
-                                            <img src={cut.image_path} alt="Cut" className="max-w-full max-h-[400px] object-contain" />
+                                            <img src={cut.image_path} alt="Cut" className="w-full h-full object-cover" />
                                         ) : (
-                                            <div className="text-center p-8">
+                                            <div className="text-slate-600 flex flex-col items-center gap-2">
                                                 {generatingIds.has(cut.id) ? (
-                                                    <div className="flex flex-col items-center gap-2">
-                                                        <Loader2 className="animate-spin text-purple-500" />
-                                                        <p className="text-xs text-purple-500">Generating...</p>
-                                                    </div>
+                                                    <>
+                                                        <RefreshCw className="animate-spin text-purple-500" size={24} />
+                                                        <span className="text-[10px] text-purple-400">Rendering...</span>
+                                                    </>
                                                 ) : (
                                                     <>
-                                                        <ImageIcon size={32} className="mx-auto text-gray-600 mb-2" />
-                                                        <p className="text-xs text-gray-500 mb-2">No image generated</p>
+                                                        <ImageIcon size={32} className="opacity-30" />
+                                                        <span className="text-[10px] opacity-50">No Image</span>
                                                         <Button
-                                                            variant="outline"
+                                                            variant="ghost"
                                                             size="sm"
-                                                            onClick={() => handleGenerateImage(cut.id)}
-                                                            className="h-7 text-xs"
+                                                            onClick={(e) => { e.stopPropagation(); handleGenerateImage(cut.id); }}
+                                                            className="h-6 text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white mt-1 border border-slate-700"
                                                         >
-                                                            <Wand2 size={12} className="mr-1" /> Generate
+                                                            Generate
                                                         </Button>
                                                     </>
                                                 )}
                                             </div>
-
                                         )}
 
-                                        {/* Edit Button Overlay */}
-                                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                            <Button
-                                                variant="secondary"
-                                                size="sm"
-                                                onClick={() => {
-                                                    setActiveCut(cut.id);
-                                                    onEditCut();
-                                                }}
-                                            >
-                                                Edit in Canvas
-                                            </Button>
+                                        {/* Edit Overlay */}
+                                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                                            <div className="px-3 py-1.5 rounded-full bg-slate-900/80 border border-slate-700 text-xs font-bold text-white backdrop-blur-sm shadow-xl flex items-center gap-2">
+                                                Edit in Canvas <Maximize2 size={10} />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Script Area */}
+                                    <div className="w-1/2 p-4 flex flex-col">
+                                        <span className="text-[10px] uppercase text-slate-500 font-bold mb-2 tracking-wider">Visual Script</span>
+                                        <p className="text-sm text-slate-300 leading-relaxed font-serif italic line-clamp-4 flex-1">
+                                            "{cut.script}"
+                                        </p>
+                                        <div className="mt-4 pt-3 border-t border-slate-800/50 flex justify-between items-center">
+                                            <span className="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-400 border border-slate-700 font-mono">{cut.aspect_ratio || '1:1'}</span>
+                                            {cut.image_path && (
+                                                <span className="text-[10px] text-purple-400 flex items-center gap-1 font-bold">
+                                                    <Wand2 size={10} /> AI Ready
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         ))
                     )}
-                </div>
 
-                {/* Director Mode Area - Appears at the end of the list */}
-                {isDirectorMode ? (
-                    <div className="border-t border-gray-700 bg-gray-800/90 p-4 rounded-xl border border-purple-500/30 shadow-2xl">
-                        <div className="flex justify-between items-center mb-3">
-                            <h3 className="text-purple-400 font-semibold flex items-center gap-2">
-                                <Wand2 size={16} /> Director AI
-                            </h3>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                    setIsDirectorMode(false);
-                                    setDirectorOptions([]);
-                                    setScriptInput('');
-                                }}
-                                className="text-gray-400 hover:text-white"
-                            >
-                                Cancel
-                            </Button>
-                        </div>
+                    {/* Director Mode Area */}
+                    {isDirectorMode ? (
+                        <div className="border border-purple-500/30 bg-[#13131c] p-4 rounded-xl shadow-2xl relative z-20 animate-in fade-in slide-in-from-bottom-4">
+                            <div className="flex justify-between items-center mb-3">
+                                <h3 className="text-purple-400 font-bold text-sm flex items-center gap-2">
+                                    <Wand2 size={14} /> Director AI
+                                </h3>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                        setIsDirectorMode(false);
+                                        setDirectorOptions([]);
+                                        setScriptInput('');
+                                    }}
+                                    className="h-6 text-xs text-slate-500 hover:text-white"
+                                >
+                                    Cancel
+                                </Button>
+                            </div>
 
-                        <div className="flex gap-4">
-                            <div className="flex-1 space-y-3">
+                            <div className="space-y-3">
                                 <Textarea
-                                    placeholder="Describe the next scene (e.g., 'The hero looks up at the rainy sky, tears mixing with rain.')"
+                                    placeholder="Describe the next scene..."
                                     value={scriptInput}
                                     onChange={(e) => setScriptInput(e.target.value)}
-                                    className="bg-gray-900 border-gray-700 min-h-[80px]"
+                                    className="bg-[#0f0f16] border-slate-700 min-h-[80px] text-sm text-slate-200 focus:border-purple-500"
                                 />
                                 {!directorOptions.length && (
                                     <Button
                                         onClick={handleDirectorSuggest}
                                         disabled={isSuggesting || !scriptInput.trim()}
-                                        className="w-full bg-indigo-600 hover:bg-indigo-700"
+                                        className="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold h-9 text-xs shadow-lg shadow-purple-900/20"
                                     >
                                         {isSuggesting ? (
-                                            <><Loader2 size={16} className="mr-2 animate-spin" /> Directing...</>
+                                            <><Loader2 size={14} className="mr-2 animate-spin" /> Analysing Script...</>
                                         ) : (
-                                            "Get Suggestions"
+                                            "Get Visual Suggestions"
                                         )}
                                     </Button>
                                 )}
                             </div>
-                        </div>
 
-                        {/* Options Display */}
-                        {directorOptions.length > 0 && (
-                            <div className="mt-6 grid grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-2">
-                                {directorOptions.map((opt) => (
-                                    <div
-                                        key={opt.id}
-                                        className={`border border-gray-700 rounded-lg p-3 bg-gray-900 cursor-pointer hover:border-purple-500 transition-all hover:scale-105 active:scale-95 ${isRendering === opt.id ? 'ring-2 ring-purple-500 opacity-50 pointer-events-none' : ''}`}
-                                        onClick={() => handleOptionSelect(opt)}
-                                    >
-                                        <div className="aspect-[4/3] bg-gray-800 rounded mb-2 flex items-center justify-center text-gray-500 text-xs text-center p-2 relative overflow-hidden">
-                                            {/* Placeholder for the 'visual direction' thumbnail if we had one, for now text or icon */}
-                                            {isRendering === opt.id ? (
-                                                <Loader2 className="animate-spin text-purple-500" />
-                                            ) : (
-                                                <div className="flex flex-col items-center gap-1">
-                                                    <Clapperboard size={20} className="mb-1 opacity-50" />
-                                                    <span className="font-bold text-gray-400">{opt.label}</span>
-                                                </div>
-                                            )}
+                            {/* Options Display */}
+                            {directorOptions.length > 0 && (
+                                <div className="mt-4 grid grid-cols-2 gap-3 animate-in fade-in slide-in-from-bottom-2">
+                                    {directorOptions.map((opt) => (
+                                        <div
+                                            key={opt.id}
+                                            className={`border border-slate-700 rounded-lg p-3 bg-[#0f0f16] cursor-pointer hover:border-purple-500 transition-all hover:scale-[1.02] active:scale-[0.98] ${isRendering === opt.id ? 'ring-1 ring-purple-500 opacity-50 pointer-events-none' : ''}`}
+                                            onClick={() => handleOptionSelect(opt)}
+                                        >
+                                            <div className="flex items-start justify-between mb-2">
+                                                <span className="font-bold text-xs text-slate-200">{opt.label}</span>
+                                                <span className="text-[10px] text-slate-500 font-mono px-1.5 py-0.5 bg-slate-800 rounded">{opt.aspect_ratio}</span>
+                                            </div>
+                                            <p className="text-[10px] text-slate-400 line-clamp-3 leading-relaxed border-t border-slate-800 pt-2">{opt.description}</p>
                                         </div>
-                                        <h4 className="font-bold text-sm text-gray-200 mb-1">{opt.label}</h4>
-                                        <p className="text-xs text-gray-500 line-clamp-3">{opt.description}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                ) : (
-                    cuts.length > 0 && (
-                        <Button
-                            onClick={() => setIsDirectorMode(true)}
-                            className="w-full py-6 border-2 border-dashed border-gray-700 bg-gray-800/30 hover:bg-gray-800 hover:border-gray-500 text-gray-400"
-                        >
-                            <Plus size={20} className="mr-2" /> Add Next Scene
-                        </Button>
-                    )
-                )}
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        cuts.length > 0 && (
+                            <button
+                                onClick={() => setIsDirectorMode(true)}
+                                className="w-full py-4 border-2 border-dashed border-slate-800 rounded-xl text-slate-500 hover:text-white hover:border-slate-600 hover:bg-slate-900/30 transition-all flex items-center justify-center gap-2 text-sm font-bold"
+                            >
+                                <Plus size={16} /> Add Next Scene
+                            </button>
+                        )
+                    )}
+                </div>
             </div>
 
             {/* Mobile Viewer */}
@@ -446,8 +450,21 @@ export default function StoryboardView({ projectId, onEditCut }: StoryboardViewP
                 onUpdateCut={(cutId, newPath) => {
                     setCuts(prev => prev.map(c => c.id === cutId ? { ...c, image_path: newPath } : c));
                 }}
-                mode={isMobileViewerOpen ? 'review' : 'view'} // Defaulting to review mode for now as requested
+                mode={isMobileViewerOpen ? 'review' : 'view'}
             />
+
+            <style jsx global>{`
+                .custom-scrollbar::-webkit-scrollbar {
+                  width: 6px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-track {
+                  background: transparent;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb {
+                  background: #334155;
+                  border-radius: 3px;
+                }
+            `}</style>
         </div>
     );
 }
