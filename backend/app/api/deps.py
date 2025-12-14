@@ -3,7 +3,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from pydantic import ValidationError
-from sqlmodel import Session, create_engine
+from sqlmodel import Session
 from app.core.config import settings
 from app.core import security
 
@@ -11,7 +11,7 @@ reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/auth/login/access-token"
 )
 
-engine = create_engine(settings.DATABASE_URL.replace("postgresql+asyncpg", "postgresql"), echo=True)
+from app.db.engine import engine
 
 def get_session():
     with Session(engine) as session:
