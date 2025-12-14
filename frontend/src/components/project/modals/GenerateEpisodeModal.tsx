@@ -106,6 +106,7 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
         }, 1500); // Slower steps to match real API time roughly
 
         try {
+            console.log("Generating episode with:", formData);
             // Real API Call
             const response = await api.post('/episodes/generate-cuts', {
                 project_id: projectId,

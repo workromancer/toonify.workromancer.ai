@@ -179,6 +179,7 @@ class StoryCut(SQLModel, table=True):
     aspect_ratio: str
     
     # File Reference
+    image_path: Optional[str] = None # Direct URL/Path for MVP
     image_asset_id: Optional[UUID] = Field(foreign_key="asset.id", default=None)
     
     dialogues: List[dict] = Field(sa_column=Column(JSON), default=[]) # JSON List of {speaker, text}

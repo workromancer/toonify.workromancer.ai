@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import api from '@/lib/api';
 import ProjectHome from '@/components/project/ProjectHome';
 import { Character } from '@/components/project/CharacterCard';
@@ -15,6 +15,7 @@ interface Project {
 }
 
 export default function ProjectPage() {
+    const router = useRouter();
     const params = useParams();
     const projectId = params?.projectId as string;
     const [project, setProject] = useState<Project | null>(null);
@@ -72,8 +73,8 @@ export default function ProjectPage() {
 
     const handleEpisodeAdd = (newEpisode: any) => {
         setEpisodes([...episodes, newEpisode]);
-        // Redirect to editor
-        window.location.href = `/project/${projectId}/editor?episode_id=${newEpisode.id}`;
+        // Redirect to editor using router for SPA navigation
+        router.push(`/project/${projectId}/editor?episode_id=${newEpisode.id}`);
     };
 
     if (loading) {

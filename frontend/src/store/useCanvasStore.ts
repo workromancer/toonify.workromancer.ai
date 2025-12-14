@@ -55,12 +55,39 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     updateElement: (id, updates) => set((state) => ({
         elements: state.elements.map((el) => (el.id === id ? { ...el, ...updates } : el))
     })),
-    updateSelectedElement: (updates) => {
-        const { selectedId, elements } = get();
-        if (!selectedId) return;
-        set({
-            elements: elements.map(el => el.id === selectedId ? { ...el, ...updates } : el)
-        });
+    updateSelectedElement: async (updates) => {
+        const { selectedId, elements, activeCutId } = get();
+
+        // 1. Update Local State
+        if (selectedId) {
+            set({
+                elements: elements.map(el => el.id === selectedId ? { ...el, ...updates } : el)
+            });
+        }
+
+        // 2. Persist to Backend if activeCut exists
+        if (activeCutId) {
+            try {
+                // Map local updates to API fields
+                const apiUpdates: any = {};
+                if (updates.prompt) apiUpdates.script = updates.prompt; // Mapping prompt to script for now, or new field? StoryCut has script.
+                if (updates.content && updates.content.startsWith('http')) apiUpdates.image_path = updates.content;
+
+                // If we are updating a Cut property via Inspector (like Ratio)
+                if (updates.width && updates.height) {
+                    // Infer ratio
+                    const ratio = updates.width > updates.height ? "Wide" : updates.width < updates.height ? "Vertical" : "Square";
+                    apiUpdates.aspect_ratio = ratio;
+                }
+
+                if (Object.keys(apiUpdates).length > 0) {
+                    const api = (await import('@/lib/api')).default;
+                    await api.put(`/cuts/${activeCutId}`, apiUpdates);
+                }
+            } catch (e) {
+                console.error("Failed to sync cut update", e);
+            }
+        }
     },
     setElements: (elements) => set({ elements })
 }));

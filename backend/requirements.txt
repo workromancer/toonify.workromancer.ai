@@ -12,3 +12,5 @@ psycopg2-binary
 minio
 requests
 pydantic[email]
+alembic
+greenlet
