@@ -12,7 +12,7 @@ import EditProjectModal from './modals/EditProjectModal';
 import GenerateEpisodeModal from './modals/GenerateEpisodeModal';
 import ArtStyleSetupModal from './modals/ArtStyleSetupModal';
 import CharacterDetailModal from './modals/CharacterDetailModal';
-import { Plus, Sparkles, Clapperboard, Edit2, Palette, ArrowRight, Settings, Play, AlertCircle, Database } from 'lucide-react';
+import { Plus, Sparkles, Clapperboard, Edit2, Palette, ArrowRight, Settings, Play, AlertCircle, Database, ChevronDown, MoreVertical, LayoutTemplate } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { SectionLabel } from '@/components/ui/section-label';
 import ImageGeneratingPlaceholder from '@/components/ui/ImageGeneratingPlaceholder';
@@ -70,6 +70,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
     const [isArtStyleOpen, setIsArtStyleOpen] = useState(false);
     const [isViewStyleOpen, setIsViewStyleOpen] = useState(false);
     const [isCharacterDetailOpen, setIsCharacterDetailOpen] = useState(false);
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
     const { toast } = useToast();
     const router = useRouter();
@@ -216,23 +217,63 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
         }
     };
 
+    // Priority Logic for CTA
+    const getHeroAction = () => {
+        // Priority 1: Missing Settings
+        if (!project.genre || !project.worldview) {
+            return {
+                label: "Setup Project",
+                icon: <Settings className="mr-2 h-4 w-4" />,
+                onClick: () => setIsEditModalOpen(true),
+                variant: 'primary',
+                description: "Complete project settings to proceed"
+            };
+        }
+
+        // Priority 2: Missing Art Style
+        if (!project.style_preset) {
+            return {
+                label: "Select Art Style",
+                icon: <Palette className="mr-2 h-4 w-4" />,
+                onClick: () => setIsArtStyleOpen(true),
+                variant: 'primary',
+                description: "Choose an art style for your project"
+            };
+        }
+
+        // Priority 3: Missing or Failed Cover (Default Action)
+        // If cover is present, we still allow regeneration, but the "Prompt" implies
+        // "When AI Cover is missing" -> Generate.
+        // If it exists, we can show "Regenerate" or just "Generate" again.
+        return {
+            label: isCoverProcessing ? "Generating..." : "Generate AI Cover",
+            icon: <Sparkles className={cn("mr-2 h-4 w-4", isCoverProcessing && "animate-spin")} />,
+            onClick: handleGenerateCover,
+            disabled: isCoverProcessing,
+            variant: 'magic',
+            description: "Create a stunning cover image"
+        };
+    };
+
+    const heroAction = getHeroAction();
+
     return (
         <ProjectLayout projectId={project.id} projectTitle={project.title}>
-            <div className="flex h-full relative overflow-y-auto bg-[#0A0A0B]">
+            <div className="flex h-full relative overflow-y-auto bg-[#0A0A0B]" onClick={() => setIsMenuOpen(false)}>
                 {/* Main Content */}
                 <div className="flex-1 flex flex-col min-w-0">
                     {/* Hero Section */}
-                    <div className="relative w-full aspect-[21/9] max-h-[400px] bg-black group overflow-hidden">
+                    <div className="relative w-full aspect-[21/9] max-h-[400px] bg-black group overflow-visible">
                         <div
                             className={cn(
-                                "absolute inset-0 bg-cover bg-center transition-all duration-700",
+                                "absolute inset-0 bg-cover bg-center transition-all duration-700 overflow-hidden",
                                 isCoverProcessing && "opacity-50 filter blur-sm"
                             )}
                             style={{
                                 backgroundImage: project.thumbnail_url ? `url("${project.thumbnail_url}")` : undefined,
                             }}
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0B] via-[#0A0A0B]/60 to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0B] via-[#0A0A0B]/60 to-transparent pointer-events-none" />
 
                         {/* Status Overlay for Processing */}
                         {isCoverProcessing && (
@@ -259,45 +300,93 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                 </p>
                             </div>
 
-                            <div className="flex gap-3">
+                            <div className="flex items-center gap-2 relative">
+                                {/* Primary CTA */}
                                 <Button
                                     size="lg"
-                                    onClick={handleGenerateCover}
-                                    disabled={isCoverProcessing}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        heroAction.onClick();
+                                    }}
+                                    disabled={heroAction.disabled}
                                     className={cn(
-                                        "bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-sm transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1",
-                                        isCoverProcessing && "cursor-not-allowed opacity-70"
+                                        "h-12 px-6 text-base font-bold shadow-xl transition-all hover:shadow-2xl hover:-translate-y-1",
+                                        heroAction.variant === 'magic'
+                                            ? "bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-sm"
+                                            : "bg-white text-black hover:bg-gray-100",
+                                        heroAction.disabled && "cursor-not-allowed opacity-70"
                                     )}
                                 >
-                                    <Sparkles className={cn("mr-2 h-4 w-4", isCoverProcessing && "animate-spin")} />
-                                    {isCoverProcessing ? "Generating..." : "Generate AI Cover"}
+                                    {heroAction.icon}
+                                    {heroAction.label}
                                 </Button>
-                                <Button
-                                    size="lg"
-                                    onClick={() => setIsEditModalOpen(true)}
-                                    className="bg-white text-black hover:bg-gray-100 transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1"
-                                >
-                                    <Settings className="mr-2 h-4 w-4" />
-                                    Project Settings
-                                </Button>
+
+                                {/* Tooltip Menu Trigger */}
+                                <div className="relative">
+                                    <Button
+                                        size="icon"
+                                        className="h-12 w-12 bg-black/40 hover:bg-black/60 text-white border border-white/10 backdrop-blur-md rounded-lg"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setIsMenuOpen(!isMenuOpen);
+                                        }}
+                                    >
+                                        <MoreVertical size={20} />
+                                    </Button>
+
+                                    {/* Dropdown Menu */}
+                                    {isMenuOpen && (
+                                        <div className="absolute bottom-full right-0 mb-2 w-56 bg-[#18181B] border border-white/10 rounded-xl shadow-2xl overflow-hidden py-1 z-50 animate-in fade-in zoom-in-95 duration-200">
+                                            <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-white/5 bg-white/5">
+                                                Project Controls
+                                            </div>
+
+                                            <button
+                                                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-white/10 transition-colors text-left"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setIsEditModalOpen(true);
+                                                    setIsMenuOpen(false);
+                                                }}
+                                            >
+                                                <Settings size={16} />
+                                                Project Settings
+                                            </button>
+
+                                            <button
+                                                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-white/10 transition-colors text-left"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleStyleClick();
+                                                    setIsMenuOpen(false);
+                                                }}
+                                            >
+                                                <Palette size={16} />
+                                                {project.style_preset ? 'View Art Style' : 'Select Art Style'}
+                                            </button>
+
+                                            <button
+                                                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-white/10 transition-colors text-left"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleGenerateCover();
+                                                    setIsMenuOpen(false);
+                                                }}
+                                                disabled={isCoverProcessing}
+                                            >
+                                                <LayoutTemplate size={16} />
+                                                {project.thumbnail_url ? 'Regenerate Cover' : 'Generate Cover'}
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
 
-                        {/* Quick Actions / Stats Overlay */}
-                        <div className="absolute top-8 right-8 flex flex-col items-end gap-3 z-20">
-                            <div className="flex items-center gap-2 p-1 rounded-full bg-black/20 backdrop-blur-md border border-white/10">
-                                <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    className="w-8 h-8 rounded-full text-gray-400 hover:text-white hover:bg-white/10"
-                                    title="Art Style"
-                                    onClick={handleStyleClick}
-                                >
-                                    <Palette size={16} />
-                                </Button>
-                            </div>
+                        {/* Top Right Stats / Sync Status */}
+                        <div className="absolute top-8 right-8 flex flex-col items-end gap-3 z-20 pointer-events-none">
                             {/* Sync Status */}
-                            <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/5 text-[10px] font-mono text-gray-300 backdrop-blur-sm">
+                            <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/40 border border-white/10 text-[10px] font-mono text-gray-300 backdrop-blur-md shadow-lg">
                                 <Database size={10} className="text-[#4a4aff]" /> Synced
                             </span>
                         </div>
