@@ -35,6 +35,7 @@ interface Project {
     cover_image_status?: string | null;
     subtitle?: string;
     genre?: string;
+    genre_id?: string | null;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     worldview?: any;
     art_style?: string;

@@ -12,6 +12,7 @@ interface Project {
     description?: string;
     style_preset: string;
     thumbnail_url?: string;
+    genre_id?: string | null;
 }
 
 export default function ProjectPage() {

@@ -25,7 +25,7 @@ interface Project {
     description?: string;
     style_preset: string;
     worldview?: any;
-    genre_id?: string;
+    genre_id?: string | null;
     genre?: string;
 }
 
@@ -45,7 +45,7 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate }:
         style_preset: '',
         genre_id: ''
     });
-    
+
     // Detailed Worldview Data
     const [tones, setTones] = useState<string[]>([]);
     const [keyFeatures, setKeyFeatures] = useState<string[]>([]);
@@ -115,7 +115,7 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate }:
                 subtitle: formData.subtitle,
                 description: formData.description,
                 worldview: worldviewUpdate,
-                genre_id: formData.genre_id
+                genre_id: formData.genre_id || null
                 // Note: style_preset typically updated via setup, but can safeguard here if needed
             });
             onUpdate(response.data);
@@ -130,7 +130,7 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate }:
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-2xl bg-[#0A0A0B] text-white border-gray-800 p-0 overflow-hidden gap-0 h-[85vh] flex flex-col">
-                
+
                 {/* Header */}
                 <div className="p-6 border-b border-gray-800 flex-none">
                     <DialogHeader>
@@ -138,42 +138,42 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate }:
                             <SettingsIcon className="text-gray-400" /> Project Settings
                         </DialogTitle>
                         <DialogDescription className="text-gray-400">
-                             Manage metadata, genre, and storytelling elements.
+                            Manage metadata, genre, and storytelling elements.
                         </DialogDescription>
                     </DialogHeader>
                 </div>
 
                 {/* Form Body - Scrollable */}
                 <div className="p-6 flex-1 overflow-y-auto custom-scrollbar space-y-6">
-                    
+
                     {/* Basic Info Section */}
                     <div className="space-y-4">
                         <SectionLabel icon={<FileText size={14} />}>Basic Info</SectionLabel>
                         <div className="grid gap-4">
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="title" className="text-right text-gray-300">Title</Label>
-                                <Input 
-                                    id="title" 
-                                    value={formData.title} 
-                                    onChange={(e) => setFormData({ ...formData, title: e.target.value })} 
+                                <Input
+                                    id="title"
+                                    value={formData.title}
+                                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                                     className="col-span-3"
                                 />
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="subtitle" className="text-right text-gray-300">Subtitle</Label>
-                                <Input 
-                                    id="subtitle" 
-                                    value={formData.subtitle} 
-                                    onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })} 
+                                <Input
+                                    id="subtitle"
+                                    value={formData.subtitle}
+                                    onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
                                     className="col-span-3"
                                 />
                             </div>
-                             <div className="grid grid-cols-4 items-center gap-4">
+                            <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="genre" className="text-right text-gray-300">Genre</Label>
                                 <div className="col-span-3">
-                                    <Select 
-                                        value={formData.genre_id || "default"} 
-                                        onValueChange={(val: string) => setFormData({...formData, genre_id: val === "default" ? "" : val})}
+                                    <Select
+                                        value={formData.genre_id || "default"}
+                                        onValueChange={(val: string) => setFormData({ ...formData, genre_id: val === "default" ? "" : val })}
                                     >
                                         <SelectTrigger className="bg-black/20 border-white/10 text-white w-full">
                                             <SelectValue placeholder="Select Genre" />
@@ -194,11 +194,11 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate }:
                     {/* Worldview Section */}
                     <div className="space-y-4">
                         <SectionLabel icon={<Layers size={14} />}>Worldview & Tone</SectionLabel>
-                        
+
                         {/* Description */}
                         <div>
                             <Label className="mb-2 block text-gray-300">World Description</Label>
-                            <Textarea 
+                            <Textarea
                                 value={formData.worldview_content}
                                 onChange={(e) => setFormData({ ...formData, worldview_content: e.target.value })}
                                 placeholder="Describe the setting..."
@@ -208,7 +208,7 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate }:
                         {/* Tones */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <Label className="mb-2 block text-gray-300 flex items-center gap-2"><Tag size={12}/> Tones</Label>
+                                <Label className="mb-2 block text-gray-300 flex items-center gap-2"><Tag size={12} /> Tones</Label>
                                 <div className="flex flex-wrap gap-2 p-3 rounded-lg bg-black/20 border border-white/5 min-h-[50px]">
                                     {tones.length > 0 ? tones.map((t, i) => (
                                         <Badge key={i} variant="tag">
@@ -218,10 +218,10 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate }:
                                 </div>
                                 <p className="text-[10px] text-gray-500 mt-1">Tones are generated by AI during concept phase.</p>
                             </div>
-                            
+
                             {/* Key Features */}
-                             <div>
-                                <Label className="mb-2 block text-gray-300 flex items-center gap-2"><Sparkles size={12}/> Key Features</Label>
+                            <div>
+                                <Label className="mb-2 block text-gray-300 flex items-center gap-2"><Sparkles size={12} /> Key Features</Label>
                                 <div className="flex flex-col gap-2 p-3 rounded-lg bg-black/20 border border-white/5 min-h-[50px]">
                                     {keyFeatures.length > 0 ? keyFeatures.map((f, i) => (
                                         <div key={i} className="flex items-start gap-2 text-xs text-gray-300">
@@ -237,8 +237,8 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate }:
 
                 {/* Footer */}
                 <div className="p-6 border-t border-gray-800 bg-[#0F0F12] flex justify-end gap-3 flex-none">
-                     <Button type="button" variant="dark" onClick={onClose}>Cancel</Button>
-                     <Button type="submit" variant="glow" onClick={handleSubmit} disabled={loading}>
+                    <Button type="button" variant="dark" onClick={onClose}>Cancel</Button>
+                    <Button type="submit" variant="glow" onClick={handleSubmit} disabled={loading}>
                         {loading ? 'Saving...' : 'Save Changes'}
                     </Button>
                 </div>
@@ -249,21 +249,21 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate }:
 }
 
 function SettingsIcon(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.35a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
-      <circle cx="12" cy="12" r="3" />
-    </svg>
-  )
+    return (
+        <svg
+            {...props}
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        >
+            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.35a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+            <circle cx="12" cy="12" r="3" />
+        </svg>
+    )
 }
