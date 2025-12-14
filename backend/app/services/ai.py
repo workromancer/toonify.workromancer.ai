@@ -33,7 +33,7 @@ class AIService:
             self.model_config = {
                 "style": "gemini-2.5-flash",
                 "worldview": "gemini-3-pro-preview",
-                "director": "gemini-3-pro-preview",
+                "director": "gemini-2.5-pro",
                 "image": "gemini-3-pro-image-preview",
                 "embedding": "gemini-embedding-001"
             } 
@@ -131,8 +131,9 @@ class AIService:
              raise Exception("AI Service not initialized")
 
         prompt = f"""
-        You are an expert fantasy/sci-fi world builder.
+        You are an expert webtoon scenario writer proficient in all genres.
         Based on the following worldview description and project context, create 3 distinct directions/variations for this world.
+        The 3 options MUST be clearly distinct in style, mood, and narrative focus from each other.
         Each option should have a catchy title, a short summary, and a detailed enhanced description.
         
         Project Context:{context_str}
@@ -565,7 +566,7 @@ class AIService:
         """
         try:
             response = self.client.models.generate_content(
-                model=self.model_config["worldview"],
+                model="gemini-2.5-pro",
                 contents=prompt,
                 config=types.GenerateContentConfig(response_mime_type="application/json")
             )
@@ -621,8 +622,8 @@ class AIService:
         if not self.client:
              raise Exception("AI Service not initialized")
 
-        # User requested "gemini-2.5-flash-lite".
-        target_model = "gemini-2.5-flash-lite"
+        # User requested "gemini-2.5-flash" as primary, "gemini-2.5-flash-lite" as fallback.
+        target_model = "gemini-2.5-flash"
 
         prompt = ""
         if suggestion_type == "name":
@@ -670,11 +671,11 @@ class AIService:
                 return {"suggestion": response.text.strip()}
                 
         except Exception as e:
-            # Fallback to standard model if lite fails (likely due to name mismatch)
-            print(f"Suggestion Error with {target_model}: {e}. Retrying with gemini-2.0-flash.")
+            # Fallback to lite model
+            print(f"Suggestion Error with {target_model}: {e}. Retrying with gemini-2.5-flash-lite.")
             try:
                 response = self.client.models.generate_content(
-                    model="gemini-2.0-flash",
+                    model="gemini-2.5-flash-lite",
                     contents=prompt,
                      config=types.GenerateContentConfig(
                         response_mime_type="application/json" if suggestion_type in ["visuals", "name"] else "text/plain"

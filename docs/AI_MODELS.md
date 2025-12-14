@@ -1,0 +1,369 @@
+# AI 모델 & 프롬프트 문서 (AI Models & Prompts)
+
+이 문서는 Toonify 백엔드에서 사용되는 AI 모델, 각 기능에 대해 구성된 프롬프트, 그리고 전달되는 파라미터를 정리한 문서입니다.
+
+## 헬퍼 모델 구성 (Helper Models Configuration)
+
+`AIService` (`backend/app/services/ai.py`)에 설정된 모델 목록입니다:
+
+| 키 (Key) | 모델 ID (Model ID) | 용도 (Purpose) |
+| :--- | :--- | :--- |
+| `style` | `gemini-2.5-flash` | 화풍(Art Style) 추천에 최적화됨 |
+| `worldview` | `gemini-3-pro-preview` | 세계관 구축, 서사 생성, 캐릭터 확장(Variation) |
+| `director` | `gemini-2.5-pro` | 스토리보드 연출, 컷 기획, 시각적 디렉팅 |
+| `image` | `gemini-3-pro-image-preview` | 이미지 생성 및 수정 |
+| `embedding` | `gemini-embedding-001` | RAG/검색을 위한 텍스트 임베딩 |
+| *(Lite)* | `gemini-2.5-flash-lite` | 빠른 캐릭터 제안 (이름, 비주얼 키워드 등) |
+| *(Analysis)* | `gemini-2.5-flash` | 심층 캐릭터 분석 (역할/아키타입) |
+
+---
+
+## 1. 프로젝트 & 세계관 (Project & Worldview)
+
+### 세계관 확장 (Worldview Augmentation)
+**메서드:** `augment_worldview`
+**모델:** `gemini-3-pro-preview`
+
+**파라미터:**
+- `description`: 사용자의 초기 아이디어.
+- `title` (선택): 프로젝트 제목.
+- `subtitle` (선택): 프로젝트 부제목.
+- `genres` (선택): 장르 목록.
+
+**프롬프트 구조:**
+```text
+You are an expert webtoon scenario writer proficient in all genres.
+Based on the following worldview description and project context, create 3 distinct directions/variations for this world.
+The 3 options MUST be clearly distinct in style, mood, and narrative focus from each other.
+Each option should have a catchy title, a short summary, and a detailed enhanced description.
+
+Project Context:
+Project Title: {title}
+Subtitle: {subtitle}
+Genres: {genres}
+
+Original Description: "{description}"
+
+Return ONLY a JSON object with the following structure:
+{
+    "options": [
+        {
+            "id": "option_1",
+            "title": "Title",
+            "tone": ["Tone 1", "Tone 2"], 
+            "key_features": ["Feature 1", "Feature 2"],
+            "description": "Short summary",
+            "content": "Full detailed enhanced worldview description..."
+        },
+        ...
+    ]
+}
+```
+
+### 프로젝트 커버 생성 (Project Cover Generation)
+**메서드:** `generate_project_cover_image`
+**모델:** `gemini-3-pro-image-preview`
+
+**파라미터:**
+- `title`: 프로젝트 제목.
+- `genre`: 장르.
+- `worldview`: 전체 세계관 설명.
+- `style`: 화풍 이름.
+- `tones` (선택): 톤(Tone) 목록.
+- `style_ref_url` (선택): 스타일 참조 이미지 URL.
+- `character_image_urls` (선택): 포함할 캐릭터 이미지 URL 목록.
+
+**프롬프트 구조:**
+```text
+Create a high-quality webtoon cover illustration.
+
+Title: {title}
+Genre: {genre}
+Art Style: {style}
+Tone: {tones}
+
+Worldview/Setting:
+{worldview}
+
+Requirements:
+- The image should be eye-catching and representative of the genre and story.
+- Use the user-defined art style: {style}.
+- Aspect Ratio: Wide (16:9).
+- Composition: Cinematic, showing the atmosphere.
+- No text overlay.
+
+(If character references provided):
+- INCLUDE the characters provided in the reference images. Place them naturally in the scene according to the worldview.
+
+(If style reference provided):
+- IMPORTANT: Mimic the art style of the first provided image exactly.
+```
+*참고: 참조 이미지가 제공되면 멀티모달(Multimodal) 입력을 사용합니다.*
+
+---
+
+## 2. 화풍 (Art Style)
+
+### 스타일 추천 (Style Recommendation)
+**메서드:** `recommend_style`
+**모델:** `gemini-2.5-flash`
+
+**파라미터:**
+- `description`: 세계관 또는 스토리 설명.
+
+**프롬프트 구조:**
+```text
+You are an expert art director for webtoons.
+Based on the following story or worldview description, recommend 3 distinct art styles that would suit the project.
+
+Description: "{description}"
+
+Return ONLY a JSON object with the following structure:
+{
+    "options": [
+        {
+            "id": "style_A",
+            "label": "Style Name",
+            "description": "Why this fits the story.",
+            "sample_image_url": "..." (Ignored/Re-generated)
+        },
+        ...
+    ]
+}
+```
+
+**후속 이미지 생성 (Follow-up Image Generation):**
+각 추천 스타일에 대해 샘플 이미지를 생성합니다:
+`Prompt`: "A high-quality representative illustration of the art style: {style_label}. {style_desc} Visual composition: portrait or character focus."
+`Model`: `gemini-3-pro-image-preview` (3:4 비율)
+
+---
+
+## 3. 캐릭터 (Characters)
+
+### 캐릭터 확장/변형 (Character Augmentation)
+**메서드:** `augment_character_text`
+**모델:** `gemini-3-pro-preview`
+
+**파라미터:**
+- `name`: 캐릭터 이름.
+- `tags`: 외모 태그 목록.
+- `mood`: 성격/분위기 키워드.
+- `style`: 화풍.
+- `project_context`: 제목, 장르, 세계관.
+
+**프롬프트 구조:**
+```text
+You are a character design expert for {style} webtoons.
+Based on the initial concept and the project context, create 3 distinct character profile variations that fit the world.
+
+Project Context:
+{project_context}
+
+Input Name: {name}
+Initial Tags: {tags}
+Mood: {mood}
+
+For each option, provide:
+- Unique Name
+- Age
+- Personality
+- Features
+- Pros/Cons
+- Bio (Origin, Goals, Quirk)
+- Visual Description
+
+Return ONLY a JSON object...
+```
+
+### 캐릭터 제안 (Character Suggestions)
+**메서드:** `get_character_suggestion`
+**모델:** `gemini-2.5-flash` (실패 시 `gemini-2.5-flash-lite`로 폴백)
+
+**파라미터:**
+- `suggestion_type`: "name" (이름), "visuals" (비주얼), "lore" (설정).
+- `project_context`: 프로젝트 상세 정보.
+- `current_data`: 현재 컨텍스트 딕셔너리 (이름, 나이 등).
+
+**프롬프트 요약:**
+- **이름 (Name)**: "Suggest a creative character name and a suitable age fitting for this Webtoon Project. Project Context: {context}..."
+- **비주얼 (Visuals)**: "Suggest 5-7 visual appearance keywords/tags... Character Name: {name}..."
+- **설정 (Lore)**: "Write a compelling, short character description/lore (2-3 sentences)... Archetype: {role}..."
+
+### 캐릭터 분석 (Character Analysis - Archetype)
+**메서드:** `analyze_character_concept`
+**모델:** `gemini-2.5-flash`
+
+**파라미터:**
+- `project_context`: 프로젝트 상세 정보.
+- `name`, `age`, `visual_keywords`, `personality`.
+
+**프롬프트 구조:**
+```text
+Analyze the following character concept within the provided Project Worldview and suggest the best fitting Role (Archetype) and a unique background story (Lore).
+
+Project Context: {project_context}
+Character Concept: ...
+
+Available Roles: Protagonist, Antagonist, Second Lead, Scene Stealer.
+
+Task:
+1. Select the BEST fitting Role.
+2. Write a unique "Lore".
+3. Suggest stats (0-100) for Strength, Intelligence, Charisma, Luck, Empathy, Leadership.
+
+Return ONLY a JSON object...
+```
+
+### 캐릭터 시트 생성 (Character Sheet Generation)
+**메서드:** `generate_character_sheet`
+**모델:** `gemini-3-pro-image-preview`
+
+**파라미터:**
+- `name`: 캐릭터 이름.
+- `description`: 상세 비주얼 설명.
+- `style`: 화풍.
+
+**프롬프트 구조:**
+```text
+Create a Character Reference Sheet for a {style} webtoon character named {name}.
+
+Character Description:
+{description}
+
+Composition Requirements:
+- Vertical Layout (9:16 Portrait aspect ratio).
+- TOP HALF: High-quality detailed Portrait/Close-up.
+- BOTTOM HALF: Horizontally divided into 4 equal vertical sections (outfits/poses).
+- Background: Pure white, empty, whitespace.
+- Style: {style}.
+
+NEGATIVE PROMPT: Do NOT include any text, logos, watermarks, signature, charts, buildings, scenery, trees, furniture, or complex background.
+```
+
+---
+
+## 4. 에피소드 & 스토리보드 (Episodes & Storyboard)
+
+### 에피소드 아이디어 (Episode Ideas)
+**메서드:** `generate_episode_ideas`
+**모델:** `gemini-2.5-pro`
+
+**파라미터:**
+- `project_title`, `worldview`.
+- `recent_episodes`: 최근 3개 에피소드 요약.
+
+**프롬프트 구조:**
+```text
+You are a webtoon writer.
+Project: {project_title}
+Worldview: {worldview}
+Recent Episodes: {recent_episodes}
+
+Propose 3 distinct episode ideas for the next chapter.
+Return ONLY JSON...
+```
+
+### 초기 컷 기획 (Initial Cuts Planning)
+**메서드:** `generate_initial_cuts`
+**모델:** `gemini-2.5-pro` (Director)
+
+**파라미터:**
+- `episode_title`, `summary`.
+- `style`: 화풍.
+- `num_cuts`: 컷 수 (기본 6개).
+
+**프롬프트 구조:**
+```text
+Plan a {num_cuts}-cut webtoon episode.
+Title: {episode_title}
+Summary: {summary}
+Style: {style}
+
+For each cut, determine:
+- Script (Visual Description)
+- Dialogues
+- Panel Type (Wide, Vertical, Square)
+
+Return ONLY JSON...
+```
+
+### 시각 연출 옵션 (Visual Direction Options)
+**메서드:** `generate_direction_options`
+**모델:** `gemini-2.5-pro` (Director)
+
+**파라미터:**
+- `script`: 씬 스크립트.
+- `character_context`: (선택) 캐릭터 상세 정보.
+
+**프롬프트 구조:**
+```text
+You are a professional webtoon director. 
+Analyze the following script and suggest 3 distinct visual direction options (camera angle, composition, mood).
+
+Script: "{script}"
+{character_context}
+
+Return ONLY a JSON object...
+```
+
+### 패널 이미지 생성 - 스마트 (Panel Image Generation - Smart)
+**메서드:** `generate_panel_image`
+**모델:** `gemini-3-pro-image-preview`
+
+**파라미터:**
+- `prompt`: 씬 설명.
+- `style_ref_url`: 프로젝트 스타일 참조 이미지.
+- `character_data`: 캐릭터 참조 이미지 목록.
+- `prev_scene_url`: 연속성을 위한 이전 씬 이미지.
+
+**프롬프트 구조:**
+```text
+Create a high-quality webtoon panel.
+
+Scene Description:
+{prompt}
+
+Requirements:
+- Match the art style of the provided Style Reference.
+- Maintain visual consistency with the Previous Scene.
+- Include the specific characters provided.
+
+[Multimodal Inputs appended: Style Ref, Prev Scene, Character Refs]
+```
+
+### 단순 컷 이미지 - 폴백/빠른생성 (Simple Cut Image)
+**메서드:** `bg_generate_cut_image` (`endpoints/project_workflow.py` 내부) -> `generate_image` 호출
+**모델:** `gemini-3-pro-image-preview`
+
+**파라미터:**
+- `cut.script`: 스크립트 텍스트.
+- `project.art_style`: 화풍.
+
+**프롬프트 구조:**
+```text
+{cut.script}, Style: {project.art_style}
+```
+
+---
+
+## 5. 이미지 유틸리티 (Image Utilities)
+
+### 일반 이미지 생성 (General Image Generation)
+**메서드:** `generate_image`
+**모델:** `gemini-3-pro-image-preview`
+
+**파라미터:**
+- `prompt`: 텍스트 설명.
+- `width`/`height`: 비율 결정 (1:1, 3:4, 4:3, 16:9, 9:16).
+
+### 이미지 수정 (Image Modification)
+**메서드:** `modify_image`
+**모델:** `gemini-3-pro-image-preview`
+
+**파라미터:**
+- `original_image_url`: 원본 이미지.
+- `instruction`: 수정 지시 사항 텍스트.
+
+**프롬프트 구조:**
+Input: `[Image, Text("Edit this image: {instruction}")]`
