@@ -3,7 +3,10 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { toast } from '@/components/ui/toaster';
 
 // Environment variable for API URL or default to localhost
-const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+import { config } from '@/lib/config';
+
+// Environment variable for API URL or default to localhost
+const API_URL = config.API_URL;
 
 const api = axios.create({
     baseURL: API_URL,
