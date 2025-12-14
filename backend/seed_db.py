@@ -16,7 +16,7 @@ def seed():
                 session.refresh(user)
                 
                 # Create default workspace
-                workspace = Workspace(name="Test Workspace", owner_id=user.id)
+                workspace = Workspace(name="Test Workspace", owner_id=user.id, credits=10000)
                 session.add(workspace)
                 session.commit()
                 session.refresh(workspace)
@@ -63,10 +63,18 @@ def seed():
                 # Need workspace id
                 workspace = session.exec(select(Workspace).where(Workspace.owner_id == user.id)).first()
                 if not workspace:
-                     workspace = Workspace(name="Test Workspace", owner_id=user.id)
+                     workspace = Workspace(name="Test Workspace", owner_id=user.id, credits=10000)
                      session.add(workspace)
                      session.commit()
                      session.refresh(workspace)
+                
+                # Enforce 10000 credits for test account
+                if workspace.credits < 10000:
+                    workspace.credits = 10000
+                    session.add(workspace)
+                    session.commit()
+                    session.refresh(workspace)
+                    print("Enforced 10000 credits for Test Workspace")
                 
                 # Use Fantasy as default for test project
                 default_genre_id = genre_map.get("Fantasy").id if "Fantasy" in genre_map else None

@@ -52,7 +52,7 @@ def generate_scene_structure(
     """
     # 1. Billing Check & Deduction
     workspace_id = get_workspace_id(session, current_user_id, request.project_id)
-    billing_service.deduct_credits(session, workspace_id, UUID(current_user_id), "director_suggestion")
+    billing_service.deduct_credits(session, workspace_id, UUID(current_user_id), "generate_direction_options")
 
     try:
         # Context Gathering
@@ -141,7 +141,7 @@ def modify_scene(
     # Implementation Plan says "Director's Cut" might have its own cost, assuming 'image_generation' or 'upscale' or custom.
     # Let's use 'image_generation' for modify.
     workspace_id = get_workspace_id(session, current_user_id, request.project_id)
-    billing_service.deduct_credits(session, workspace_id, UUID(current_user_id), "image_generation")
+    billing_service.deduct_credits(session, workspace_id, UUID(current_user_id), "modify_image")
 
     try:
         image_bytes = ai_service.modify_image(request.original_image_url, request.instruction)
@@ -168,7 +168,7 @@ def render_scene(
     """
     # 1. Billing Check & Deduction
     workspace_id = get_workspace_id(session, current_user_id, request.project_id)
-    billing_service.deduct_credits(session, workspace_id, UUID(current_user_id), "image_generation")
+    billing_service.deduct_credits(session, workspace_id, UUID(current_user_id), "generate_panel_image")
 
     try:
         # In a real app, we would upload to GCS and return URL.

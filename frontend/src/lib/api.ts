@@ -58,6 +58,12 @@ api.interceptors.response.use(
             } else if (status === 404) {
                 title = "Not Found";
                 message = "The requested resource was not found.";
+            } else if (status === 402) {
+                title = "Insufficient Credits";
+                message = "You don't have enough credits for this action. Please recharge.";
+                if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('open-recharge-modal'));
+                }
             } else if (status === 422) {
                 title = "Validation Error";
                 if (data.detail && Array.isArray(data.detail)) {

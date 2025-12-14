@@ -7,6 +7,7 @@ from app.api import deps
 from app.core import security
 from app.models import Project, Workspace, WorkspaceMember, User, Character, Genre, Asset
 from app.services.ai import ai_service
+from app.services.billing import billing_service
 from pydantic import BaseModel, root_validator
 from datetime import datetime
 from app.services.storage import storage
@@ -47,29 +48,12 @@ class ProjectOut(BaseModel):
 
     @root_validator(pre=True)
     def resolve_fields(cls, values):
-        # Handle SQLModel object or dict
-        # Ensure we extract values correctly
-        
-        # If 'values' is an ORM model
         if hasattr(values, "genre") and values.genre:
             values.genre_name = values.genre.name
-            # If the validator expects 'genre' field to be the name
-            # We can't easily mutate 'values' if it's an object unless we convert to dict.
-            # But Pydantic 'from_orm' usually handles mapping.
-            # Let's rely on manual mapping in response or property access if possible.
-            # Actually, simpler: define properties
-            pass
         return values
         
     class Config:
         orm_mode = True
-
-# Helper to map Project to ProjectOut manually if needed, or rely on ORM
-# We will intercept the response to ensure genre name and thumbnail_url are populated.
-# Since we can't easily add logic to Pydantic v1 ORM mode for computed fields without properties on model,
-# We will update the Project model to have properties or handle it in the endpoint.
-# Let's add properties to Project model? No, that's in models.py.
-# I'll modify the endpoint return values to ensure they are dicts with correct data.
 
 class ProjectDetailOut(ProjectOut):
     characters: List[Any] = []
@@ -160,11 +144,8 @@ def list_projects(
         
         # Resolve Thumbnail
         thumb = None
-        # Explicitly load asset if needed or access lazy
-        # Note: Accessing p.genre might trigger lazy load if session is active.
         if p.thumbnail_asset_id:
-             # Just in case it's not loaded
-             if not p.thumbnail_asset: # Attempt to access
+             if not p.thumbnail_asset: 
                  pass 
              thumb = p.thumbnail_asset.file_url if p.thumbnail_asset else None
         
@@ -196,14 +177,13 @@ def create_project(
         
         workspace_id = member.workspace_id
 
-        # Handle worldview: Project model expects dict
+        # Handle worldview
         final_worldview = project_in.worldview
         if isinstance(final_worldview, str):
             final_worldview = {"content": final_worldview, "title": f"{project_in.title} World", "tone": []}
         elif isinstance(final_worldview, dict):
              if "tone" not in final_worldview:
                  final_worldview["tone"] = []
-             # Ensure tone is list if it's string (legacy?)
              if isinstance(final_worldview.get("tone"), str):
                   final_worldview["tone"] = [final_worldview["tone"]]
 
@@ -221,7 +201,6 @@ def create_project(
         session.commit()
         session.refresh(project)
         
-        # Prepare response
         p_dict = project.dict()
         p_dict['genre'] = project.genre.name if project.genre else None
         p_dict['thumbnail_url'] = project.thumbnail_asset.file_url if project.thumbnail_asset else None
@@ -234,6 +213,7 @@ def create_project(
 @router.post("/worldview/augment")
 def augment_worldview(
     *,
+    session: Session = Depends(deps.get_session),
     request: WorldviewAugmentRequest,
     current_user_id: str = Depends(deps.get_current_user_id),
 ) -> Any:
@@ -241,6 +221,14 @@ def augment_worldview(
     Augment the worldview description using AI.
     """
     try:
+        # Deduct Credits (Cost: 5)
+        ws_statement = select(WorkspaceMember).where(WorkspaceMember.user_id == current_user_id)
+        member = session.exec(ws_statement).first()
+        if not member:
+             raise HTTPException(status_code=404, detail="No workspace found for user.")
+        
+        billing_service.deduct_credits(session, member.workspace_id, UUID(current_user_id), "augment_worldview")
+
         result = ai_service.augment_worldview(
             description=request.description,
             title=request.title,
@@ -248,6 +236,8 @@ def augment_worldview(
             genres=request.genres
         )
         return result
+    except HTTPException as he:
+        raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -274,15 +264,6 @@ def get_project(
     p_dict['genre'] = project.genre.name if project.genre else None
     p_dict['thumbnail_url'] = project.thumbnail_asset.file_url if project.thumbnail_asset else None
     p_dict['cover_image_status'] = project.cover_image_status
-    
-    # ProjectDetailOut needs characters (serialized)
-    # The default simple serialization might work if characters are loaded?
-    # Actually ProjectDetailOut defines characters: List[Any].
-    # p_dict might not include characters if we called .dict().
-    # .dict() on SQLModel only includes fields, not relationships unless we set exclude_unset=False etc?
-    # Relationships are not included in .dict() by default usually.
-    # We should populate characters manually.
-    
     p_dict['characters'] = project.characters
     
     return p_dict
@@ -308,10 +289,8 @@ def update_project(
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
-    # Update fields
     project_data = project_in.dict(exclude_unset=True)
     
-    # Handle worldview tone normalization if present
     if 'worldview' in project_data and project_data['worldview']:
          wv = project_data['worldview']
          if isinstance(wv, dict):
@@ -356,21 +335,22 @@ def generate_cover(
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
-    # Extract worldview content
+    # Deduct Credits (Cost: 15)
+    billing_service.deduct_credits(session, project.workspace_id, UUID(current_user_id), "generate_project_cover_image")
+
     wv_content = ""
     tones = []
     if project.worldview:
         if isinstance(project.worldview, dict):
              wv_content = project.worldview.get("content", "") or project.worldview.get("description", "")
              tones = project.worldview.get("tone", [])
-             if isinstance(tones, str): # Legacy check
+             if isinstance(tones, str):
                  tones = [tones]
         else:
              wv_content = str(project.worldview)
     
     genre_name = project.genre.name if project.genre else "Fantasy"
     
-    # Fetch Characters for Multimodal Input (Max 6)
     char_statement = select(Character).where(Character.project_id == project.id).limit(6)
     chars = session.exec(char_statement).all()
     char_urls = []
@@ -380,7 +360,6 @@ def generate_cover(
     
     print(f"Found {len(char_urls)} character images for cover generation.")
 
-    # Set status to processing immediately
     project.cover_image_status = "processing"
     session.add(project)
     session.commit()
@@ -403,6 +382,7 @@ def generate_cover(
 @router.post("/styles/recommend")
 def recommend_styles(
     *,
+    session: Session = Depends(deps.get_session),
     request: StyleRecommendRequest,
     current_user_id: str = Depends(deps.get_current_user_id),
 ) -> Any:
@@ -410,7 +390,17 @@ def recommend_styles(
     Recommend 3 style options based on description using AI.
     """
     try:
+        # Deduct Credits (Cost: 1)
+        ws_statement = select(WorkspaceMember).where(WorkspaceMember.user_id == current_user_id)
+        member = session.exec(ws_statement).first()
+        if not member:
+             raise HTTPException(status_code=404, detail="No workspace found for user.")
+        
+        billing_service.deduct_credits(session, member.workspace_id, UUID(current_user_id), "recommend_style")
+
         styles = ai_service.recommend_style(request.description)
         return styles
+    except HTTPException as he:
+        raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

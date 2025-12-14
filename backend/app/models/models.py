@@ -35,7 +35,7 @@ class Workspace(SQLModel, table=True):
     name: str
     owner_id: UUID  # Creator/Primary Owner
     tier: str = "free"
-    credits: int = 50
+    credits: int = 500
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     members: List[User] = Relationship(back_populates="workspaces", link_model=WorkspaceMember)

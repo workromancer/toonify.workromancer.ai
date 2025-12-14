@@ -6,12 +6,12 @@ from app.api import deps
 from app.models import Character, Project, Asset
 from pydantic import BaseModel
 from datetime import datetime
-from datetime import datetime
 from uuid import UUID
 from fastapi import BackgroundTasks
 from app.services.storage import storage
 from app.api.deps import engine
 from app.services.ai import ai_service
+from app.services.billing import billing_service
 
 router = APIRouter()
 
@@ -182,6 +182,9 @@ def augment_character(
     if not project:
          raise HTTPException(status_code=404, detail="Project not found")
 
+    # Deduct Credits (Cost: 5)
+    billing_service.deduct_credits(session, project.workspace_id, UUID(current_user_id), "augment_character_text")
+
     # Construct Context
     wv_desc = ""
     if project.worldview:
@@ -289,6 +292,9 @@ def generate_character_image(
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
+    # Deduct Credits (Cost: 20)
+    billing_service.deduct_credits(session, project.workspace_id, UUID(current_user_id), "generate_character_sheet")
+
     # Set status to processing immediately
     character.sheet_status = "processing"
     session.add(character)
@@ -322,6 +328,9 @@ def suggest_character_attribute(
     project = session.get(Project, request.project_id)
     if not project:
          raise HTTPException(status_code=404, detail="Project not found")
+
+    # Deduct Credits (Cost: 1)
+    billing_service.deduct_credits(session, project.workspace_id, UUID(current_user_id), "get_character_suggestion")
 
     # Construct Context
     wv_desc = ""
@@ -374,6 +383,9 @@ def analyze_character(
     project = session.get(Project, request.project_id)
     if not project:
          raise HTTPException(status_code=404, detail="Project not found")
+
+    # Deduct Credits (Cost: 1)
+    billing_service.deduct_credits(session, project.workspace_id, UUID(current_user_id), "analyze_character_concept")
 
     # Construct Context
     wv_desc = ""

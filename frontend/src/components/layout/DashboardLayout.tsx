@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { LayoutDashboard, LayoutTemplate, Image as ImageIcon, Settings, LogOut, HelpCircle, Coins, Plus, ChevronDown, Check, Palette } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 import CreateWorkspaceModal from '@/components/dashboard/CreateWorkspaceModal';
+import RechargeModal from '@/components/dashboard/RechargeModal';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
@@ -24,6 +25,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     // UI State
     const [isWorkspaceOpen, setIsWorkspaceOpen] = useState(false);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isRechargeModalOpen, setIsRechargeModalOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     // Close dropdown when clicking outside
@@ -35,6 +37,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    // Listen for Recharge Event
+    useEffect(() => {
+        const handleOpenRecharge = () => setIsRechargeModalOpen(true);
+        window.addEventListener('open-recharge-modal', handleOpenRecharge);
+        return () => window.removeEventListener('open-recharge-modal', handleOpenRecharge);
     }, []);
 
     useEffect(() => {
@@ -75,9 +84,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                     <div className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate mb-1">
                                         {currentWorkspace.name}
                                     </div>
-                                    <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400 text-xs font-semibold">
+                                    <div 
+                                        className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400 text-xs font-semibold hover:text-yellow-300 transition-colors"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setIsRechargeModalOpen(true);
+                                        }}
+                                    >
                                         <Coins size={12} />
                                         <span>{currentWorkspace.credits} Credits</span>
+                                        <Plus size={10} className="bg-yellow-500/20 rounded-full p-0.5" />
                                     </div>
                                 </div>
                                 <ChevronDown size={16} className={`text-gray-500 transition-transform ${isWorkspaceOpen ? 'rotate-180' : ''}`} />
@@ -191,6 +207,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <CreateWorkspaceModal
                         open={isCreateModalOpen}
                         onOpenChange={setIsCreateModalOpen}
+                    />
+                    <RechargeModal 
+                         open={isRechargeModalOpen}
+                         onOpenChange={setIsRechargeModalOpen}
                     />
                 </div>
             </aside>

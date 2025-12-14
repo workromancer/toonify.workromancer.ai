@@ -7,6 +7,7 @@ from app.api import deps
 from app.models import Workspace, WorkspaceMember, User
 from pydantic import BaseModel
 from datetime import datetime
+from app.services.billing import billing_service
 
 router = APIRouter()
 
@@ -68,7 +69,7 @@ def create_workspace(
         name=workspace_in.name,
         owner_id=current_user_id,
         tier="free",
-        credits=50 # Default starting credits
+        credits=500 # Default starting credits (Welcome Bonus)
     )
     session.add(workspace)
     session.commit()
@@ -116,6 +117,10 @@ def get_workspace(
     workspace = session.get(Workspace, workspace_id)
     if not workspace:
         raise HTTPException(status_code=404, detail="Workspace not found")
+
+    # Check for Daily Refill
+    if billing_service.check_daily_refill(session, workspace_id):
+        session.refresh(workspace) # Refresh to get updated credits
         
     return WorkspaceOut(
         id=workspace.id,

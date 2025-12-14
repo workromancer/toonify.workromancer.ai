@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlmodel import Session, select
-from app.api.deps import get_session
-from app.models.models import Project, ProjectTemplate, User, Character, StoryCut, Episode
+from app.api import deps
+from app.models.models import Project, ProjectTemplate, User, Character, StoryCut, Episode, WorkspaceMember, Asset
 from app.services.ai import ai_service
+from app.services.billing import billing_service
 from app.services.storage import storage
 import uuid
 import base64
@@ -47,23 +48,9 @@ class GenerateCutImageRequest(BaseModel):
 # --- Background Tasks ---
 
 async def bg_generate_cover(project_id: uuid.UUID, style: str, session_factory):
-    """
-    Background task to generate project cover.
-    """
-    # Create a fresh session for the background task
-    from sqlmodel import Session
-    from app.api.deps import engine 
-    # Use engine directly or pass session factory. 
-    # Better to import engine from deps if accessible, or pass it.
-    
-    # Re-importing engine here to avoid circular dependencies if any, 
-    # but practically we should pass the session or engine.
-    # For now, let's assume we can get engine or use the passed session if it's thread-safe (Sessions aren't).
-    
-    # We will just instantiate a new session from the global engine for the bg task.
-    # This assumes 'engine' is available globally or we can import it.
     from app.api.deps import engine
-
+    from sqlmodel import Session
+    
     with Session(engine) as session:
         project = session.get(Project, project_id)
         if not project:
@@ -71,19 +58,15 @@ async def bg_generate_cover(project_id: uuid.UUID, style: str, session_factory):
 
         try:
             print(f"Starting Cover Generation for {project_id}...")
-            # 1. Generate Image
-            # Construct worldview text from dict if needed or just use raw
             worldview_text = str(project.worldview) if project.worldview else ""
             
             image_bytes = ai_service.generate_project_cover_image(
                 title=project.title,
-                genre=project.genre or "General",
+                genre=project.genre.name if project.genre else "General",
                 worldview=worldview_text,
                 style=style
             )
             
-            
-            # 2. Upload/Save Image
             try:
                 data_url = storage.upload_image(image_bytes)
             except Exception as s3_e:
@@ -91,9 +74,18 @@ async def bg_generate_cover(project_id: uuid.UUID, style: str, session_factory):
                 b64_img = base64.b64encode(image_bytes).decode('utf-8')
                 data_url = f"data:image/png;base64,{b64_img}"
 
-            
-            # 3. Update Project
-            project.cover_image_url = data_url
+            # Create Asset
+            asset = Asset(
+                workspace_id=project.workspace_id,
+                user_id=project.owner_id,
+                filename=f"cover_{project_id}.png",
+                file_url=data_url,
+                file_type="image/png"
+            )
+            session.add(asset)
+            session.flush()
+
+            project.cover_image_asset_id = asset.id
             project.cover_image_status = "completed"
             session.add(project)
             session.commit()
@@ -117,7 +109,6 @@ async def bg_generate_character_sheet(character_id: uuid.UUID, name: str, desc: 
         try:
             print(f"Starting Character Sheet for {character_id}...")
             
-            # 1. Generate Image
             image_bytes = ai_service.generate_character_sheet(name, desc, style)
             
             try:
@@ -127,27 +118,33 @@ async def bg_generate_character_sheet(character_id: uuid.UUID, name: str, desc: 
                  b64_img = base64.b64encode(image_bytes).decode('utf-8')
                  data_url = f"data:image/png;base64,{b64_img}"
 
-            
-            # 2. Generate Embedding
-            # Combine name, desc, style, tags (if fetched) for better RAG context
+            project = session.get(Project, char.project_id)
+            if project:
+                asset = Asset(
+                    workspace_id=project.workspace_id,
+                    user_id=project.owner_id,
+                    filename=f"character_{character_id}_sheet.png",
+                    file_url=data_url,
+                    file_type="image/png"
+                )
+                session.add(asset)
+                session.flush()
+                char.profile_image_asset_id = asset.id # Link asset
+
             embedding_text = f"Name: {name}\nStyle: {style}\nDescription: {desc}"
             embedding_vector = ai_service.get_embedding(embedding_text)
             
-            char.character_sheet_url = data_url
             char.sheet_status = "completed"
             char.embedding = embedding_vector
             session.add(char)
             session.commit()
             print(f"Sheet & Embedding Generation Completed for {character_id}")
 
-            
         except Exception as e:
              print(f"Sheet Generation Failed: {e}")
              char.sheet_status = "failed"
              session.add(char)
              session.commit()
-
-
 
 async def bg_generate_cut_image(cut_id: uuid.UUID):
     from app.api.deps import engine
@@ -160,7 +157,6 @@ async def bg_generate_cut_image(cut_id: uuid.UUID):
             
         try:
             print(f"Starting Cut Image for {cut_id}...")
-            # Ideally we context from the project style/chars, but simplicity for now:
             episode = session.get(Episode, cut.episode_id)
             project = session.get(Project, episode.project_id)
             
@@ -175,9 +171,19 @@ async def bg_generate_cut_image(cut_id: uuid.UUID):
                 b64_img = base64.b64encode(image_bytes).decode('utf-8')
                 data_url = f"data:image/png;base64,{b64_img}"
 
+            asset = Asset(
+                workspace_id=project.workspace_id,
+                user_id=project.owner_id,
+                filename=f"cut_{cut_id}.png",
+                file_url=data_url,
+                file_type="image/png"
+            )
+            session.add(asset)
+            session.flush()
+
+            cut.image_asset_id = asset.id
+            cut.image_path = data_url # Keep for compatibility for now
             
-            cut.image_path = data_url
-            # Add embedding for the script if not present (or maybe do it on creation)
             if not cut.embedding and cut.script:
                  cut.embedding = ai_service.get_embedding(cut.script)
 
@@ -196,11 +202,15 @@ def set_project_art_style(
     project_id: uuid.UUID, 
     request: StyleUpdateRequest,
     background_tasks: BackgroundTasks,
-    session: Session = Depends(get_session)
+    session: Session = Depends(deps.get_session),
+    current_user_id: str = Depends(deps.get_current_user_id),
 ):
     project = session.get(Project, project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+
+    # Deduct credits (Cost: 15 for cover gen)
+    billing_service.deduct_credits(session, project.workspace_id, uuid.UUID(current_user_id), "generate_project_cover_image")
         
     # Update style
     project.art_style = request.art_style
@@ -218,9 +228,16 @@ def set_project_art_style(
 def augment_character_concept(
     project_id: uuid.UUID,
     request: TextAugmentRequest,
-    session: Session = Depends(get_session)
+    session: Session = Depends(deps.get_session),
+    current_user_id: str = Depends(deps.get_current_user_id),
 ):
-    # Just a stateless AI call, no DB update needed yet
+    project = session.get(Project, project_id)
+    if not project:
+         raise HTTPException(status_code=404, detail="Project not found")
+
+    # Deduct credits (Cost: 5)
+    billing_service.deduct_credits(session, project.workspace_id, uuid.UUID(current_user_id), "augment_character_text")
+
     result = ai_service.augment_character_text(
         name=request.name,
         tags=request.tags,
@@ -234,15 +251,21 @@ def generate_character_sheet_endpoint(
     project_id: uuid.UUID,
     request: GenerateSheetRequest,
     background_tasks: BackgroundTasks,
-    session: Session = Depends(get_session)
+    session: Session = Depends(deps.get_session),
+    current_user_id: str = Depends(deps.get_current_user_id),
 ):
-    # Ensure character exists
     char = session.get(Character, request.character_id)
     if not char:
         raise HTTPException(status_code=404, detail="Character not found")
         
+    project = session.get(Project, project_id)
+    if not project:
+         raise HTTPException(status_code=404, detail="Project not found")
+
+    # Deduct credits (Cost: 20)
+    billing_service.deduct_credits(session, project.workspace_id, uuid.UUID(current_user_id), "generate_character_sheet")
+        
     char.sheet_status = "processing"
-    # Update description to match what we are generating
     char.description = request.description
     session.add(char)
     session.commit()
@@ -254,13 +277,16 @@ def generate_character_sheet_endpoint(
 @router.post("/projects/{project_id}/episodes/ideas")
 def generate_episode_ideas_endpoint(
     project_id: uuid.UUID,
-    session: Session = Depends(get_session)
+    session: Session = Depends(deps.get_session),
+    current_user_id: str = Depends(deps.get_current_user_id),
 ):
     project = session.get(Project, project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Deduct credits (Cost: 3)
+    billing_service.deduct_credits(session, project.workspace_id, uuid.UUID(current_user_id), "generate_episode_ideas")
         
-    # Get recent episodes context
     recent_eps = session.exec(select(Episode).where(Episode.project_id == project_id).order_by(Episode.episode_order.desc()).limit(3)).all()
     recent_context = "\n".join([f"{ep.title}: {ep.story_summary}" for ep in recent_eps])
     
@@ -275,10 +301,17 @@ def generate_episode_ideas_endpoint(
 def create_episode_with_cuts(
     project_id: uuid.UUID,
     request: CreateEpisodeRequest,
-    session: Session = Depends(get_session)
+    session: Session = Depends(deps.get_session),
+    current_user_id: str = Depends(deps.get_current_user_id),
 ):
+    project = session.get(Project, project_id)
+    if not project:
+         raise HTTPException(status_code=404, detail="Project not found")
+
+    # Deduct credits (Cost: 5)
+    billing_service.deduct_credits(session, project.workspace_id, uuid.UUID(current_user_id), "generate_initial_cuts")
+
     # 1. Create Episode
-    # Get max order
     existing_count = session.exec(select(Episode).where(Episode.project_id == project_id)).all()
     new_order = len(existing_count) + 1
     
@@ -293,8 +326,6 @@ def create_episode_with_cuts(
     session.refresh(episode)
     
     # 2. Generate Initial Cuts Plan (Sync)
-    project = session.get(Project, project_id)
-    
     cuts_data = ai_service.generate_initial_cuts(
         episode_title=request.title,
         summary=request.summary,
@@ -324,12 +355,18 @@ def generate_cut_image_endpoint(
     episode_id: uuid.UUID,
     cut_id: uuid.UUID,
     background_tasks: BackgroundTasks,
-    session: Session = Depends(get_session)
+    session: Session = Depends(deps.get_session),
+    current_user_id: str = Depends(deps.get_current_user_id),
 ):
     cut = session.get(StoryCut, cut_id)
     if not cut:
         raise HTTPException(status_code=404, detail="Cut not found")
         
+    episode = session.get(Episode, cut.episode_id)
+    project = session.get(Project, episode.project_id)
+    
+    # Deduct credits (Cost: 8)
+    billing_service.deduct_credits(session, project.workspace_id, uuid.UUID(current_user_id), "bg_generate_cut_image")
+
     background_tasks.add_task(bg_generate_cut_image, cut.id)
     return {"status": "processing", "cut_id": cut.id}
-
