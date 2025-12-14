@@ -241,10 +241,18 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
             };
         }
 
-        // Priority 3: Missing or Failed Cover (Default Action)
-        // If cover is present, we still allow regeneration, but the "Prompt" implies
-        // "When AI Cover is missing" -> Generate.
-        // If it exists, we can show "Regenerate" or just "Generate" again.
+        // Priority 3: No Characters (New)
+        if (!characters || characters.length === 0) {
+            return {
+                label: "Add Character",
+                icon: <Plus className="mr-2 h-4 w-4" />,
+                onClick: () => router.push(`/project/${project.id}/casting`),
+                variant: 'primary',
+                description: "Create your first character"
+            };
+        }
+
+        // Priority 4: Missing or Failed Cover (Default Action)
         return {
             label: isCoverProcessing ? "Generating..." : "Generate AI Cover",
             icon: <Sparkles className={cn("mr-2 h-4 w-4", isCoverProcessing && "animate-spin")} />,
@@ -522,8 +530,8 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
 
                                                 <div className="flex items-center gap-3">
                                                     <span className={`text-[10px] px-2 py-1 rounded-full border ${ep.thumbnail_url
-                                                            ? 'bg-green-900/20 text-green-400 border-green-500/30'
-                                                            : 'bg-slate-800 text-slate-400 border-slate-700'
+                                                        ? 'bg-green-900/20 text-green-400 border-green-500/30'
+                                                        : 'bg-slate-800 text-slate-400 border-slate-700'
                                                         }`}>
                                                         {ep.thumbnail_url ? 'Ready' : 'Draft'}
                                                     </span>

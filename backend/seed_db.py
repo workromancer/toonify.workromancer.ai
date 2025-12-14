@@ -46,11 +46,14 @@ def seed():
             for g_name in genres:
                 genre = session.exec(select(Genre).where(Genre.name == g_name)).first()
                 if not genre:
+                    print(f"DEBUG: Genre '{g_name}' NOT found. Creating...")
                     genre = Genre(name=g_name, description=f"{g_name} genre")
                     session.add(genre)
                     session.commit()
                     session.refresh(genre)
                     print(f"Created Genre: {g_name}")
+                else:
+                    print(f"DEBUG: Genre '{g_name}' found (ID: {genre.id}). Skipping.")
                 genre_map[g_name] = genre
 
             # Check for Test Project
