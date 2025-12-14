@@ -42,6 +42,18 @@ echo "Cleaning up ports 8000 and 3000..."
 kill_port 8000
 kill_port 3000
 
+# Check for .env.local files
+if [ ! -f "backend/.env.local" ]; then
+    echo -e "${BLUE}ERROR: backend/.env.local not found. Please create it.${NC}"
+    exit 1
+fi
+
+if [ ! -f "frontend/.env.local" ]; then
+    echo -e "${BLUE}ERROR: frontend/.env.local not found. Please create it.${NC}"
+    exit 1
+fi
+
+
 # Backend Setup
 echo -e "${GREEN}Setting up Backend...${NC}"
 cd backend

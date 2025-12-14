@@ -15,12 +15,15 @@ async function proxyRequest(request: NextRequest, { params }: { params: Promise<
     const res = await fetch(targetUrl, {
         method: request.method,
         headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': request.headers.get('Content-Type') || 'application/json',
             // Forward Authorization header if present
             ...(request.headers.get('Authorization') ? { 'Authorization': request.headers.get('Authorization')! } : {}),
         },
         // Forward body for non-GET/HEAD requests
         body: (request.method !== 'GET' && request.method !== 'HEAD') ? request.body : undefined,
+        // Required for streaming bodies in Node.js fetch
+        // @ts-ignore - duplex is not in the standard RequestInit type yet but required for Node.js
+        duplex: 'half',
         // Prevent caching for API requests
         cache: 'no-store',
     });
