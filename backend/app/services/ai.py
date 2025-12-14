@@ -195,6 +195,10 @@ class AIService:
         - Features (Visual traits as list)
         - Pros (Strengths/Advantages)
         - Cons (Weaknesses/Flaws)
+        - Bio (Structured background):
+            - Origin: Where they came from or their past.
+            - Goals: What they want to achieve.
+            - Quirk: A unique habit or trait.
         - Visual Description (Detailed prompt for image generation, ensuring it respects the Project Context/Worldview)
         
         Return ONLY a JSON object:
@@ -207,6 +211,11 @@ class AIService:
                     "features": ["tag1", "tag2"],
                     "pros": ["..."],
                     "cons": ["..."],
+                    "bio": {{
+                        "origin": "...",
+                        "goals": "...",
+                        "quirk": "..."
+                    }},
                     "visual_description": "...",
                     "reason": "Why this fits"
                 }},

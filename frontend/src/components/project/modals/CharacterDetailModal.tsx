@@ -21,6 +21,11 @@ interface Character {
         cons?: string[];
         background?: string;
         features?: string[];
+        bio?: {
+            origin?: string;
+            goals?: string;
+            quirk?: string;
+        } | string; // Support both object and string for legacy
     };
 }
 
@@ -43,11 +48,11 @@ export default function CharacterDetailModal({ isOpen, onClose, character, onRet
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent hideCloseButton className="max-w-4xl p-0 overflow-hidden bg-[#13111C] border border-white/10 text-white sm:rounded-2xl">
+            <DialogContent hideCloseButton className="max-w-4xl p-0 overflow-hidden bg-[#0F0F12] border border-gray-800 text-white sm:rounded-2xl">
                 <div className="flex flex-col md:flex-row h-full max-h-[85vh]">
 
                     {/* Left: Image / Status Area */}
-                    <div className="w-full md:w-1/2 relative bg-black/40 min-h-[400px] md:min-h-full flex items-center justify-center border-b md:border-b-0 md:border-r border-white/10">
+                    <div className="w-full md:w-1/2 relative bg-black/40 min-h-[400px] md:min-h-full flex items-center justify-center border-b md:border-b-0 md:border-r border-gray-800">
                         {character.profile_image_url && !isGenerating ? (
                             <div
                                 className="absolute inset-0 bg-contain bg-no-repeat bg-center"
@@ -93,9 +98,9 @@ export default function CharacterDetailModal({ isOpen, onClose, character, onRet
                     </div>
 
                     {/* Right: Details */}
-                    <div className="w-full md:w-1/2 flex flex-col bg-[#13111C]">
+                    <div className="w-full md:w-1/2 flex flex-col bg-[#0F0F12]">
                         {/* Header */}
-                        <div className="p-6 border-b border-white/5 flex items-start justify-between bg-white/[0.02]">
+                        <div className="p-6 border-b border-gray-800 flex items-start justify-between bg-white/[0.01]">
                             <div>
                                 <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight mb-1">
                                     {character.name}
@@ -130,7 +135,7 @@ export default function CharacterDetailModal({ isOpen, onClose, character, onRet
                             {(character.profile?.age || character.profile?.personality) && (
                                 <section className="grid grid-cols-2 gap-4">
                                     {character.profile?.age && (
-                                        <div className="bg-white/5 border border-white/10 rounded-xl p-3">
+                                        <div className="bg-[#15151A] border border-gray-800 rounded-xl p-3">
                                             <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Age</h4>
                                             <p className="text-white font-medium">{character.profile.age}</p>
                                         </div>
@@ -182,14 +187,37 @@ export default function CharacterDetailModal({ isOpen, onClose, character, onRet
                             )}
 
                             {/* Description / Background */}
-                            {(character.profile?.background || character.description) && (
+                            {(character.profile?.bio || character.profile?.background || character.description) && (
                                 <section>
                                     <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-                                        <FileText size={12} /> Bio / Description
+                                        <FileText size={12} /> Bio / Background
                                     </h4>
-                                    <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap rounded-xl bg-white/[0.03] p-4 border border-white/5">
-                                        {character.profile?.background || character.description}
-                                    </p>
+                                    {typeof character.profile?.bio === 'object' ? (
+                                        <div className="grid grid-cols-1 gap-3">
+                                            {character.profile.bio.origin && (
+                                                <div className="bg-[#15151A] border border-gray-800 rounded-xl p-4">
+                                                    <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider mb-1 block">Origin</span>
+                                                    <p className="text-sm text-gray-300 leading-relaxed">{character.profile.bio.origin}</p>
+                                                </div>
+                                            )}
+                                            {character.profile.bio.goals && (
+                                                <div className="bg-[#15151A] border border-gray-800 rounded-xl p-4">
+                                                    <span className="text-[10px] font-bold text-purple-400 uppercase tracking-wider mb-1 block">Goals</span>
+                                                    <p className="text-sm text-gray-300 leading-relaxed">{character.profile.bio.goals}</p>
+                                                </div>
+                                            )}
+                                            {character.profile.bio.quirk && (
+                                                <div className="bg-[#15151A] border border-gray-800 rounded-xl p-4">
+                                                    <span className="text-[10px] font-bold text-yellow-500 uppercase tracking-wider mb-1 block">Quirk</span>
+                                                    <p className="text-sm text-gray-300 leading-relaxed">{character.profile.bio.quirk}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap rounded-xl bg-[#15151A] p-4 border border-gray-800">
+                                            {character.profile?.bio || character.profile?.background || character.description}
+                                        </p>
+                                    )}
                                 </section>
                             )}
 
@@ -211,7 +239,7 @@ export default function CharacterDetailModal({ isOpen, onClose, character, onRet
                         </div>
 
                         {/* Footer Actions */}
-                        <div className="p-6 border-t border-white/5 bg-white/[0.02] flex justify-end gap-3">
+                        <div className="p-6 border-t border-gray-800 bg-white/[0.01] flex justify-end gap-3">
                             <Button variant="ghost" onClick={onClose} className="hover:bg-white/5 text-gray-400 hover:text-white">
                                 Close
                             </Button>

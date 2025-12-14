@@ -127,14 +127,19 @@ export default function CharacterListPage() {
 
     return (
         <ProjectLayout projectId={project.id} projectTitle={project.title}>
-            <div className="flex h-full relative overflow-y-auto bg-[#13111C]">
-                <div className="flex-1 flex flex-col items-center py-10 sm:py-12 md:py-16">
+            <div className="flex h-full relative overflow-y-auto bg-[#05050a]">
+
+                {/* Background Ambience */}
+                <div className="fixed top-[-20%] right-[-10%] w-[1000px] h-[1000px] bg-purple-900/5 rounded-full blur-[150px] pointer-events-none" />
+                <div className="fixed bottom-[-20%] left-[-10%] w-[800px] h-[800px] bg-indigo-900/5 rounded-full blur-[150px] pointer-events-none" />
+
+                <div className="flex-1 flex flex-col items-center py-10 sm:py-12 md:py-16 relative z-10">
                     <div className="flex w-full max-w-7xl flex-1 flex-col gap-8 px-4 sm:px-6 lg:px-8">
                         {/* PageHeading */}
-                        <div className="flex flex-wrap items-end justify-between gap-4">
+                        <div className="flex flex-wrap items-end justify-between gap-4 mb-4">
                             <div className="flex flex-col gap-2">
                                 <h1 className="text-3xl font-black leading-tight tracking-[-0.033em] text-white sm:text-4xl">All Characters</h1>
-                                <p className="text-gray-400">Manage your cast</p>
+                                <p className="text-gray-400">Manage your cast and view detailed profiles</p>
                             </div>
                             <button
                                 onClick={handleNavigateToCasting}
@@ -150,7 +155,7 @@ export default function CharacterListPage() {
                             {/* Add Card */}
                             <div
                                 onClick={handleNavigateToCasting}
-                                className="aspect-[3/4] cursor-pointer rounded-xl border border-dashed border-white/10 bg-white/[0.02] flex flex-col items-center justify-center gap-2 hover:bg-white/[0.05] hover:border-white/20 transition-all group"
+                                className="aspect-[3/4] cursor-pointer rounded-xl border border-dashed border-gray-800 bg-[#0F0F12] flex flex-col items-center justify-center gap-2 hover:bg-[#15151A] hover:border-gray-700 transition-all group"
                             >
                                 <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gray-400 group-hover:text-white transition-colors">
                                     <Plus size={20} />
@@ -166,10 +171,10 @@ export default function CharacterListPage() {
                                         key={char.id}
                                         onClick={() => handleCharacterClick(char)}
                                         className={cn(
-                                            "group relative rounded-xl overflow-hidden bg-[#1d1c27] border transition-all cursor-pointer",
+                                            "group relative rounded-xl overflow-hidden bg-[#0F0F12] border transition-all cursor-pointer",
                                             isFailed
                                                 ? "border-red-500/50 hover:border-red-500"
-                                                : "border-white/5 hover:border-white/20"
+                                                : "border-gray-800 hover:border-gray-700"
                                         )}
                                     >
                                         <div className="aspect-[3/4] bg-cover bg-center relative"
