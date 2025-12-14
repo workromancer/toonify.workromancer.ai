@@ -169,60 +169,46 @@ export default function EpisodesPage() {
                             </div>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        <div className="flex flex-col gap-3">
                             {filteredEpisodes.map((ep) => (
                                 <div
                                     key={ep.id}
                                     onClick={() => router.push(`/project/${projectId}/editor?episode_id=${ep.id}`)}
-                                    className="group relative flex flex-col bg-[#0F0F12] border border-gray-800 rounded-xl overflow-hidden hover:border-gray-600 transition-all cursor-pointer hover:-translate-y-1 hover:shadow-xl"
+                                    className="group flex items-center justify-between p-4 bg-[#0f0f16] border border-slate-800 rounded-xl hover:border-slate-600 transition-all cursor-pointer"
                                 >
-                                    {/* Thumbnail */}
-                                    <div className="aspect-video bg-black/40 relative overflow-hidden">
+                                    <div className="flex items-center gap-4">
+                                        {/* Thumbnail or Number */}
                                         {ep.thumbnail_url ? (
-                                            <img
-                                                src={ep.thumbnail_url}
-                                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                                alt={ep.title}
-                                            />
+                                            <div className="w-16 h-16 rounded-lg bg-black/40 overflow-hidden relative shrink-0 border border-slate-700">
+                                                <img src={ep.thumbnail_url} className="w-full h-full object-cover" alt={ep.title} />
+                                            </div>
                                         ) : (
-                                            <div className="w-full h-full flex items-center justify-center bg-[#15151A]">
-                                                <span className="text-4xl font-mono font-bold text-gray-700 group-hover:text-gray-600 transition-colors">
-                                                    {String(ep.episode_order || 0).padStart(2, '0')}
-                                                </span>
+                                            <div className="w-12 h-12 bg-slate-900 rounded-lg flex items-center justify-center text-slate-600 font-mono font-bold text-lg border border-slate-800 shrink-0">
+                                                {String(ep.episode_order || 0).padStart(2, '0')}
                                             </div>
                                         )}
 
-                                        {/* Overlay Status */}
-                                        <div className="absolute top-2 right-2 flex gap-2">
-                                            <span className={cn(
-                                                "px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider backdrop-blur-md border",
-                                                ep.thumbnail_url
-                                                    ? "bg-green-500/20 text-green-200 border-green-500/30"
-                                                    : "bg-gray-500/20 text-gray-300 border-gray-500/30"
-                                            )}>
-                                                {ep.thumbnail_url ? 'Ready' : 'Draft'}
-                                            </span>
+                                        <div>
+                                            <h4 className="text-white font-bold text-sm mb-1 group-hover:text-purple-400 transition-colors">{ep.title}</h4>
+                                            <div className="flex gap-3 text-xs text-slate-500">
+                                                <span className="flex items-center gap-1"><Calendar size={12} /> {ep.created_at ? new Date(ep.created_at).toLocaleDateString() : 'Draft'}</span>
+                                                <span className="flex items-center gap-1"><Film size={12} /> Episode {ep.episode_order || 0}</span>
+                                            </div>
                                         </div>
                                     </div>
 
-                                    {/* Info */}
-                                    <div className="p-4 flex flex-col gap-2 flex-1">
-                                        <div className="flex items-start justify-between gap-2">
-                                            <h3 className="font-bold text-gray-200 line-clamp-1 group-hover:text-purple-400 transition-colors">
-                                                {ep.title}
-                                            </h3>
-                                        </div>
-
-                                        <div className="mt-auto pt-2 flex items-center justify-between text-xs text-gray-500 border-t border-gray-800/50">
-                                            <span className="flex items-center gap-1.5">
-                                                <Calendar size={12} />
-                                                {ep.created_at ? new Date(ep.created_at).toLocaleDateString() : 'N/A'}
-                                            </span>
-                                            <span className="flex items-center gap-1.5">
-                                                <Film size={12} />
-                                                Episode {ep.episode_order || 0}
-                                            </span>
-                                        </div>
+                                    <div className="flex items-center gap-3">
+                                        <span className={cn(
+                                            "text-[10px] px-2 py-1 rounded-full border",
+                                            ep.thumbnail_url
+                                                ? "bg-green-900/20 text-green-400 border-green-500/30"
+                                                : "bg-slate-800 text-slate-400 border-slate-700"
+                                        )}>
+                                            {ep.thumbnail_url ? 'Ready' : 'Draft'}
+                                        </span>
+                                        <button className="p-2 text-slate-500 hover:text-white transition-colors">
+                                            <MoreVertical size={16} />
+                                        </button>
                                     </div>
                                 </div>
                             ))}
