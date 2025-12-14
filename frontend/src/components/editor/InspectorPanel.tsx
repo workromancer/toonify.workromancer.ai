@@ -64,28 +64,28 @@ export default function InspectorPanel() {
 
     if (!selectedElement) {
         return (
-            <div className="p-4 space-y-6">
-                <h3 className="font-semibold mb-4 text-gray-300">Properties</h3>
+            <div className="p-4 space-y-6 h-full bg-[#0f0f16] border-l border-slate-800">
+                <h3 className="font-bold text-slate-300 text-sm uppercase tracking-wider mb-4">Properties</h3>
                 {activeCharacter ? (
                     <div className="space-y-4">
                         <div className="flex items-center gap-4">
-                            <div className="w-16 h-16 rounded-full bg-gray-700 overflow-hidden flex items-center justify-center border border-gray-600 shrink-0">
+                            <div className="w-16 h-16 rounded-full bg-slate-800 overflow-hidden flex items-center justify-center border border-slate-700 shrink-0">
                                 {activeCharacter.profile_image_url ? (
                                     <img src={activeCharacter.profile_image_url} alt={activeCharacter.name} className="w-full h-full object-cover" />
                                 ) : activeCharacter.name ? (
-                                    <span className="text-2xl font-bold text-gray-400">
+                                    <span className="text-2xl font-bold text-slate-600">
                                         {activeCharacter.name[0]}
                                     </span>
                                 ) : null}
                             </div>
                             <div>
                                 <h4 className="text-lg font-bold text-white">{activeCharacter.name}</h4>
-                                <p className="text-sm text-gray-400">{activeCharacter.tags.join(', ')}</p>
+                                <p className="text-sm text-slate-500">{activeCharacter.tags.join(', ')}</p>
                             </div>
                         </div>
                     </div>
                 ) : (
-                    <div className="text-sm text-gray-500 italic">
+                    <div className="text-xs text-slate-500 italic p-4 border border-dashed border-slate-800 rounded-lg text-center">
                         Select an element or character to view properties.
                     </div>
                 )}
@@ -94,46 +94,46 @@ export default function InspectorPanel() {
     }
 
     return (
-        <div className="p-4 space-y-6">
+        <div className="p-4 space-y-6 h-full bg-[#0f0f16] border-l border-slate-800">
             <div>
-                <h3 className="font-semibold mb-4 text-gray-300">Properties</h3>
+                <h3 className="font-bold text-slate-300 text-sm uppercase tracking-wider mb-4">Properties</h3>
                 <div className="space-y-4">
                     <div className="grid w-full items-center gap-1.5">
-                        <Label htmlFor="width">Width</Label>
-                        <div className="flex gap-2">
+                        <Label htmlFor="width" className="text-slate-400 text-xs">Width</Label>
+                        <div className="flex gap-2 items-center">
                             <Input
                                 id="width"
                                 value={selectedElement.width}
                                 disabled
-                                className="bg-gray-800"
+                                className="bg-[#15151A] border-slate-700 text-slate-300 focus-visible:ring-purple-600 h-8"
                             />
-                            <span className="text-gray-500 py-2">px</span>
+                            <span className="text-slate-500 text-xs">px</span>
                         </div>
                     </div>
 
                     <div className="grid w-full items-center gap-1.5">
-                        <Label htmlFor="height">Height</Label>
-                        <div className="flex gap-2">
+                        <Label htmlFor="height" className="text-slate-400 text-xs">Height</Label>
+                        <div className="flex gap-2 items-center">
                             <Input
                                 id="height"
                                 value={selectedElement.height}
                                 disabled
-                                className="bg-gray-800"
+                                className="bg-[#15151A] border-slate-700 text-slate-300 focus-visible:ring-purple-600 h-8"
                             />
-                            <span className="text-gray-500 py-2">px</span>
+                            <span className="text-slate-500 text-xs">px</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div className="border-t border-gray-700 pt-4">
-                <h3 className="font-semibold mb-4 text-gray-300">AI Generation</h3>
+            <div className="border-t border-slate-800 pt-4">
+                <h3 className="font-bold text-slate-300 text-sm uppercase tracking-wider mb-4">AI Generation</h3>
                 <div className="space-y-4">
-                    <div className="grid w-full items-center gap-1.5">
+                    <div className="grid w-full items-center gap-2">
                         <div className="flex justify-between items-center">
-                            <Label htmlFor="prompt">Prompt</Label>
+                            <Label htmlFor="prompt" className="text-slate-400 text-xs">Prompt</Label>
                             {activeCharacter && (
-                                <Button variant="link" size="sm" className="h-auto p-0 text-purple-400" onClick={insertCharacterPrompt}>
+                                <Button variant="link" size="sm" className="h-auto p-0 text-purple-400 text-xs hover:text-purple-300" onClick={insertCharacterPrompt}>
                                     + {activeCharacter.name}
                                 </Button>
                             )}
@@ -144,12 +144,13 @@ export default function InspectorPanel() {
                             placeholder="Describe the scene..."
                             value={prompt}
                             onChange={(e) => setPrompt(e.target.value)}
+                            className="bg-[#15151A] border-slate-700 text-slate-300 focus-visible:ring-purple-600 focus-visible:border-purple-600"
                         />
                     </div>
 
                     <Button
                         data-testid="ai-generate-button"
-                        className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90"
+                        className="w-full bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-900/20"
                         onClick={handleGenerate}
                         disabled={generating || (!prompt && !activeCutId)}
                     >
@@ -157,7 +158,7 @@ export default function InspectorPanel() {
                             'Generating...'
                         ) : (
                             <>
-                                <Wand2 className="mr-2" size={16} /> Generate Image
+                                <Wand2 className="mr-2" size={14} /> Generate Image
                             </>
                         )}
                     </Button>

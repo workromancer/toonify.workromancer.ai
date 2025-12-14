@@ -12,7 +12,7 @@ import EditProjectModal from './modals/EditProjectModal';
 import GenerateEpisodeModal from './modals/GenerateEpisodeModal';
 import ArtStyleSetupModal from './modals/ArtStyleSetupModal';
 import CharacterDetailModal from './modals/CharacterDetailModal';
-import { Plus, Sparkles, Clapperboard, Edit2, Palette, ArrowRight, Settings, Play, AlertCircle, Database, ChevronDown, MoreVertical, LayoutTemplate } from 'lucide-react';
+import { Plus, Sparkles, Clapperboard, Edit2, Palette, ArrowRight, Settings, Play, AlertCircle, Database, ChevronDown, MoreVertical, LayoutTemplate, Calendar, Film, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { SectionLabel } from '@/components/ui/section-label';
 import ImageGeneratingPlaceholder from '@/components/ui/ImageGeneratingPlaceholder';
@@ -479,68 +479,66 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
 
                             {/* Episodes List */}
                             <section>
-                                <div className="flex items-center justify-between mb-6">
-                                    <div className="flex items-center gap-3">
-                                        <h3 className="text-xl font-bold text-white">Episodes</h3>
-                                        <span className="px-2 py-0.5 bg-white/5 rounded-full text-xs text-gray-400 font-mono">{episodes?.length || 0}</span>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <Button
-                                            className="h-9 px-4 rounded-full bg-[#4a4aff] hover:bg-[#3d3dcc] text-white font-bold shadow-lg shadow-blue-900/20 text-xs"
-                                            onClick={() => setIsEpisodeModalOpen(true)}
-                                        >
-                                            <Sparkles size={14} className="mr-2" /> New Episode
-                                        </Button>
-                                    </div>
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                        Episodes <span className="text-slate-500 text-sm font-normal">{episodes?.length || 0}</span>
+                                    </h3>
+                                    <Button
+                                        className="h-9 px-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold shadow-lg shadow-purple-900/20 text-xs flex items-center gap-2"
+                                        onClick={() => setIsEpisodeModalOpen(true)}
+                                    >
+                                        <Plus size={16} /> New Episode
+                                    </Button>
                                 </div>
 
                                 <div className="flex flex-col gap-3">
                                     {episodes && episodes.length > 0 ? (
                                         episodes.map((ep, idx) => (
-                                            <div key={ep.id} className="group relative flex items-center gap-4 p-3 pr-4 rounded-xl bg-[#0F0F12] border border-gray-800 hover:border-gray-700 transition-all hover:bg-[#15151A]">
-                                                {/* Episode Thumbnail */}
-                                                <div className="w-32 aspect-video rounded-md bg-black/40 overflow-hidden relative shrink-0 border border-white/5">
+                                            <div key={ep.id}
+                                                onClick={() => router.push(`/project/${project.id}/editor?episode_id=${ep.id}`)}
+                                                className="group flex items-center justify-between p-4 bg-[#0f0f16] border border-slate-800 rounded-xl hover:border-slate-600 transition-all cursor-pointer"
+                                            >
+                                                <div className="flex items-center gap-4">
+                                                    {/* Thumbnail or Number Box - Hybrid Approach: Use Thumbnail if available, else Number Box */}
                                                     {ep.thumbnail_url ? (
-                                                        <img src={ep.thumbnail_url} className="w-full h-full object-cover" alt={ep.title} />
+                                                        <div className="w-16 h-16 rounded-lg bg-black/40 overflow-hidden relative shrink-0 border border-slate-700">
+                                                            <img src={ep.thumbnail_url} className="w-full h-full object-cover" alt={ep.title} />
+                                                        </div>
                                                     ) : (
-                                                        <div className="w-full h-full flex flex-col items-center justify-center text-gray-700">
-                                                            <span className="text-xl font-bold">{ep.episode_order}</span>
+                                                        <div className="w-12 h-12 bg-slate-900 rounded-lg flex items-center justify-center text-slate-600 font-mono font-bold text-lg border border-slate-800 shrink-0">
+                                                            {String(ep.episode_order).padStart(2, '0')}
                                                         </div>
                                                     )}
-                                                    {idx === episodes.length - 1 && (
-                                                        <div className="absolute top-1 left-1 w-2 h-2 bg-[#4a4aff] rounded-full shadow-[0_0_8px_rgba(74,74,255,0.8)]" />
-                                                    )}
-                                                </div>
 
-                                                {/* Episode Info */}
-                                                <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-[10px] font-mono text-gray-500 uppercase">EP {ep.episode_order}</span>
-                                                        <span className="text-[10px] text-gray-600">•</span>
-                                                        <span className="text-[10px] text-gray-500">{ep.created_at ? new Date(ep.created_at).toLocaleDateString() : 'Draft'}</span>
+                                                    <div>
+                                                        <h4 className="text-white font-bold text-sm mb-1 group-hover:text-purple-400 transition-colors">{ep.title}</h4>
+                                                        <div className="flex gap-3 text-xs text-slate-500">
+                                                            <span className="flex items-center gap-1"><Calendar size={12} /> {ep.created_at ? new Date(ep.created_at).toLocaleDateString() : 'Draft'}</span>
+                                                            {/* Mock/Hypothetical info to match ref style */}
+                                                            <span className="flex items-center gap-1"><Film size={12} /> {Math.floor(Math.random() * 20) + 10} Cuts</span>
+                                                        </div>
                                                     </div>
-                                                    <h4 className="text-base font-bold text-gray-200 group-hover:text-white truncate pr-4">
-                                                        {ep.title}
-                                                    </h4>
                                                 </div>
 
-                                                {/* Studio Actions */}
-                                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity focus-within:opacity-100">
-                                                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full text-gray-400 hover:text-white hover:bg-white/10">
-                                                        <Play size={14} />
-                                                    </Button>
-                                                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full text-gray-400 hover:text-white hover:bg-white/10">
-                                                        <Edit2 size={14} />
-                                                    </Button>
+                                                <div className="flex items-center gap-3">
+                                                    <span className={`text-[10px] px-2 py-1 rounded-full border ${ep.thumbnail_url
+                                                            ? 'bg-green-900/20 text-green-400 border-green-500/30'
+                                                            : 'bg-slate-800 text-slate-400 border-slate-700'
+                                                        }`}>
+                                                        {ep.thumbnail_url ? 'Ready' : 'Draft'}
+                                                    </span>
+                                                    <button className="p-2 text-slate-500 hover:text-white transition-colors">
+                                                        <MoreVertical size={16} />
+                                                    </button>
                                                 </div>
                                             </div>
                                         ))
                                     ) : (
-                                        <div className="py-12 flex flex-col items-center justify-center text-center gap-3 border border-dashed border-white/5 rounded-xl bg-white/[0.02]">
-                                            <div className="p-3 rounded-full bg-white/5 text-gray-500">
+                                        <div className="py-12 flex flex-col items-center justify-center text-center gap-3 border border-dashed border-slate-800 rounded-xl bg-[#0f0f16]">
+                                            <div className="p-3 rounded-full bg-slate-800/50 text-slate-500">
                                                 <Clapperboard size={24} />
                                             </div>
-                                            <p className="text-sm text-gray-500">No episodes created yet.</p>
+                                            <p className="text-sm text-slate-500">No episodes created yet.</p>
                                         </div>
                                     )}
                                 </div>

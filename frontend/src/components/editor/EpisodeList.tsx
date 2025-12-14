@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Calendar, Film } from 'lucide-react';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import EpisodeGenerationModal from './EpisodeGenerationModal';
@@ -15,6 +15,8 @@ interface Episode {
     id: string;
     title: string;
     episode_order: number;
+    thumbnail_url?: string;
+    created_at?: string;
 }
 
 export default function EpisodeList() {
@@ -85,19 +87,22 @@ export default function EpisodeList() {
     }, [projectId]);
 
     return (
-        <div className="flex flex-col h-full">
-            <h3 className="font-semibold mb-4 text-gray-300 px-4 pt-4">Episodes</h3>
+        <div className="flex flex-col h-full bg-[#0f0f16]">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
+                <h3 className="font-bold text-slate-300 text-sm uppercase tracking-wider">Episodes</h3>
+                <span className="text-xs text-slate-500 font-mono">{episodes.length}</span>
+            </div>
 
-            <div className="flex-1 overflow-y-auto px-4 space-y-2">
+            <div className="flex-1 overflow-y-auto px-2 py-2 space-y-2 custom-scrollbar">
                 {loading ? (
-                    <div className="text-gray-500 text-sm">Loading...</div>
+                    <div className="text-slate-500 text-xs text-center py-4">Loading...</div>
                 ) : episodes.length === 0 ? (
-                    <div className="text-center py-8">
-                        <div className="text-gray-500 text-sm italic mb-4">No episodes yet.</div>
+                    <div className="text-center py-8 px-4 border border-dashed border-slate-800 rounded-xl m-2">
+                        <div className="text-slate-500 text-xs italic mb-4">No episodes yet.</div>
                         <Button
                             variant="outline"
                             size="sm"
-                            className="bg-gray-800 border-gray-700 text-purple-400 hover:text-purple-300 hover:bg-gray-700 hover:border-purple-500"
+                            className="bg-slate-800 border-slate-700 text-purple-400 hover:text-purple-300 hover:bg-slate-700 hover:border-purple-500 w-full"
                             onClick={() => setGenModalOpen(true)}
                         >
                             <Sparkles size={14} className="mr-2" /> Auto-Generate
@@ -108,62 +113,60 @@ export default function EpisodeList() {
                         <div
                             key={ep.id}
                             data-testid={`episode-item-${ep.id}`}
-                            className={`p-3 border rounded cursor-pointer transition-colors group flex justify-between items-center ${activeEpisodeId === ep.id
-                                ? 'bg-purple-900/40 border-purple-500'
-                                : 'bg-gray-700/50 hover:bg-gray-700 border-transparent hover:border-gray-500'
+                            className={`p-2 rounded-lg cursor-pointer transition-all group border ${activeEpisodeId === ep.id
+                                ? 'bg-purple-900/20 border-purple-500/50'
+                                : 'bg-[#15151A] border-transparent hover:bg-slate-800 hover:border-slate-700'
                                 }`}
                             onClick={() => setActiveEpisode(ep.id)}
                         >
-                            <span className="text-sm font-medium text-gray-200">{ep.title}</span>
-                            <ConfirmationDialog
-                                open={deleteConfirmationId === ep.id}
-                                onOpenChange={(open) => !open && setDeleteConfirmationId(null)}
-                                title="Delete Episode?"
-                                description="Are you sure you want to delete this episode? This action cannot be undone and all cuts will be lost."
-                                onConfirm={() => handleDeleteConfirm(ep.id)}
-                                variant="destructive"
-                                trigger={
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-6 w-6 text-gray-400 hover:text-red-400 hover:bg-gray-800"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setDeleteConfirmationId(ep.id);
-                                        }}
-                                    >
-                                        <Trash2 size={14} />
-                                    </Button>
-                                }
-                            />
+                            <div className="flex justify-between items-start mb-1">
+                                <span className={`text-sm font-bold truncate pr-2 ${activeEpisodeId === ep.id ? 'text-white' : 'text-slate-300 group-hover:text-white'}`}>
+                                    {ep.title}
+                                </span>
+                                {activeEpisodeId === ep.id && <div className="w-1.5 h-1.5 rounded-full bg-purple-500 mt-1.5 shrink-0 shadow-[0_0_6px_rgba(168,85,247,0.8)]" />}
+                            </div>
+
+                            <div className="flex items-center justify-between text-[10px] text-slate-500">
+                                <span className="flex items-center gap-1"><Calendar size={10} /> {ep.created_at ? new Date(ep.created_at).toLocaleDateString() : 'Draft'}</span>
+                                <span className="flex items-center gap-1"><Film size={10} /> #{ep.episode_order}</span>
+                            </div>
+
+                            <div className="flex justify-end mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <ConfirmationDialog
+                                    open={deleteConfirmationId === ep.id}
+                                    onOpenChange={(open) => !open && setDeleteConfirmationId(null)}
+                                    title="Delete Episode?"
+                                    description="Are you sure? This action cannot be undone."
+                                    onConfirm={() => handleDeleteConfirm(ep.id)}
+                                    variant="destructive"
+                                    trigger={
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-6 w-6 text-slate-500 hover:text-red-400 hover:bg-slate-700/50"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setDeleteConfirmationId(ep.id);
+                                            }}
+                                        >
+                                            <Trash2 size={12} />
+                                        </Button>
+                                    }
+                                />
+                            </div>
                         </div>
                     ))
                 )}
             </div>
 
-            <div className="p-4 border-t border-gray-700 space-y-2">
+            <div className="p-3 border-t border-slate-800 space-y-2 bg-[#0f0f16]">
                 <Button
                     variant="default"
                     size="sm"
-                    className="w-full bg-purple-900/50 hover:bg-purple-900 text-purple-200 border border-purple-800"
+                    className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg shadow-purple-900/20 border-0 h-9 font-bold text-xs"
                     onClick={() => setGenModalOpen(true)}
                 >
-                    <Sparkles size={16} className="mr-2" /> Generate with AI
-                </Button>
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    data-testid="add-episode-btn"
-                    className="w-full text-gray-400 border border-dashed border-gray-600 hover:text-white hover:border-gray-500 hover:bg-gray-700"
-                    onClick={createEpisode}
-                    disabled={creating}
-                >
-                    {creating ? (
-                        <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin mr-2" />
-                    ) : (
-                        <Plus size={16} className="mr-2" />
-                    )}
-                    {creating ? 'Creating...' : 'Empty Episode'}
+                    <Sparkles size={14} className="mr-2" /> CREATE NEW
                 </Button>
             </div>
 

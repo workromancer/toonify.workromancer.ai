@@ -79,7 +79,7 @@ export default function EditorPage() {
             {/* Top Bar */}
             <header className="h-14 border-b border-slate-800 flex items-center justify-between px-6 bg-[#0f0f16]">
                 <div className="flex items-center gap-4">
-                    <Link href="/dashboard">
+                    <Link href={`/project/${projectId}`}>
                         <Button variant="ghost" size="sm" className="text-slate-400 hover:text-white hover:bg-slate-800/80 -ml-2">
                             <ArrowLeft size={18} className="mr-2" /> Back
                         </Button>
