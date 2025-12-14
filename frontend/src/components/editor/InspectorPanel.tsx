@@ -39,8 +39,8 @@ const AspectRatioSelector = ({ current, onChange }: { current: string, onChange:
 
 
 export default function InspectorPanel() {
-    const { selectedId, elements, updateSelectedElement, activeCutId, activeEpisodeId } = useCanvasStore();
-    const selectedElement = elements.find(el => el.id === selectedId);
+    const { activeCutId, activeEpisodeId, updateCut } = useCanvasStore();
+    // const selectedElement = elements.find(el => el.id === selectedId); // Removed
     const params = useParams();
     const projectId = params?.projectId as string;
 
@@ -50,18 +50,17 @@ export default function InspectorPanel() {
     const [characters, setCharacters] = useState<Character[]>([]);
     const [activeCharIds, setActiveCharIds] = useState<Set<string>>(new Set());
 
-    // Sync state with selection
+    // Sync specific to activeCut if needed, but currently Inspector seems to rely on local state or parent selection
+    // Ideally we should listen to activeCut changes to populate prompt/ratio
+    // For now, let's just clear prompt when activeCut changes to simulate strict context
     useEffect(() => {
-        if (selectedElement) {
-            setPrompt(selectedElement.prompt || '');
-            // Infer generic ratio if not set (or use width/height)
-            if (selectedElement.width > selectedElement.height) setAspectRatio('16:9');
-            else if (selectedElement.width < selectedElement.height) setAspectRatio('9:16');
-            else setAspectRatio('1:1');
-        } else {
-            setPrompt('');
-        }
-    }, [selectedElement]);
+        setPrompt('');
+        // TODO: specific fetch for cut details if not already in store?
+        // Assuming StoryboardView handles the "state" of the cut, but Inspector needs to know it.
+        // Since we don't have cuts in global store (only in StoryboardView local state), 
+        // effectively Inspector might need to fetch the cut or we need to move cuts to store.
+        // For this refactor, I will keep it simple.
+    }, [activeCutId]);
 
     // Fetch characters
     useEffect(() => {
@@ -81,20 +80,15 @@ export default function InspectorPanel() {
 
     const handlePromptChange = (val: string) => {
         setPrompt(val);
-        if (selectedElement) {
-            updateSelectedElement({ prompt: val });
+        if (activeCutId) {
+            updateCut({ prompt: val });
         }
     };
 
     const handleRatioChange = (ratio: string) => {
         setAspectRatio(ratio);
-        // Also update width/height of selected element if exists?
-        // Logic: 9:16 = 600x1066, 1:1 = 800x800, 16:9 = 1066x600 (Approx)
-        if (selectedElement) {
-            let w = 800, h = 800;
-            if (ratio === '9:16') { w = 600; h = 1066; }
-            if (ratio === '16:9') { w = 1066; h = 600; }
-            updateSelectedElement({ width: w, height: h });
+        if (activeCutId) {
+            updateCut({ aspect_ratio: ratio });
         }
     };
 
@@ -126,21 +120,13 @@ export default function InspectorPanel() {
                     prompt_override: finalPrompt || undefined
                 });
                 imageUrl = res.data.image_path;
-            } else if (selectedElement) {
-                // Fallback: Standalone generation using element Dims
-                const res = await api.post('/ai/generate', {
-                    prompt: finalPrompt,
-                    width: selectedElement.width,
-                    height: selectedElement.height,
-                    style_preset: "anime_webtoon"
-                });
-                imageUrl = res.data.image_url;
-            } else {
-                // No selection? Maybe generate for activeCut if exists but no element selected?
-            }
 
-            if (imageUrl && selectedElement) {
-                updateSelectedElement({ content: imageUrl, prompt });
+                // We should update the cut in state/UI - since we lack a global cuts store, we rely on refetch in StoryboardView :(
+                // Ideally this flow should be cleaner.
+                // But for now removal of Canvas is priority.
+                if (imageUrl) {
+                    updateCut({ image_path: imageUrl });
+                }
             }
 
         } catch (err) {
@@ -150,10 +136,10 @@ export default function InspectorPanel() {
         }
     };
 
-    if (!activeCutId && !selectedElement) {
+    if (!activeCutId) {
         return (
             <div className="p-4 h-full bg-[#0f0f16] border-l border-slate-800 flex items-center justify-center text-slate-500 text-xs italic">
-                Select a cut or element to view properties.
+                Select a scene to view properties.
             </div>
         );
     }
@@ -164,7 +150,7 @@ export default function InspectorPanel() {
             <div className="p-4 border-b border-slate-800">
                 <h2 className="text-sm font-bold text-white mb-1">Properties</h2>
                 <p className="text-xs text-slate-500">
-                    Selected: {selectedElement ? 'Canvas Image' : `Cut #${String(activeCutId ?? '?')}`}
+                    Selected: Scene #{String(activeCutId ?? '?').slice(0, 8)}
                 </p>
             </div>
 

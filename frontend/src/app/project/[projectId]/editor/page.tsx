@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
-import CanvasArea from '@/components/editor/CanvasArea';
 import InspectorPanel from '@/components/editor/InspectorPanel';
 import StoryboardView from '@/components/editor/StoryboardView';
 import { useCanvasStore } from '@/store/useCanvasStore';
@@ -18,7 +17,7 @@ export default function EditorPage() {
     const params = useParams();
     const searchParams = useSearchParams();
     const projectId = params?.projectId as string;
-    const [activeSegment, setActiveSegment] = useState('storyboard'); // canvas, script, storyboard
+    const [activeSegment, setActiveSegment] = useState('storyboard'); // script, storyboard
     const { activeEpisodeId, setActiveEpisode } = useCanvasStore();
     const [exporting, setExporting] = useState(false);
     const { toast } = useToast();
@@ -148,15 +147,6 @@ export default function EditorPage() {
                                         Storyboard
                                     </Button>
                                     <Button
-                                        data-testid="view-canvas-btn"
-                                        variant="ghost"
-                                        size="sm"
-                                        className={`text-xs font-medium ${activeSegment === 'canvas' ? 'bg-purple-500/10 text-purple-400' : 'text-slate-500 hover:text-slate-300'}`}
-                                        onClick={() => setActiveSegment('canvas')}
-                                    >
-                                        Canvas
-                                    </Button>
-                                    <Button
                                         data-testid="view-script-btn"
                                         variant="ghost"
                                         size="sm"
@@ -169,12 +159,9 @@ export default function EditorPage() {
 
                                 {/* Content Area */}
                                 <div className="flex-1 overflow-hidden relative">
-                                    {activeSegment === 'canvas' ? (
-                                        <CanvasArea />
-                                    ) : activeSegment === 'storyboard' ? (
+                                    {activeSegment === 'storyboard' ? (
                                         <StoryboardView
                                             projectId={projectId?.toString() || ''}
-                                            onEditCut={() => setActiveSegment('canvas')}
                                         />
                                     ) : (
                                         <div className="w-full h-full max-w-3xl bg-[#0f0f16] p-12 border border-slate-800 text-slate-300 font-mono text-sm mx-auto my-8 overflow-auto shadow-2xl rounded-xl">

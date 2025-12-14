@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Plus, Image as ImageIcon, Trash2, Clapperboard, Loader2, Wand2, Sparkles, Smartphone, Maximize2, RefreshCw } from 'lucide-react';
+// Removed unused Maximize2 import
+import { Plus, Image as ImageIcon, Trash2, Clapperboard, Loader2, Wand2, Sparkles, Smartphone, RefreshCw } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import DirectorCutModal from './DirectorCutModal';
 import { useToast } from '@/hooks/use-toast';
@@ -30,10 +31,9 @@ interface DirectorOption {
 
 interface StoryboardViewProps {
     projectId: string;
-    onEditCut: () => void;
 }
 
-export default function StoryboardView({ projectId, onEditCut }: StoryboardViewProps) {
+export default function StoryboardView({ projectId }: StoryboardViewProps) {
     const { activeEpisodeId, setActiveCut, activeCutId } = useCanvasStore(); // Added activeCutId to track selection
     const [cuts, setCuts] = useState<StoryCut[]>([]);
     const [loading, setLoading] = useState(false);
@@ -281,13 +281,6 @@ export default function StoryboardView({ projectId, onEditCut }: StoryboardViewP
                                         >
                                             <Sparkles size={12} />
                                         </button>
-                                        <button
-                                            className="p-1 hover:text-white text-slate-500 transition-colors"
-                                            onClick={(e) => { e.stopPropagation(); onEditCut(); setActiveCut(cut.id); }}
-                                            title="Edit in Canvas"
-                                        >
-                                            <Maximize2 size={12} />
-                                        </button>
                                         <ConfirmationDialog
                                             open={deleteConfirmationId === cut.id}
                                             onOpenChange={(open) => !open && setDeleteConfirmationId(null)}
@@ -337,12 +330,6 @@ export default function StoryboardView({ projectId, onEditCut }: StoryboardViewP
                                             </div>
                                         )}
 
-                                        {/* Edit Overlay */}
-                                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-                                            <div className="px-3 py-1.5 rounded-full bg-slate-900/80 border border-slate-700 text-xs font-bold text-white backdrop-blur-sm shadow-xl flex items-center gap-2">
-                                                Edit in Canvas <Maximize2 size={10} />
-                                            </div>
-                                        </div>
                                     </div>
 
                                     {/* Script Area */}
