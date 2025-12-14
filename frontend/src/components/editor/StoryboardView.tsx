@@ -50,16 +50,24 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
 
     // Reuse existing handlers...
     const handleGenerateAll = async () => {
-        const cutsToGenerate = cuts.filter(c => !c.image_path && !generatingIds.has(c.id));
+        // Sort cuts by order to ensure sequential context
+        const sortedCuts = [...cuts].sort((a, b) => a.cut_order - b.cut_order);
+        const cutsToGenerate = sortedCuts.filter(c => !c.image_path && !generatingIds.has(c.id));
+
         if (cutsToGenerate.length === 0) {
             toast({ title: "No cuts to generate", description: "All cuts already have images or are processing." });
             return;
         }
 
-        toast({ title: "Starting Batch Generation", description: `Generating images for ${cutsToGenerate.length} cuts...` });
+        toast({ title: "Starting Batch Generation", description: `Generating images for ${cutsToGenerate.length} cuts sequentially...` });
 
         for (const cut of cutsToGenerate) {
-            handleGenerateImage(cut.id);
+            // We await each generation to ensure the next one has the previous one's context (image)
+            const success = await handleGenerateImage(cut.id, true); // true = allow refetching/updating UI intermediate if needed
+            if (!success) {
+                toast({ title: "Generation Interrupted", description: `Failed to generate cut #${cut.cut_order}. Stopping sequence.`, variant: "destructive" });
+                break;
+            }
         }
     };
 
@@ -164,29 +172,61 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
 
     const [generatingIds, setGeneratingIds] = useState<Set<string>>(new Set());
 
-    const handleGenerateImage = async (cutId: string) => {
+    const handleGenerateImage = async (cutId: string, isBatch = false): Promise<boolean> => {
         try {
             setGeneratingIds(prev => new Set(prev).add(cutId));
-            await api.post(`/episodes/${activeEpisodeId}/cuts/${cutId}/generate-image`);
-            toast({
-                title: "Generation Started",
-                description: "AI is generating the image. This may take a moment.",
-            });
 
-            const poll = setInterval(async () => {
-                const res = await api.get(`/cuts/${cutId}`); // Assuming this endpoint exists, or verify with backend
-                // Since this might not be standard, let's just refresh the list which is safer
-                fetchCuts();
-            }, 3000);
+            // 1. Kick off generation
+            await api.post(`/episodes/${activeEpisodeId}/cuts/${cutId}/generate-image`, {});
 
-            setTimeout(() => {
-                clearInterval(poll);
-                setGeneratingIds(prev => {
-                    const next = new Set(prev);
-                    next.delete(cutId);
-                    return next;
+            if (!isBatch) {
+                toast({
+                    title: "Generation Started",
+                    description: "AI is generating the image...",
                 });
-            }, 30000);
+            }
+
+            // 2. Poll for completion
+            // Poll for up to 60 seconds (30 attempts * 2s)
+            const maxAttempts = 30;
+            let attempts = 0;
+
+            while (attempts < maxAttempts) {
+                await new Promise(r => setTimeout(r, 2000));
+
+                try {
+                    const res = await api.get(`/cuts/${cutId}`);
+                    const updatedCut = res.data;
+
+                    if (updatedCut.image_path) {
+                        // Success!
+                        // Update local state immediately to reflect change without full refetch if we want, 
+                        // but fetchCuts() is safer for sync.
+                        fetchCuts();
+
+                        setGeneratingIds(prev => {
+                            const next = new Set(prev);
+                            next.delete(cutId);
+                            return next;
+                        });
+                        return true;
+                    }
+                } catch (pollErr) {
+                    console.error("Polling error", pollErr);
+                    // Continue polling even if one request fails? or abort?
+                }
+
+                attempts++;
+            }
+
+            // Timeout
+            toast({ title: "Generation Timeout", description: "Image generation took too long.", variant: "destructive" });
+            setGeneratingIds(prev => {
+                const next = new Set(prev);
+                next.delete(cutId);
+                return next;
+            });
+            return false;
 
         } catch (e) {
             console.error("Gen Image Failed", e);
@@ -196,6 +236,7 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
                 next.delete(cutId);
                 return next;
             });
+            return false;
         }
     };
 

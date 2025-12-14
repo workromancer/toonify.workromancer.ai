@@ -82,6 +82,21 @@ def create_cut(
     session.refresh(cut)
     return cut
 
+@router.get("/{cut_id}", response_model=StoryCutOut)
+def get_cut(
+    *,
+    session: Session = Depends(deps.get_session),
+    cut_id: UUID,
+    current_user_id: str = Depends(deps.get_current_user_id),
+) -> Any:
+    """
+    Get a specific story cut.
+    """
+    cut = session.get(StoryCut, cut_id)
+    if not cut:
+        raise HTTPException(status_code=404, detail="Cut not found")
+    return cut
+
 @router.put("/{cut_id}", response_model=StoryCutOut)
 def update_cut(
     *,
