@@ -18,14 +18,14 @@ export default function ProjectLayout({ children, projectId, projectTitle }: Pro
     const navItems = [
         { name: 'Overview', href: `/project/${projectId}`, icon: LayoutDashboard, exact: true },
         { name: 'Characters', href: `/project/${projectId}/characters`, icon: Users, exact: false },
-        { name: 'Storyboard', href: `/project/${projectId}/storyboard`, icon: Clapperboard, exact: false },
+        { name: 'Episodes', href: `/project/${projectId}/episodes`, icon: Clapperboard, exact: false },
     ];
 
     return (
         <div className="flex h-full min-h-screen bg-[#0A0A0B]">
             {/* Project Sidebar */}
             <aside className="w-64 bg-[#0F0F12] border-r border-gray-800 flex flex-col sticky top-0 h-screen shrink-0">
-                
+
                 {/* Header / Back */}
                 <div className="p-4 border-b border-gray-800">
                     <Link href="/dashboard" className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm font-medium mb-4">
@@ -43,8 +43,8 @@ export default function ProjectLayout({ children, projectId, projectTitle }: Pro
                 <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
                     {navItems.map((item) => {
                         const Icon = item.icon;
-                        const isActive = item.exact 
-                            ? pathname === item.href 
+                        const isActive = item.exact
+                            ? pathname === item.href
                             : pathname?.startsWith(item.href);
 
                         return (
@@ -74,15 +74,15 @@ export default function ProjectLayout({ children, projectId, projectTitle }: Pro
                     <div className={cn(
                         "flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-400 hover:text-white hover:bg-[#15151A] cursor-pointer transition-colors"
                     )}>
-                         <Settings size={18} />
-                         <span className="text-sm">Project Settings</span>
+                        <Settings size={18} />
+                        <span className="text-sm">Project Settings</span>
                     </div>
                 </div>
             </aside>
 
             {/* Main Content */}
             <main className="flex-1 min-w-0 bg-[#0A0A0B] relative">
-               {children}
+                {children}
             </main>
         </div>
     );

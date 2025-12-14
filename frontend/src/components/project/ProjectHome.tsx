@@ -411,6 +411,72 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                 </section>
                             )}
 
+                            {/* Characters Section */}
+                            <section>
+                                <div className="flex items-center justify-between mb-6">
+                                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                        Cast & Characters
+                                    </h3>
+                                    <Link href={`/project/${project.id}/characters`}>
+                                        <Button variant="ghost" size="sm" className="text-sm text-gray-400 hover:text-white">View All <ArrowRight size={14} className="ml-1" /></Button>
+                                    </Link>
+                                </div>
+                                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                                    <div
+                                        onClick={() => router.push(`/project/${project.id}/casting`)}
+                                        className="aspect-[3/4] cursor-pointer rounded-xl border border-dashed border-gray-800 bg-[#0F0F12] flex flex-col items-center justify-center gap-2 hover:bg-[#15151A] hover:border-gray-700 transition-all group"
+                                    >
+                                        <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-gray-400 group-hover:text-white transition-colors">
+                                            <Plus size={16} />
+                                        </div>
+                                        <span className="text-xs font-medium text-gray-500 group-hover:text-gray-300">Add Character</span>
+                                    </div>
+
+
+                                    {[...characters].reverse().slice(0, 5).map(char => {
+                                        const isGenerating = char.sheet_status === 'pending' || char.sheet_status === 'processing';
+                                        const isFailed = char.sheet_status === 'failed';
+                                        return (
+                                            <div
+                                                key={char.id || char.name}
+                                                onClick={() => handleCharacterClick(char)}
+                                                className={cn(
+                                                    "group relative rounded-xl overflow-hidden bg-[#0F0F12] border transition-all cursor-pointer",
+                                                    isFailed
+                                                        ? "border-red-500/50 hover:border-red-500"
+                                                        : "border-gray-800 hover:border-gray-700"
+                                                )}
+                                            >
+                                                <div className="aspect-[3/4] bg-cover bg-center relative" style={char.profile_image_url && !isGenerating ? { backgroundImage: `url("${char.profile_image_url}")` } : {}}>
+                                                    {isGenerating && (
+                                                        <ImageGeneratingPlaceholder text="CREATING..." />
+                                                    )}
+
+                                                    {(!char.profile_image_url && !isGenerating && !isFailed) && (
+                                                        <div className="w-full h-full bg-slate-800 flex flex-col items-center justify-center text-gray-600 gap-2">
+                                                            <span className="font-bold text-xl">{char.name[0]}</span>
+                                                        </div>
+                                                    )}
+
+                                                    {isFailed && (
+                                                        <div className="w-full h-full bg-slate-800 flex flex-col items-center justify-center text-gray-600 gap-2">
+                                                            <div className="w-8 h-8 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center">
+                                                                <AlertCircle size={16} />
+                                                            </div>
+                                                            <span className="text-[10px] text-red-400 font-bold">FAILED</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/90 to-transparent">
+                                                    <h4 className="text-white text-xs font-bold truncate">{char.name}</h4>
+                                                    <p className="text-[10px] text-gray-400 truncate">{Array.isArray(char.default_mood) ? char.default_mood.join(', ') : (char.default_mood || 'Neutral')}</p>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </section>
+
                             {/* Episodes List */}
                             <section>
                                 <div className="flex items-center justify-between mb-6">
@@ -477,72 +543,6 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                             <p className="text-sm text-gray-500">No episodes created yet.</p>
                                         </div>
                                     )}
-                                </div>
-                            </section>
-
-                            {/* Characters Section */}
-                            <section>
-                                <div className="flex items-center justify-between mb-6">
-                                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                                        Cast & Characters
-                                    </h3>
-                                    <Link href={`/project/${project.id}/characters`}>
-                                        <Button variant="ghost" size="sm" className="text-sm text-gray-400 hover:text-white">View All <ArrowRight size={14} className="ml-1" /></Button>
-                                    </Link>
-                                </div>
-                                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                                    <div
-                                        onClick={() => router.push(`/project/${project.id}/casting`)}
-                                        className="aspect-[3/4] cursor-pointer rounded-xl border border-dashed border-gray-800 bg-[#0F0F12] flex flex-col items-center justify-center gap-2 hover:bg-[#15151A] hover:border-gray-700 transition-all group"
-                                    >
-                                        <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-gray-400 group-hover:text-white transition-colors">
-                                            <Plus size={16} />
-                                        </div>
-                                        <span className="text-xs font-medium text-gray-500 group-hover:text-gray-300">Add Character</span>
-                                    </div>
-
-
-                                    {[...characters].reverse().slice(0, 5).map(char => {
-                                        const isGenerating = char.sheet_status === 'pending' || char.sheet_status === 'processing';
-                                        const isFailed = char.sheet_status === 'failed';
-                                        return (
-                                            <div
-                                                key={char.id || char.name}
-                                                onClick={() => handleCharacterClick(char)}
-                                                className={cn(
-                                                    "group relative rounded-xl overflow-hidden bg-[#0F0F12] border transition-all cursor-pointer",
-                                                    isFailed
-                                                        ? "border-red-500/50 hover:border-red-500"
-                                                        : "border-gray-800 hover:border-gray-700"
-                                                )}
-                                            >
-                                                <div className="aspect-[3/4] bg-cover bg-center relative" style={char.profile_image_url && !isGenerating ? { backgroundImage: `url("${char.profile_image_url}")` } : {}}>
-                                                    {isGenerating && (
-                                                        <ImageGeneratingPlaceholder text="CREATING..." />
-                                                    )}
-
-                                                    {(!char.profile_image_url && !isGenerating && !isFailed) && (
-                                                        <div className="w-full h-full bg-slate-800 flex flex-col items-center justify-center text-gray-600 gap-2">
-                                                            <span className="font-bold text-xl">{char.name[0]}</span>
-                                                        </div>
-                                                    )}
-
-                                                    {isFailed && (
-                                                        <div className="w-full h-full bg-slate-800 flex flex-col items-center justify-center text-gray-600 gap-2">
-                                                            <div className="w-8 h-8 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center">
-                                                                <AlertCircle size={16} />
-                                                            </div>
-                                                            <span className="text-[10px] text-red-400 font-bold">FAILED</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/90 to-transparent">
-                                                    <h4 className="text-white text-xs font-bold truncate">{char.name}</h4>
-                                                    <p className="text-[10px] text-gray-400 truncate">{Array.isArray(char.default_mood) ? char.default_mood.join(', ') : (char.default_mood || 'Neutral')}</p>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
                                 </div>
                             </section>
                         </div>
