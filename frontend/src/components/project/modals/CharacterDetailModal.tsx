@@ -2,7 +2,8 @@
 
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { X, Sparkles, User, Tag, FileText } from 'lucide-react';
+import { X, Sparkles, User, Tag, FileText, Activity } from 'lucide-react';
+import { RadarChart } from '@/components/ui/radar-chart'; // New Import
 import { cn } from '@/lib/utils';
 
 // Redefine interface locally to match ProjectHome structure
@@ -14,7 +15,7 @@ interface Character {
     default_mood?: string | string[];
     sheet_status?: 'pending' | 'processing' | 'completed' | 'failed';
     appearance_tags?: string[];
-    profile?: {
+    profile?: { // Made optional to match usage
         age?: string;
         personality?: string;
         pros?: string[];
@@ -25,7 +26,8 @@ interface Character {
             origin?: string;
             goals?: string;
             quirk?: string;
-        } | string; // Support both object and string for legacy
+        } | string;
+        stats?: Record<string, number>;
     };
 }
 
@@ -163,6 +165,22 @@ export default function CharacterDetailModal({ isOpen, onClose, character, onRet
                                     </div>
                                 </div>
                             </section>
+
+                            {/* Stats Radar Chart */}
+                            {character.profile?.stats && (
+                                <section>
+                                    <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                        <Activity size={12} /> Stats
+                                    </h4>
+                                    <div className="bg-[#15151A] border border-gray-800 rounded-xl p-4 flex justify-center">
+                                        <RadarChart
+                                            data={Object.entries(character.profile.stats).map(([k, v]) => ({ label: k, value: v }))}
+                                            size={200}
+                                            color="#a855f7"
+                                        />
+                                    </div>
+                                </section>
+                            )}
 
                             {/* Strengths & Weaknesses */}
                             {(character.profile?.pros || character.profile?.cons) && (

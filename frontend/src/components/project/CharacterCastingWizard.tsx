@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { SectionLabel } from '@/components/ui/section-label';
 import { SelectionCard } from '@/components/ui/selection-card';
+import { RadarChart } from '@/components/ui/radar-chart'; // New Import
 import api from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
@@ -35,7 +36,7 @@ type StepName = 'concept' | 'style' | 'analyzing' | 'role';
 const StepIndicator = ({ currentStep, totalSteps }: { currentStep: number; totalSteps: number }) => {
     return (
         <div className="w-full relative mb-8 px-4 flex justify-center">
-             <div className="relative w-full max-w-lg">
+            <div className="relative w-full max-w-lg">
                 <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-white/10 -translate-y-1/2 z-0"></div>
                 <motion.div
                     className="absolute top-1/2 left-0 h-[1px] bg-primary -translate-y-1/2 z-1 shadow-[0_0_10px_rgba(55,19,236,0.6)]"
@@ -46,7 +47,7 @@ const StepIndicator = ({ currentStep, totalSteps }: { currentStep: number; total
 
                 <div className="relative z-10 flex justify-between w-full">
                     {/* Steps: Concept(1), Style(2), Role(3) */}
-                     {['CONCEPT', 'STYLE', 'ROLE'].map((label, index) => {
+                    {['CONCEPT', 'STYLE', 'ROLE'].map((label, index) => {
                         const stepNum = index + 1;
                         const isActive = stepNum <= currentStep;
                         const isCurrent = stepNum === currentStep;
@@ -92,7 +93,7 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
     const [currentKeyword, setCurrentKeyword] = useState('');
     const [themeColor, setThemeColor] = useState<string>('#3b82f6'); // Default Blue
     const [personalityTypes, setPersonalityTypes] = useState<string[]>([]);
-    
+
     // Role Step Data - Initialized later or here? 
     // Typescript might complain if I use variable before declaration. 
     // I will use a hardcoded default string that matches the first archetype title.
@@ -105,6 +106,7 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
     const [error, setError] = useState<string | null>(null);
     const [suggestionLoading, setSuggestionLoading] = useState<string | null>(null);
     const [roleDescription, setRoleDescription] = useState<string>('');
+    const [characterStats, setCharacterStats] = useState<Record<string, number> | null>(null);
 
     // Helpers
     const getStepNumber = (s: StepName) => {
@@ -128,7 +130,7 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
         setStep(prev);
         setError(null);
     };
-    
+
     // --- Logic Handlers ---
 
     const handleConceptSubmit = () => {
@@ -159,24 +161,24 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                 visual_keywords: visualKeywords,
                 personality: personalityTypes.join(', ')
             });
-            
+
             if (type === 'name' && res.data) {
                 if (res.data.name) setName(res.data.name);
                 if (res.data.age) setAge(res.data.age.toString());
             } else if (type === 'visuals') {
-                 // Check if list or wrapped
-                 let newKeywords: string[] = [];
-                 if (Array.isArray(res.data)) newKeywords = res.data;
-                 else if (res.data.suggestion && Array.isArray(res.data.suggestion)) newKeywords = res.data.suggestion;
-                 else if (typeof res.data.suggestion === 'string') {
+                // Check if list or wrapped
+                let newKeywords: string[] = [];
+                if (Array.isArray(res.data)) newKeywords = res.data;
+                else if (res.data.suggestion && Array.isArray(res.data.suggestion)) newKeywords = res.data.suggestion;
+                else if (typeof res.data.suggestion === 'string') {
                     // Try parsing if string
-                    try { newKeywords = JSON.parse(res.data.suggestion); } catch(e) {}
-                 }
+                    try { newKeywords = JSON.parse(res.data.suggestion); } catch (e) { }
+                }
 
-                 if (newKeywords.length > 0) {
-                     const unique = newKeywords.filter((k: string) => !visualKeywords.includes(k));
-                     setVisualKeywords([...visualKeywords, ...unique]);
-                 }
+                if (newKeywords.length > 0) {
+                    const unique = newKeywords.filter((k: string) => !visualKeywords.includes(k));
+                    setVisualKeywords([...visualKeywords, ...unique]);
+                }
             } else if (type === 'lore' && res.data.suggestion) {
                 setRoleDescription(res.data.suggestion);
             }
@@ -191,16 +193,52 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
     // Analyzing Effect
     useEffect(() => {
         if (step === 'analyzing') {
-            const timer = setTimeout(() => {
-                handleNextStep('role');
-            }, 3000); // 3 seconds fake Analysis
-            return () => clearTimeout(timer);
+            const analyze = async () => {
+                try {
+                    const res = await api.post('/characters/analyze', {
+                        project_id: projectId,
+                        name: name,
+                        age: age,
+                        visual_keywords: visualKeywords,
+                        personality: personalityTypes.join(', ')
+                    });
+
+                    if (res.data) {
+                        const { recommended_role, lore, stats } = res.data;
+
+                        // Map recommended_role to internal titles if needed (or just assume AI follows instructions)
+                        // Ideally we find the matching archetype object
+                        const match = archetypes.find(a => a.title === recommended_role || recommended_role.includes(a.title));
+                        if (match) {
+                            setSelectedRole(match.title);
+                            // Optionally update stats of the archetype object locally? 
+                            // For now we just select the role.
+                        } else {
+                            // Fallback if AI invents a role title
+                            setSelectedRole(archetypes[0].title);
+                        }
+
+                        if (lore) setRoleDescription(lore);
+
+                        // Use AI stats if available, otherwise will fallback to archetype stats in render
+                        if (stats) setCharacterStats(stats);
+                    }
+                } catch (e) {
+                    console.error("Analysis failed", e);
+                    // Fallback to defaults
+                    setSelectedRole(archetypes[0].title);
+                } finally {
+                    // Ensure minimum time for transition smoothness or just go next
+                    handleNextStep('role');
+                }
+            };
+            analyze();
         }
     }, [step]);
 
 
     const handleFinalize = async () => {
-         if (!selectedRole) return;
+        if (!selectedRole) return;
         setIsGenerating(true);
         setError(null);
 
@@ -212,7 +250,8 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
             role: selectedRole,
             theme_color: themeColor,
             personality_type: personalityTypes.join(', '),
-            lore: roleDescription
+            lore: roleDescription,
+            stats: characterStats // Save stats in profile
         };
 
         try {
@@ -279,8 +318,8 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                 <div className="space-y-3">
                     <div className="flex justify-between items-center">
                         <SectionLabel className="text-[#d8b4fe]">Character Name</SectionLabel>
-                        <Badge 
-                            variant="outline" 
+                        <Badge
+                            variant="outline"
                             className="border-purple-500/30 text-purple-300 bg-purple-500/10 text-[10px] px-2 py-0.5 cursor-pointer hover:bg-purple-500/20 transition-colors"
                             onClick={() => handleSuggestion('name')}
                         >
@@ -323,14 +362,14 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-full">
                 {/* LEFT COLUMN: Visuals */}
                 <div className="flex flex-col gap-8">
-                     {/* Keywords */}
+                    {/* Keywords */}
                     <div className="space-y-3">
                         <div className="flex justify-between items-center">
                             <SectionLabel className="text-[#d8b4fe]" icon={<Sparkles className="w-3 h-3" />}>
                                 Visual Keywords
                             </SectionLabel>
-                            <Badge 
-                                variant="outline" 
+                            <Badge
+                                variant="outline"
                                 className="border-purple-500/30 text-purple-300 bg-purple-500/10 text-[10px] px-2 py-0.5 cursor-pointer hover:bg-purple-500/20 transition-colors"
                                 onClick={() => handleSuggestion('visuals')}
                             >
@@ -338,9 +377,9 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                                 AI Style Suggestion
                             </Badge>
                         </div>
-                        
+
                         <div className="bg-[#0B0d12] border border-[#2a2f3a] rounded-xl p-4 min-h-[140px] flex flex-col gap-3 transition-all focus-within:border-purple-500/50 focus-within:ring-1 focus-within:ring-purple-500/50">
-                             <div className="flex flex-wrap gap-2">
+                            <div className="flex flex-wrap gap-2">
                                 {visualKeywords.map((tag, i) => (
                                     <Badge key={i} variant="secondary" className="px-2.5 py-1 bg-[#1c162e] text-purple-200 border border-purple-500/20 hover:bg-[#251d3d] transition-colors gap-1.5 font-normal">
                                         {tag}
@@ -351,7 +390,7 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                                 ))}
                             </div>
                             <div className="relative mt-auto">
-                                 <Input
+                                <Input
                                     className="bg-transparent border-none text-white placeholder:text-white/20 p-0 focus-visible:ring-0 h-auto text-sm"
                                     placeholder="Add keywords (e.g., Uniform, Sword)..."
                                     value={currentKeyword}
@@ -372,7 +411,7 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
 
                     {/* Theme Color */}
                     <div className="space-y-3">
-                         <SectionLabel className="text-[#d8b4fe]" icon={<Palette className="w-3 h-3" />}>
+                        <SectionLabel className="text-[#d8b4fe]" icon={<Palette className="w-3 h-3" />}>
                             Theme Color
                         </SectionLabel>
                         <div className="flex gap-3">
@@ -399,13 +438,13 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                 {/* RIGHT COLUMN: Personality */}
                 <div className="flex flex-col gap-3">
                     <SectionLabel className="text-[#fbbf24]" icon={<span className='w-3 h-3 text-center leading-3'>☺</span>}>
-                         Personality Type
+                        Personality Type
                     </SectionLabel>
-                    
+
                     <div className="grid grid-cols-2 gap-3 h-full">
-                         {[
-                            'Cheerful', 'Serious', 
-                            'Cold', 'Tsundere', 
+                        {[
+                            'Cheerful', 'Serious',
+                            'Cold', 'Tsundere',
                             'Mysterious', 'Melancholic',
                             'Pure', 'Madness'
                         ].map((pType) => {
@@ -413,7 +452,7 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                             // We use custom class for orange override if needed, or stick to 'filled' which defaults to primary (purple).
                             // The original had orange. Let's try to override via className to keep the ID "orange" feeling if desired, or let it be purple.
                             // I'll stick to 'filled' but override the selected style to be orange to match original design.
-                            
+
                             return (
                                 <SelectionCard
                                     key={pType}
@@ -446,7 +485,7 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
             subtitle: 'Center of the Story',
             tags: ['Determined', 'Main Character'],
             description: 'The core figure driving the story. A character designed to garner reader empathy or admiration.',
-            stats: { charisma: 85, strength: 70, luck: 80 }
+            stats: { strength: 70, intelligence: 60, charisma: 85, luck: 80, empathy: 75, leadership: 80 }
         },
         {
             id: 'antagonist',
@@ -454,7 +493,7 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
             subtitle: 'The Opposing Force',
             tags: ['Charismatic', 'Ambitious'],
             description: 'The primary obstacle for the protagonist. Often mirrors the hero but with twisted ideals.',
-            stats: { charisma: 90, strength: 85, luck: 40 }
+            stats: { strength: 85, intelligence: 90, charisma: 90, luck: 40, empathy: 20, leadership: 85 }
         },
         {
             id: 'second_lead',
@@ -462,7 +501,7 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
             subtitle: 'The Devoted Support',
             tags: ['Devoted', 'Talented'],
             description: 'A key character who often rivals the protagonist in skill or love, but tragically falls short.',
-            stats: { charisma: 75, strength: 60, luck: 50 }
+            stats: { strength: 60, intelligence: 70, charisma: 75, luck: 50, empathy: 90, leadership: 60 }
         },
         {
             id: 'scene_stealer',
@@ -470,13 +509,13 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
             subtitle: 'Comic Relief / Wildcard',
             tags: ['Funny', 'Loyal'],
             description: 'A character with a distinct personality that brightens the mood or adds chaos to the plot.',
-            stats: { charisma: 95, strength: 40, luck: 90 }
+            stats: { strength: 40, intelligence: 50, charisma: 95, luck: 90, empathy: 60, leadership: 30 }
         }
     ];
 
     // Role Step Data
 
-    
+
     const currentArchetype = archetypes.find(a => a.title === selectedRole) || archetypes[0];
 
     useEffect(() => {
@@ -490,9 +529,22 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
     // For simplicity, whenever selectedRole changes, we reset description to archetype default.
     useEffect(() => {
         if (currentArchetype) {
-            setRoleDescription(currentArchetype.description);
+            // If we don't have AI stats (manually navigating?), use archetype defaults
+            if (!characterStats) {
+                // But wait, if we got stats from AI, we set them.
+                // If user switches role, should stats update? 
+                // Currently, characterStats is populated ONCE by AI.
+                // If user clicks a role, we CAN reset it to null to show archetype defaults?
+                // Or we prioritize displaying characterStats if it matches the current role selection?
+                // Let's implement this: When rendering, prioritize `characterStats` IF it was generated for this specific flow.
+                // But simpler: just initialize it.
+            }
         }
-    }, [currentArchetype]);
+    }, [currentArchetype, characterStats]);           // Issue: this prevents switching descriptions when clicking different cards if we pre-filled it.
+    // Better: We need to know if the description is "dirty" or "custom".
+    // For now, let's just NOT auto-overwrite if it looks like custom lore (lengthy?).
+    // Or better: update description on click in the selection card handler, not in useEffect.
+
 
 
     const renderRoleStep = () => (
@@ -510,7 +562,11 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                     <SelectionCard
                         key={arch.id}
                         selected={selectedRole === arch.title}
-                        onClick={() => setSelectedRole(arch.title)}
+                        onClick={() => {
+                            setSelectedRole(arch.title);
+                            setRoleDescription(arch.description); // Reset description
+                            setCharacterStats(null); // Reset to archetype stats when manually switching
+                        }}
                         className="flex flex-col items-start"
                     >
                         <h4 className={cn("font-bold text-sm mb-2", selectedRole === arch.title ? "text-white" : "text-gray-400")}>
@@ -532,21 +588,21 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                 {/* Header */}
                 <div className="flex justify-between items-start z-10">
                     <div>
-                         <div className="text-purple-400 text-xs font-mono font-bold tracking-wider mb-1">{currentArchetype.subtitle}</div>
-                         <h2 className="text-2xl font-bold text-white">{currentArchetype.title}</h2>
+                        <div className="text-purple-400 text-xs font-mono font-bold tracking-wider mb-1">{currentArchetype.subtitle}</div>
+                        <h2 className="text-2xl font-bold text-white">{currentArchetype.title}</h2>
                     </div>
                     {age && <Badge variant="outline" className="text-gray-400 border-white/10">{age} yrs</Badge>}
                 </div>
-                
-                 {/* Description Box */}
+
+                {/* Description Box */}
                 <div className="space-y-2 z-10">
                     <div className="flex justify-between items-center">
-                         <SectionLabel className="text-gray-500">Character Profile</SectionLabel>
-                         <Badge 
-                            variant="outline" 
+                        <SectionLabel className="text-gray-500">Character Profile</SectionLabel>
+                        <Badge
+                            variant="outline"
                             className="border-purple-500/30 text-purple-300 bg-purple-500/10 text-[10px] px-2 py-0.5 cursor-pointer hover:bg-purple-500/20 transition-colors"
                             onClick={() => handleSuggestion('lore')}
-                         >
+                        >
                             {suggestionLoading === 'lore' ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Wand2 className="w-3 h-3 mr-1" />}
                             AI Lore Expansion
                         </Badge>
@@ -556,23 +612,15 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                     </div>
                 </div>
 
-                {/* Stats */}
-                <div className="space-y-4 mt-2 z-10">
-                    {Object.entries(currentArchetype.stats).map(([stat, value]) => (
-                        <div key={stat} className="flex items-center text-xs gap-4">
-                            <span className="w-16 uppercase font-bold text-gray-500 text-[10px]">{stat}</span>
-                            <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
-                                <motion.div 
-                                    className="h-full bg-blue-500 rounded-full"
-                                    initial={{ width: 0 }}
-                                    animate={{ width: `${value}%` }}
-                                    transition={{ duration: 0.5, delay: 0.2 }}
-                                />
-                            </div>
-                        </div>
-                    ))}
+                {/* Stats Radar Chart */}
+                <div className="flex-1 flex items-center justify-center -mt-4 relative z-20">
+                    <RadarChart
+                        data={Object.entries(characterStats || currentArchetype.stats).map(([k, v]) => ({ label: k, value: (v as number) }))}
+                        size={220}
+                        color="#a855f7"
+                    />
                 </div>
-                
+
                 {/* Background Decoration */}
                 <div className="absolute -bottom-10 -right-10 w-64 h-64 bg-purple-500/5 blur-[80px] rounded-full pointer-events-none"></div>
             </div>
@@ -581,7 +629,7 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
 
     // Placeholder for other steps to avoid errors during incremental rebuild
     const renderOtherSteps = () => (
-       <div className='text-center text-white/50 w-full h-full'>
+        <div className='text-center text-white/50 w-full h-full'>
             {step === 'style' && renderStyleStep()}
             {step === 'role' && renderRoleStep()}
             {step === 'analyzing' && (
@@ -597,72 +645,72 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                     </div>
                 </div>
             )}
-       </div> 
+        </div>
     );
 
 
     return (
         <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center p-4 font-sans selection:bg-purple-500/30">
-             {/* Header */}
-             <header className="absolute top-0 left-0 w-full p-6 flex justify-between items-center z-50 border-b border-white/5 bg-[#050505]/80 backdrop-blur-sm">
+            {/* Header */}
+            <header className="absolute top-0 left-0 w-full p-6 flex justify-between items-center z-50 border-b border-white/5 bg-[#050505]/80 backdrop-blur-sm">
                 <div className="flex items-center gap-4 text-gray-400 hover:text-white transition-colors cursor-pointer" onClick={() => router.back()}>
                     <MoveLeft className="w-5 h-5" />
                     <span className="font-medium">Back to Project</span>
                 </div>
-                
-                 {/* Project Metatdata Header */}
-                 <div className="flex flex-col items-center gap-1 justify-center">
-                      {projectTitle && (
-                          <div className="flex items-center gap-2">
-                              <span className="font-bold text-white text-lg tracking-tight">{projectTitle}</span>
-                              {projectGenre && (
-                                  <Badge variant="outline" className="text-[10px] h-5 px-1.5 py-0 border-white/10 bg-white/5 text-gray-400 font-normal">
-                                      {projectGenre}
-                                  </Badge>
-                              )}
-                          </div>
-                      )}
-                 </div>
+
+                {/* Project Metatdata Header */}
+                <div className="flex flex-col items-center gap-1 justify-center">
+                    {projectTitle && (
+                        <div className="flex items-center gap-2">
+                            <span className="font-bold text-white text-lg tracking-tight">{projectTitle}</span>
+                            {projectGenre && (
+                                <Badge variant="outline" className="text-[10px] h-5 px-1.5 py-0 border-white/10 bg-white/5 text-gray-400 font-normal">
+                                    {projectGenre}
+                                </Badge>
+                            )}
+                        </div>
+                    )}
+                </div>
 
                 <div className="text-xs font-mono text-gray-600">v.2.2.1 (Eng/Fix)</div>
             </header>
 
             <main className="w-full max-w-5xl relative z-10 flex flex-col gap-8 mt-16">
-                 {/* Title Section */}
+                {/* Title Section */}
                 <div className="text-center space-y-2 mb-4">
-                     {step === 'concept' && (
+                    {step === 'concept' && (
                         <>
                             <h1 className="text-3xl font-bold tracking-tight text-white/90">Basic Concept Setting</h1>
                             <p className="text-gray-500 text-sm">Establish the basic settings of the character based on &#123;world_context&#125;.</p>
                         </>
-                     )}
-                     {step === 'style' && (
-                         <>
-                             <h1 className="text-3xl font-bold tracking-tight text-white/90">Visuals & Personality</h1>
-                             <p className="text-gray-500 text-sm">AI can suggest visuals and personality fitting the &#123;world_context&#125;.</p>
-                         </>
-                     )}
-                     {step === 'role' && (
-                         <>
+                    )}
+                    {step === 'style' && (
+                        <>
+                            <h1 className="text-3xl font-bold tracking-tight text-white/90">Visuals & Personality</h1>
+                            <p className="text-gray-500 text-sm">AI can suggest visuals and personality fitting the &#123;world_context&#125;.</p>
+                        </>
+                    )}
+                    {step === 'role' && (
+                        <>
                             <h1 className="text-3xl font-bold tracking-tight text-white/90">Determine Role (Archetype)</h1>
-                             <p className="text-gray-500 text-sm">Select and refine the role this character plays in the story.</p>
-                         </>
-                     )}
-                     {step === 'analyzing' && (<div className='h-16'></div>)}
+                            <p className="text-gray-500 text-sm">Select and refine the role this character plays in the story.</p>
+                        </>
+                    )}
+                    {step === 'analyzing' && (<div className='h-16'></div>)}
                 </div>
 
                 {/* Main Card */}
                 <div className="bg-[#0f0b15] border border-white/5 rounded-3xl shadow-2xl relative overflow-hidden min-h-[500px] flex flex-col">
-                    
+
                     {/* Inner Content Padding */}
                     <div className="p-8 pb-32 flex-1 flex flex-col">
-                        
+
                         {step !== 'analyzing' && (
                             <StepIndicator currentStep={getStepNumber(step)} totalSteps={3} />
                         )}
 
                         <div className="flex-1 flex flex-col justify-center relative">
-                             <AnimatePresence custom={direction} mode="wait">
+                            <AnimatePresence custom={direction} mode="wait">
                                 {step === 'concept' && renderConceptStep()}
                                 {step !== 'concept' && renderOtherSteps()}
                             </AnimatePresence>
@@ -670,16 +718,16 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                     </div>
 
                     {/* Footer / Actions */}
-                     {step !== 'analyzing' && (
+                    {step !== 'analyzing' && (
                         <div className="absolute bottom-0 left-0 right-0 p-8 border-t border-white/5 bg-[#0f0b15]/50 backdrop-blur-sm flex justify-between items-center">
-                             {/* Back Button or Divider */}
+                            {/* Back Button or Divider */}
                             <div>
                                 {step !== 'concept' && (
-                                     <Button
+                                    <Button
                                         variant="ghost"
                                         onClick={() => {
-                                             if (step === 'style') handlePrevStep('concept');
-                                             if (step === 'role') handlePrevStep('style');
+                                            if (step === 'style') handlePrevStep('concept');
+                                            if (step === 'role') handlePrevStep('style');
                                         }}
                                         className="text-gray-400 hover:text-white hover:bg-white/5 gap-2 pl-0 hover:pl-2 transition-all"
                                     >
@@ -723,10 +771,10 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                                         Create Character
                                     </Button>
                                 )}
-                                 {/* Placeholders for buttons of other steps */}
+                                {/* Placeholders for buttons of other steps */}
                             </div>
                         </div>
-                     )}
+                    )}
                 </div>
             </main>
         </div>

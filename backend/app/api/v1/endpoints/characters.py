@@ -354,3 +354,50 @@ def suggest_character_attribute(
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+class CharacterAnalysisRequest(BaseModel):
+    project_id: UUID
+    name: str
+    age: str
+    visual_keywords: List[str]
+    personality: str
+
+@router.post("/analyze", response_model=Any)
+def analyze_character(
+    *,
+    request: CharacterAnalysisRequest,
+    session: Session = Depends(deps.get_session),
+    current_user_id: str = Depends(deps.get_current_user_id),
+):
+    """
+    Analyze character concept to suggest Role and Lore.
+    """
+    project = session.get(Project, request.project_id)
+    if not project:
+         raise HTTPException(status_code=404, detail="Project not found")
+
+    # Construct Context
+    wv_desc = ""
+    if project.worldview:
+        if isinstance(project.worldview, dict):
+            wv_desc = project.worldview.get("content") or project.worldview.get("description") or ""
+        else:
+             wv_desc = str(project.worldview)
+
+    project_context = f"""
+    Title: {project.title}
+    Genre: {project.genre.name if project.genre else 'Unknown'}
+    Worldview: {wv_desc}
+    """
+
+    try:
+        result = ai_service.analyze_character_concept(
+            project_context=project_context,
+            name=request.name,
+            age=request.age,
+            visual_keywords=request.visual_keywords,
+            personality=request.personality
+        )
+        return result
+    except Exception as e:
+        print(f"Analysis failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

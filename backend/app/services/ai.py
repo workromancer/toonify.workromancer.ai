@@ -672,4 +672,78 @@ class AIService:
                 raise e2
 
 
+    def analyze_character_concept(self, project_context: str, name: str, age: str, visual_keywords: List[str], personality: str) -> dict:
+        """
+        Analyzes the character concept and suggests a Role (Archetype) and Lore.
+        Uses gemini-2.5-flash for speed and reasoning.
+        """
+        # User requested gemini-2.5-flash. Using client.models.generate_content directly.
+        
+        prompt = f"""
+        Analyze the following character concept within the provided Project Worldview and suggest the best fitting Role (Archetype) and a unique background story (Lore).
+
+        Project Context:
+        {project_context}
+
+        Character Concept:
+        - Name: {name}
+        - Age: {age}
+        - Visual Keywords: {', '.join(visual_keywords)}
+        - Personality: {personality}
+
+        Available Roles (Archetypes):
+        1. "The Protagonist" (Center of story, determined, relatable)
+        2. "The Antagonist" (Opposing force, ambitious, twisted ideals)
+        3. "The Second Lead" (Devoted support, rival, tragic)
+        4. "The Scene Stealer" (Comic relief, wildcard, distinct personality)
+
+        Task:
+        1. Select the BEST fitting Role from the list above.
+        2. Write a unique "Lore" (Background Description) that weaves the character's personality and visuals into the project's worldview. The lore should explain their motivation or current state.
+        3. Suggest stats (0-100) for the following 6 attributes:
+           - Strength (Physical power)
+           - Intelligence (Mental acuity)
+           - Charisma (Social influence)
+           - Luck (Fortune)
+           - Empathy (Emotional understanding)
+           - Leadership (Ability to command)
+
+        Return ONLY a JSON object:
+        {{
+            "recommended_role": "Exact Title from list above",
+            "analysis": "Brief reason why this role fits",
+            "lore": "A compelling 2-3 sentence background story...",
+            "stats": {{
+                "strength": 50,
+                "intelligence": 50,
+                "charisma": 50,
+                "luck": 50,
+                "empathy": 50,
+                "leadership": 50
+            }}
+        }}
+        """
+
+        try:
+            response = self.client.models.generate_content(
+                model="gemini-2.5-flash", 
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json"
+                )
+            )
+            
+            cleaned = self._clean_json_text(response.text)
+            return json.loads(cleaned)
+
+        except Exception as e:
+            print(f"Error in analyze_character_concept: {e}")
+            return {
+                "recommended_role": "The Protagonist",
+                "analysis": "Fallback due to error.",
+                "lore": f"{name} is a mysterious character in this world.",
+                "stats": {"charisma": 50, "strength": 50, "luck": 50}
+            }
+
+
 ai_service = AIService()
