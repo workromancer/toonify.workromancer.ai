@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { useWorkspaceStore } from '@/store/useWorkspaceStore';
+import { useTranslations } from 'next-intl';
 
 interface CreateWorkspaceModalProps {
     open: boolean;
@@ -15,6 +16,8 @@ export default function CreateWorkspaceModal({ open, onOpenChange }: CreateWorks
     const [name, setName] = useState('');
     const [loading, setLoading] = useState(false);
     const { createWorkspace } = useWorkspaceStore();
+    const t = useTranslations('CreateWorkspace');
+    const tCommon = useTranslations('Common');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -37,30 +40,30 @@ export default function CreateWorkspaceModal({ open, onOpenChange }: CreateWorks
             <DialogContent className="sm:max-w-[425px]">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle>Create Workspace</DialogTitle>
+                        <DialogTitle>{t('title')}</DialogTitle>
                         <DialogDescription>
-                            Create a new workspace to organize your projects and assets.
+                            {t('description')}
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="name">Workspace Name</Label>
+                            <Label htmlFor="name">{t('nameLabel')}</Label>
                             <Input
                                 id="name"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                placeholder="e.g. My Awesome Studio"
+                                placeholder={t('namePlaceholder')}
                                 autoFocus
                             />
                         </div>
                     </div>
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                            Cancel
+                            {tCommon('cancel')}
                         </Button>
                         <Button type="submit" disabled={!name.trim() || loading}>
                             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Create Workspace
+                            {t('submit')}
                         </Button>
                     </DialogFooter>
                 </form>

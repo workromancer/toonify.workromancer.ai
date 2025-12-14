@@ -36,8 +36,11 @@ interface Template {
 
 // --- Components (Inline to match Ref style and ensure exact look) ---
 
+import { useTranslations } from 'next-intl';
+
 const ProjectCard = ({ project }: { project: Project }) => {
     const router = useRouter();
+    const t = useTranslations('Dashboard');
 
     return (
         <div
@@ -73,7 +76,7 @@ const ProjectCard = ({ project }: { project: Project }) => {
                 {/* Hover Play/Open Hint */}
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-0">
                     <div className="bg-purple-600/90 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg backdrop-blur-sm transform scale-90 group-hover:scale-100 transition-transform">
-                        Open Editor
+                        {t('openEditor')}
                     </div>
                 </div>
             </div>
@@ -95,7 +98,9 @@ const ProjectCard = ({ project }: { project: Project }) => {
     );
 };
 
-const TemplateCard = ({ template, onSelect }: { template: Template; onSelect: (t: Template | null) => void }) => (
+const TemplateCard = ({ template, onSelect }: { template: Template; onSelect: (t: Template | null) => void }) => {
+    const t = useTranslations('Dashboard');
+    return (
     <div
         onClick={() => onSelect(template.isAction ? null : template)}
         className={`
@@ -132,22 +137,25 @@ const TemplateCard = ({ template, onSelect }: { template: Template; onSelect: (t
                         {template.title}
                     </span>
                     <span className="text-[10px] text-purple-400 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-                        Use Template <ChevronDown size={10} className="-rotate-90" />
+                        {t('useTemplate')} <ChevronDown size={10} className="-rotate-90" />
                     </span>
                 </div>
             </>
         )}
     </div>
 );
+};
 
 // --- Draft Card Component ---
-const DraftCard = ({ draft, onClick }: { draft: any, onClick: () => void }) => (
+const DraftCard = ({ draft, onClick }: { draft: any, onClick: () => void }) => {
+    const t = useTranslations('Dashboard');
+    return (
     <div
         onClick={onClick}
         className="group relative w-full aspect-[3/4] bg-[#0f0f16] rounded-2xl border-2 border-dashed border-purple-500/30 hover:border-purple-500 transition-all duration-300 ease-out overflow-hidden flex flex-col cursor-pointer hover:-translate-y-1.5 shadow-lg hover:shadow-purple-900/20"
     >
         <div className="absolute top-3 left-3 z-20">
-            <span className="bg-purple-600/90 text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider animate-pulse shadow-lg">In Progress</span>
+            <span className="bg-purple-600/90 text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider animate-pulse shadow-lg">{t('inProgress')}</span>
         </div>
 
         {/* Thumbnail Area - Placeholder for Draft */}
@@ -164,30 +172,32 @@ const DraftCard = ({ draft, onClick }: { draft: any, onClick: () => void }) => (
             {/* Hover Action */}
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
                 <div className="bg-purple-600 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg flex items-center gap-2 transform translate-y-2 group-hover:translate-y-0 transition-all">
-                    Resume <ArrowRight size={12} />
+                    {t('resume')} <ArrowRight size={12} />
                 </div>
             </div>
         </div>
 
         {/* Info Area */}
         <div className="p-5 border-t border-slate-800 bg-[#0f0f16] group-hover:bg-[#13131c] transition-colors relative z-10">
-            <h3 className="text-white font-bold truncate mb-1.5 text-sm">{draft.title || "Untitled Draft"}</h3>
+            <h3 className="text-white font-bold truncate mb-1.5 text-sm">{draft.title || t('untitledDraft')}</h3>
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-mono">
                     <Clock size={10} />
-                    <span>Just Now</span>
+                    <span>{t('justNow')}</span>
                 </div>
                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-900/20 text-purple-400 border border-purple-500/30">
-                    Draft
+                    {t('draft')}
                 </span>
             </div>
         </div>
     </div>
 );
+};
 
 // --- Main Page ---
 
 export default function DashboardPage() {
+    const t = useTranslations('Dashboard');
     const [projects, setProjects] = useState<Project[]>([]);
     const [templates, setTemplates] = useState<Template[]>([]);
     const [loading, setLoading] = useState(true);
@@ -263,10 +273,10 @@ export default function DashboardPage() {
                 <header className="h-20 flex items-center justify-between px-10 sticky top-0 bg-[#05050a]/80 backdrop-blur-md z-30 border-b border-slate-800/30">
                     <div>
                         <h1 className="text-2xl font-bold text-white leading-tight flex items-center gap-2">
-                            Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400">{user?.email?.split('@')[0] || "Artist"}!</span>
+                            {t('welcome')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400">{user?.email?.split('@')[0] || "Artist"}!</span>
                             <span className="animate-pulse text-xl">👋</span>
                         </h1>
-                        <p className="text-sm text-slate-500 mt-0.5 font-medium">Ready to create something amazing today?</p>
+                        <p className="text-sm text-slate-500 mt-0.5 font-medium">{t('welcomeMessage')}</p>
                     </div>
 
                     <div className="flex items-center gap-4">
@@ -283,7 +293,7 @@ export default function DashboardPage() {
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-purple-400 transition-colors" size={16} />
                             <input
                                 type="text"
-                                placeholder="Search projects..."
+                                placeholder={t('searchPlaceholder')}
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="bg-slate-900 border border-slate-700/50 rounded-full pl-10 pr-4 py-2.5 text-sm text-white focus:border-purple-500 outline-none w-64 transition-all placeholder:text-slate-600 focus:w-80 focus:bg-slate-900/80"
@@ -300,16 +310,16 @@ export default function DashboardPage() {
                         <div className="flex items-center justify-between mb-6">
                             <div className="flex items-center gap-3">
                                 <div className="w-1.5 h-6 bg-purple-600 rounded-full shadow-[0_0_12px_rgba(147,51,234,0.6)]" />
-                                <h2 className="text-xl font-bold text-white tracking-wide">Recent Projects</h2>
+                                <h2 className="text-xl font-bold text-white tracking-wide">{t('recentProjects')}</h2>
                             </div>
                             <button className="text-xs font-bold text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1">
-                                View All <ChevronDown size={12} className="-rotate-90" />
+                                {t('viewAll')} <ChevronDown size={12} className="-rotate-90" />
                             </button>
                         </div>
 
                         {loading ? (
                             <div className="w-full h-40 flex items-center justify-center text-slate-600">
-                                <span className="animate-pulse">Loading projects...</span>
+                                <span className="animate-pulse">{t('loadingProjects')}</span>
                             </div>
                         ) : (filteredProjects.length > 0 || draftProject) ? (
                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6">
@@ -323,7 +333,7 @@ export default function DashboardPage() {
                         ) : (
                             <div className="w-full h-40 border border-dashed border-slate-800 rounded-2xl flex flex-col items-center justify-center text-slate-600 bg-slate-900/20">
                                 <FolderOpen size={32} className="mb-2 opacity-50" />
-                                <p className="text-sm">No recent projects found.</p>
+                                <p className="text-sm">{t('noProjects')}</p>
                             </div>
                         )}
                     </section>
@@ -332,7 +342,7 @@ export default function DashboardPage() {
                     <section className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
                         <div className="flex items-center gap-3 mb-6">
                             <div className="w-1.5 h-6 bg-indigo-500 rounded-full shadow-[0_0_12px_rgba(99,102,241,0.6)]" />
-                            <h2 className="text-xl font-bold text-white tracking-wide">Start a New Toon</h2>
+                            <h2 className="text-xl font-bold text-white tracking-wide">{t('startNew')}</h2>
                         </div>
 
                         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">

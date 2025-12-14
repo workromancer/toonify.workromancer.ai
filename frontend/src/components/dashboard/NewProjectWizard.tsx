@@ -10,12 +10,13 @@ import {
 } from 'lucide-react';
 import api from '@/lib/api';
 import { AiSuggestionCard } from '@/components/project/AiSuggestionCard';
+import { useTranslations } from 'next-intl';
 
 const GENRES = [
   { id: 'fantasy', label: 'Fantasy', icon: Sparkles, color: 'bg-amber-600' },
   { id: 'romance', label: 'Romance', icon: Heart, color: 'bg-pink-600' },
-  { id: 'sci-fi', label: 'Sci-Fi', icon: Monitor, color: 'bg-cyan-600' },
-  { id: 'slice_of_life', label: 'Slice of Life', icon: BookOpen, color: 'bg-orange-500' },
+  { id: 'sciFi', label: 'Sci-Fi', icon: Monitor, color: 'bg-cyan-600' },
+  { id: 'sliceOfLife', label: 'Slice of Life', icon: BookOpen, color: 'bg-orange-500' },
   { id: 'action', label: 'Action', icon: Sword, color: 'bg-red-600' },
   { id: 'thriller', label: 'Thriller', icon: Skull, color: 'bg-purple-600' },
   { id: 'historical', label: 'Historical', icon: Clock, color: 'bg-stone-600' },
@@ -25,7 +26,8 @@ const GENRES = [
 ];
 
 const ProgressBar = ({ currentStep }: { currentStep: number }) => {
-  const steps = ['TITLE', 'SUBTITLE', 'GENRE', 'WORLD'];
+  const t = useTranslations('NewProject');
+  const steps = [t('steps.title'), t('steps.subtitle'), t('steps.genre'), t('steps.world')];
   
   return (
     <div className="w-full max-w-xl mx-auto mb-8 px-4">
@@ -58,6 +60,7 @@ const ProgressBar = ({ currentStep }: { currentStep: number }) => {
 
 export default function NewProjectWizard() {
   const router = useRouter();
+  const t = useTranslations('NewProject');
   const [step, setStep] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   
@@ -280,7 +283,7 @@ export default function NewProjectWizard() {
            className={`flex items-center gap-2 transition-colors ${isLocked ? 'text-slate-700 cursor-not-allowed' : 'text-slate-400 hover:text-white'}`}
          >
             <ArrowLeft size={20} />
-            <span className="text-sm font-medium">Back to Dashboard</span>
+            <span className="text-sm font-medium">{t('backToDashboard')}</span>
          </button>
       </div>
 
@@ -291,16 +294,16 @@ export default function NewProjectWizard() {
         {!showAiResults && (
             <div className={`text-center mb-8 animate-fade-in-up ${isLocked ? 'opacity-50 blur-sm duration-500' : ''}`}>
             <h1 className="text-4xl font-bold text-white mb-3 tracking-tight">
-                {step === 0 && "Name Your Story"}
-                {step === 1 && "Add a Tagline"}
-                {step === 2 && "Choose Genre"}
-                {step === 3 && "Build the World"}
+                {step === 0 && t('headers.title')}
+                {step === 1 && t('headers.subtitle')}
+                {step === 2 && t('headers.genre')}
+                {step === 3 && t('headers.world')}
             </h1>
             <p className="text-slate-500 text-lg">
-                {step === 0 && "Every great webtoon starts with a memorable title."}
-                {step === 1 && "Give your readers a hint of what's coming."}
-                {step === 2 && "Select one or more genres that fit your story."}
-                {step === 3 && "Describe the setting and let AI enhance it for you."}
+                {step === 0 && t('descriptions.title')}
+                {step === 1 && t('descriptions.subtitle')}
+                {step === 2 && t('descriptions.genre')}
+                {step === 3 && t('descriptions.world')}
             </p>
             </div>
         )}
@@ -309,8 +312,8 @@ export default function NewProjectWizard() {
         {showAiResults && mappedSuggestion ? (
             <div className="w-full animate-fade-in-up my-10 relative z-50">
                 <div className="flex justify-between items-center mb-4 px-2">
-                    <h2 className="text-sm font-bold text-purple-400 tracking-wider uppercase">AI Suggestions</h2>
-                    <button onClick={() => setShowAiResults(false)} className="text-xs text-slate-500 hover:text-white">Dismiss</button>
+                    <h2 className="text-sm font-bold text-purple-400 tracking-wider uppercase">{t('aiSuggestions')}</h2>
+                    <button onClick={() => setShowAiResults(false)} className="text-xs text-slate-500 hover:text-white">{t('dismiss')}</button>
                 </div>
                 <AiSuggestionCard 
                     suggestion={mappedSuggestion} 
@@ -334,13 +337,13 @@ export default function NewProjectWizard() {
                 {/* Step 0: Title */}
                 {step === 0 && (
                 <div className="space-y-4">
-                    <label className="text-xs font-mono font-bold text-slate-500 ml-1 uppercase">Webtoon Title</label>
+                    <label className="text-xs font-mono font-bold text-slate-500 ml-1 uppercase">{t('inputs.titleLabel')}</label>
                     <div className="relative group">
                         <input 
                         type="text" 
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
-                        placeholder="e.g. Workromancer"
+                        placeholder={t('inputs.titlePlaceholder')}
                         disabled={isLocked}
                         className="w-full bg-transparent border-2 border-slate-700 rounded-xl px-6 py-5 text-2xl font-bold text-white placeholder-slate-700 focus:border-purple-500 outline-none transition-all group-hover:border-slate-600 disabled:opacity-50"
                         autoFocus
@@ -354,13 +357,13 @@ export default function NewProjectWizard() {
                 {/* Step 1: Subtitle */}
                 {step === 1 && (
                 <div className="space-y-4">
-                    <label className="text-xs font-mono font-bold text-slate-500 ml-1 uppercase">Subtitle / Tagline</label>
+                    <label className="text-xs font-mono font-bold text-slate-500 ml-1 uppercase">{t('inputs.subtitleLabel')}</label>
                     <div className="relative group">
                         <input 
                         type="text" 
                         value={subtitle}
                         onChange={(e) => setSubtitle(e.target.value)}
-                        placeholder="e.g. The Ghost of Pangyo"
+                        placeholder={t('inputs.subtitlePlaceholder')}
                         disabled={isLocked}
                         className="w-full bg-transparent border-2 border-slate-700 rounded-xl px-6 py-5 text-xl font-medium text-white placeholder-slate-700 focus:border-purple-500 outline-none transition-all group-hover:border-slate-600 disabled:opacity-50"
                         autoFocus
@@ -393,7 +396,7 @@ export default function NewProjectWizard() {
                                 <genre.icon size={16} />
                             </div>
                             <span className={`font-bold text-sm ${isSelected ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}`}>
-                                {genre.label}
+                                {t(`genres.${genre.id}`)}
                             </span>
                             {isSelected && (
                                 <div className="absolute top-2 right-2 w-2 h-2 bg-purple-500 rounded-full shadow-[0_0_8px_rgba(168,85,247,0.8)]" />
@@ -408,7 +411,7 @@ export default function NewProjectWizard() {
                 {step === 3 && (
                 <div className="space-y-4 h-full flex flex-col">
                     <div className="flex justify-between items-center">
-                        <label className="text-xs font-mono font-bold text-slate-500 ml-1 uppercase">Project Worldview</label>
+                        <label className="text-xs font-mono font-bold text-slate-500 ml-1 uppercase">{t('inputs.worldLabel')}</label>
                         <button 
                             onClick={handleAugmentWorldview}
                             disabled={aiLoading || isLocked}
@@ -426,7 +429,7 @@ export default function NewProjectWizard() {
                             ) : (
                                 <Wand2 size={12} />
                             )}
-                            {aiLoading ? "Generating..." : "AI Augment"}
+                            {aiLoading ? t('buttons.generating') : t('buttons.aiAugment')}
                         </button>
                     </div>
                     
@@ -434,7 +437,7 @@ export default function NewProjectWizard() {
                         <textarea 
                         value={typeof worldDesc === 'string' ? worldDesc : (worldDesc.content || JSON.stringify(worldDesc))}
                         onChange={(e) => setWorldDesc(e.target.value)}
-                        placeholder="E.g. A dystopian cyberpunk city where rain never stops and neon lights control people's emotions..."
+                        placeholder={t('inputs.worldPlaceholder')}
                         disabled={isLocked}
                         className="w-full h-40 bg-slate-900/30 border-2 border-slate-700 rounded-xl p-5 text-base text-white placeholder-slate-700 focus:border-purple-500 outline-none resize-none transition-all leading-relaxed disabled:opacity-50"
                         autoFocus
@@ -460,7 +463,7 @@ export default function NewProjectWizard() {
                     }
                 `}
                 >
-                <ArrowLeft size={18} /> Back
+                <ArrowLeft size={18} /> {t('buttons.back')}
                 </button>
 
                 <button 
@@ -479,11 +482,11 @@ export default function NewProjectWizard() {
                 `}
                 >
                 {isProcessing ? (
-                    <>Processing...</>
+                    <>{t('buttons.processing')}</>
                 ) : step === 3 ? (
-                    <>Create Project <Check size={18} /></>
+                    <>{t('buttons.createProject')} <Check size={18} /></>
                 ) : (
-                    <>Next <ArrowRight size={18} /></>
+                    <>{t('buttons.next')} <ArrowRight size={18} /></>
                 )}
                 </button>
             </div>

@@ -18,16 +18,19 @@ class User(SQLModel, table=True):
     email: str = Field(unique=True, index=True)
     password_hash: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    language: str = Field(default="en")
     
     workspaces: List["Workspace"] = Relationship(back_populates="members", link_model=WorkspaceMember)
 
 class UserRead(SQLModel):
     id: UUID
     email: str
+    language: str
     created_at: datetime
 
 class UserUpdate(SQLModel):
     email: Optional[str] = None
+    language: Optional[str] = None
     password: Optional[str] = None
 
 class Workspace(SQLModel, table=True):

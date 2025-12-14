@@ -1,0 +1,114 @@
+{
+  "Settings": {
+    "title": "Settings",
+    "description": "Manage your profile and workspace preferences.",
+    "profile": "Profile Information",
+    "profileDescription": "Your personal account details",
+    "workspace": "Workspace",
+    "workspaceDescription": "Plan and usage details",
+    "email": "Email Address",
+    "userId": "User ID",
+    "language": "Language",
+    "currentPlan": "Current Plan",
+    "upgradePlan": "Upgrade Plan",
+    "creditsAvailable": "Credits Available",
+    "purchaseCredits": "Purchase Credits"
+  },
+  "Common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "loading": "Loading...",
+    "create": "Create"
+  },
+  "Dashboard": {
+    "subtitle": "AI Webtoon Tool",
+    "nav": {
+      "projects": "Projects",
+      "styles": "Art Styles",
+      "templates": "Templates",
+      "assets": "Assets",
+      "settings": "Settings",
+      "help": "Help"
+    },
+    "workspace": {
+      "switch": "Switch Workspace",
+      "create": "Create New Workspace",
+      "settings": "Workspace Settings",
+      "credits": "{count} Credits"
+    },
+    "newProject": "New Project",
+    "welcome": "Welcome back,",
+    "welcomeMessage": "Ready to create something amazing today?",
+    "searchPlaceholder": "Search projects...",
+    "recentProjects": "Recent Projects",
+    "viewAll": "View All",
+    "loadingProjects": "Loading projects...",
+    "noProjects": "No recent projects found.",
+    "startNew": "Start a New Toon",
+    "openEditor": "Open Editor",
+    "useTemplate": "Use Template",
+    "resume": "Resume",
+    "draft": "Draft",
+    "inProgress": "In Progress",
+    "justNow": "Just Now",
+    "untitledDraft": "Untitled Draft"
+  },
+  "CreateWorkspace": {
+    "title": "Create Workspace",
+    "description": "Create a new workspace to organize your projects and assets.",
+    "nameLabel": "Workspace Name",
+    "namePlaceholder": "e.g. My Awesome Studio",
+    "submit": "Create Workspace"
+  },
+  "NewProject": {
+    "backToDashboard": "Back to Dashboard",
+    "aiSuggestions": "AI Suggestions",
+    "dismiss": "Dismiss",
+    "steps": {
+      "title": "TITLE",
+      "subtitle": "SUBTITLE",
+      "genre": "GENRE",
+      "world": "WORLD"
+    },
+    "headers": {
+      "title": "Name Your Story",
+      "subtitle": "Add a Tagline",
+      "genre": "Choose Genre",
+      "world": "Build the World"
+    },
+    "descriptions": {
+      "title": "Every great webtoon starts with a memorable title.",
+      "subtitle": "Give your readers a hint of what's coming.",
+      "genre": "Select one or more genres that fit your story.",
+      "world": "Describe the setting and let AI enhance it for you."
+    },
+    "inputs": {
+      "titleLabel": "Webtoon Title",
+      "titlePlaceholder": "e.g. Workromancer",
+      "subtitleLabel": "Subtitle / Tagline",
+      "subtitlePlaceholder": "e.g. The Ghost of Pangyo",
+      "worldLabel": "Project Worldview",
+      "worldPlaceholder": "E.g. A dystopian cyberpunk city where rain never stops..."
+    },
+    "buttons": {
+      "aiAugment": "AI Augment",
+      "generating": "Generating...",
+      "back": "Back",
+      "next": "Next",
+      "createProject": "Create Project",
+      "processing": "Processing..."
+    },
+    "genres": {
+      "fantasy": "Fantasy",
+      "romance": "Romance",
+      "sciFi": "Sci-Fi",
+      "sliceOfLife": "Slice of Life",
+      "action": "Action",
+      "thriller": "Thriller",
+      "historical": "Historical",
+      "comedy": "Comedy",
+      "mystery": "Mystery",
+      "horror": "Horror"
+    }
+  }
+}

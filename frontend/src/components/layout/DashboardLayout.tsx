@@ -11,10 +11,13 @@ import { useEffect, useState, useRef } from 'react';
 import CreateWorkspaceModal from '@/components/dashboard/CreateWorkspaceModal';
 import RechargeModal from '@/components/dashboard/RechargeModal';
 
+import { useTranslations } from 'next-intl';
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const pathname = usePathname() || '';
     const { logout, user } = useAuthStore();
+    const t = useTranslations('Dashboard');
 
     const handleLogout = () => {
         logout();
@@ -51,11 +54,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }, []);
 
     const navItems = [
-        { name: 'Projects', href: '/dashboard', icon: LayoutDashboard },
-        { name: 'Art Styles', href: '/dashboard/styles', icon: Palette },
-        { name: 'Templates', href: '/templates', icon: LayoutTemplate },
-        { name: 'Assets', href: '/assets', icon: ImageIcon },
-        { name: 'Settings', href: '/dashboard/settings', icon: Settings },
+        { name: t('nav.projects'), href: '/dashboard', icon: LayoutDashboard },
+        { name: t('nav.styles'), href: '/dashboard/styles', icon: Palette },
+        { name: t('nav.templates'), href: '/templates', icon: LayoutTemplate },
+        { name: t('nav.assets'), href: '/assets', icon: ImageIcon },
+        { name: t('nav.settings'), href: '/dashboard/settings', icon: Settings },
     ];
 
     return (
@@ -68,7 +71,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         <div className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 shadow-sm" style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuBN5z1oDmeTFxQPTUuZqFXRVrFpjy9QgdgN7rv824MDXj0NTjJf2cUSjH7YeclTy1qA7RfMULzL6lGPB0I4bZHNNHrSkeRlsh8ShZdCrhnIOWQrexQX3xL1OC7CAWTqbG9zjPeN6nxXKNfnX7EL9jlzWM3lPPERGqxmt9W6cV5zdFUyxhV086nH2nspTA8NdBpwgv32ZZe6ILXWL6fWCGG7q9dHiEZH9OCuBdZ3TVK_QRzEx4ItSKvZ0B4FeqhlaveTmuZFH9g2Gls")' }}></div>
                         <div className="flex flex-col">
                             <h1 className="text-gray-900 dark:text-white text-base font-medium leading-normal">Toonify</h1>
-                            <p className="text-gray-500 dark:text-gray-400 text-sm font-normal leading-normal">AI Webtoon Tool</p>
+                            <p className="text-gray-500 dark:text-gray-400 text-sm font-normal leading-normal">{t('subtitle')}</p>
                         </div>
                     </Link>
 
@@ -92,7 +95,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                         }}
                                     >
                                         <Coins size={12} />
-                                        <span>{currentWorkspace.credits} Credits</span>
+                                        <span>{t('workspace.credits', {count: currentWorkspace.credits})}</span>
                                         <Plus size={10} className="bg-yellow-500/20 rounded-full p-0.5" />
                                     </div>
                                 </div>
@@ -103,7 +106,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             {isWorkspaceOpen && (
                                 <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 shadow-lg py-1 animate-in fade-in zoom-in-95 duration-100">
                                     <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                        Switch Workspace
+                                        {t('workspace.switch')}
                                     </div>
                                     <div className="max-h-60 overflow-y-auto">
                                         {workspaces.map((ws) => (
@@ -129,7 +132,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                         className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-primary dark:hover:text-primary transition-colors text-left font-medium"
                                     >
                                         <Plus size={14} />
-                                        Create New Workspace
+                                        {t('workspace.create')}
                                     </button>
                                     <Link
                                         href="/dashboard/settings"
@@ -137,7 +140,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                         onClick={() => setIsWorkspaceOpen(false)}
                                     >
                                         <Settings size={14} />
-                                        Workspace Settings
+                                        {t('workspace.settings')}
                                     </Link>
                                 </div>
                             )}
@@ -149,7 +152,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         <Link href="/new-project">
                             <div className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white p-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-purple-900/20 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer">
                                 <Plus size={16} strokeWidth={3} />
-                                <span className="pt-[1px]">New Project</span>
+                                <span className="pt-[1px]">{t('newProject')}</span>
                             </div>
                         </Link>
                     </div>
@@ -182,7 +185,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <div className="mt-auto flex flex-col gap-1">
                     <Link href="/help" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors">
                         <HelpCircle size={20} className="text-gray-500 dark:text-gray-500" />
-                        <p className="text-gray-800 dark:text-white text-sm font-medium leading-normal">Help</p>
+                        <p className="text-gray-800 dark:text-white text-sm font-medium leading-normal">{t('nav.help')}</p>
                     </Link>
 
                     {/* Profile Section */}
