@@ -41,13 +41,20 @@ api.interceptors.response.use(
             const data = error.response.data;
 
             if (status === 401) {
-                // Optional: Handle unauthorized (e.g., redirect to login)
-                // For now, just show error
-                title = "Unauthorized";
+                // 401 Unauthorized: Session invalid -> Logout & Home
+                useAuthStore.getState().logout();
+                if (typeof window !== 'undefined') {
+                    window.location.href = '/';
+                }
+                title = "Session Expired";
                 message = "Please log in again.";
             } else if (status === 403) {
-                title = "Forbidden";
-                message = "You do not have permission to perform this action.";
+                // 403 Forbidden: Permission denied -> Redirect to Dashboard (Workspace Home)
+                if (typeof window !== 'undefined') {
+                    window.location.href = '/dashboard';
+                }
+                title = "Access Denied";
+                message = "You don't have permission to view this page. Redirecting to workspace...";
             } else if (status === 404) {
                 title = "Not Found";
                 message = "The requested resource was not found.";
