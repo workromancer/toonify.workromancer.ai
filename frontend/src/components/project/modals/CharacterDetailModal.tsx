@@ -50,18 +50,19 @@ export default function CharacterDetailModal({ isOpen, onClose, character, onRet
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent hideCloseButton className="max-w-4xl p-0 overflow-hidden bg-[#0F0F12] border border-gray-800 text-white sm:rounded-2xl">
-                <div className="flex flex-col md:flex-row h-full max-h-[85vh]">
+            <DialogContent hideCloseButton className="max-w-5xl p-0 overflow-hidden bg-[#0F0F12] border border-gray-800 text-white sm:rounded-2xl max-h-[90vh] flex flex-col">
+                <div className="flex flex-col md:flex-row h-full overflow-hidden">
 
                     {/* Left: Image / Status Area */}
-                    <div className="w-full md:w-1/2 relative bg-black/40 min-h-[400px] md:min-h-full flex items-center justify-center border-b md:border-b-0 md:border-r border-gray-800">
+                    <div className="w-full md:w-[45%] relative bg-black/40 flex items-center justify-center border-b md:border-b-0 md:border-r border-gray-800 overflow-hidden bg-[#13111C]">
                         {character.profile_image_url && !isGenerating ? (
-                            <div
-                                className="absolute inset-0 bg-contain bg-no-repeat bg-center"
-                                style={{ backgroundImage: `url("${character.profile_image_url}")` }}
+                            <img
+                                src={character.profile_image_url}
+                                alt={character.name}
+                                className="w-full h-auto max-h-[85vh] object-contain"
                             />
                         ) : (
-                            <div className="flex flex-col items-center gap-4 p-8 text-center relative z-10">
+                            <div className="flex flex-col items-center gap-4 p-8 text-center relative z-10 w-full min-h-[400px] justify-center">
                                 {isGenerating ? (
                                     <>
                                         <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin shadow-xl shadow-primary/20" />
@@ -92,15 +93,14 @@ export default function CharacterDetailModal({ isOpen, onClose, character, onRet
                                         {character.name[0]}
                                     </div>
                                 )}
+                                {/* Overlay Gradient for readability if needed (only for placeholder) */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-[#13111C] via-transparent to-transparent opacity-60 pointer-events-none" />
                             </div>
                         )}
-
-                        {/* Overlay Gradient for readability if needed */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#13111C] via-transparent to-transparent opacity-60" />
                     </div>
 
                     {/* Right: Details */}
-                    <div className="w-full md:w-1/2 flex flex-col bg-[#0F0F12]">
+                    <div className="w-full md:w-[55%] flex flex-col bg-[#0F0F12] h-full md:h-auto overflow-hidden">
                         {/* Header */}
                         <div className="p-6 border-b border-gray-800 flex items-start justify-between bg-white/[0.01]">
                             <div>
@@ -133,15 +133,107 @@ export default function CharacterDetailModal({ isOpen, onClose, character, onRet
                         {/* Scrollable Content */}
                         <div className="flex-1 overflow-y-auto p-6 custom-scrollbar space-y-8">
 
-                            {/* Basic Info Row */}
-                            {(character.profile?.age || character.profile?.personality) && (
-                                <section className="grid grid-cols-2 gap-4">
-                                    {character.profile?.age && (
-                                        <div className="bg-[#15151A] border border-gray-800 rounded-xl p-3">
-                                            <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Age</h4>
-                                            <p className="text-white font-medium">{character.profile.age}</p>
-                                        </div>
-                                    )}
+                            {/* Description / Background (Moved to Top) */}
+                            {(character.profile?.bio || character.profile?.background || character.description) && (
+                                <section>
+                                    <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                        <FileText size={12} /> Bio / Background
+                                    </h4>
+                                    {(() => {
+                                        const bioContent = character.profile?.bio || character.profile?.background || character.description;
+
+                                        if (!bioContent) return null;
+
+                                        if (typeof bioContent === 'object') {
+                                            return (
+                                                <div className="grid grid-cols-1 gap-3">
+                                                    {Object.entries(bioContent).map(([key, value]) => {
+                                                        if (!value) return null;
+                                                        // Map keys to colors
+                                                        const colorClass =
+                                                            key === 'origin' ? 'text-blue-400' :
+                                                                key === 'goals' ? 'text-purple-400' :
+                                                                    key === 'quirk' ? 'text-yellow-500' : 'text-gray-400';
+
+                                                        return (
+                                                            <div key={key} className="bg-[#15151A] border border-gray-800 rounded-xl p-4">
+                                                                <span className={cn("text-[10px] font-bold uppercase tracking-wider mb-1 block", colorClass)}>
+                                                                    {key}
+                                                                </span>
+                                                                <p className="text-sm text-gray-300 leading-relaxed capitalize">{value}</p>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            );
+                                        }
+
+                                        // It's a string, try to parse it
+                                        const parseRawBio = (text: string) => {
+                                            // Keys to look for. Order matters for split? 
+                                            // We'll use a regex to find all "Key:" patterns
+                                            const keyPattern = /(?:^|\.\s+|,\s+)(Age|Role|Personality|Visuals|Lore|Origin|Goals|Quirk|Background|History):\s*/gi;
+
+                                            // Split logic is tricky with regex split.
+                                            // Let's match all keys and their indices
+                                            const matches = Array.from(text.matchAll(keyPattern));
+
+                                            if (matches.length === 0) {
+                                                // No structure found, return as single "Background"
+                                                return { Background: text };
+                                            }
+
+                                            const result: Record<string, string> = {};
+
+                                            matches.forEach((match, index) => {
+                                                const key = match[1]; // e.g. "Age"
+                                                const start = match.index! + match[0].length;
+                                                const end = matches[index + 1] ? matches[index + 1].index! : text.length;
+                                                let value = text.slice(start, end).trim();
+
+                                                // Remove trailing dots or commas if they are clearly separators
+                                                if (value.endsWith('.') || value.endsWith(',')) {
+                                                    value = value.slice(0, -1);
+                                                }
+
+                                                // Capitalize Key
+                                                const capKey = key.charAt(0).toUpperCase() + key.slice(1).toLowerCase();
+                                                result[capKey] = value;
+                                            });
+
+                                            return result;
+                                        };
+
+                                        const parsed = parseRawBio(bioContent);
+
+                                        return (
+                                            <div className="grid grid-cols-1 gap-3">
+                                                {Object.entries(parsed).map(([key, value]) => {
+                                                    // Skipping fields that are already displayed prominently elsewhere
+                                                    // "Age" -> Already in header
+                                                    // "Visuals" -> Already in tags
+                                                    // "Personality" -> Already in Mood?
+                                                    // User asked to "split and show like profile". Showing them all is safer for now.
+
+                                                    const colorClass =
+                                                        key === 'Lore' || key === 'Background' || key === 'History' ? 'text-indigo-400' :
+                                                            key === 'Role' ? 'text-pink-400' :
+                                                                key === 'Quirk' ? 'text-yellow-500' :
+                                                                    key === 'Goals' ? 'text-purple-400' :
+                                                                        key === 'Origin' ? 'text-blue-400' : 'text-gray-500';
+
+                                                    return (
+                                                        <div key={key} className="bg-[#15151A] border border-gray-800 rounded-xl p-4 transition-all hover:bg-[#1A1A20]">
+                                                            <span className={cn("text-[10px] font-bold uppercase tracking-wider mb-2 block flex items-center gap-2", colorClass)}>
+                                                                {key}
+                                                            </span>
+                                                            <p className="text-sm text-gray-300 leading-relaxed font-sans">{value}</p>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        );
+                                    })()}
                                 </section>
                             )}
 
@@ -200,41 +292,6 @@ export default function CharacterDetailModal({ isOpen, onClose, character, onRet
                                                 {character.profile.cons.map((p, i) => <li key={i}>{p}</li>)}
                                             </ul>
                                         </div>
-                                    )}
-                                </section>
-                            )}
-
-                            {/* Description / Background */}
-                            {(character.profile?.bio || character.profile?.background || character.description) && (
-                                <section>
-                                    <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-                                        <FileText size={12} /> Bio / Background
-                                    </h4>
-                                    {typeof character.profile?.bio === 'object' ? (
-                                        <div className="grid grid-cols-1 gap-3">
-                                            {character.profile.bio.origin && (
-                                                <div className="bg-[#15151A] border border-gray-800 rounded-xl p-4">
-                                                    <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider mb-1 block">Origin</span>
-                                                    <p className="text-sm text-gray-300 leading-relaxed">{character.profile.bio.origin}</p>
-                                                </div>
-                                            )}
-                                            {character.profile.bio.goals && (
-                                                <div className="bg-[#15151A] border border-gray-800 rounded-xl p-4">
-                                                    <span className="text-[10px] font-bold text-purple-400 uppercase tracking-wider mb-1 block">Goals</span>
-                                                    <p className="text-sm text-gray-300 leading-relaxed">{character.profile.bio.goals}</p>
-                                                </div>
-                                            )}
-                                            {character.profile.bio.quirk && (
-                                                <div className="bg-[#15151A] border border-gray-800 rounded-xl p-4">
-                                                    <span className="text-[10px] font-bold text-yellow-500 uppercase tracking-wider mb-1 block">Quirk</span>
-                                                    <p className="text-sm text-gray-300 leading-relaxed">{character.profile.bio.quirk}</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    ) : (
-                                        <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap rounded-xl bg-[#15151A] p-4 border border-gray-800">
-                                            {character.profile?.bio || character.profile?.background || character.description}
-                                        </p>
                                     )}
                                 </section>
                             )}
