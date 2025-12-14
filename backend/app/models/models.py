@@ -21,6 +21,15 @@ class User(SQLModel, table=True):
     
     workspaces: List["Workspace"] = Relationship(back_populates="members", link_model=WorkspaceMember)
 
+class UserRead(SQLModel):
+    id: UUID
+    email: str
+    created_at: datetime
+
+class UserUpdate(SQLModel):
+    email: Optional[str] = None
+    password: Optional[str] = None
+
 class Workspace(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     name: str

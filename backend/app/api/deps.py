@@ -29,12 +29,25 @@ def get_current_user_id(
         if settings.DEBUG:
             print(f"JWT Validation Error: {e}")
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
+                status_code=status.HTTP_401_UNAUTHORIZED,
                 detail=f"Could not validate credentials: {e}",
+                headers={"WWW-Authenticate": "Bearer"},
             )
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
         )
     return token_data
+
+def get_current_active_user(
+    session: Session = Depends(get_session),
+    user_id: str = Depends(get_current_user_id),
+) -> "User":
+    from app.models import User
+    user = session.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    # For now, we don't have is_active field, assuming all users are active
+    return user
 

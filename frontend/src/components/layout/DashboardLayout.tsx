@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useWorkspaceStore } from '@/store/useWorkspaceStore';
 import { cn } from '@/lib/utils';
@@ -11,8 +11,14 @@ import { useEffect, useState, useRef } from 'react';
 import CreateWorkspaceModal from '@/components/dashboard/CreateWorkspaceModal';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+    const router = useRouter();
     const pathname = usePathname() || '';
     const { logout, user } = useAuthStore();
+
+    const handleLogout = () => {
+        logout();
+        router.push('/login');
+    };
     const { currentWorkspace, workspaces, fetchWorkspaces, setCurrentWorkspace } = useWorkspaceStore();
 
     // UI State
@@ -176,7 +182,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             variant="ghost"
                             size="icon"
                             className="text-gray-400 hover:text-red-500 hover:bg-red-500/10 shrink-0"
-                            onClick={logout}
+                            onClick={handleLogout}
                         >
                             <LogOut size={18} />
                         </Button>
