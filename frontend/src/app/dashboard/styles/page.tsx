@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import {
     LayoutGrid, Paintbrush, LayoutTemplate, FolderOpen, Settings,
     Plus, Search, MoreVertical, LogOut, User,
@@ -154,7 +154,7 @@ const StyleCard = ({ style }: { style: ArtStyle }) => {
     );
 };
 
-export default function ArtStylesPage() {
+function ArtStylesContent() {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isSelectionModalOpen, setIsSelectionModalOpen] = useState(false);
     const [styles, setStyles] = useState<ArtStyle[]>([]);
@@ -196,7 +196,7 @@ export default function ArtStylesPage() {
     };
 
     return (
-        <DashboardLayout>
+        <>
             <div className="relative min-h-full bg-[#05050a] text-slate-200 font-sans selection:bg-purple-500/30 p-8">
                 {/* Background Ambience */}
                 <div className="fixed top-[-20%] left-[-10%] w-[1000px] h-[1000px] bg-purple-900/5 rounded-full blur-[150px] pointer-events-none" />
@@ -347,6 +347,20 @@ export default function ArtStylesPage() {
                     to { opacity: 1; }
                 }
               `}</style>
+        </>
+    );
+}
+
+export default function ArtStylesPage() {
+    return (
+        <DashboardLayout>
+            <Suspense fallback={
+                <div className="flex items-center justify-center min-h-[300px] h-full">
+                    <Loader2 className="animate-spin text-purple-500" size={32} />
+                </div>
+            }>
+                <ArtStylesContent />
+            </Suspense>
         </DashboardLayout>
     );
 }
