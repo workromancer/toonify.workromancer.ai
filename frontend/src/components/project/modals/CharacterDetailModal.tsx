@@ -38,7 +38,11 @@ interface CharacterDetailModalProps {
     onRetry?: (characterId: string) => void;
 }
 
+import { useTranslations } from 'next-intl';
+
 export default function CharacterDetailModal({ isOpen, onClose, character, onRetry }: CharacterDetailModalProps) {
+    const t = useTranslations('Modals.CharacterDetail');
+
     if (!character) return null;
 
     const isGenerating = character.sheet_status === 'pending' || character.sheet_status === 'processing';
@@ -67,8 +71,8 @@ export default function CharacterDetailModal({ isOpen, onClose, character, onRet
                                     <>
                                         <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin shadow-xl shadow-primary/20" />
                                         <div className="flex flex-col gap-1">
-                                            <h3 className="text-xl font-bold text-white animate-pulse">Designing {character.name}...</h3>
-                                            <p className="text-sm text-gray-400">Our AI artists are sketching your character.</p>
+                                            <h3 className="text-xl font-bold text-white animate-pulse">{t('designing', { name: character.name })}</h3>
+                                            <p className="text-sm text-gray-400">{t('designingDesc')}</p>
                                         </div>
                                     </>
                                 ) : isFailed ? (
@@ -76,14 +80,14 @@ export default function CharacterDetailModal({ isOpen, onClose, character, onRet
                                         <div className="w-16 h-16 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center mb-2">
                                             <X size={32} />
                                         </div>
-                                        <h3 className="text-xl font-bold text-white">Generation Failed</h3>
-                                        <p className="text-sm text-gray-400 max-w-xs mb-4">Something went wrong while creating the character.</p>
+                                        <h3 className="text-xl font-bold text-white">{t('failed')}</h3>
+                                        <p className="text-sm text-gray-400 max-w-xs mb-4">{t('failedDesc')}</p>
                                         {onRetry && (
                                             <Button
                                                 onClick={() => onRetry(character.id!)}
                                                 className="bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-900/20"
                                             >
-                                                <Sparkles size={16} className="mr-2" /> Retry Generation
+                                                <Sparkles size={16} className="mr-2" /> {t('retry')}
                                             </Button>
                                         )}
                                     </>
@@ -116,7 +120,7 @@ export default function CharacterDetailModal({ isOpen, onClose, character, onRet
                                                 ? "bg-red-500/20 text-red-300 border-red-500/30"
                                                 : "bg-green-500/20 text-green-300 border-green-500/30"
                                     )}>
-                                        {isGenerating ? "Processing" : isFailed ? "Error" : "Ready"}
+                                        {isGenerating ? t('processing') : isFailed ? t('error') : t('ready')}
                                     </span>
                                 </div>
                             </div>
@@ -137,7 +141,7 @@ export default function CharacterDetailModal({ isOpen, onClose, character, onRet
                             {(character.profile?.bio || character.profile?.background || character.description) && (
                                 <section>
                                     <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-                                        <FileText size={12} /> Bio / Background
+                                        <FileText size={12} /> {t('bio')}
                                     </h4>
                                     {(() => {
                                         const bioContent = character.profile?.bio || character.profile?.background || character.description;
@@ -240,7 +244,7 @@ export default function CharacterDetailModal({ isOpen, onClose, character, onRet
                             {/* Moods / Personality */}
                             <section>
                                 <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-                                    <Sparkles size={12} /> Personality & Mood
+                                    <Sparkles size={12} /> {t('mood')}
                                 </h4>
                                 <div className="flex flex-col gap-3">
                                     {character.profile?.personality && (
@@ -262,7 +266,7 @@ export default function CharacterDetailModal({ isOpen, onClose, character, onRet
                             {character.profile?.stats && (
                                 <section>
                                     <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-                                        <Activity size={12} /> Stats
+                                        <Activity size={12} /> {t('stats')}
                                     </h4>
                                     <div className="bg-[#15151A] border border-gray-800 rounded-xl p-4 flex justify-center">
                                         <RadarChart
@@ -279,7 +283,7 @@ export default function CharacterDetailModal({ isOpen, onClose, character, onRet
                                 <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {character.profile?.pros && (
                                         <div className="bg-green-500/5 border border-green-500/10 rounded-xl p-4">
-                                            <h4 className="text-xs font-bold text-green-400 uppercase tracking-widest mb-2">Strengths</h4>
+                                            <h4 className="text-xs font-bold text-green-400 uppercase tracking-widest mb-2">{t('strengths')}</h4>
                                             <ul className="list-disc list-inside text-sm text-gray-400 space-y-1">
                                                 {character.profile.pros.map((p, i) => <li key={i}>{p}</li>)}
                                             </ul>
@@ -287,7 +291,7 @@ export default function CharacterDetailModal({ isOpen, onClose, character, onRet
                                     )}
                                     {character.profile?.cons && (
                                         <div className="bg-red-500/5 border border-red-500/10 rounded-xl p-4">
-                                            <h4 className="text-xs font-bold text-red-400 uppercase tracking-widest mb-2">Weaknesses</h4>
+                                            <h4 className="text-xs font-bold text-red-400 uppercase tracking-widest mb-2">{t('weaknesses')}</h4>
                                             <ul className="list-disc list-inside text-sm text-gray-400 space-y-1">
                                                 {character.profile.cons.map((p, i) => <li key={i}>{p}</li>)}
                                             </ul>
@@ -300,7 +304,7 @@ export default function CharacterDetailModal({ isOpen, onClose, character, onRet
                             {(character.appearance_tags && character.appearance_tags.length > 0) && (
                                 <section>
                                     <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-                                        <Tag size={12} /> Visual Traits
+                                        <Tag size={12} /> {t('visuals')}
                                     </h4>
                                     <div className="flex flex-wrap gap-2">
                                         {character.appearance_tags.map((tag, i) => (
@@ -316,7 +320,7 @@ export default function CharacterDetailModal({ isOpen, onClose, character, onRet
                         {/* Footer Actions */}
                         <div className="p-6 border-t border-gray-800 bg-white/[0.01] flex justify-end gap-3">
                             <Button variant="ghost" onClick={onClose} className="hover:bg-white/5 text-gray-400 hover:text-white">
-                                Close
+                                {t('close')}
                             </Button>
                         </div>
                     </div>

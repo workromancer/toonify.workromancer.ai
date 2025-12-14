@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import api from '@/lib/api';
+import { useTranslations } from 'next-intl';
 
 interface AddCharacterModalProps {
     isOpen: boolean;
@@ -16,6 +17,7 @@ interface AddCharacterModalProps {
 }
 
 export default function AddCharacterModal({ isOpen, onClose, projectId, onAdd }: AddCharacterModalProps) {
+    const t = useTranslations('Modals.AddCharacter');
     const [formData, setFormData] = useState({
         name: '',
         age: 18,
@@ -48,36 +50,36 @@ export default function AddCharacterModal({ isOpen, onClose, projectId, onAdd }:
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Add New Character</DialogTitle>
+                    <DialogTitle>{t('title')}</DialogTitle>
                     <DialogDescription>
-                        Define a new character for your webtoon.
+                        {t('desc')}
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="grid gap-4 py-4">
                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="char-name" className="text-right">Name</Label>
+                        <Label htmlFor="char-name" className="text-right">{t('name')}</Label>
                         <Input id="char-name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="col-span-3" required />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="char-age" className="text-right">Age</Label>
+                        <Label htmlFor="char-age" className="text-right">{t('age')}</Label>
                         <Input id="char-age" type="number" value={formData.age} onChange={(e) => setFormData({ ...formData, age: parseInt(e.target.value) })} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="char-gender" className="text-right">Gender</Label>
+                        <Label htmlFor="char-gender" className="text-right">{t('gender')}</Label>
                         <Input id="char-gender" value={formData.gender} onChange={(e) => setFormData({ ...formData, gender: e.target.value })} className="col-span-3" placeholder="e.g. Female" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="char-personality" className="text-right">Personality</Label>
+                        <Label htmlFor="char-personality" className="text-right">{t('personality')}</Label>
                         <Input id="char-personality" value={formData.personality} onChange={(e) => setFormData({ ...formData, personality: e.target.value })} className="col-span-3" placeholder="e.g. Brave, Shy" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="char-desc" className="text-right">Description</Label>
+                        <Label htmlFor="char-desc" className="text-right">{t('description')}</Label>
                         <Textarea id="char-desc" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="col-span-3" placeholder="Physical appearance and other details..." />
                     </div>
                 </form>
                 <DialogFooter>
                     <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
-                    <Button type="submit" onClick={handleSubmit} disabled={loading}>{loading ? 'Creating...' : 'Create Character'}</Button>
+                    <Button type="submit" onClick={handleSubmit} disabled={loading}>{loading ? t('creating') : t('create')}</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

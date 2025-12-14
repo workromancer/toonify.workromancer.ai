@@ -23,6 +23,7 @@ import { SelectionCard } from '@/components/ui/selection-card';
 import { RadarChart } from '@/components/ui/radar-chart'; // New Import
 import api from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslations } from 'next-intl';
 
 interface CharacterCastingWizardProps {
     projectId: string;
@@ -34,6 +35,9 @@ type StepName = 'concept' | 'style' | 'analyzing' | 'role';
 
 // Inline StepIndicator component
 const StepIndicator = ({ currentStep, totalSteps }: { currentStep: number; totalSteps: number }) => {
+    const t = useTranslations('CharacterWizard.steps');
+    const stepKeys = ['concept', 'style', 'role'];
+
     return (
         <div className="w-full relative mb-8 px-4 flex justify-center">
             <div className="relative w-full max-w-lg">
@@ -47,10 +51,11 @@ const StepIndicator = ({ currentStep, totalSteps }: { currentStep: number; total
 
                 <div className="relative z-10 flex justify-between w-full">
                     {/* Steps: Concept(1), Style(2), Role(3) */}
-                    {['CONCEPT', 'STYLE', 'ROLE'].map((label, index) => {
+                    {stepKeys.map((key, index) => {
                         const stepNum = index + 1;
                         const isActive = stepNum <= currentStep;
                         const isCurrent = stepNum === currentStep;
+                        const label = t(key).toUpperCase();
 
                         return (
                             <div key={index} className="flex flex-col items-center gap-3 relative group cursor-default">
@@ -76,9 +81,12 @@ const StepIndicator = ({ currentStep, totalSteps }: { currentStep: number; total
     );
 };
 
+
 export default function CharacterCastingWizard({ projectId, projectTitle, projectGenre }: CharacterCastingWizardProps) {
     const router = useRouter();
     const { toast } = useToast();
+    const t = useTranslations('CharacterWizard');
+    const tRoles = useTranslations('CharacterWizard.roles');
 
     // Steps state
     const [step, setStep] = useState<StepName>('concept');
@@ -184,7 +192,7 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
             }
         } catch (e) {
             console.error(e);
-            toast({ title: "Suggestion Failed", description: "AI could not generate a suggestion.", variant: "destructive" });
+            toast({ title: t('toasts.suggestionFailed'), description: t('toasts.suggestionFailedDesc'), variant: "destructive" });
         } finally {
             setSuggestionLoading(null);
         }
@@ -269,14 +277,14 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
             api.post(`/characters/${newCharId}/generate`, {});
 
             toast({
-                title: "Character Created!",
-                description: `${name} has been cast as the ${selectedRole}.`,
+                title: t('toasts.createdTitle'),
+                description: t('toasts.createdDesc', { name, role: selectedRole }),
             });
 
             router.push(`/project/${projectId}`);
         } catch (e) {
             console.error("Creation Error", e);
-            setError("Failed to create character.");
+            setError(t('toasts.createFailed'));
             setIsGenerating(false);
         }
     };
@@ -317,20 +325,20 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
             <div className="space-y-6 max-w-md mx-auto w-full">
                 <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                        <SectionLabel className="text-[#d8b4fe]">Character Name</SectionLabel>
+                        <SectionLabel className="text-[#d8b4fe]">{t('inputs.nameLabel')}</SectionLabel>
                         <Badge
                             variant="outline"
                             className="border-purple-500/30 text-purple-300 bg-purple-500/10 text-[10px] px-2 py-0.5 cursor-pointer hover:bg-purple-500/20 transition-colors"
                             onClick={() => handleSuggestion('name')}
                         >
                             {suggestionLoading === 'name' ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Sparkles className="w-3 h-3 mr-1" />}
-                            AI Suggestion
+                            {t('buttons.aiSuggestion')}
                         </Badge>
                     </div>
                     <Input
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        placeholder="Park Dohyun"
+                        placeholder={t('inputs.namePlaceholder')}
                         size="xl"
                         className="text-center"
                         autoFocus
@@ -338,11 +346,11 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                 </div>
 
                 <div className="space-y-3">
-                    <SectionLabel className="text-[#d8b4fe]">Age (approx)</SectionLabel>
+                    <SectionLabel className="text-[#d8b4fe]">{t('inputs.ageLabel')}</SectionLabel>
                     <Input
                         value={age}
                         onChange={(e) => setAge(e.target.value)}
-                        placeholder="Age (e.g., 18)"
+                        placeholder={t('inputs.agePlaceholder')}
                         size="xl"
                         className="text-center"
                     />
@@ -366,7 +374,7 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                     <div className="space-y-3">
                         <div className="flex justify-between items-center">
                             <SectionLabel className="text-[#d8b4fe]" icon={<Sparkles className="w-3 h-3" />}>
-                                Visual Keywords
+                                {t('inputs.visualLabel')}
                             </SectionLabel>
                             <Badge
                                 variant="outline"
@@ -374,7 +382,7 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                                 onClick={() => handleSuggestion('visuals')}
                             >
                                 {suggestionLoading === 'visuals' ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Wand2 className="w-3 h-3 mr-1" />}
-                                AI Style Suggestion
+                                {t('buttons.aiStyleSuggestion')}
                             </Badge>
                         </div>
 
@@ -392,7 +400,7 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                             <div className="relative mt-auto">
                                 <Input
                                     className="bg-transparent border-none text-white placeholder:text-white/20 p-0 focus-visible:ring-0 h-auto text-sm"
-                                    placeholder="Add keywords (e.g., Uniform, Sword)..."
+                                    placeholder={t('inputs.visualPlaceholder')}
                                     value={currentKeyword}
                                     onChange={(e) => setCurrentKeyword(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && handleAddKeyword()}
@@ -412,7 +420,7 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                     {/* Theme Color */}
                     <div className="space-y-3">
                         <SectionLabel className="text-[#d8b4fe]" icon={<Palette className="w-3 h-3" />}>
-                            Theme Color
+                            {t('inputs.themeLabel')}
                         </SectionLabel>
                         <div className="flex gap-3">
                             {['#ef4444', '#3b82f6', '#10b981', '#B49221', '#8b5cf6', '#252830', '#9ca3af', '#be185d'].map((color) => {
@@ -438,7 +446,7 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                 {/* RIGHT COLUMN: Personality */}
                 <div className="flex flex-col gap-3">
                     <SectionLabel className="text-[#fbbf24]" icon={<span className='w-3 h-3 text-center leading-3'>☺</span>}>
-                        Personality Type
+                        {t('inputs.personalityLabel')}
                     </SectionLabel>
 
                     <div className="grid grid-cols-2 gap-3 h-full">
@@ -557,7 +565,7 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
         >
             {/* Left Sidebar: Roles List */}
             <div className="w-1/3 flex flex-col gap-3 pr-2 overflow-y-auto custom-scrollbar">
-                <SectionLabel className="mb-2 text-gray-500">Select Role</SectionLabel>
+                <SectionLabel className="mb-2 text-gray-500">{tRoles('selectRole')}</SectionLabel>
                 {archetypes.map((arch) => (
                     <SelectionCard
                         key={arch.id}
@@ -597,14 +605,14 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                 {/* Description Box */}
                 <div className="space-y-2 z-10">
                     <div className="flex justify-between items-center">
-                        <SectionLabel className="text-gray-500">Character Profile</SectionLabel>
+                        <SectionLabel className="text-gray-500">{tRoles('profile')}</SectionLabel>
                         <Badge
                             variant="outline"
                             className="border-purple-500/30 text-purple-300 bg-purple-500/10 text-[10px] px-2 py-0.5 cursor-pointer hover:bg-purple-500/20 transition-colors"
                             onClick={() => handleSuggestion('lore')}
                         >
                             {suggestionLoading === 'lore' ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Wand2 className="w-3 h-3 mr-1" />}
-                            AI Lore Expansion
+                            {t('buttons.aiLoreExpansion')}
                         </Badge>
                     </div>
                     <div className="bg-[#151921] rounded-lg p-4 text-gray-300 text-sm leading-relaxed border border-white/5 min-h-[80px]">
@@ -640,8 +648,8 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                         <div className="absolute inset-4 rounded-full border-b-2 border-blue-500 animate-spin [animation-duration:2s]"></div>
                     </div>
                     <div className="text-center space-y-2">
-                        <h3 className="text-xl font-bold tracking-tight text-white/80">ANALYZING WEBTOON DATA...</h3>
-                        <p className="text-gray-500 text-sm">Matching {name} with best archetypes...</p>
+                        <h3 className="text-xl font-bold tracking-tight text-white/80">{t('headers.analyzing')}</h3>
+                        <p className="text-gray-500 text-sm">{t('headers.analyzingDesc', { name })}</p>
                     </div>
                 </div>
             )}
@@ -655,7 +663,7 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
             <header className="absolute top-0 left-0 w-full p-6 flex justify-between items-center z-50 border-b border-white/5 bg-[#050505]/80 backdrop-blur-sm">
                 <div className="flex items-center gap-4 text-gray-400 hover:text-white transition-colors cursor-pointer" onClick={() => router.back()}>
                     <MoveLeft className="w-5 h-5" />
-                    <span className="font-medium">Back to Project</span>
+                    <span className="font-medium">{t('buttons.backToProject')}</span>
                 </div>
 
                 {/* Project Metatdata Header */}
@@ -680,20 +688,20 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                 <div className="text-center space-y-2 mb-4">
                     {step === 'concept' && (
                         <>
-                            <h1 className="text-3xl font-bold tracking-tight text-white/90">Basic Concept Setting</h1>
-                            <p className="text-gray-500 text-sm">Establish the basic settings of the character based on &#123;world_context&#125;.</p>
+                            <h1 className="text-3xl font-bold tracking-tight text-white/90">{t('headers.concept')}</h1>
+                            <p className="text-gray-500 text-sm">{t('headers.conceptDesc', { world_context: 'world_context' })}</p>
                         </>
                     )}
                     {step === 'style' && (
                         <>
-                            <h1 className="text-3xl font-bold tracking-tight text-white/90">Visuals & Personality</h1>
-                            <p className="text-gray-500 text-sm">AI can suggest visuals and personality fitting the &#123;world_context&#125;.</p>
+                            <h1 className="text-3xl font-bold tracking-tight text-white/90">{t('headers.style')}</h1>
+                            <p className="text-gray-500 text-sm">{t('headers.styleDesc', { world_context: 'world_context' })}</p>
                         </>
                     )}
                     {step === 'role' && (
                         <>
-                            <h1 className="text-3xl font-bold tracking-tight text-white/90">Determine Role (Archetype)</h1>
-                            <p className="text-gray-500 text-sm">Select and refine the role this character plays in the story.</p>
+                            <h1 className="text-3xl font-bold tracking-tight text-white/90">{t('headers.role')}</h1>
+                            <p className="text-gray-500 text-sm">{t('headers.roleDesc')}</p>
                         </>
                     )}
                     {step === 'analyzing' && (<div className='h-16'></div>)}
@@ -731,7 +739,7 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                                         }}
                                         className="text-gray-400 hover:text-white hover:bg-white/5 gap-2 pl-0 hover:pl-2 transition-all"
                                     >
-                                        <MoveLeft size={16} /> Back
+                                        <MoveLeft size={16} /> {t('buttons.back')}
                                     </Button>
                                 )}
                             </div>
@@ -768,7 +776,7 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                                         size="xl"
                                     >
                                         {isGenerating ? <Loader2 className="animate-spin mr-2" /> : <Sparkles className="mr-2 w-4 h-4" />}
-                                        Create Character
+                                        {t('buttons.create')}
                                     </Button>
                                 )}
                                 {/* Placeholders for buttons of other steps */}

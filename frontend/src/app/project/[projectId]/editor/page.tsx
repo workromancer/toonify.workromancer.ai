@@ -12,6 +12,7 @@ import { useCanvasStore } from '@/store/useCanvasStore';
 import api from '@/lib/api';
 import { ArrowLeft, Save, Download, Cloud, Layers, Users, Image as ImageIcon, Settings, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslations } from 'next-intl';
 
 export default function EditorPage() {
     const params = useParams();
@@ -21,6 +22,7 @@ export default function EditorPage() {
     const { activeEpisodeId, setActiveEpisode } = useCanvasStore();
     const [exporting, setExporting] = useState(false);
     const { toast } = useToast();
+    const t = useTranslations('Project.Editor');
 
     // Load episode from query param if present
     useEffect(() => {
@@ -77,23 +79,23 @@ export default function EditorPage() {
                 <div className="flex items-center gap-4">
                     <Link href={`/project/${projectId}`}>
                         <Button variant="ghost" size="sm" className="text-slate-400 hover:text-white hover:bg-slate-800/80 -ml-2">
-                            <ArrowLeft size={18} className="mr-2" /> Back
+                            <ArrowLeft size={18} className="mr-2" /> {t('back')}
                         </Button>
                     </Link>
                     <div className="h-4 w-[1px] bg-slate-800 mx-2"></div>
                     <h1 className="font-bold text-sm text-slate-200">
-                        Project Editor <span className="text-slate-600 ml-2 font-mono text-xs">ID: {projectId?.toString().slice(0, 8)}...</span>
+                        {t('title')} <span className="text-slate-600 ml-2 font-mono text-xs">ID: {projectId?.toString().slice(0, 8)}...</span>
                     </h1>
                 </div>
 
                 <div className="flex items-center gap-3">
                     <div className="flex items-center gap-2 mr-4">
                         <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900 border border-slate-700 text-[10px] font-mono text-slate-400">
-                            <Cloud size={10} className="text-green-500" /> Saved
+                            <Cloud size={10} className="text-green-500" /> {t('saved')}
                         </span>
                     </div>
                     <Button variant="outline" size="sm" className="bg-[#0f0f16] border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 hover:border-slate-600">
-                        <Save size={16} className="mr-2" /> Save
+                        <Save size={16} className="mr-2" /> {t('save')}
                     </Button>
                     <Button
                         className="bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-900/20"
@@ -106,7 +108,7 @@ export default function EditorPage() {
                         ) : (
                             <Download size={16} className="mr-2" />
                         )}
-                        Export
+                        {t('export')}
                     </Button>
                 </div>
             </header>
@@ -144,7 +146,7 @@ export default function EditorPage() {
                                         className={`text-xs font-medium ${activeSegment === 'storyboard' ? 'bg-purple-500/10 text-purple-400' : 'text-slate-500 hover:text-slate-300'}`}
                                         onClick={() => setActiveSegment('storyboard')}
                                     >
-                                        Storyboard
+                                        {t('storyboard')}
                                     </Button>
                                     <Button
                                         data-testid="view-script-btn"
@@ -153,7 +155,7 @@ export default function EditorPage() {
                                         className={`text-xs font-medium ${activeSegment === 'script' ? 'bg-purple-500/10 text-purple-400' : 'text-slate-500 hover:text-slate-300'}`}
                                         onClick={() => setActiveSegment('script')}
                                     >
-                                        Script
+                                        {t('script')}
                                     </Button>
                                 </div>
 
@@ -165,7 +167,7 @@ export default function EditorPage() {
                                         />
                                     ) : (
                                         <div className="w-full h-full max-w-3xl bg-[#0f0f16] p-12 border border-slate-800 text-slate-300 font-mono text-sm mx-auto my-8 overflow-auto shadow-2xl rounded-xl">
-                                            <p className="text-slate-500 mb-6"># SCRIPT EDITOR (Read-Only)</p>
+                                            <p className="text-slate-500 mb-6"># {t('scriptEditor')}</p>
                                             <p className="font-bold text-white mb-2">EXT. CITY STREET - DAY</p>
                                             <p className="leading-relaxed">The HERO looks up at the sky, eyes narrowing against the glare of the dual suns.</p>
                                         </div>

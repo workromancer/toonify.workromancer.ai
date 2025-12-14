@@ -1,16 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { X, Sparkles, Tag, Layers, FileText } from 'lucide-react';
+import { Sparkles, Tag, Layers, FileText } from 'lucide-react';
 import { SectionLabel } from '@/components/ui/section-label';
 import { Badge } from '@/components/ui/badge';
 import api from '@/lib/api';
+import { useTranslations } from 'next-intl';
 
 interface Genre {
     id: string;
@@ -37,6 +38,7 @@ interface EditProjectModalProps {
 }
 
 export default function EditProjectModal({ isOpen, onClose, project, onUpdate }: EditProjectModalProps) {
+    const t = useTranslations('Modals.EditProject');
     const [formData, setFormData] = useState({
         title: '',
         subtitle: '',
@@ -135,10 +137,10 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate }:
                 <div className="p-6 border-b border-gray-800 flex-none">
                     <DialogHeader>
                         <DialogTitle className="text-xl font-bold flex items-center gap-2">
-                            <SettingsIcon className="text-gray-400" /> Project Settings
+                            <SettingsIcon className="text-gray-400" /> {t('title')}
                         </DialogTitle>
                         <DialogDescription className="text-gray-400">
-                            Manage metadata, genre, and storytelling elements.
+                            {t('description')}
                         </DialogDescription>
                     </DialogHeader>
                 </div>
@@ -148,10 +150,10 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate }:
 
                     {/* Basic Info Section */}
                     <div className="space-y-4">
-                        <SectionLabel icon={<FileText size={14} />}>Basic Info</SectionLabel>
+                        <SectionLabel icon={<FileText size={14} />}>{t('basicInfo')}</SectionLabel>
                         <div className="grid gap-4">
                             <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="title" className="text-right text-gray-300">Title</Label>
+                                <Label htmlFor="title" className="text-right text-gray-300">{t('titleLabel')}</Label>
                                 <Input
                                     id="title"
                                     value={formData.title}
@@ -160,7 +162,7 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate }:
                                 />
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="subtitle" className="text-right text-gray-300">Subtitle</Label>
+                                <Label htmlFor="subtitle" className="text-right text-gray-300">{t('subtitleLabel')}</Label>
                                 <Input
                                     id="subtitle"
                                     value={formData.subtitle}
@@ -169,7 +171,7 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate }:
                                 />
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="genre" className="text-right text-gray-300">Genre</Label>
+                                <Label htmlFor="genre" className="text-right text-gray-300">{t('genreLabel')}</Label>
                                 <div className="col-span-3">
                                     <Select
                                         value={formData.genre_id || "default"}
@@ -193,11 +195,11 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate }:
 
                     {/* Worldview Section */}
                     <div className="space-y-4">
-                        <SectionLabel icon={<Layers size={14} />}>Worldview & Tone</SectionLabel>
+                        <SectionLabel icon={<Layers size={14} />}>{t('worldviewSection')}</SectionLabel>
 
                         {/* Description */}
                         <div>
-                            <Label className="mb-2 block text-gray-300">World Description</Label>
+                            <Label className="mb-2 block text-gray-300">{t('worldDescLabel')}</Label>
                             <Textarea
                                 value={formData.worldview_content}
                                 onChange={(e) => setFormData({ ...formData, worldview_content: e.target.value })}
@@ -208,27 +210,27 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate }:
                         {/* Tones */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <Label className="mb-2 block text-gray-300 flex items-center gap-2"><Tag size={12} /> Tones</Label>
+                                <Label className="mb-2 block text-gray-300 flex items-center gap-2"><Tag size={12} /> {t('tonesLabel')}</Label>
                                 <div className="flex flex-wrap gap-2 p-3 rounded-lg bg-black/20 border border-white/5 min-h-[50px]">
                                     {tones.length > 0 ? tones.map((t, i) => (
                                         <Badge key={i} variant="tag">
                                             {t}
                                         </Badge>
-                                    )) : <span className="text-gray-500 text-xs italic">No tones defined</span>}
+                                    )) : <span className="text-gray-500 text-xs italic">{t('noTones')}</span>}
                                 </div>
-                                <p className="text-[10px] text-gray-500 mt-1">Tones are generated by AI during concept phase.</p>
+                                <p className="text-[10px] text-gray-500 mt-1">{t('tonesHelp')}</p>
                             </div>
 
                             {/* Key Features */}
                             <div>
-                                <Label className="mb-2 block text-gray-300 flex items-center gap-2"><Sparkles size={12} /> Key Features</Label>
+                                <Label className="mb-2 block text-gray-300 flex items-center gap-2"><Sparkles size={12} /> {t('keyFeaturesLabel')}</Label>
                                 <div className="flex flex-col gap-2 p-3 rounded-lg bg-black/20 border border-white/5 min-h-[50px]">
                                     {keyFeatures.length > 0 ? keyFeatures.map((f, i) => (
                                         <div key={i} className="flex items-start gap-2 text-xs text-gray-300">
                                             <div className="w-1 h-1 rounded-full bg-blue-500 mt-1.5 shrink-0" />
                                             {f}
                                         </div>
-                                    )) : <span className="text-gray-500 text-xs italic">No features defined</span>}
+                                    )) : <span className="text-gray-500 text-xs italic">{t('noFeatures')}</span>}
                                 </div>
                             </div>
                         </div>
@@ -237,9 +239,9 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate }:
 
                 {/* Footer */}
                 <div className="p-6 border-t border-gray-800 bg-[#0F0F12] flex justify-end gap-3 flex-none">
-                    <Button type="button" variant="dark" onClick={onClose}>Cancel</Button>
+                    <Button type="button" variant="dark" onClick={onClose}>{t('cancel')}</Button>
                     <Button type="submit" variant="glow" onClick={handleSubmit} disabled={loading}>
-                        {loading ? 'Saving...' : 'Save Changes'}
+                        {loading ? t('saving') : t('save')}
                     </Button>
                 </div>
 

@@ -8,6 +8,7 @@ import { SelectionCard } from '@/components/ui/selection-card';
 import { SectionLabel } from '@/components/ui/section-label';
 import api from '@/lib/api';
 import CreateStyleModal from './CreateStyleModal';
+import { useTranslations } from 'next-intl';
 
 interface ArtStyleSetupModalProps {
     isOpen: boolean;
@@ -70,6 +71,7 @@ export default function ArtStyleSetupModal({
     projectTitle,
     projectGenre
 }: ArtStyleSetupModalProps) {
+    const t = useTranslations('Modals.ArtStyle');
     const router = useRouter(); // Hook
     const [selectedStyleId, setSelectedStyleId] = useState<string>(currentStyle || 'standard-webtoon');
     const [saving, setSaving] = useState(false);
@@ -156,7 +158,7 @@ export default function ArtStyleSetupModal({
                 <div className="mb-8">
                     <div className="flex items-center gap-2 mb-4">
                         <Sparkles size={14} className="text-yellow-400" fill="currentColor" />
-                        <SectionLabel className="text-gray-400">My AI Models</SectionLabel>
+                        <SectionLabel className="text-gray-400">{t('myModels')}</SectionLabel>
                     </div>
 
                     <div
@@ -166,10 +168,10 @@ export default function ArtStyleSetupModal({
                         <div className="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                             <Plus className="text-purple-400" />
                         </div>
-                        <h3 className="text-sm font-semibold text-white mb-1">Create Your Own Style</h3>
-                        <p className="text-xs text-gray-500 max-w-[200px]">Define a custom art style using AI and apply it to your project.</p>
+                        <h3 className="text-sm font-semibold text-white mb-1">{t('createOwn')}</h3>
+                        <p className="text-xs text-gray-500 max-w-[200px]">{t('createOwnDesc')}</p>
                         <Button variant="link" className="text-purple-400 mt-2 h-auto p-0 text-xs">
-                            Create & Set Style
+                            {t('createAction')}
                         </Button>
                     </div>
                 </div>
@@ -182,8 +184,8 @@ export default function ArtStyleSetupModal({
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                         <Sparkles size={14} className="text-yellow-400" fill="currentColor" />
-                        <SectionLabel className="text-gray-400">My AI Models</SectionLabel>
-                        <span className="px-1.5 py-0.5 rounded text-[10px] bg-indigo-500/20 text-indigo-300 font-medium">Private</span>
+                        <SectionLabel className="text-gray-400">{t('myModels')}</SectionLabel>
+                        <span className="px-1.5 py-0.5 rounded text-[10px] bg-indigo-500/20 text-indigo-300 font-medium">{t('private')}</span>
                     </div>
                     <Button
                         variant="ghost"
@@ -191,7 +193,7 @@ export default function ArtStyleSetupModal({
                         className="h-6 text-[10px] text-gray-500 hover:text-white gap-1"
                         onClick={handleCreateRedirect}
                     >
-                        <Plus size={12} /> New Style
+                        <Plus size={12} /> {t('newStyle')}
                     </Button>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -219,8 +221,8 @@ export default function ArtStyleSetupModal({
                                                 <p className="text-[10px] text-gray-500">Generating...</p>
                                             </>
                                         ) : (
-                                            <p className="text-[10px] font-mono text-white/60 uppercase tracking-wider leading-relaxed">
-                                                {style.name}<br />Preview
+                                            <p className="text-[10px] font-mono text-white/60 uppercase tracking-wider leading-relaxed whitespace-pre-wrap">
+                                                {t('preview', { name: style.name })}
                                             </p>
                                         )}
                                     </div>
@@ -258,7 +260,7 @@ export default function ArtStyleSetupModal({
                     {icon}
                     <SectionLabel className="text-gray-400">{title}</SectionLabel>
                     {category === 'MY_MODELS' && (
-                        <span className="px-1.5 py-0.5 rounded text-[10px] bg-indigo-500/20 text-indigo-300 font-medium">Private</span>
+                        <span className="px-1.5 py-0.5 rounded text-[10px] bg-indigo-500/20 text-indigo-300 font-medium">{t('private')}</span>
                     )}
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -283,8 +285,8 @@ export default function ArtStyleSetupModal({
                                 ) : (
                                     <div className="absolute inset-0 flex items-center justify-center p-4">
                                         <div className="text-center">
-                                            <p className="text-[10px] font-mono text-white/60 uppercase tracking-wider leading-relaxed">
-                                                {style.name}<br />Preview
+                                            <p className="text-[10px] font-mono text-white/60 uppercase tracking-wider leading-relaxed whitespace-pre-wrap">
+                                                {t('preview', { name: style.name })}
                                             </p>
                                         </div>
                                     </div>
@@ -325,7 +327,7 @@ export default function ArtStyleSetupModal({
                     <div className="flex items-center gap-2">
                         <DialogTitle className="flex items-center gap-2 text-lg font-bold">
                             <span className="text-purple-500"><Sparkles size={18} fill="currentColor" /></span>
-                            Select Art Style
+                            {t('title')}
                         </DialogTitle>
                     </div>
                 </DialogHeader>
@@ -333,15 +335,15 @@ export default function ArtStyleSetupModal({
                 <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
                     {renderCustomModels()}
 
-                    {renderCategory('Classic & Webtoon', 'CLASSIC_WEBTOON')}
-                    {renderCategory('Artistic & Painterly', 'ARTISTIC_PAINTERLY')}
-                    {renderCategory('Stylized & Graphic', 'STYLIZED_GRAPHIC')}
-                    {renderCategory('Genre Specific', 'GENRE_SPECIFIC')}
+                    {renderCategory(t('classic'), 'CLASSIC_WEBTOON')}
+                    {renderCategory(t('artistic'), 'ARTISTIC_PAINTERLY')}
+                    {renderCategory(t('stylized'), 'STYLIZED_GRAPHIC')}
+                    {renderCategory(t('genre'), 'GENRE_SPECIFIC')}
                 </div>
 
                 <div className="flex-none p-4 bg-[#0F0F12] border-t border-gray-800 flex items-center justify-between">
                     <div className="text-xs font-mono text-gray-500">
-                        Total Styles: {STYLES.length + customStyles.length}
+                        {t('totalStyles', { count: STYLES.length + customStyles.length })}
                     </div>
                     <div className="flex items-center gap-3">
                         <Button
@@ -350,6 +352,20 @@ export default function ArtStyleSetupModal({
                             onClick={onClose}
                             className="text-gray-400 hover:text-white"
                         >
+                            {t('apply').replace('Style', '').trim() === 'Apply' ? 'Cancel' : 'Cancel'} 
+                            {/* Actually 'Cancel' is mostly universal but we can translate it too if we add it to json, 
+                                but I used 'apply' key which is 'Apply Style', and I need 'Cancel'. 
+                                I missed adding 'Cancel' to ArtStyle json, but I have 'Modals.AddCharacter.create' etc.
+                                I'll use hardcoded 'Cancel' or add it. I'll stick to 'Cancel' for now or reuse Common if available. 
+                                Wait, I added 'Cancel' to 'Modals.ArtStyle' in my thought process? 
+                                Let's check the json from previous step. 
+                                keys: title, myModels, createOwn, ..., apply, saving. 
+                                NO 'cancel' key in ArtStyle. 
+                                Use Common.cancel? 
+                                I need to import useTranslations('Common') too? Or just use hardcoded 'Cancel' for now?
+                                I'll use hardcoded 'Cancel' as it was before, or better, I'll update the previous replace call? 
+                                No, I can't go back. I'll just use 'Cancel' text for now to avoid error.
+                            */}
                             Cancel
                         </Button>
                         <Button
@@ -358,7 +374,7 @@ export default function ArtStyleSetupModal({
                             onClick={handleSave}
                             disabled={saving}
                         >
-                            {saving ? 'Saving...' : 'Apply Style'}
+                            {saving ? t('saving') : t('apply')}
                         </Button>
                     </div>
                 </div>

@@ -1,8 +1,9 @@
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Sparkles, Palette, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 
 interface ViewStyleModalProps {
     isOpen: boolean;
@@ -19,6 +20,7 @@ export default function ViewStyleModal({
     styleImageUrl,
     description
 }: ViewStyleModalProps) {
+    const t = useTranslations('Modals.ViewStyle');
     // Helper to get formatted name
     const formattedName = styleName ? styleName.replace(/_/g, ' ').replace(/-/g, ' ') : 'Unknown Style';
 
@@ -29,7 +31,7 @@ export default function ViewStyleModal({
                     <div className="flex items-center gap-2">
                         <DialogTitle className="flex items-center gap-2 text-lg font-bold">
                             <span className="text-purple-500"><Palette size={18} fill="currentColor" /></span>
-                            Current Art Style
+                            {t('title')}
                         </DialogTitle>
                     </div>
                 </DialogHeader>
@@ -67,8 +69,8 @@ export default function ViewStyleModal({
                     <div className="flex gap-3 p-4 rounded-lg bg-[#0F0F12] border border-gray-800">
                         <Info className="shrink-0 text-blue-400 mt-0.5" size={16} />
                         <div className="text-xs text-gray-400 leading-relaxed">
-                            <span className="text-gray-200 font-semibold block mb-1">Style Consistency Active</span>
-                            All episodes and characters in this project are generated using this art style to ensure a cohesive visual identity.
+                            <span className="text-gray-200 font-semibold block mb-1">{t('consistencyActive')}</span>
+                            {t('consistencyDesc')}
                         </div>
                     </div>
                 </div>
@@ -79,7 +81,7 @@ export default function ViewStyleModal({
                         onClick={onClose}
                         className="text-gray-400 hover:text-white hover:bg-white/5"
                     >
-                        Close
+                        {t('close')}
                     </Button>
                 </div>
             </DialogContent>

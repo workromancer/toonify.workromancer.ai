@@ -16,6 +16,7 @@ import { Plus, Sparkles, Clapperboard, Edit2, Palette, ArrowRight, Settings, Pla
 import { useToast } from '@/hooks/use-toast';
 import { SectionLabel } from '@/components/ui/section-label';
 import ImageGeneratingPlaceholder from '@/components/ui/ImageGeneratingPlaceholder';
+import { useTranslations } from 'next-intl';
 
 interface Character {
     id?: string;
@@ -77,6 +78,8 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
     const router = useRouter();
     const searchParams = useSearchParams();
     const pathname = usePathname();
+    const t = useTranslations('Project.Home');
+    const tGenres = useTranslations('genres');
 
     // Polling for cover image status
     useEffect(() => {
@@ -93,13 +96,13 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
 
                         if (updatedProject.cover_image_status === 'completed') {
                             toast({
-                                title: "Cover Generated",
-                                description: "Your project cover has been successfully created.",
+                                title: t('coverGenerated'),
+                                description: t('coverSuccess'),
                             });
                         } else if (updatedProject.cover_image_status === 'failed') {
                             toast({
-                                title: "Generation Failed",
-                                description: "Failed to generate project cover.",
+                                title: t('genFailed'),
+                                description: t('coverFailed'),
                                 variant: 'destructive'
                             });
                         }
@@ -122,8 +125,8 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
     const handleGenerateCover = async () => {
         if (!project.genre || !project.worldview) {
             toast({
-                title: "Missing Information",
-                description: "Please set a genre and worldview first. Opening settings...",
+                title: t('missingInfo'),
+                description: t('setGenreFirst'),
                 // variant: 'default', // Changed from destructive to friendly
             });
             setIsEditModalOpen(true);
@@ -137,14 +140,14 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
             await api.post(`/projects/${project.id}/cover`);
 
             toast({
-                title: "Generation Started",
-                description: "AI is creating your cover art...",
+                title: t('genStarted'),
+                description: t('creatingCover'),
             });
         } catch (e) {
             console.error(e);
             toast({
-                title: "Request Failed",
-                description: "Failed to start cover generation.",
+                title: t('reqFailed'),
+                description: t('startCoverFailed'),
                 variant: 'destructive',
             });
             onProjectUpdate({ ...project, cover_image_status: 'failed' });
@@ -159,8 +162,8 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
         } catch (e) {
             console.error(e);
             toast({
-                title: "Retry Failed",
-                description: "Failed to retry character generation.",
+                title: t('retryFailed'),
+                description: t('charRetryFailed'),
                 variant: 'destructive',
             });
         }
@@ -223,33 +226,33 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
         // Priority 1: Missing Settings
         if (!project.genre || !project.worldview) {
             return {
-                label: "Setup Project",
+                label: t('setupProject'),
                 icon: <Settings className="mr-2 h-4 w-4" />,
                 onClick: () => setIsEditModalOpen(true),
                 variant: 'primary',
-                description: "Complete project settings to proceed"
+                description: t('setupDesc')
             };
         }
 
         // Priority 2: Missing Art Style
         if (!project.style_preset) {
             return {
-                label: "Select Art Style",
+                label: t('selectStyle'),
                 icon: <Palette className="mr-2 h-4 w-4" />,
                 onClick: () => setIsArtStyleOpen(true),
                 variant: 'primary',
-                description: "Choose an art style for your project"
+                description: t('selectStyleDesc')
             };
         }
 
         // Priority 3: No Characters (New)
         if (!characters || characters.length === 0) {
             return {
-                label: "Add Character",
+                label: t('addChar'),
                 icon: <Plus className="mr-2 h-4 w-4" />,
                 onClick: () => router.push(`/project/${project.id}/casting`),
                 variant: 'primary',
-                description: "Create your first character"
+                description: t('addCharDesc')
             };
         }
 
@@ -259,12 +262,12 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
         }
 
         return {
-            label: isCoverProcessing ? "Generating..." : "Generate AI Cover",
+            label: isCoverProcessing ? t('generating') : t('genAiCover'),
             icon: <Sparkles className={cn("mr-2 h-4 w-4", isCoverProcessing && "animate-spin")} />,
             onClick: handleGenerateCover,
             disabled: isCoverProcessing,
             variant: 'magic',
-            description: "Create a stunning cover image"
+            description: t('genAiCoverDesc')
         };
     };
 
@@ -290,14 +293,14 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
 
                         {/* Status Overlay for Processing */}
                         {isCoverProcessing && (
-                            <ImageGeneratingPlaceholder text="GENERATING COVER ART..." />
+                            <ImageGeneratingPlaceholder text={t('generatingCoverArt')} />
                         )}
 
                         <div className="absolute bottom-0 left-0 w-full p-8 sm:p-12 flex flex-col sm:flex-row items-start sm:items-end justify-between gap-6 z-10">
                             <div className="flex flex-col gap-4 max-w-2xl">
                                 <div className="flex items-center gap-3">
                                     <span className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-xs font-bold text-white border border-white/20">
-                                        {project.genre || "Genre Not Set"}
+                                        {(project.genre_id ? tGenres(project.genre_id) : (project.genre || t('genreNotSet')))}
                                     </span>
                                     {project.worldview?.tone && Array.isArray(project.worldview.tone) && project.worldview.tone.map((t: string) => (
                                         <span key={t} className="px-3 py-1 rounded-full bg-purple-500/20 backdrop-blur-md text-xs font-bold text-purple-200 border border-purple-500/30">
@@ -309,7 +312,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                     {project.title}
                                 </h1>
                                 <p className="text-lg text-gray-300 font-medium line-clamp-2 max-w-xl">
-                                    {project.description || project.worldview?.content || project.worldview?.description || "No description yet."}
+                                    {project.description || project.worldview?.content || project.worldview?.description || t('noDesc')}
                                 </p>
                             </div>
 
@@ -353,7 +356,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                     {isMenuOpen && (
                                         <div className="absolute bottom-full right-0 mb-2 w-56 bg-[#18181B] border border-white/10 rounded-xl shadow-2xl overflow-hidden py-1 z-50 animate-in fade-in zoom-in-95 duration-200">
                                             <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-white/5 bg-white/5">
-                                                Project Controls
+                                                {t('controls')}
                                             </div>
 
                                             <button
@@ -365,7 +368,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                                 }}
                                             >
                                                 <Settings size={16} />
-                                                Project Settings
+                                                {t('settings')}
                                             </button>
 
                                             <button
@@ -377,7 +380,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                                 }}
                                             >
                                                 <Palette size={16} />
-                                                {project.style_preset ? 'View Art Style' : 'Select Art Style'}
+                                                {project.style_preset ? t('viewStyle') : t('selectStyleAction')}
                                             </button>
 
                                             <button
@@ -390,7 +393,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                                 disabled={isCoverProcessing}
                                             >
                                                 <LayoutTemplate size={16} />
-                                                {project.thumbnail_url ? 'Regenerate Cover' : 'Generate Cover'}
+                                                {project.thumbnail_url ? t('regenCover') : t('genCover')}
                                             </button>
                                         </div>
                                     )}
@@ -402,7 +405,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                         <div className="absolute top-8 right-8 flex flex-col items-end gap-3 z-20 pointer-events-none">
                             {/* Sync Status */}
                             <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/40 border border-white/10 text-[10px] font-mono text-gray-300 backdrop-blur-md shadow-lg">
-                                <Database size={10} className="text-[#4a4aff]" /> Synced
+                                <Database size={10} className="text-[#4a4aff]" /> {t('synced')}
                             </span>
                         </div>
                     </div>
@@ -414,7 +417,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                             {/* Worldview Key Features */}
                             {project.worldview?.key_features && Array.isArray(project.worldview.key_features) && (
                                 <section className="mb-4">
-                                    <SectionLabel icon={<Sparkles size={12} />} className="mb-3 text-gray-400">Key Features</SectionLabel>
+                                    <SectionLabel icon={<Sparkles size={12} />} className="mb-3 text-gray-400">{t('keyFeatures')}</SectionLabel>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                                         {project.worldview.key_features.map((feature: string, idx: number) => (
                                             <div key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-[#0F0F12] border border-gray-800">
@@ -430,10 +433,10 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                             <section>
                                 <div className="flex items-center justify-between mb-6">
                                     <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                                        Cast & Characters
+                                        {t('cast')}
                                     </h3>
                                     <Link href={`/project/${project.id}/characters`}>
-                                        <Button variant="ghost" size="sm" className="text-sm text-gray-400 hover:text-white">View All <ArrowRight size={14} className="ml-1" /></Button>
+                                        <Button variant="ghost" size="sm" className="text-sm text-gray-400 hover:text-white">{t('viewAll')} <ArrowRight size={14} className="ml-1" /></Button>
                                     </Link>
                                 </div>
                                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
@@ -444,7 +447,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                         <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-gray-400 group-hover:text-white transition-colors">
                                             <Plus size={16} />
                                         </div>
-                                        <span className="text-xs font-medium text-gray-500 group-hover:text-gray-300">Add Character</span>
+                                        <span className="text-xs font-medium text-gray-500 group-hover:text-gray-300">{t('addChar')}</span>
                                     </div>
 
 
@@ -464,7 +467,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                             >
                                                 <div className="aspect-[3/4] bg-cover bg-center relative" style={char.profile_image_url && !isGenerating ? { backgroundImage: `url("${char.profile_image_url}")` } : {}}>
                                                     {isGenerating && (
-                                                        <ImageGeneratingPlaceholder text="CREATING..." />
+                                                        <ImageGeneratingPlaceholder text={t('creating')} />
                                                     )}
 
                                                     {(!char.profile_image_url && !isGenerating && !isFailed) && (
@@ -478,7 +481,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                                             <div className="w-8 h-8 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center">
                                                                 <AlertCircle size={16} />
                                                             </div>
-                                                            <span className="text-[10px] text-red-400 font-bold">FAILED</span>
+                                                            <span className="text-[10px] text-red-400 font-bold">{t('failed')}</span>
                                                         </div>
                                                     )}
                                                 </div>
@@ -496,13 +499,13 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                             <section>
                                 <div className="flex items-center justify-between mb-4">
                                     <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                        Episodes <span className="text-slate-500 text-sm font-normal">{episodes?.length || 0}</span>
+                                        {t('episodes')} <span className="text-slate-500 text-sm font-normal">{episodes?.length || 0}</span>
                                     </h3>
                                     <Button
                                         className="h-9 px-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold shadow-lg shadow-purple-900/20 text-xs flex items-center gap-2"
                                         onClick={() => setIsEpisodeModalOpen(true)}
                                     >
-                                        <Plus size={16} /> New Episode
+                                        <Plus size={16} /> {t('newEpisode')}
                                     </Button>
                                 </div>
 
@@ -538,7 +541,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                                                 ? "bg-green-500/20 text-green-200 border-green-500/30"
                                                                 : "bg-gray-500/20 text-gray-300 border-gray-500/30"
                                                         )}>
-                                                            {ep.thumbnail_url ? 'Ready' : 'Draft'}
+                                                            {ep.thumbnail_url ? t('ready') : t('draft')}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -558,7 +561,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                                         </span>
                                                         <span className="flex items-center gap-1.5">
                                                             <Film size={12} />
-                                                            Episode {ep.episode_order || 0}
+                                                            {t('episode')} {ep.episode_order || 0}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -569,7 +572,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                             <div className="p-3 rounded-full bg-slate-800/50 text-slate-500">
                                                 <Clapperboard size={24} />
                                             </div>
-                                            <p className="text-sm text-slate-500">No episodes created yet.</p>
+                                            <p className="text-sm text-slate-500">{t('noEpisodes')}</p>
                                         </div>
                                     )}
                                 </div>

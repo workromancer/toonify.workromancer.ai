@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Coins, Zap, Star, ShieldCheck } from 'lucide-react';
 import { useWorkspaceStore } from '@/store/useWorkspaceStore';
+import { useTranslations } from 'next-intl';
 
 interface RechargeModalProps {
     open: boolean;
@@ -12,6 +13,7 @@ interface RechargeModalProps {
 
 export default function RechargeModal({ open, onOpenChange }: RechargeModalProps) {
     const { currentWorkspace } = useWorkspaceStore();
+    const t = useTranslations('Modals.Recharge');
     
     const packs = [
         { id: 'starter', credits: 100, price: '$2.99', popular: false, icon: Coins },
@@ -31,11 +33,13 @@ export default function RechargeModal({ open, onOpenChange }: RechargeModalProps
                 <DialogHeader>
                     <DialogTitle className="text-xl flex items-center gap-2">
                         <Coins className="text-yellow-500" />
-                        Recharge Credits
+                        {t('title')}
                     </DialogTitle>
                     <DialogDescription className="text-gray-400">
-                        You currently have <span className="text-yellow-500 font-bold">{currentWorkspace?.credits || 0}</span> credits.
-                        Top up to continue creating.
+                        {t.rich('currentCredits', {
+                            credits: currentWorkspace?.credits || 0,
+                            span: (chunks) => <span className="text-yellow-500 font-bold">{chunks}</span>
+                        })}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -51,14 +55,14 @@ export default function RechargeModal({ open, onOpenChange }: RechargeModalProps
                         >
                             {pack.popular && (
                                 <div className="absolute -top-3 bg-purple-600 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                                    Best Value
+                                    {t('bestValue')}
                                 </div>
                             )}
                             <div className="p-3 rounded-full bg-gray-800 mb-3 group-hover:scale-110 transition-transform">
                                 <pack.icon size={24} className="text-yellow-500" />
                             </div>
                             <div className="text-2xl font-bold text-white mb-1">{pack.credits}</div>
-                            <div className="text-xs text-gray-400 uppercase tracking-widest font-semibold mb-4">Credits</div>
+                            <div className="text-xs text-gray-400 uppercase tracking-widest font-semibold mb-4">{t('credits')}</div>
                             <Button 
                                 className={`w-full ${pack.popular ? 'bg-purple-600 hover:bg-purple-500' : 'bg-gray-800 hover:bg-gray-700'}`}
                             >
@@ -71,8 +75,8 @@ export default function RechargeModal({ open, onOpenChange }: RechargeModalProps
                 <div className="bg-gray-800/30 rounded-lg p-4 flex items-start gap-3">
                     <ShieldCheck className="text-green-500 shrink-0 mt-0.5" size={18} />
                     <div className="text-sm text-gray-400">
-                        <p className="text-gray-200 font-medium mb-1">Secure Payment</p>
-                        Payments are processed securely via Stripe. Credits never expire as long as your account is active.
+                        <p className="text-gray-200 font-medium mb-1">{t('securePayment')}</p>
+                        {t('secureDesc')}
                     </div>
                 </div>
             </DialogContent>

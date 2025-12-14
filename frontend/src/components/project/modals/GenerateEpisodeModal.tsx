@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { X, Sparkles, Zap, RotateCw, Wand2, Sliders, ArrowRight } from 'lucide-react';
+import { Sparkles, Zap, RotateCw, Wand2, Sliders } from 'lucide-react';
 import api from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslations } from 'next-intl';
 
 interface GenerateEpisodeModalProps {
     isOpen: boolean;
@@ -23,6 +23,7 @@ interface Idea {
 }
 
 export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGenerate, nextOrder }: GenerateEpisodeModalProps) {
+    const t = useTranslations('Modals.GenerateEpisode');
     const [mode, setMode] = useState<'form' | 'suggestions' | 'generating'>('form');
     const [loadingStep, setLoadingStep] = useState(0);
 
@@ -162,10 +163,10 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
                     <div>
                         <h2 className="text-xl font-bold text-white flex items-center gap-2">
                             {mode === 'generating' ? <RotateCw className="animate-spin text-purple-500" /> : <Sparkles className="text-purple-500" />}
-                            {mode === 'generating' ? 'Creating Episode...' : 'Generate New Episode'}
+                            {mode === 'generating' ? t('titleGenerating') : t('title')}
                         </h2>
                         <p className="text-xs text-slate-500 mt-1">
-                            {mode === 'generating' ? 'AI is converting your summary into storyboard cuts.' : 'Create a new episode from scratch or use AI suggestions.'}
+                            {mode === 'generating' ? t('descGenerating') : t('desc')}
                         </p>
                     </div>
                     {/* Close button is handled by DialogContent usually but we can add explicit one if header is custom */}
@@ -185,7 +186,7 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
                                 </div>
                             </div>
 
-                            <h3 className="text-2xl font-bold text-white mb-2 text-center">Thinking...</h3>
+                            <h3 className="text-2xl font-bold text-white mb-2 text-center">{t('thinking')}</h3>
                             <div className="h-6 overflow-hidden relative w-full max-w-xs text-center">
                                 <p key={loadingStep} className="text-slate-400 text-sm animate-fade-in-up">
                                     {["Analyzing Story Arc...", "Drafting Storyboard...", "Generating Cuts...", "Applying Style...", "Finalizing..."][loadingStep] || "Processing..."}
@@ -204,8 +205,8 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
                                             <Wand2 size={20} />
                                         </div>
                                         <div>
-                                            <h4 className="text-sm font-bold text-purple-200">Need inspiration?</h4>
-                                            <p className="text-xs text-purple-400/70">Let AI suggest plot twists for this episode.</p>
+                                            <h4 className="text-sm font-bold text-purple-200">{t('needInspiration')}</h4>
+                                            <p className="text-xs text-purple-400/70">{t('inspirationDesc')}</p>
                                         </div>
                                     </div>
                                     <button
@@ -214,7 +215,7 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
                                         className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold rounded-lg shadow-lg shadow-purple-900/20 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         {loadingIdeas ? <RotateCw size={14} className="animate-spin" /> : <Sparkles size={14} />}
-                                        {loadingIdeas ? 'Thinking...' : 'Suggest Ideas'}
+                                        {loadingIdeas ? t('thinking') : t('suggestIdeas')}
                                     </button>
                                 </div>
                             )}
@@ -223,8 +224,8 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
                             {mode === 'suggestions' && (
                                 <div className="space-y-3 animate-fade-in">
                                     <div className="flex items-center justify-between mb-2">
-                                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">AI Suggestions</span>
-                                        <button onClick={() => setMode('form')} className="text-xs text-slate-500 hover:text-white underline">Cancel</button>
+                                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t('suggestionsTitle')}</span>
+                                        <button onClick={() => setMode('form')} className="text-xs text-slate-500 hover:text-white underline">{t('cancel')}</button>
                                     </div>
                                     {ideas.map((idea, idx) => (
                                         <button
@@ -234,7 +235,7 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
                                         >
                                             <div className="flex justify-between items-start mb-2">
                                                 <h4 className="font-bold text-slate-200 group-hover:text-white">{idea.title}</h4>
-                                                <span className="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-400 border border-slate-700">Auto Cuts</span>
+                                                <span className="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-400 border border-slate-700">{t('autoCuts')}</span>
                                             </div>
                                             <p className="text-xs text-slate-400 leading-relaxed group-hover:text-slate-300">{idea.summary}</p>
                                             <div className="mt-2 text-[10px] text-purple-400/60 italic">Why: {idea.reason}</div>
@@ -247,7 +248,7 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
                             {mode === 'form' && (
                                 <div className="space-y-5 animate-fade-in">
                                     <div>
-                                        <label className="text-xs font-mono text-slate-500 mb-1.5 block ml-1 uppercase">Episode Title</label>
+                                        <label className="text-xs font-mono text-slate-500 mb-1.5 block ml-1 uppercase">{t('episodeTitleLabel')}</label>
                                         <input
                                             type="text"
                                             placeholder="e.g. The Beginning of the End"
@@ -259,9 +260,9 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
                                     </div>
 
                                     <div>
-                                        <label className="text-xs font-mono text-slate-500 mb-1.5 block ml-1 uppercase">Story Summary</label>
+                                        <label className="text-xs font-mono text-slate-500 mb-1.5 block ml-1 uppercase">{t('summaryLabel')}</label>
                                         <textarea
-                                            placeholder="Describe what happens in this episode. AI will generate storyboard scenes based on this text..."
+                                            placeholder={t('summaryPlaceholder')}
                                             className="w-full h-32 bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-all placeholder-slate-600 resize-none leading-relaxed text-sm"
                                             value={formData.story_summary}
                                             onChange={(e) => setFormData({ ...formData, story_summary: e.target.value })}
@@ -269,7 +270,7 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
                                     </div>
 
                                     <div>
-                                        <label className="text-xs font-mono text-slate-500 mb-1.5 block ml-1 uppercase">Estimated Cuts</label>
+                                        <label className="text-xs font-mono text-slate-500 mb-1.5 block ml-1 uppercase">{t('cutsLabel')}</label>
                                         <div className="bg-slate-900 border border-slate-700 rounded-xl p-4 flex items-center gap-4">
                                             <Sliders size={18} className="text-slate-500" />
                                             <input
@@ -297,7 +298,7 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
                         className="px-5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors text-sm font-medium"
                         disabled={mode === 'generating'}
                     >
-                        Cancel
+                        {t('cancel')}
                     </button>
                     <button
                         onClick={handleGenerate}
@@ -310,7 +311,7 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
                             }
                         `}
                     >
-                        {mode === 'generating' ? 'Generating...' : 'Start Generation'}
+                        {mode === 'generating' ? t('generating') : t('startGen')}
                         {!mode.includes('generating') && <Zap size={16} fill="currentColor" />}
                     </button>
                 </div>

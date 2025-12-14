@@ -6,14 +6,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Sparkles, Loader2 } from 'lucide-react';
 import api from '@/lib/api';
+import { useTranslations } from 'next-intl';
 
 interface CreateStyleModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onCreated: (newStyle: any) => void;
+    onCreated: (style: unknown) => void;
 }
 
 export default function CreateStyleModal({ isOpen, onClose, onCreated }: CreateStyleModalProps) {
+    const t = useTranslations('Modals.CreateStyle');
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -47,13 +49,13 @@ export default function CreateStyleModal({ isOpen, onClose, onCreated }: CreateS
                 <DialogHeader className="border-b border-gray-800 pb-4 mb-4">
                     <DialogTitle className="flex items-center gap-2 text-lg font-bold">
                         <span className="text-purple-500"><Sparkles size={18} fill="currentColor" /></span>
-                        Create Custom Art Style
+                        {t('title')}
                     </DialogTitle>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="space-y-2">
-                        <Label htmlFor="name" className="text-gray-300">Style Name</Label>
+                        <Label htmlFor="name" className="text-gray-300">{t('nameLabel')}</Label>
                         <Input 
                             id="name"
                             value={name}
@@ -65,7 +67,7 @@ export default function CreateStyleModal({ isOpen, onClose, onCreated }: CreateS
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="description" className="text-gray-300">Description / Prompt</Label>
+                        <Label htmlFor="description" className="text-gray-300">{t('descLabel')}</Label>
                         <Textarea 
                             id="description"
                             value={description}
@@ -74,7 +76,7 @@ export default function CreateStyleModal({ isOpen, onClose, onCreated }: CreateS
                             className="bg-[#0F0F12] border-gray-800 text-white focus:ring-purple-500 min-h-[120px]"
                             required
                         />
-                        <p className="text-xs text-gray-500">This description will be used by AI to generate a reference image.</p>
+                        <p className="text-xs text-gray-500">{t('descHelp')}</p>
                     </div>
 
                     {error && (
@@ -90,7 +92,7 @@ export default function CreateStyleModal({ isOpen, onClose, onCreated }: CreateS
                             onClick={onClose}
                             className="text-gray-400 hover:text-white"
                         >
-                            Cancel
+                            {t('cancel')}
                         </Button>
                         <Button 
                             type="submit" 
@@ -100,10 +102,10 @@ export default function CreateStyleModal({ isOpen, onClose, onCreated }: CreateS
                             {isSubmitting ? (
                                 <>
                                     <Loader2 size={16} className="mr-2 animate-spin" />
-                                    Generating...
+                                    {t('generating')}
                                 </>
                             ) : (
-                                'Generate & Save'
+                                t('generate')
                             )}
                         </Button>
                     </div>

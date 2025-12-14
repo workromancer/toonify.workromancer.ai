@@ -2,6 +2,7 @@
 
 import { Edit, Eye, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useTranslations } from 'next-intl';
 
 export interface Character {
     id?: string;
@@ -12,9 +13,14 @@ export interface Character {
 }
 
 export default function CharacterCard({ character }: { character: Character }) {
+    const t = useTranslations('Project.Home');
+    
+    // Check if the mood IS the translation key "Default Mood" or similar? 
+    // Actually the user provided strings might be anything. 
+    // However, "Neutral" is a common default.
     const moodDisplay = Array.isArray(character.default_mood) 
         ? character.default_mood.join(", ") 
-        : (character.default_mood || "Neutral");
+        : (character.default_mood || t('neutral'));
 
     return (
         <div className="group relative flex flex-col overflow-hidden rounded-xl bg-white dark:bg-[#1d1c27] transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-primary/20 border border-gray-200 dark:border-transparent">
@@ -27,7 +33,7 @@ export default function CharacterCard({ character }: { character: Character }) {
             )}
             <div className="flex flex-1 flex-col p-4">
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white">{character.name}</h3>
-                <p className="text-sm text-gray-500 dark:text-[#a19db9]">Default Mood: {moodDisplay}</p>
+                <p className="text-sm text-gray-500 dark:text-[#a19db9]">{t('defaultMood')}: {moodDisplay}</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                     {character.appearance_tags && character.appearance_tags.map((tag, index) => (
                         <span key={index} className={`rounded-full px-2 py-1 text-xs font-medium ${index === 0 ? 'bg-primary/20 text-primary' : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-[#a19db9]'}`}>
@@ -36,7 +42,7 @@ export default function CharacterCard({ character }: { character: Character }) {
                     ))}
                     {(!character.appearance_tags || character.appearance_tags.length === 0) && (
                          <span className="rounded-full px-2 py-1 text-xs font-medium bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-[#a19db9]">
-                            Protagonist
+                            {t('protagonist')}
                         </span>
                     )}
                 </div>

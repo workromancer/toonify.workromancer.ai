@@ -24,6 +24,7 @@ import {
 } from "../../../../components/ui/dropdown-menu";
 import GenerateEpisodeModal from '@/components/project/modals/GenerateEpisodeModal';
 import { cn } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 
 // Types
 interface Episode {
@@ -46,6 +47,7 @@ export default function EpisodesPage() {
     const params = useParams();
     const router = useRouter();
     const projectId = params?.projectId as string;
+    const t = useTranslations('Project.Episodes');
 
     const [project, setProject] = useState<Project | null>(null);
     const [episodes, setEpisodes] = useState<Episode[]>([]);
@@ -108,15 +110,15 @@ export default function EpisodesPage() {
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-3xl font-black text-white tracking-tight mb-2">Episodes</h1>
-                        <p className="text-gray-400">Manage and organize your series episodes.</p>
+                        <h1 className="text-3xl font-black text-white tracking-tight mb-2">{t('title')}</h1>
+                        <p className="text-gray-400">{t('subtitle')}</p>
                     </div>
                     <Button
                         onClick={() => setIsGenerateModalOpen(true)}
                         className="bg-purple-600 hover:bg-purple-500 text-white font-bold shadow-lg shadow-purple-900/20"
                     >
                         <Plus size={18} className="mr-2" />
-                        New Episode
+                        {t('newEpisode')}
                     </Button>
                 </div>
 
@@ -125,7 +127,7 @@ export default function EpisodesPage() {
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
                         <Input
-                            placeholder="Search episodes..."
+                            placeholder={t('searchPlaceholder')}
                             className="pl-10 bg-[#15151A] border-gray-700 text-white focus:ring-purple-500/50"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
@@ -137,19 +139,19 @@ export default function EpisodesPage() {
                                 <Button variant="outline" className="border-gray-700 bg-[#15151A] text-gray-300 hover:text-white hover:bg-[#1E1E24] min-w-[140px] justify-between">
                                     <span className="flex items-center gap-2">
                                         <Filter size={16} />
-                                        {statusFilter === 'ALL' ? 'All Status' : statusFilter === 'READY' ? 'Ready' : 'Draft'}
+                                        {statusFilter === 'ALL' ? t('allStatus') : statusFilter === 'READY' ? t('ready') : t('draft')}
                                     </span>
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="bg-[#18181B] border-gray-800 text-gray-300">
                                 <DropdownMenuItem onClick={() => setStatusFilter('ALL')} className="focus:bg-white/10 focus:text-white cursor-pointer">
-                                    All Status
+                                    {t('allStatus')}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => setStatusFilter('READY')} className="focus:bg-white/10 focus:text-white cursor-pointer">
-                                    Ready
+                                    {t('ready')}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => setStatusFilter('DRAFT')} className="focus:bg-white/10 focus:text-white cursor-pointer">
-                                    Draft
+                                    {t('draft')}
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -164,8 +166,8 @@ export default function EpisodesPage() {
                                 <Clapperboard size={32} />
                             </div>
                             <div className="space-y-1">
-                                <h3 className="text-lg font-bold text-gray-300">No episodes found</h3>
-                                <p className="text-sm text-gray-500">Try adjusting your search or filters, or create a new episode.</p>
+                                <h3 className="text-lg font-bold text-gray-300">{t('noEpisodes')}</h3>
+                                <p className="text-sm text-gray-500">{t('noEpisodesDesc')}</p>
                             </div>
                         </div>
                     ) : (
@@ -204,7 +206,7 @@ export default function EpisodesPage() {
                                                 ? "bg-green-900/20 text-green-400 border-green-500/30"
                                                 : "bg-slate-800 text-slate-400 border-slate-700"
                                         )}>
-                                            {ep.thumbnail_url ? 'Ready' : 'Draft'}
+                                            {ep.thumbnail_url ? t('ready') : t('draft')}
                                         </span>
                                         <button className="p-2 text-slate-500 hover:text-white transition-colors">
                                             <MoreVertical size={16} />

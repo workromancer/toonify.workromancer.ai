@@ -7,10 +7,10 @@ import { Button } from '@/components/ui/button';
 // Removed unused Maximize2 import
 import { Plus, Image as ImageIcon, Trash2, Clapperboard, Loader2, Wand2, Sparkles, Smartphone, RefreshCw } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
-import DirectorCutModal from './DirectorCutModal';
 import { useToast } from '@/hooks/use-toast';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import MobileEpisodeViewer from '@/components/viewer/MobileEpisodeViewer';
+import { useTranslations } from 'next-intl';
 
 interface StoryCut {
     id: string;
@@ -18,7 +18,7 @@ interface StoryCut {
     script: string;
     aspect_ratio: string;
     image_path?: string;
-    dialogues: any[];
+    dialogues: unknown[];
 }
 
 interface DirectorOption {
@@ -38,6 +38,7 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
     const [cuts, setCuts] = useState<StoryCut[]>([]);
     const [loading, setLoading] = useState(false);
     const { toast } = useToast();
+    const t = useTranslations('Project.Editor');
 
     // Director Mode State
     const [isDirectorMode, setIsDirectorMode] = useState(false);
@@ -55,17 +56,17 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
         const cutsToGenerate = sortedCuts.filter(c => !c.image_path && !generatingIds.has(c.id));
 
         if (cutsToGenerate.length === 0) {
-            toast({ title: "No cuts to generate", description: "All cuts already have images or are processing." });
+            toast({ title: t('toasts.noCuts'), description: t('toasts.noCutsDesc') });
             return;
         }
 
-        toast({ title: "Starting Batch Generation", description: `Generating images for ${cutsToGenerate.length} cuts sequentially...` });
+        toast({ title: t('toasts.batchStart'), description: t('toasts.batchStartDesc', { count: cutsToGenerate.length }) });
 
         for (const cut of cutsToGenerate) {
             // We await each generation to ensure the next one has the previous one's context (image)
             const success = await handleGenerateImage(cut.id, true); // true = allow refetching/updating UI intermediate if needed
             if (!success) {
-                toast({ title: "Generation Interrupted", description: `Failed to generate cut #${cut.cut_order}. Stopping sequence.`, variant: "destructive" });
+                toast({ title: t('toasts.interrupted'), description: t('toasts.interruptedDesc', { order: cut.cut_order }), variant: "destructive" });
                 break;
             }
         }
@@ -98,8 +99,8 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
         } catch (err) {
             console.error("Director Suggest Error", err);
             toast({
-                title: "Suggestion Failed",
-                description: "Failed to get suggestions from Director AI.",
+                title: t('toasts.suggestionFailed'),
+                description: "Failed to get suggestions from Director AI.", // Keep generic fallback or translate if critical
                 variant: 'destructive',
             });
         } finally {
@@ -141,7 +142,7 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
         } catch (err) {
             console.error("Render & Save Error", err);
             toast({
-                title: "Creation Failed",
+                title: t('toasts.creationFailed'),
                 description: "Failed to create cut. Please try again.",
                 variant: 'destructive',
             });
@@ -157,13 +158,13 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
             await api.delete(`/cuts/${id}`);
             fetchCuts();
             toast({
-                title: "Scene Deleted",
+                title: t('toasts.sceneDeleted'),
                 description: "The scene has been removed.",
             });
         } catch (err) {
             console.error("Failed to delete cut", err);
             toast({
-                title: "Deletion Failed",
+                title: t('toasts.deleteFailed'),
                 description: "Failed to delete scene.",
                 variant: 'destructive',
             });
@@ -181,7 +182,7 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
 
             if (!isBatch) {
                 toast({
-                    title: "Generation Started",
+                    title: t('toasts.genStarted'),
                     description: "AI is generating the image...",
                 });
             }
@@ -220,7 +221,7 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
             }
 
             // Timeout
-            toast({ title: "Generation Timeout", description: "Image generation took too long.", variant: "destructive" });
+            toast({ title: t('toasts.genTimeout'), description: "Image generation took too long.", variant: "destructive" });
             setGeneratingIds(prev => {
                 const next = new Set(prev);
                 next.delete(cutId);
@@ -230,7 +231,7 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
 
         } catch (e) {
             console.error("Gen Image Failed", e);
-            toast({ title: "Generation Failed", variant: "destructive" });
+            toast({ title: t('toasts.genFailed'), variant: "destructive" });
             setGeneratingIds(prev => {
                 const next = new Set(prev);
                 next.delete(cutId);
@@ -266,16 +267,16 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
             <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-[#0f0f16] shrink-0 z-10">
                 <h2 className="font-bold text-white flex items-center gap-2 text-sm">
                     <Clapperboard size={16} className="text-purple-500" />
-                    Storyboard
+                    {t('storyboardTitle')}
                 </h2>
                 <div className="flex gap-2">
                     {cuts.some(c => !c.image_path) && (
                         <Button variant="outline" size="sm" onClick={handleGenerateAll} className="h-7 text-xs border-purple-500/30 text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 hover:text-purple-300">
-                            <Sparkles size={12} className="mr-1" /> Generate All
+                            <Sparkles size={12} className="mr-1" /> {t('generateAll')}
                         </Button>
                     )}
                     <Button variant="outline" size="sm" onClick={() => setIsMobileViewerOpen(true)} className="h-7 text-xs bg-slate-800 border-slate-700 hover:bg-slate-700 text-slate-300">
-                        <Smartphone size={12} className="mr-1" /> Review
+                        <Smartphone size={12} className="mr-1" /> {t('review')}
                     </Button>
                 </div>
             </div>
@@ -287,16 +288,16 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
                     {loading ? (
                         <div className="text-slate-500 text-center py-10 flex flex-col items-center">
                             <Loader2 className="animate-spin mb-2 text-slate-600" />
-                            <span className="text-xs">Loading scenes...</span>
+                            <span className="text-xs">{t('loadingScenes')}</span>
                         </div>
                     ) : cuts.length === 0 && !isDirectorMode ? (
                         <div className="text-center py-12 border border-dashed border-slate-800 rounded-xl bg-[#0f0f16]">
-                            <div className="text-slate-500 italic mb-4 text-sm">No scenes created yet.</div>
+                            <div className="text-slate-500 italic mb-4 text-sm">{t('noScenes')}</div>
                             <Button
                                 onClick={() => setIsDirectorMode(true)}
                                 className="bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-900/20 font-bold"
                             >
-                                <Wand2 size={16} className="mr-2" /> Start Director Mode
+                                <Wand2 size={16} className="mr-2" /> {t('startDirectorMode')}
                             </Button>
                         </div>
                     ) : (
@@ -313,7 +314,7 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
                             >
                                 {/* Header */}
                                 <div className="flex items-center justify-between px-4 py-3 bg-[#13131c] border-b border-slate-800">
-                                    <span className="text-xs font-bold text-slate-400 font-mono">SCENE #{String(cut.cut_order).padStart(2, '0')}</span>
+                                    <span className="text-xs font-bold text-slate-400 font-mono">{t('sceneHeader', { order: String(cut.cut_order).padStart(2, '0') })}</span>
                                     <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button
                                             className="p-1 hover:text-purple-400 text-slate-500 transition-colors"
@@ -325,8 +326,8 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
                                         <ConfirmationDialog
                                             open={deleteConfirmationId === cut.id}
                                             onOpenChange={(open) => !open && setDeleteConfirmationId(null)}
-                                            title="Delete Scene?"
-                                            description="Are you sure?"
+                                            title={t('toasts.deleteConfirmTitle')}
+                                            description={t('toasts.deleteConfirmDesc')}
                                             onConfirm={() => handleDeleteConfirm(cut.id)}
                                             variant="destructive"
                                             trigger={
@@ -352,19 +353,19 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
                                                 {generatingIds.has(cut.id) ? (
                                                     <>
                                                         <RefreshCw className="animate-spin text-purple-500" size={24} />
-                                                        <span className="text-[10px] text-purple-400">Rendering...</span>
+                                                        <span className="text-[10px] text-purple-400">{t('rendering')}</span>
                                                     </>
                                                 ) : (
                                                     <>
                                                         <ImageIcon size={32} className="opacity-30" />
-                                                        <span className="text-[10px] opacity-50">No Image</span>
+                                                        <span className="text-[10px] opacity-50">{t('noImage')}</span>
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
                                                             onClick={(e) => { e.stopPropagation(); handleGenerateImage(cut.id); }}
                                                             className="h-6 text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white mt-1 border border-slate-700"
                                                         >
-                                                            Generate
+                                                            {t('generate')}
                                                         </Button>
                                                     </>
                                                 )}
@@ -375,15 +376,15 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
 
                                     {/* Script Area */}
                                     <div className="w-1/2 p-4 flex flex-col">
-                                        <span className="text-[10px] uppercase text-slate-500 font-bold mb-2 tracking-wider">Visual Script</span>
+                                        <span className="text-[10px] uppercase text-slate-500 font-bold mb-2 tracking-wider">{t('visualScript')}</span>
                                         <p className="text-sm text-slate-300 leading-relaxed font-serif italic line-clamp-4 flex-1">
-                                            "{cut.script}"
+                                            &quot;{cut.script}&quot;
                                         </p>
                                         <div className="mt-4 pt-3 border-t border-slate-800/50 flex justify-between items-center">
                                             <span className="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-400 border border-slate-700 font-mono">{cut.aspect_ratio || '1:1'}</span>
                                             {cut.image_path && (
                                                 <span className="text-[10px] text-purple-400 flex items-center gap-1 font-bold">
-                                                    <Wand2 size={10} /> AI Ready
+                                                    <Wand2 size={10} /> {t('aiReady')}
                                                 </span>
                                             )}
                                         </div>
@@ -398,7 +399,7 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
                         <div className="border border-purple-500/30 bg-[#13131c] p-4 rounded-xl shadow-2xl relative z-20 animate-in fade-in slide-in-from-bottom-4">
                             <div className="flex justify-between items-center mb-3">
                                 <h3 className="text-purple-400 font-bold text-sm flex items-center gap-2">
-                                    <Wand2 size={14} /> Director AI
+                                    <Wand2 size={14} /> {t('directorMode.title')}
                                 </h3>
                                 <Button
                                     variant="ghost"
@@ -410,13 +411,13 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
                                     }}
                                     className="h-6 text-xs text-slate-500 hover:text-white"
                                 >
-                                    Cancel
+                                    {t('directorMode.cancel')}
                                 </Button>
                             </div>
 
                             <div className="space-y-3">
                                 <Textarea
-                                    placeholder="Describe the next scene..."
+                                    placeholder={t('directorMode.placeholder')}
                                     value={scriptInput}
                                     onChange={(e) => setScriptInput(e.target.value)}
                                     className="bg-[#0f0f16] border-slate-700 min-h-[80px] text-sm text-slate-200 focus:border-purple-500"
@@ -428,9 +429,9 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
                                         className="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold h-9 text-xs shadow-lg shadow-purple-900/20"
                                     >
                                         {isSuggesting ? (
-                                            <><Loader2 size={14} className="mr-2 animate-spin" /> Analysing Script...</>
+                                            <><Loader2 size={14} className="mr-2 animate-spin" /> {t('directorMode.analysing')}</>
                                         ) : (
-                                            "Get Visual Suggestions"
+                                            t('directorMode.getSuggestions')
                                         )}
                                     </Button>
                                 )}
@@ -461,7 +462,7 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
                                 onClick={() => setIsDirectorMode(true)}
                                 className="w-full py-4 border-2 border-dashed border-slate-800 rounded-xl text-slate-500 hover:text-white hover:border-slate-600 hover:bg-slate-900/30 transition-all flex items-center justify-center gap-2 text-sm font-bold"
                             >
-                                <Plus size={16} /> Add Next Scene
+                                <Plus size={16} /> {t('directorMode.addNext')}
                             </button>
                         )
                     )}
