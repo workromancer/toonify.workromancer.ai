@@ -24,10 +24,13 @@ interface DirectorCutModalProps {
     onUpdate: () => void;
 }
 
+import { useTranslations } from 'next-intl';
+
 export default function DirectorCutModal({ isOpen, onClose, cut, onUpdate }: DirectorCutModalProps) {
     const [instruction, setInstruction] = useState('');
     const [isModifying, setIsModifying] = useState(false);
     const { toast } = useToast();
+    const t = useTranslations('Modals.DirectorCut');
 
     const handleModify = async () => {
         if (!cut || !cut.image_path || !instruction.trim()) return;
@@ -50,14 +53,14 @@ export default function DirectorCutModal({ isOpen, onClose, cut, onUpdate }: Dir
             onClose();
             setInstruction('');
             toast({
-                title: "Scene Modified",
-                description: "Director's Cut applied successfully!",
+                title: t('success'),
+                description: t('successDesc'),
             });
         } catch (err) {
             console.error("Modification Failed", err);
             toast({
-                title: "Modification Failed",
-                description: "Failed to modify scene. Please try again.",
+                title: t('failed'),
+                description: t('failedDesc'),
                 variant: "destructive"
             });
         } finally {
@@ -72,7 +75,7 @@ export default function DirectorCutModal({ isOpen, onClose, cut, onUpdate }: Dir
             <DialogContent className="bg-gray-900 border-gray-700 text-white sm:max-w-[600px]">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
-                        <Sparkles className="text-purple-400" size={20} /> Director's Cut
+                        <Sparkles className="text-purple-400" size={20} /> {t('title')}
                     </DialogTitle>
                 </DialogHeader>
 
@@ -81,27 +84,27 @@ export default function DirectorCutModal({ isOpen, onClose, cut, onUpdate }: Dir
                         {cut.image_path ? (
                             <img src={cut.image_path} alt="Current Cut" className="max-h-[300px] object-contain" />
                         ) : (
-                            <div className="text-gray-500">No image to modify</div>
+                            <div className="text-gray-500">{t('noImage')}</div>
                         )}
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="instruction" className="text-gray-300">Modification Instruction</Label>
+                        <Label htmlFor="instruction" className="text-gray-300">{t('instructionLabel')}</Label>
                         <Textarea
                             id="instruction"
-                            placeholder="e.g., 'Make the character look angrier', 'Change to night time', 'Zoom in on the face'"
+                            placeholder={t('placeholder')}
                             value={instruction}
                             onChange={(e) => setInstruction(e.target.value)}
                             className="bg-gray-800 border-gray-700 focus:border-purple-500"
                         />
                         <div className="flex gap-2 mt-2">
-                            {['Make it night', 'Zoom in', 'Change expression to happy'].map((suggestion) => (
+                            {['night', 'zoom', 'happy'].map((key) => (
                                 <button
-                                    key={suggestion}
-                                    onClick={() => setInstruction(suggestion)}
+                                    key={key}
+                                    onClick={() => setInstruction(t(`suggestions.${key}` as any))}
                                     className="text-xs bg-gray-800 hover:bg-gray-700 border border-gray-700 px-2 py-1 rounded text-gray-400 transition-colors"
                                 >
-                                    {suggestion}
+                                    {t(`suggestions.${key}` as any)}
                                 </button>
                             ))}
                         </div>
@@ -109,7 +112,7 @@ export default function DirectorCutModal({ isOpen, onClose, cut, onUpdate }: Dir
                 </div>
 
                 <DialogFooter>
-                    <Button variant="ghost" onClick={onClose} disabled={isModifying}>Cancel</Button>
+                    <Button variant="ghost" onClick={onClose} disabled={isModifying}>{t('cancel')}</Button>
                     <Button
                         onClick={handleModify}
                         disabled={isModifying || !instruction.trim()}
@@ -117,11 +120,11 @@ export default function DirectorCutModal({ isOpen, onClose, cut, onUpdate }: Dir
                     >
                         {isModifying ? (
                             <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Modifying...
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t('modify')}
                             </>
                         ) : (
                             <>
-                                <RefreshCw className="mr-2 h-4 w-4" /> Apply Changes
+                                <RefreshCw className="mr-2 h-4 w-4" /> {t('apply')}
                             </>
                         )}
                     </Button>

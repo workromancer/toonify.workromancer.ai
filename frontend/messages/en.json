@@ -74,7 +74,23 @@
     "draft": "Draft",
     "inProgress": "In Progress",
     "justNow": "Just Now",
-    "untitledDraft": "Untitled Draft"
+    "untitledDraft": "Untitled Draft",
+    "defaultUser": "Artist",
+    "defaultPreset": "Webtoon",
+    "templates": {
+      "scratch": {
+        "title": "Start Empty",
+        "desc": "Create from scratch"
+      },
+      "webtoon": {
+        "title": "Standard Scroll",
+        "desc": "Standard Webtoon Format"
+      },
+      "action": {
+        "title": "Action Pack",
+        "desc": "High Octane Action"
+      }
+    }
   },
   "CreateWorkspace": {
     "title": "Create Workspace",
@@ -186,11 +202,24 @@
       "neutral": "Neutral",
       "protagonist": "Protagonist",
       "addNewChar": "Add New Character",
-      "addCharacter": "Add Character",
-      "characterStatus": {
-        "processing": "Processing",
-        "ready": "Ready",
-        "failed": "Failed"
+      "NewProject": {
+        "title": "Create New Project",
+        "desc": "Give your new webtoon a title and genre.",
+        "titleLabel": "Title",
+        "genreLabel": "Genre",
+        "selectGenre": "Select a genre...",
+        "create": "Create Project",
+        "creating": "Creating...",
+        "error": "Failed to create project. Please try again.",
+        "placeholder": "My Awesome Webtoon"
+      },
+      "AddCharacter": {
+        "addCharacter": "Add Character",
+        "characterStatus": {
+          "processing": "Processing",
+          "ready": "Ready",
+          "failed": "Failed"
+        }
       },
       "episodeList": "Episode List",
       "emptyEpisodes": "No episodes yet.",
@@ -231,6 +260,16 @@
       "noImage": "No Image",
       "generate": "Generate",
       "rendering": "Rendering...",
+      "ready": "Ready",
+      "noEpisodeSelected": "No Episode Selected",
+      "selectEpisodeToExport": "Select an episode to export.",
+      "exportStarted": "Export Started",
+      "exportDownloading": "Your webtoon strip is downloading.",
+      "exportFailed": "Export Failed",
+      "exportFailedDesc": "Failed to export episode. Please try again.",
+      "scriptPlaceholderTitle": "Script Editor",
+      "scriptPlaceholderLine1": "EXT. CITY STREET - DAY",
+      "scriptPlaceholderLine2": "The HERO looks up at the sky, eyes narrowing against the glare of the dual suns.",
       "directorMode": {
         "title": "Director AI",
         "placeholder": "Describe the next scene...",
@@ -322,53 +361,220 @@
     "roles": {
       "selectRole": "Select Role",
       "profile": "Character Profile"
+    },
+    "archetypes": {
+      "protagonist": {
+        "title": "The Protagonist",
+        "subtitle": "Center of the Story",
+        "description": "The core figure driving the story. A character designed to garner reader empathy or admiration.",
+        "tags": [
+          "Determined",
+          "Main Character"
+        ]
+      },
+      "antagonist": {
+        "title": "The Antagonist",
+        "subtitle": "The Opposing Force",
+        "description": "The primary obstacle for the protagonist. Often mirrors the hero but with twisted ideals.",
+        "tags": [
+          "Charismatic",
+          "Ambitious"
+        ]
+      },
+      "second_lead": {
+        "title": "The Second Lead",
+        "subtitle": "The Devoted Support",
+        "description": "A key character who often rivals the protagonist in skill or love, but tragically falls short.",
+        "tags": [
+          "Devoted",
+          "Talented"
+        ]
+      },
+      "scene_stealer": {
+        "title": "The Scene Stealer",
+        "subtitle": "Comic Relief / Wildcard",
+        "description": "A character with a distinct personality that brightens the mood or adds chaos to the plot.",
+        "tags": [
+          "Funny",
+          "Loyal"
+        ]
+      }
     }
   },
   "Modals": {
-    "AddCharacter": {
-      "title": "Add New Character",
-      "desc": "Define a new character for your webtoon.",
-      "name": "Name",
-      "age": "Age",
-      "gender": "Gender",
-      "personality": "Personality",
-      "description": "Description",
-      "create": "Create Character",
-      "creating": "Creating..."
+    "ready": "Ready"
+  },
+  "ArtStyle": {
+    "title": "Select Art Style",
+    "myModels": "My AI Models",
+    "createOwn": "Create Your Own Style",
+    "createOwnDesc": "Define a custom art style using AI and apply it to your project.",
+    "createAction": "Create & Set Style",
+    "newStyle": "New Style",
+    "classic": "Classic & Webtoon",
+    "artistic": "Artistic & Painterly",
+    "stylized": "Stylized & Graphic",
+    "genre": "Genre Specific",
+    "private": "Private",
+    "preview": "{name}\nPreview",
+    "totalStyles": "Total Styles: {count}",
+    "apply": "Apply Style",
+    "saving": "Saving..."
+  },
+  "Recharge": {
+    "title": "Recharge Credits",
+    "currentCredits": "Current Credits: <span>{credits}</span>",
+    "bestValue": "Best Value",
+    "credits": "Credits",
+    "securePayment": "Secure Payment (Stripe)",
+    "secureDesc": "Your transaction is protected with 256-bit encryption.",
+    "purchaseSimulation": "Purchased pack {packId} (Simulation). In real app, this redirects to Stripe."
+  },
+  "AddCharacter": {
+    "title": "Add New Character",
+    "desc": "Define the basic traits of your character. You can generate their image later.",
+    "name": "Name",
+    "age": "Age",
+    "gender": "Gender",
+    "personality": "Personality",
+    "description": "Description",
+    "genderPlaceholder": "e.g. Female",
+    "personalityPlaceholder": "e.g. Brave, Shy",
+    "descPlaceholder": "Physical appearance and other details...",
+    "cancel": "Cancel",
+    "create": "Create",
+    "creating": "Creating..."
+  },
+  "CreateStyle": {
+    "title": "Create New Style",
+    "nameLabel": "Style Name",
+    "descLabel": "Description",
+    "descHelp": "Describe colors, lines, lighting, and artists you want to mimic.",
+    "cancel": "Cancel",
+    "generate": "Create Style",
+    "generating": "Creating...",
+    "placeholders": {
+      "name": "e.g. Cyberpunk Noir",
+      "desc": "Describe the visual style, lighting, texture, and mood..."
     },
-    "CharacterDetail": {
-      "designing": "Designing {name}...",
-      "designingDesc": "Our AI artists are sketching your character.",
-      "failed": "Generation Failed",
-      "failedDesc": "Something went wrong while creating the character.",
-      "retry": "Retry Generation",
-      "bio": "Bio / Background",
-      "mood": "Personality & Mood",
-      "stats": "Stats",
-      "strengths": "Strengths",
-      "weaknesses": "Weaknesses",
-      "visuals": "Visual Traits",
-      "close": "Close",
-      "processing": "Processing",
-      "error": "Error",
-      "ready": "Ready"
+    "error": "Failed to create style. Please try again."
+  },
+  "EditProject": {
+    "title": "Project Settings",
+    "description": "Modify the core details and worldview of your webtoon.",
+    "basicInfo": "Basic Info",
+    "titleLabel": "Title",
+    "subtitleLabel": "Subtitle",
+    "genreLabel": "Genre",
+    "worldviewSection": "Worldview & Tone",
+    "worldDescLabel": "World Description",
+    "tonesLabel": "Tones",
+    "noTones": "No tones extracted",
+    "tonesHelp": "Extracted from worldview analysis",
+    "keyFeaturesLabel": "Key Features",
+    "noFeatures": "No features extracted",
+    "save": "Save Changes",
+    "saving": "Saving...",
+    "cancel": "Cancel"
+  },
+  "ViewStyle": {
+    "title": "Style Details",
+    "consistencyActive": "Style Consistency Active",
+    "consistencyDesc": "This style will be applied to all generated images in this project to maintain visual uniformity.",
+    "close": "Close"
+  },
+  "GenerateEpisode": {
+    "title": "New Episode",
+    "desc": "Create a new episode with AI assistance.",
+    "titleGenerating": "Creating Episode...",
+    "descGenerating": "AI is writing script, storyboarding, and preparing assets.",
+    "thinking": "Thinking...",
+    "needInspiration": "Need Inspiration?",
+    "inspirationDesc": "Let AI suggest story ideas based on your world.",
+    "suggestIdeas": "Suggest Ideas",
+    "suggestionsTitle": "AI Suggestions",
+    "autoCuts": "Auto-Cuts",
+    "episodeTitleLabel": "Episode Title",
+    "summaryLabel": "Story Summary",
+    "summaryPlaceholder": "Describe what happens in this episode...",
+    "cutsLabel": "Number of Cuts",
+    "cancel": "Cancel",
+    "startGen": "Start Generation",
+    "generating": "Generating...",
+    "failed": "Failed to suggest ideas",
+    "failedDesc": "AI service could not generate suggestions.",
+    "steps": {
+      "analyzing": "Analyzing Story Arc...",
+      "drafting": "Drafting Storyboard...",
+      "generating": "Generating Cuts...",
+      "applying": "Applying Style...",
+      "finalizing": "Finalizing..."
     },
-    "ArtStyle": {
-      "title": "Select Art Style",
-      "myModels": "My AI Models",
-      "createOwn": "Create Your Own Style",
-      "createOwnDesc": "Define a custom art style using AI and apply it to your project.",
-      "createAction": "Create & Set Style",
-      "newStyle": "New Style",
-      "classic": "Classic & Webtoon",
-      "artistic": "Artistic & Painterly",
-      "stylized": "Stylized & Graphic",
-      "genre": "Genre Specific",
-      "private": "Private",
-      "preview": "{name}\nPreview",
-      "totalStyles": "Total Styles: {count}",
-      "apply": "Apply Style",
-      "saving": "Saving..."
-    }
+    "success": "Episode Created",
+    "successDesc": "\"{title}\" is ready for editing.",
+    "genFailed": "Generation Failed",
+    "genFailedDesc": "Something went wrong while creating the episode."
+  },
+  "DirectorCut": {
+    "title": "Director's Cut",
+    "instructionLabel": "Modification Instruction",
+    "placeholder": "e.g., 'Make the character look angrier', 'Change to night time', 'Zoom in on the face'",
+    "suggestions": {
+      "night": "Make it night",
+      "zoom": "Zoom in",
+      "happy": "Change expression to happy"
+    },
+    "cancel": "Cancel",
+    "modify": "Modifying...",
+    "apply": "Apply Changes",
+    "success": "Scene Modified",
+    "successDesc": "Director's Cut applied successfully!",
+    "failed": "Modification Failed",
+    "failedDesc": "Failed to modify scene. Please try again.",
+    "noImage": "No image to modify"
+  },
+  "Styles": {
+    "searchPlaceholder": "Search styles...",
+    "prompt": "Prompt",
+    "generatingPreview": "Generating Preview...",
+    "myStyles": "My Art Styles",
+    "subtitle": "Create custom visual styles using text prompts.",
+    "generateNew": "Generate New",
+    "startGenerating": "Start Generating",
+    "returnToSetup": "Return to Project Setup",
+    "creatingFor": "Creating style for project:"
+  },
+  "Help": {
+    "title": "How can we help?",
+    "searchPlaceholder": "Search help...",
+    "doc": "Documentation",
+    "docDesc": "Detailed guides on using Toonify features.",
+    "api": "API Reference",
+    "apiDesc": "Developer documentation for API integration.",
+    "support": "Support",
+    "supportDesc": "Contact us if you need assistance.",
+    "faq": "Frequently Asked Questions",
+    "q1": "How do credits work?",
+    "a1": "Credits are consumed for AI image generation and advanced editing. 1 credit per generation. You get 50 free credits on sign up, and can purchase more or upgrade your plan.",
+    "q2": "Can I export my webtoon?",
+    "a2": "Yes! You can export episodes as vertical scroll images (PNG/JPG) or PDF. Premium users can also export project files for external software like Clip Studio Paint."
+  },
+  "Errors": {
+    "defaultTitle": "Error",
+    "defaultMessage": "An unexpected error occurred",
+    "sessionExpired": "Session Expired",
+    "sessionExpiredDesc": "Please log in again.",
+    "accessDenied": "Access Denied",
+    "accessDeniedDesc": "You don't have permission to view this page. Redirecting to workspace...",
+    "notFound": "Not Found",
+    "notFoundDesc": "The requested resource was not found.",
+    "insufficientCredits": "Insufficient Credits",
+    "insufficientCreditsDesc": "You don't have enough credits for this action. Please recharge.",
+    "validationError": "Validation Error",
+    "invalidInput": "Invalid input data.",
+    "serverError": "Server Error",
+    "serverErrorDesc": "Something went wrong on the server. Please try again later.",
+    "networkError": "Network Error",
+    "networkErrorDesc": "Unable to connect to the server. Please check your internet connection."
   }
 }

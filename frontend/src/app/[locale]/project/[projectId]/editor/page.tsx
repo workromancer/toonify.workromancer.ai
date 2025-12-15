@@ -35,8 +35,8 @@ export default function EditorPage() {
     const handleExport = async () => {
         if (!activeEpisodeId) {
             toast({
-                title: "No Episode Selected",
-                description: "Select an episode to export.",
+                title: t('noEpisodeSelected'),
+                description: t('selectEpisodeToExport'),
                 variant: 'destructive',
             });
             return;
@@ -56,15 +56,15 @@ export default function EditorPage() {
             link.parentNode?.removeChild(link);
 
             toast({
-                title: "Export Started",
-                description: "Your webtoon strip is downloading.",
+                title: t('exportStarted'),
+                description: t('exportDownloading'),
             });
 
         } catch (err) {
             console.error("Export failed", err);
             toast({
-                title: "Export Failed",
-                description: "Failed to export episode. Please try again.",
+                title: t('exportFailed'),
+                description: t('exportFailedDesc'),
                 variant: 'destructive'
             });
         } finally {
@@ -167,9 +167,9 @@ export default function EditorPage() {
                                         />
                                     ) : (
                                         <div className="w-full h-full max-w-3xl bg-[#0f0f16] p-12 border border-slate-800 text-slate-300 font-mono text-sm mx-auto my-8 overflow-auto shadow-2xl rounded-xl">
-                                            <p className="text-slate-500 mb-6"># {t('scriptEditor')}</p>
-                                            <p className="font-bold text-white mb-2">EXT. CITY STREET - DAY</p>
-                                            <p className="leading-relaxed">The HERO looks up at the sky, eyes narrowing against the glare of the dual suns.</p>
+                                            <p className="text-slate-500 mb-6"># {t('scriptPlaceholderTitle')}</p>
+                                            <p className="font-bold text-white mb-2">{t('scriptPlaceholderLine1')}</p>
+                                            <p className="leading-relaxed">{t('scriptPlaceholderLine2')}</p>
                                         </div>
                                     )}
                                 </div>

@@ -65,8 +65,8 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
         } catch (e) {
             console.error("Failed to get ideas", e);
             toast({
-                title: "Failed to suggest ideas",
-                description: "AI service could not generate suggestions.",
+                title: t('failed'),
+                description: t('failedDesc'),
                 variant: "destructive"
             });
         } finally {
@@ -90,12 +90,13 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
         setLoadingStep(0);
 
         // Start animation timer
+        // Start animation timer
         const steps = [
-            "Analyzing Story Arc...",
-            "Drafting Storyboard...",
-            "Generating Cuts...",
-            "Applying Style...",
-            "Finalizing..."
+            t('steps.analyzing'),
+            t('steps.drafting'),
+            t('steps.generating'),
+            t('steps.applying'),
+            t('steps.finalizing')
         ];
 
         let currentStep = 0;
@@ -134,8 +135,8 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
                 onGenerate(newEpisode);
 
                 toast({
-                    title: "Episode Created",
-                    description: `"${formData.title}" is ready for editing.`,
+                    title: t('success'),
+                    description: t('successDesc', { title: formData.title }),
                 });
 
                 handleClose();
@@ -146,8 +147,8 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
             clearInterval(interval);
             setMode('form'); // Go back to form on error
             toast({
-                title: "Generation Failed",
-                description: "Something went wrong while creating the episode.",
+                title: t('genFailed'),
+                description: t('genFailedDesc'),
                 variant: 'destructive',
             });
         }
@@ -169,7 +170,6 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
                             {mode === 'generating' ? t('descGenerating') : t('desc')}
                         </p>
                     </div>
-                    {/* Close button is handled by DialogContent usually but we can add explicit one if header is custom */}
                 </div>
 
                 {/* Modal Body */}
@@ -189,7 +189,7 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
                             <h3 className="text-2xl font-bold text-white mb-2 text-center">{t('thinking')}</h3>
                             <div className="h-6 overflow-hidden relative w-full max-w-xs text-center">
                                 <p key={loadingStep} className="text-slate-400 text-sm animate-fade-in-up">
-                                    {["Analyzing Story Arc...", "Drafting Storyboard...", "Generating Cuts...", "Applying Style...", "Finalizing..."][loadingStep] || "Processing..."}
+                                    {[t('steps.analyzing'), t('steps.drafting'), t('steps.generating'), t('steps.applying'), t('steps.finalizing')][loadingStep] || "Processing..."}
                                 </p>
                             </div>
                         </div>

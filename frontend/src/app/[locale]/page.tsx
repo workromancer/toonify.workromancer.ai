@@ -21,7 +21,7 @@ export default function Home() {
     return (
         <div className="flex min-h-screen flex-col items-center justify-center bg-black text-white p-4">
             <h1 className="text-6xl font-extrabold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
-                {t('title')}
+                Toonify
             </h1>
             <p className="text-xl text-gray-400 mb-8">{t('subtitle')}</p>
 

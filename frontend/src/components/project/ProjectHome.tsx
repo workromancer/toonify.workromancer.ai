@@ -300,7 +300,9 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                             <div className="flex flex-col gap-4 max-w-2xl">
                                 <div className="flex items-center gap-3">
                                     <span className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-xs font-bold text-white border border-white/20">
-                                        {(project.genre_id ? tGenres(project.genre_id) : (project.genre || t('genreNotSet')))}
+                                        {(project.genre_id ? tGenres(project.genre_id) : (
+                                            Array.isArray(project.genre) ? project.genre.join(', ') : (project.genre || t('genreNotSet'))
+                                        ))}
                                     </span>
                                     {project.worldview?.tone && Array.isArray(project.worldview.tone) && project.worldview.tone.map((t: string) => (
                                         <span key={t} className="px-3 py-1 rounded-full bg-purple-500/20 backdrop-blur-md text-xs font-bold text-purple-200 border border-purple-500/30">

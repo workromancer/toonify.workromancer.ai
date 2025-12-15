@@ -6,8 +6,12 @@ async function proxyRequest(request: NextRequest, { params }: { params: Promise<
   const { path } = await params;
   const pathString = path.join('/');
 
-  // Construct the target URL
-  const targetUrl = `${BACKEND_URL}/${pathString}${request.nextUrl.search}`;
+  // Normalize BACKEND_URL to ensure we don't double up on /api/v1
+  // If env var has /api/v1, strip it so we can construct it consistently
+  const cleanBackendUrl = BACKEND_URL.replace(/\/api\/v1\/?$/, '').replace(/\/api\/?$/, '');
+
+  // Construct target: cleanBackendUrl + /api/ + pathString (which contains v1/...)
+  const targetUrl = `${cleanBackendUrl}/api/${pathString}${request.nextUrl.search}`;
 
   console.log(`[Proxy] Forwarding ${request.method} request to: ${targetUrl}`);
 

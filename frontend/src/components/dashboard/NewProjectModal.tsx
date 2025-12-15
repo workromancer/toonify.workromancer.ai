@@ -25,9 +25,12 @@ interface NewProjectModalProps {
     };
 }
 
+import { useTranslations } from 'next-intl';
+
 export default function NewProjectModal({ onProjectCreated, open, onOpenChange, initialValues }: NewProjectModalProps) {
     const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm();
     const router = useRouter();
+    const t = useTranslations('Modals.NewProject');
 
     const [error, setError] = useState('');
     const [genres, setGenres] = useState<any[]>([]);
@@ -64,7 +67,7 @@ export default function NewProjectModal({ onProjectCreated, open, onOpenChange, 
             onProjectCreated();
         } catch (err) {
             console.error(err);
-            setError('Failed to create project. Please try again.');
+            setError(t('error'));
         }
     };
 
@@ -72,25 +75,25 @@ export default function NewProjectModal({ onProjectCreated, open, onOpenChange, 
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Create New Project</DialogTitle>
+                    <DialogTitle>{t('title')}</DialogTitle>
                     <DialogDescription>
-                        Give your new webtoon a title and genre.
+                        {t('desc')}
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
                     <div className="grid w-full items-center gap-1.5">
-                        <Label htmlFor="title">Title</Label>
-                        <Input id="title" {...register('title', { required: true })} placeholder="My Awesome Webtoon" />
+                        <Label htmlFor="title">{t('titleLabel')}</Label>
+                        <Input id="title" {...register('title', { required: true })} placeholder={t('placeholder')} />
                     </div>
 
                     <div className="grid w-full items-center gap-1.5">
-                        <Label htmlFor="genre">Genre</Label>
+                        <Label htmlFor="genre">{t('genreLabel')}</Label>
                         <select
                             id="genre"
                             {...register('genre_id', { required: true })}
                             className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                            <option value="">Select a genre...</option>
+                            <option value="">{t('selectGenre')}</option>
                             {genres.map((g) => (
                                 <option key={g.id} value={g.id}>
                                     {g.name}
@@ -107,7 +110,7 @@ export default function NewProjectModal({ onProjectCreated, open, onOpenChange, 
 
                     <DialogFooter>
                         <Button type="submit" disabled={isSubmitting} className="bg-purple-600 hover:bg-purple-700">
-                            {isSubmitting ? 'Creating...' : 'Create Project'}
+                            {isSubmitting ? t('creating') : t('create')}
                         </Button>
                     </DialogFooter>
                 </form>

@@ -37,7 +37,7 @@ export default function CreateStyleModal({ isOpen, onClose, onCreated }: CreateS
             onClose();
         } catch (err) {
             console.error(err);
-            setError("Failed to create style. Please try again.");
+            setError(t('error'));
         } finally {
             setIsSubmitting(false);
         }
@@ -56,11 +56,11 @@ export default function CreateStyleModal({ isOpen, onClose, onCreated }: CreateS
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="space-y-2">
                         <Label htmlFor="name" className="text-gray-300">{t('nameLabel')}</Label>
-                        <Input 
+                        <Input
                             id="name"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            placeholder="e.g. Cyberpunk Noir"
+                            placeholder={t('placeholders.name')}
                             className="bg-[#0F0F12] border-gray-800 text-white focus:ring-purple-500"
                             required
                         />
@@ -68,11 +68,11 @@ export default function CreateStyleModal({ isOpen, onClose, onCreated }: CreateS
 
                     <div className="space-y-2">
                         <Label htmlFor="description" className="text-gray-300">{t('descLabel')}</Label>
-                        <Textarea 
+                        <Textarea
                             id="description"
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
-                            placeholder="Describe the visual style, lighting, texture, and mood..."
+                            placeholder={t('placeholders.desc')}
                             className="bg-[#0F0F12] border-gray-800 text-white focus:ring-purple-500 min-h-[120px]"
                             required
                         />
@@ -86,16 +86,16 @@ export default function CreateStyleModal({ isOpen, onClose, onCreated }: CreateS
                     )}
 
                     <div className="flex justify-end gap-3 pt-2">
-                        <Button 
-                            type="button" 
-                            variant="ghost" 
+                        <Button
+                            type="button"
+                            variant="ghost"
                             onClick={onClose}
                             className="text-gray-400 hover:text-white"
                         >
                             {t('cancel')}
                         </Button>
-                        <Button 
-                            type="submit" 
+                        <Button
+                            type="submit"
                             disabled={isSubmitting}
                             className="bg-purple-600 hover:bg-purple-700 text-white"
                         >

@@ -90,7 +90,7 @@ const ProjectCard = ({ project }: { project: Project }) => {
                         <span>{new Date(project.created_at).toLocaleDateString()}</span>
                     </div>
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700 max-w-[80px] truncate">
-                        {project.style_preset || "Webtoon"}
+                        {project.style_preset || t('defaultPreset')}
                     </span>
                 </div>
             </div>
@@ -221,8 +221,8 @@ export default function DashboardPage() {
             // Add "Scratch" as first item
             const scratch: Template = {
                 id: 'scratch',
-                title: 'Start Empty',
-                description: 'Create from scratch',
+                title: t('templates.scratch.title'),
+                description: t('templates.scratch.desc'),
                 style_preset: '',
                 category: '',
                 is_premium: false,
@@ -232,9 +232,9 @@ export default function DashboardPage() {
         } catch (err) {
             // Fallback
             setTemplates([
-                { id: 'scratch', title: 'Start Empty', description: 'Create from scratch', style_preset: '', category: '', is_premium: false, isAction: true },
-                { id: 'webtoon_std', title: 'Standard Scroll', description: 'Standard Webtoon Format', style_preset: 'webtoon', category: 'webtoon', is_premium: false, image_url: 'https://picsum.photos/seed/webtoon1/300/300' },
-                { id: 'action_pack', title: 'Action Pack', description: 'High Octane Action', style_preset: 'action', category: 'webtoon', is_premium: false, image_url: 'https://picsum.photos/seed/action/300/300' },
+                { id: 'scratch', title: t('templates.scratch.title'), description: t('templates.scratch.desc'), style_preset: '', category: '', is_premium: false, isAction: true },
+                { id: 'webtoon_std', title: t('templates.webtoon.title'), description: t('templates.webtoon.desc'), style_preset: 'webtoon', category: 'webtoon', is_premium: false, image_url: 'https://picsum.photos/seed/webtoon1/300/300' },
+                { id: 'action_pack', title: t('templates.action.title'), description: t('templates.action.desc'), style_preset: 'action', category: 'webtoon', is_premium: false, image_url: 'https://picsum.photos/seed/action/300/300' },
             ]);
         }
     };
@@ -273,7 +273,7 @@ export default function DashboardPage() {
                 <header className="h-20 flex items-center justify-between px-10 sticky top-0 bg-[#05050a]/80 backdrop-blur-md z-30 border-b border-slate-800/30">
                     <div>
                         <h1 className="text-2xl font-bold text-white leading-tight flex items-center gap-2">
-                            {t('welcome')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400">{user?.email?.split('@')[0] || "Artist"}!</span>
+                            {t('welcome')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400">{user?.email?.split('@')[0] || t('defaultUser')}!</span>
                             <span className="animate-pulse text-xl">👋</span>
                         </h1>
                         <p className="text-sm text-slate-500 mt-0.5 font-medium">{t('welcomeMessage')}</p>

@@ -49,6 +49,7 @@
       "projects": "프로젝트",
       "styles": "아트 스타일",
       "templates": "템플릿",
+      "templatesDesc": "미리 설정된 구성으로 시작하세요.",
       "assets": "에셋",
       "settings": "설정",
       "help": "도움말"
@@ -74,7 +75,23 @@
     "draft": "임시저장",
     "inProgress": "작업 중",
     "justNow": "방금 전",
-    "untitledDraft": "제목 없는 초안"
+    "untitledDraft": "제목 없는 초안",
+    "defaultUser": "작가님",
+    "defaultPreset": "웹툰",
+    "templates": {
+      "scratch": {
+        "title": "빈 프로젝트",
+        "desc": "처음부터 시작하기"
+      },
+      "webtoon": {
+        "title": "표준 스크롤",
+        "desc": "기본 웹툰 형식"
+      },
+      "action": {
+        "title": "액션 팩",
+        "desc": "고강도 액션 연출용"
+      }
+    }
   },
   "CreateWorkspace": {
     "title": "워크스페이스 생성",
@@ -243,6 +260,16 @@
       "noImage": "이미지 없음",
       "generate": "생성",
       "rendering": "렌더링 중...",
+      "ready": "준비됨",
+      "noEpisodeSelected": "에피소드 선택 안됨",
+      "selectEpisodeToExport": "내보낼 에피소드를 선택하세요.",
+      "exportStarted": "내보내기 시작",
+      "exportDownloading": "웹툰 스트립을 다운로드 중입니다.",
+      "exportFailed": "내보내기 실패",
+      "exportFailedDesc": "에피소드를 내보내지 못했습니다. 다시 시도해주세요.",
+      "scriptPlaceholderTitle": "스크립트 에디터",
+      "scriptPlaceholderLine1": "실외. 도시 거리 - 낮",
+      "scriptPlaceholderLine2": "주인공이 하늘을 올려다본다. 두 개의 태양 빛에 눈을 가늘게 뜬다.",
       "directorMode": {
         "title": "감독 AI",
         "placeholder": "다음 장면을 설명하세요...",
@@ -334,20 +361,47 @@
     "roles": {
       "selectRole": "역할 선택",
       "profile": "캐릭터 프로필"
+    },
+    "archetypes": {
+      "protagonist": {
+        "title": "주인공",
+        "subtitle": "이야기의 중심",
+        "description": "이야기를 이끌어가는 핵심 인물입니다. 독자의 공감과 응원을 받도록 설계됩니다.",
+        "tags": [
+          "결단력",
+          "메인 캐릭터"
+        ]
+      },
+      "antagonist": {
+        "title": "대적자 (악역)",
+        "subtitle": "반대 세력",
+        "description": "주인공의 가장 큰 장애물입니다. 영웅과 비슷하지만 뒤틀린 이상을 가진 경우가 많습니다.",
+        "tags": [
+          "카리스마",
+          "야망"
+        ]
+      },
+      "second_lead": {
+        "title": "서브 남주/여주",
+        "subtitle": "헌신적인 조력자",
+        "description": "주인공과 실력이나 사랑을 겨루지만, 비극적으로 맺어지지 못하는 매력적인 인물입니다.",
+        "tags": [
+          "헌신",
+          "재능"
+        ]
+      },
+      "scene_stealer": {
+        "title": "신 스틸러",
+        "subtitle": "감초 / 와일드카드",
+        "description": "뚜렷한 개성으로 분위기를 환기하거나 전개에 예측불허의 혼란을 더하는 캐릭터입니다.",
+        "tags": [
+          "유머",
+          "의리"
+        ]
+      }
     }
   },
   "Modals": {
-    "AddCharacter": {
-      "title": "새 캐릭터 추가",
-      "desc": "웹툰에 등장할 새 캐릭터를 정의합니다.",
-      "name": "이름",
-      "age": "나이",
-      "gender": "성별",
-      "personality": "성격",
-      "description": "설명",
-      "create": "캐릭터 생성",
-      "creating": "생성 중..."
-    },
     "CharacterDetail": {
       "designing": "{name} 디자인 중...",
       "designingDesc": "AI 아티스트가 캐릭터를 스케치하고 있습니다.",
@@ -381,6 +435,140 @@
       "totalStyles": "총 스타일: {count}",
       "apply": "스타일 적용",
       "saving": "저장 중..."
+    },
+    "Recharge": {
+      "title": "크레딧 충전",
+      "currentCredits": "보유 크레딧: <span>{credits}</span>",
+      "bestValue": "가장 인기",
+      "credits": "크레딧",
+      "securePayment": "안전한 결제 (Stripe)",
+      "secureDesc": "모든 결제는 256비트 암호화로 보호됩니다.",
+      "purchaseSimulation": "{packId} 팩 구매 완료 (시뮬레이션). 실제 앱에서는 스트라이프 결제로 이동합니다."
+    },
+    "NewProject": {
+      "title": "새 프로젝트 생성",
+      "desc": "새 웹툰의 제목과 장르를 설정하세요.",
+      "titleLabel": "제목",
+      "genreLabel": "장르",
+      "selectGenre": "장르 선택...",
+      "create": "프로젝트 생성",
+      "creating": "생성 중...",
+      "error": "프로젝트 생성에 실패했습니다. 다시 시도해주세요.",
+      "placeholder": "나의 멋진 웹툰"
+    },
+    "AddCharacter": {
+      "title": "새 캐릭터 추가",
+      "desc": "캐릭터의 기본 특성을 정의하세요. 이미지는 나중에 생성할 수 있습니다.",
+      "name": "이름",
+      "age": "나이",
+      "gender": "성별",
+      "personality": "성격",
+      "description": "설명",
+      "genderPlaceholder": "예: 여성",
+      "personalityPlaceholder": "예: 용감함, 수줍음",
+      "descPlaceholder": "외모 및 기타 세부 사항...",
+      "cancel": "취소",
+      "create": "생성",
+      "creating": "생성 중..."
+    },
+    "CreateStyle": {
+      "title": "새 스타일 만들기",
+      "nameLabel": "스타일 이름",
+      "descLabel": "설명",
+      "descHelp": "흉내 내고 싶은 색감, 선화 스타일, 조명, 작가 등을 묘사하세요.",
+      "cancel": "취소",
+      "generate": "스타일 생성",
+      "generating": "생성 중...",
+      "placeholders": {
+        "name": "예: 사이버펑크 누아르",
+        "desc": "비주얼 스타일, 조명, 질감, 분위기를 묘사하세요..."
+      },
+      "error": "스타일 생성에 실패했습니다. 다시 시도해주세요."
+    },
+    "EditProject": {
+      "title": "프로젝트 설정",
+      "description": "프로젝트의 메타데이터와 세계관을 수정합니다.",
+      "basicInfo": "기본 정보",
+      "titleLabel": "제목",
+      "subtitleLabel": "부제",
+      "genreLabel": "장르",
+      "worldviewSection": "세계관 및 설정",
+      "worldDescLabel": "세계관 설명",
+      "tonesLabel": "톤",
+      "noTones": "추출된 톤 없음",
+      "tonesHelp": "세계관 분석에서 추출됨",
+      "keyFeaturesLabel": "핵심 특징",
+      "noFeatures": "추출된 특징 없음",
+      "save": "변경사항 저장",
+      "saving": "저장 중...",
+      "cancel": "취소"
+    },
+    "ViewStyle": {
+      "title": "스타일 상세",
+      "consistencyActive": "스타일 일관성 활성화됨",
+      "consistencyDesc": "이 스타일은 프로젝트 내 모든 이미지 생성에 적용되어 시각적 통일성을 유지합니다.",
+      "close": "닫기"
+    },
+    "GenerateEpisode": {
+      "title": "새 에피소드",
+      "desc": "AI의 도움을 받아 새 에피소드를 만듭니다.",
+      "titleGenerating": "에피소드 생성 중...",
+      "descGenerating": "AI가 대본을 쓰고, 스토리보드를 그리고, 에셋을 준비하고 있습니다.",
+      "thinking": "생각 중...",
+      "needInspiration": "영감이 필요하신가요?",
+      "inspirationDesc": "세계관을 바탕으로 AI가 이야기를 제안해드립니다.",
+      "suggestIdeas": "아이디어 제안받기",
+      "suggestionsTitle": "AI 제안",
+      "autoCuts": "자동 컷 분할",
+      "episodeTitleLabel": "에피소드 제목",
+      "summaryLabel": "줄거리 요약",
+      "summaryPlaceholder": "이 에피소드에서 일어날 일을 설명하세요...",
+      "cutsLabel": "컷 수",
+      "cancel": "취소",
+      "startGen": "생성 시작",
+      "generating": "생성 중...",
+      "failed": "아이디어 제안 실패",
+      "failedDesc": "AI 서비스가 제안을 생성할 수 없습니다.",
+      "steps": {
+        "analyzing": "스토리 아크 분석 중...",
+        "drafting": "스토리보드 초안 작성 중...",
+        "generating": "컷 생성 중...",
+        "applying": "스타일 적용 중...",
+        "finalizing": "마무리 중..."
+      },
+      "success": "에피소드 생성됨",
+      "successDesc": "\"{title}\" 에피소드 편집 준비가 되었습니다.",
+      "genFailed": "생성 실패",
+      "genFailedDesc": "에피소드를 생성하는 도중 문제가 발생했습니다."
+    },
+    "DirectorCut": {
+      "title": "감독의 수정 (Director's Cut)",
+      "instructionLabel": "수정 지시사항",
+      "placeholder": "예: '캐릭터를 더 화나게 만들어줘', '밤으로 바꿔줘', '얼굴을 확대해줘'",
+      "suggestions": {
+        "night": "밤으로 변경",
+        "zoom": "화면 확대",
+        "happy": "행복한 표정으로 변경"
+      },
+      "cancel": "취소",
+      "startGenerating": "생성 시작하기",
+      "returnToSetup": "프로젝트 설정으로 복귀",
+      "creatingFor": "프로젝트용 스타일 생성: "
     }
+  },
+  "Help": {
+    "title": "무엇을 도와드릴까요?",
+    "searchPlaceholder": "도움말 검색...",
+    "doc": "문서",
+    "docDesc": "Toonify 기능 사용에 대한 상세 가이드.",
+    "api": "API 참조",
+    "apiDesc": "API 통합을 위한 개발자 문서.",
+    "support": "지원",
+    "supportDesc": "지원이 필요하시면 문의해주세요.",
+    "faq": "자주 묻는 질문",
+    "q1": "크레딧은 어떻게 작동하나요?",
+    "a1": "크레딧은 AI 이미지 생성 및 고급 편집 기능 사용에 소모됩니다. 1회 생성당 1 크레딧이 차감됩니다. 가입 시 50 크레딧을 무료로 드리며, 추가 구매하거나 플랜을 업그레이드할 수 있습니다.",
+    "q2": "웹툰을 내보낼 수 있나요?",
+    "a2": "네! 에피소드를 세로 스크롤 이미지(PNG/JPG) 또는 PDF로 내보낼 수 있습니다. 프리미엄 사용자는 클립 스튜디오 페인트와 같은 외부 소프트웨어용 프로젝트 파일로도 내보낼 수 있습니다."
   }
 }

@@ -105,7 +105,43 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
     // Role Step Data - Initialized later or here? 
     // Typescript might complain if I use variable before declaration. 
     // I will use a hardcoded default string that matches the first archetype title.
-    const [selectedRole, setSelectedRole] = useState<string>('The Protagonist');
+    // Archetypes Data moved up for state initialization
+    const archetypes = [
+        {
+            id: 'protagonist',
+            title: t('archetypes.protagonist.title'),
+            subtitle: t('archetypes.protagonist.subtitle'),
+            tags: t.raw('archetypes.protagonist.tags') as string[],
+            description: t('archetypes.protagonist.description'),
+            stats: { strength: 70, intelligence: 60, charisma: 85, luck: 80, empathy: 75, leadership: 80 }
+        },
+        {
+            id: 'antagonist',
+            title: t('archetypes.antagonist.title'),
+            subtitle: t('archetypes.antagonist.subtitle'),
+            tags: t.raw('archetypes.antagonist.tags') as string[],
+            description: t('archetypes.antagonist.description'),
+            stats: { strength: 85, intelligence: 90, charisma: 90, luck: 40, empathy: 20, leadership: 85 }
+        },
+        {
+            id: 'second_lead',
+            title: t('archetypes.second_lead.title'),
+            subtitle: t('archetypes.second_lead.subtitle'),
+            tags: t.raw('archetypes.second_lead.tags') as string[],
+            description: t('archetypes.second_lead.description'),
+            stats: { strength: 60, intelligence: 70, charisma: 75, luck: 50, empathy: 90, leadership: 60 }
+        },
+        {
+            id: 'scene_stealer',
+            title: t('archetypes.scene_stealer.title'),
+            subtitle: t('archetypes.scene_stealer.subtitle'),
+            tags: t.raw('archetypes.scene_stealer.tags') as string[],
+            description: t('archetypes.scene_stealer.description'),
+            stats: { strength: 40, intelligence: 50, charisma: 95, luck: 90, empathy: 60, leadership: 30 }
+        }
+    ];
+
+    const [selectedRole, setSelectedRole] = useState<string>('protagonist');
 
 
     // Processing State
@@ -165,7 +201,7 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                 type: type,
                 current_name: name,
                 age: age,
-                role: selectedRole,
+                role: archetypes.find(a => a.id === selectedRole)?.title || selectedRole,
                 visual_keywords: visualKeywords,
                 personality: personalityTypes.join(', ')
             });
@@ -216,14 +252,13 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
 
                         // Map recommended_role to internal titles if needed (or just assume AI follows instructions)
                         // Ideally we find the matching archetype object
+                        // Map recommended_role
                         const match = archetypes.find(a => a.title === recommended_role || recommended_role.includes(a.title));
                         if (match) {
-                            setSelectedRole(match.title);
-                            // Optionally update stats of the archetype object locally? 
-                            // For now we just select the role.
+                            setSelectedRole(match.id);
                         } else {
-                            // Fallback if AI invents a role title
-                            setSelectedRole(archetypes[0].title);
+                            // Fallback
+                            setSelectedRole(archetypes[0].id);
                         }
 
                         if (lore) setRoleDescription(lore);
@@ -234,7 +269,7 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                 } catch (e) {
                     console.error("Analysis failed", e);
                     // Fallback to defaults
-                    setSelectedRole(archetypes[0].title);
+                    setSelectedRole(archetypes[0].id);
                 } finally {
                     // Ensure minimum time for transition smoothness or just go next
                     handleNextStep('role');
@@ -251,11 +286,13 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
         setError(null);
 
         // Gather Data
-        const descriptionComplete = roleDescription ? `Age: ${age}. Role: ${selectedRole}. Personality: ${personalityTypes.join(', ')}. Visuals: ${visualKeywords.join(', ')}. Lore: ${roleDescription}` : `Age: ${age}. Role: ${selectedRole}. Personality: ${personalityTypes.join(', ')}. Visuals: ${visualKeywords.join(', ')}.`;
+        const currentArch = archetypes.find(a => a.id === selectedRole);
+        const roleTitle = currentArch?.title || selectedRole;
+        const descriptionComplete = roleDescription ? `Age: ${age}. Role: ${roleTitle}. Personality: ${personalityTypes.join(', ')}. Visuals: ${visualKeywords.join(', ')}. Lore: ${roleDescription}` : `Age: ${age}. Role: ${roleTitle}. Personality: ${personalityTypes.join(', ')}. Visuals: ${visualKeywords.join(', ')}.`;
 
         const profileData = {
             age: age,
-            role: selectedRole,
+            role: roleTitle,
             theme_color: themeColor,
             personality_type: personalityTypes.join(', '),
             lore: roleDescription,
@@ -278,7 +315,7 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
 
             toast({
                 title: t('toasts.createdTitle'),
-                description: t('toasts.createdDesc', { name, role: selectedRole }),
+                description: t('toasts.createdDesc', { name, role: roleTitle }),
             });
 
             router.push(`/project/${projectId}`);
@@ -486,49 +523,16 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
     );
 
     // --- Archetypes Data ---
-    const archetypes = [
-        {
-            id: 'protagonist',
-            title: 'The Protagonist',
-            subtitle: 'Center of the Story',
-            tags: ['Determined', 'Main Character'],
-            description: 'The core figure driving the story. A character designed to garner reader empathy or admiration.',
-            stats: { strength: 70, intelligence: 60, charisma: 85, luck: 80, empathy: 75, leadership: 80 }
-        },
-        {
-            id: 'antagonist',
-            title: 'The Antagonist',
-            subtitle: 'The Opposing Force',
-            tags: ['Charismatic', 'Ambitious'],
-            description: 'The primary obstacle for the protagonist. Often mirrors the hero but with twisted ideals.',
-            stats: { strength: 85, intelligence: 90, charisma: 90, luck: 40, empathy: 20, leadership: 85 }
-        },
-        {
-            id: 'second_lead',
-            title: 'The Second Lead',
-            subtitle: 'The Devoted Support',
-            tags: ['Devoted', 'Talented'],
-            description: 'A key character who often rivals the protagonist in skill or love, but tragically falls short.',
-            stats: { strength: 60, intelligence: 70, charisma: 75, luck: 50, empathy: 90, leadership: 60 }
-        },
-        {
-            id: 'scene_stealer',
-            title: 'The Scene Stealer',
-            subtitle: 'Comic Relief / Wildcard',
-            tags: ['Funny', 'Loyal'],
-            description: 'A character with a distinct personality that brightens the mood or adds chaos to the plot.',
-            stats: { strength: 40, intelligence: 50, charisma: 95, luck: 90, empathy: 60, leadership: 30 }
-        }
-    ];
+    // Archetypes Data (Moved up)
 
     // Role Step Data
 
 
-    const currentArchetype = archetypes.find(a => a.title === selectedRole) || archetypes[0];
+    const currentArchetype = archetypes.find(a => a.id === selectedRole) || archetypes[0];
 
     useEffect(() => {
         if (step === 'role' && !selectedRole) {
-            setSelectedRole(archetypes[0].title);
+            setSelectedRole(archetypes[0].id);
         }
     }, [step]);
 
@@ -569,15 +573,15 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                 {archetypes.map((arch) => (
                     <SelectionCard
                         key={arch.id}
-                        selected={selectedRole === arch.title}
+                        selected={selectedRole === arch.id}
                         onClick={() => {
-                            setSelectedRole(arch.title);
+                            setSelectedRole(arch.id);
                             setRoleDescription(arch.description); // Reset description
                             setCharacterStats(null); // Reset to archetype stats when manually switching
                         }}
                         className="flex flex-col items-start"
                     >
-                        <h4 className={cn("font-bold text-sm mb-2", selectedRole === arch.title ? "text-white" : "text-gray-400")}>
+                        <h4 className={cn("font-bold text-sm mb-2", selectedRole === arch.id ? "text-white" : "text-gray-400")}>
                             {arch.title}
                         </h4>
                         <div className="flex gap-1.5 flex-wrap">
@@ -680,7 +684,7 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                     )}
                 </div>
 
-                <div className="text-xs font-mono text-gray-600">v.2.2.1 (Eng/Fix)</div>
+                <div className="text-xs font-mono text-gray-600">v.2.2.1</div>
             </header>
 
             <main className="w-full max-w-5xl relative z-10 flex flex-col gap-8 mt-16">

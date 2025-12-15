@@ -376,11 +376,11 @@ export default function NewProjectWizard() {
               {step === 2 && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {GENRES.map((genre) => {
-                    const isSelected = selectedGenres.includes(genre.label);
+                    const isSelected = selectedGenres.includes(genre.id);
                     return (
                       <button
                         key={genre.id}
-                        onClick={() => toggleGenre(genre.label)}
+                        onClick={() => toggleGenre(genre.id)}
                         disabled={isLocked}
                         className={`p-4 rounded-xl border-2 text-left transition-all flex items-center gap-3 group relative overflow-hidden ${isSelected
                           ? 'bg-purple-900/20 border-purple-500'

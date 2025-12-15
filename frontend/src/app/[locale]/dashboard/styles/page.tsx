@@ -15,6 +15,7 @@ import api from '@/lib/api';
 import CreateStyleModal from '@/components/project/modals/CreateStyleModal';
 import { cn } from '@/lib/utils';
 import ArtStyleSelectionModal from '@/components/styles/ArtStyleSelectionModal';
+import { useTranslations } from 'next-intl';
 
 interface ArtStyle {
     id: string;
@@ -160,6 +161,7 @@ function ArtStylesContent() {
     const [isSelectionModalOpen, setIsSelectionModalOpen] = useState(false);
     const [styles, setStyles] = useState<ArtStyle[]>([]);
     const [loading, setLoading] = useState(true);
+    const t = useTranslations('Styles');
 
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -206,12 +208,12 @@ function ArtStylesContent() {
                 {/* Header */}
                 <div className="flex justify-between items-end mb-10 relative z-10">
                     <div>
-                        <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">My Art Styles</h1>
-                        <p className="text-slate-500 text-sm font-medium">Create custom visual styles using text prompts.</p>
+                        <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">{t('myStyles')}</h1>
+                        <p className="text-slate-500 text-sm font-medium">{t('subtitle')}</p>
                         {fromProjectSetup && (
                             <div className="mt-4 p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg inline-flex items-center gap-2 text-sm text-purple-300">
                                 <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
-                                Creating style for project: <span className="font-bold text-white">{projectTitle || "Unknown Project"}</span>
+                                {t('creatingFor')} <span className="font-bold text-white">{projectTitle || "Unknown Project"}</span>
                             </div>
                         )}
                     </div>
@@ -223,7 +225,7 @@ function ArtStylesContent() {
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-purple-400 transition-colors" size={16} />
                                 <input
                                     type="text"
-                                    placeholder="Search styles..."
+                                    placeholder={t('searchPlaceholder')}
                                     className="bg-slate-900 border border-slate-700/50 rounded-full pl-10 pr-4 py-2.5 text-sm text-white focus:border-purple-500 outline-none w-64 transition-all placeholder:text-slate-600"
                                 />
                             </div>
@@ -248,7 +250,7 @@ function ArtStylesContent() {
                                 <div className="w-16 h-16 rounded-full bg-slate-800 group-hover:bg-purple-600 group-hover:shadow-[0_0_25px_rgba(147,51,234,0.5)] flex items-center justify-center transition-all duration-300 group-hover:scale-110">
                                     <Plus size={32} className="text-slate-400 group-hover:text-white" strokeWidth={3} />
                                 </div>
-                                <span className="font-bold text-sm tracking-wide group-hover:text-purple-300">Generate New</span>
+                                <span className="font-bold text-sm tracking-wide group-hover:text-purple-300">{t('generateNew')}</span>
                             </button>
 
                             {/* Style Cards */}

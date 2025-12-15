@@ -9,14 +9,18 @@ import { LayoutDashboard, LayoutTemplate, Image as ImageIcon, Settings, LogOut, 
 import { useEffect, useState, useRef } from 'react';
 import CreateWorkspaceModal from '@/components/dashboard/CreateWorkspaceModal';
 import RechargeModal from '@/components/dashboard/RechargeModal';
+import LanguageSwitcher from '@/components/common/LanguageSwitcher';
 
 import { useTranslations } from 'next-intl';
+import { useToast } from '@/hooks/use-toast';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const pathname = usePathname() || '';
     const { logout, user } = useAuthStore();
     const t = useTranslations('Dashboard');
+    const tErrors = useTranslations('Errors');
+    const { toast } = useToast();
 
     const handleLogout = () => {
         logout();
@@ -46,6 +50,58 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         const handleOpenRecharge = () => setIsRechargeModalOpen(true);
         window.addEventListener('open-recharge-modal', handleOpenRecharge);
         return () => window.removeEventListener('open-recharge-modal', handleOpenRecharge);
+    }, []);
+
+    // Listen for API Errors
+    useEffect(() => {
+        const handleApiError = (event: CustomEvent) => {
+            const { type, message } = event.detail;
+            let titleKey = 'defaultTitle';
+            let descKey = 'defaultMessage';
+            let customDesc = message;
+
+            switch (type) {
+                case 'sessionExpired':
+                    titleKey = 'sessionExpired';
+                    descKey = 'sessionExpiredDesc';
+                    break;
+                case 'accessDenied':
+                    titleKey = 'accessDenied';
+                    descKey = 'accessDeniedDesc';
+                    break;
+                case 'notFound':
+                    titleKey = 'notFound';
+                    descKey = 'notFoundDesc';
+                    break;
+                case 'insufficientCredits':
+                    titleKey = 'insufficientCredits';
+                    descKey = 'insufficientCreditsDesc';
+                    break;
+                case 'validationError':
+                    titleKey = 'validationError';
+                    descKey = 'invalidInput'; // Default fallback
+                    break;
+                case 'serverError':
+                    titleKey = 'serverError';
+                    descKey = 'serverErrorDesc';
+                    break;
+                case 'networkError':
+                    titleKey = 'networkError';
+                    descKey = 'networkErrorDesc';
+                    break;
+                default:
+                    break;
+            }
+
+            toast({
+                title: tErrors(titleKey),
+                description: customDesc || tErrors(descKey),
+                variant: 'destructive',
+            });
+        };
+
+        window.addEventListener('api-error', handleApiError as EventListener);
+        return () => window.removeEventListener('api-error', handleApiError as EventListener);
     }, []);
 
     useEffect(() => {
@@ -196,14 +252,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                 <p className="text-gray-500 dark:text-gray-400 text-xs font-normal leading-normal truncate">{user?.email || "guest@toonify.com"}</p>
                             </div>
                         </Link>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-gray-400 hover:text-red-500 hover:bg-red-500/10 shrink-0"
-                            onClick={handleLogout}
-                        >
-                            <LogOut size={18} />
-                        </Button>
+                        <div className="flex items-center gap-1">
+                            <LanguageSwitcher />
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-gray-400 hover:text-red-500 hover:bg-red-500/10 shrink-0"
+                                onClick={handleLogout}
+                            >
+                                <LogOut size={18} />
+                            </Button>
+                        </div>
                     </div>
 
                     <CreateWorkspaceModal
@@ -214,13 +273,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         open={isRechargeModalOpen}
                         onOpenChange={setIsRechargeModalOpen}
                     />
-                </div>
-            </aside>
+                </div >
+            </aside >
 
             {/* Main Content */}
-            <main className="flex-1 overflow-auto bg-[#0A0A0B]">
+            < main className="flex-1 overflow-auto bg-[#0A0A0B]" >
                 {children}
-            </main>
-        </div>
+            </main >
+        </div >
     );
 }

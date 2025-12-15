@@ -66,19 +66,19 @@ export default function AddCharacterModal({ isOpen, onClose, projectId, onAdd }:
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="char-gender" className="text-right">{t('gender')}</Label>
-                        <Input id="char-gender" value={formData.gender} onChange={(e) => setFormData({ ...formData, gender: e.target.value })} className="col-span-3" placeholder="e.g. Female" />
+                        <Input id="char-gender" value={formData.gender} onChange={(e) => setFormData({ ...formData, gender: e.target.value })} className="col-span-3" placeholder={t('genderPlaceholder')} />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="char-personality" className="text-right">{t('personality')}</Label>
-                        <Input id="char-personality" value={formData.personality} onChange={(e) => setFormData({ ...formData, personality: e.target.value })} className="col-span-3" placeholder="e.g. Brave, Shy" />
+                        <Input id="char-personality" value={formData.personality} onChange={(e) => setFormData({ ...formData, personality: e.target.value })} className="col-span-3" placeholder={t('personalityPlaceholder')} />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="char-desc" className="text-right">{t('description')}</Label>
-                        <Textarea id="char-desc" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="col-span-3" placeholder="Physical appearance and other details..." />
+                        <Textarea id="char-desc" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="col-span-3" placeholder={t('descPlaceholder')} />
                     </div>
                 </form>
                 <DialogFooter>
-                    <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+                    <Button type="button" variant="secondary" onClick={onClose}>{t('cancel')}</Button>
                     <Button type="submit" onClick={handleSubmit} disabled={loading}>{loading ? t('creating') : t('create')}</Button>
                 </DialogFooter>
             </DialogContent>
