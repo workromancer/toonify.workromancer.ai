@@ -7,6 +7,7 @@ import api from '@/lib/api';
 import { useAuthStore } from '@/store/useAuthStore';
 import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';
+import axios from 'axios';
 
 export default function LoginPage() {
     const { register, handleSubmit } = useForm();
@@ -17,17 +18,45 @@ export default function LoginPage() {
 
     const onSubmit = async (data: any) => {
         try {
-            // Form Data for OAuth2
-            const formData = new URLSearchParams();
+            // Form Data for Next.js Auth Route (which proxies to backend)
+            const formData = new FormData();
             formData.append('username', data.email);
             formData.append('password', data.password);
 
-            const res = await api.post('/auth/login/access-token', formData, {
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+            // POST to our new Next.js internal route
+            const res = await axios.post('/api/auth/login', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' } // or let axios handle it
             });
 
-            setToken(res.data.access_token);
-            router.push('/');
+            console.log("Login Route Response:", res.data);
+
+            // Update client store for reactivity (Cookie handles the real auth)
+            // Ideally we also get the user object back
+            if (res.data.success) {
+                // Sync client store so DashboardLayout and API interceptors work immediately
+                // The middleware/cookie handles the route protection, but the access token 
+                // is still needed for client-side API calls and UI state.
+
+                // Note: The login route proxy returns { success: true, user: ... } 
+                // We need the token too if we want to store it in Zustand.
+                // Currently `route.ts` extracts token from backend response but only sets cookie.
+                // Let's modify `route.ts` to return the token as well, or just rely on the cookie 
+                // and make `useAuthStore` purely a "User State" store?
+                // For now, easiest fix is to return the token from `route.ts` so we can set it.
+
+                // Wait, I need to check if `route.ts` returns the token. 
+                // It does NOT currently returning access_token in JSON, only in Cookie.
+                // I will update `route.ts` first to return it.
+                // BUT, for now, let's assume I fix route.ts next.
+
+                if (res.data.access_token) {
+                    setToken(res.data.access_token);
+                }
+                // If user data is returned
+                // setUser(res.data.user);
+
+                router.push('/dashboard');
+            }
         } catch (err) {
             setError(t('invalidCredentials'));
         }

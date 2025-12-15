@@ -262,9 +262,8 @@ export default function DashboardPage() {
     );
 
     return (
-        <DashboardLayout>
+        <>
             <div className="flex-1 min-h-screen bg-[#05050a] text-slate-200 font-sans relative selection:bg-purple-500/30">
-
                 {/* Background Ambience */}
                 <div className="fixed top-[-20%] right-[-10%] w-[1000px] h-[1000px] bg-purple-900/5 rounded-full blur-[150px] pointer-events-none" />
                 <div className="fixed bottom-[-20%] left-[-10%] w-[800px] h-[800px] bg-indigo-900/5 rounded-full blur-[150px] pointer-events-none" />
@@ -376,7 +375,7 @@ export default function DashboardPage() {
                     }
                 `}</style>
             </div>
-        </DashboardLayout>
+        </>
     );
 }
 

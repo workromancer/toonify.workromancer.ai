@@ -14,13 +14,35 @@ import LanguageSwitcher from '@/components/common/LanguageSwitcher';
 import { useTranslations } from 'next-intl';
 import { useToast } from '@/hooks/use-toast';
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+interface DashboardLayoutProps {
+    children: React.ReactNode;
+    accessToken?: string;
+}
+
+export default function DashboardLayout({ children, accessToken }: DashboardLayoutProps) {
     const router = useRouter();
     const pathname = usePathname() || '';
-    const { logout, user } = useAuthStore();
+    const { logout, user, token, hasHydrated, setToken } = useAuthStore();
     const t = useTranslations('Dashboard');
     const tErrors = useTranslations('Errors');
     const { toast } = useToast();
+
+    // Server-Side Token Sync
+    // If server provides a token (from cookie), sync it to the store immediately
+    // This allows API calls to work even if localStorage is empty
+    if (accessToken && !token) {
+        // Direct state mutation or use store (using store inside render is discouraged usually, 
+        // but for hydration sync it might be okay or use useEffect)
+        // Better to use useEffect.
+    }
+
+    useEffect(() => {
+        if (accessToken && accessToken !== token) {
+            setToken(accessToken);
+        }
+    }, [accessToken, token, setToken]);
+
+    // ... (keep handleLogout)
 
     const handleLogout = () => {
         logout();
@@ -104,15 +126,39 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         return () => window.removeEventListener('api-error', handleApiError as EventListener);
     }, []);
 
+    // Auth Guard Logic
     useEffect(() => {
-        fetchWorkspaces();
-    }, []);
+        // If we have a server token, we are authenticated.
+        if (accessToken) return;
+
+        // Only redirect if we have finished hydrating and still have no token (and no server token)
+        if (hasHydrated && !token) {
+            router.push('/login');
+        }
+    }, [hasHydrated, token, router, accessToken]);
+
+    // Data Fetching
+    useEffect(() => {
+        if ((hasHydrated && token) || accessToken) {
+            fetchWorkspaces();
+        }
+    }, [hasHydrated, token, accessToken]);
+
+    // Waiting for hydration
+    // If we have a server token, we don't need to wait for client hydration to show the page
+    if (!hasHydrated && !accessToken) {
+        return <div className="flex h-screen w-full items-center justify-center bg-[#0A0A0B] text-white">Loading...</div>;
+    }
+
+    // If hydrated but no token, return null (guard will redirect)
+    // But if we have accessToken, we are good
+    if (!token && !accessToken) return null;
 
     const navItems = [
         { name: t('nav.projects'), href: '/dashboard', icon: LayoutDashboard },
         { name: t('nav.styles'), href: '/dashboard/styles', icon: Palette },
-        { name: t('nav.templates'), href: '/templates', icon: LayoutTemplate },
-        { name: t('nav.assets'), href: '/assets', icon: ImageIcon },
+        { name: t('nav.templates'), href: '/dashboard/templates', icon: LayoutTemplate },
+        { name: t('nav.assets'), href: '/dashboard/assets', icon: ImageIcon },
         { name: t('nav.settings'), href: '/dashboard/settings', icon: Settings },
     ];
 

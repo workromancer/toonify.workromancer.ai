@@ -21,6 +21,7 @@ api.interceptors.request.use(
         // We'll read token from the store directly.
         // This ensures we get the token even if it's stored in a nested structure by persist middleware.
         const token = useAuthStore.getState().token;
+        console.log("API Request Interceptor - URL:", config.url, "Token:", token ? "Present" : "Missing");
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
@@ -41,10 +42,20 @@ api.interceptors.response.use(
             const data = error.response.data;
 
             if (status === 401) {
-                useAuthStore.getState().logout();
-                if (typeof window !== 'undefined') {
-                    window.location.href = '/';
+                // Check if the token has changed since the request was made (Race Condition protection)
+                const currentToken = useAuthStore.getState().token;
+                const requestToken = error.config?.headers?.Authorization?.replace('Bearer ', '');
+
+                // Only logout/notify if the 401 comes from the CURRENT token.
+                // If the user has already re-logged in (new token), ignore this old 401.
+                if (currentToken && requestToken && currentToken !== requestToken) {
+                    console.warn("Ignoring 401 from stale token");
+                    return Promise.reject(error);
                 }
+
+                useAuthStore.getState().logout();
+                // Let the UI/Store handle the redirect via state change
+
                 if (typeof window !== 'undefined') {
                     window.dispatchEvent(new CustomEvent('api-error', { detail: { type: 'sessionExpired' } }));
                 }
