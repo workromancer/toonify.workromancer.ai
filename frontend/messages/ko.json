@@ -20,6 +20,29 @@
     "loading": "로딩 중...",
     "create": "생성"
   },
+  "Auth": {
+    "loginTitle": "감독 로그인",
+    "signupTitle": "새 워크스페이스",
+    "email": "이메일",
+    "password": "비밀번호",
+    "submitLogin": "스튜디오 입장",
+    "submitSignup": "워크스페이스 생성",
+    "noAccount": "워크스페이스가 없으신가요?",
+    "hasAccount": "이미 계정이 있으신가요?",
+    "createAccount": "새로 만들기",
+    "loginLink": "로그인",
+    "invalidCredentials": "이메일 또는 비밀번호가 올바르지 않습니다.",
+    "unknownError": "알 수 없는 오류가 발생했습니다."
+  },
+  "Landing": {
+    "title": "Toonify",
+    "subtitle": "당신만의 웹툰을 감독하세요.",
+    "loggedIn": "로그인 상태입니다.",
+    "dashboard": "대시보드로 이동",
+    "logout": "로그아웃",
+    "login": "로그인",
+    "signup": "회원가입"
+  },
   "Dashboard": {
     "subtitle": "AI 웹툰 도구",
     "nav": {
@@ -109,6 +132,11 @@
       "comedy": "개그",
       "mystery": "미스터리",
       "horror": "공포"
+    },
+    "errors": {
+      "noSuggestions": "제안이 생성되지 않았습니다.",
+      "augmentFailed": "제안 생성에 실패했습니다. API 키를 확인해주세요.",
+      "createFailed": "실패: "
     }
   },
   "Project": {
@@ -231,7 +259,11 @@
         "autoEnhance": "자동 향상",
         "promptPlaceholder": "장면을 묘사하세요...",
         "aspectRatio": "화면비",
-        "ratios": { "scroll": "스크롤", "square": "정방형", "wide": "와이드" },
+        "ratios": {
+          "scroll": "스크롤",
+          "square": "정방형",
+          "wide": "와이드"
+        },
         "activeCharacters": "활성 캐릭터",
         "noCharacters": "캐릭터 없음.",
         "generateImage": "이미지 생성",

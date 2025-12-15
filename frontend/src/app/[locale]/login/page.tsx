@@ -1,18 +1,19 @@
 'use client';
 
 import { useForm } from 'react-hook-form';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { useRouter, Link } from '@/navigation';
 import { useState } from 'react';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/useAuthStore';
 import { Button } from '@/components/ui/button';
+import { useTranslations } from 'next-intl';
 
 export default function LoginPage() {
     const { register, handleSubmit } = useForm();
     const router = useRouter();
     const setToken = useAuthStore((state) => state.setToken);
     const [error, setError] = useState('');
+    const t = useTranslations('Auth');
 
     const onSubmit = async (data: any) => {
         try {
@@ -28,7 +29,7 @@ export default function LoginPage() {
             setToken(res.data.access_token);
             router.push('/');
         } catch (err) {
-            setError('Invalid email or password');
+            setError(t('invalidCredentials'));
         }
     };
 
@@ -36,14 +37,14 @@ export default function LoginPage() {
         <div className="flex min-h-screen items-center justify-center bg-gray-900 text-white">
             <div className="w-full max-w-md p-8 bg-gray-800 rounded-lg shadow-lg">
                 <h2 className="mb-6 text-3xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
-                    Director Login
+                    {t('loginTitle')}
                 </h2>
 
                 {error && <p className="mb-4 text-red-500 text-center">{error}</p>}
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                     <div>
-                        <label className="block mb-1 text-sm text-gray-400">Email</label>
+                        <label className="block mb-1 text-sm text-gray-400">{t('email')}</label>
                         <input
                             {...register('email')}
                             data-testid="login-email"
@@ -53,7 +54,7 @@ export default function LoginPage() {
                         />
                     </div>
                     <div>
-                        <label className="block mb-1 text-sm text-gray-400">Password</label>
+                        <label className="block mb-1 text-sm text-gray-400">{t('password')}</label>
                         <input
                             {...register('password')}
                             data-testid="login-password"
@@ -63,12 +64,12 @@ export default function LoginPage() {
                         />
                     </div>
                     <Button type="submit" data-testid="login-submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                        Enter Studio
+                        {t('submitLogin')}
                     </Button>
                 </form>
 
                 <p className="mt-4 text-center text-sm text-gray-500">
-                    Don't have a workspace? <Link href="/signup" className="text-purple-400 hover:text-purple-300">Create one</Link>
+                    {t('noAccount')} <Link href="/signup" className="text-purple-400 hover:text-purple-300">{t('createAccount')}</Link>
                 </p>
             </div>
         </div>

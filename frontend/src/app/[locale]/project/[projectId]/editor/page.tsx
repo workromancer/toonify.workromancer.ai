@@ -3,7 +3,7 @@
 import { useParams, useSearchParams } from 'next/navigation';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
+import { Link } from '@/navigation';
 import { useState, useEffect } from 'react';
 
 import InspectorPanel from '@/components/editor/InspectorPanel';

@@ -1,7 +1,6 @@
 'use client';
 
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { Link, usePathname, useRouter } from '@/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useWorkspaceStore } from '@/store/useWorkspaceStore';
 import { cn } from '@/lib/utils';
@@ -87,7 +86,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                     <div className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate mb-1">
                                         {currentWorkspace.name}
                                     </div>
-                                    <div 
+                                    <div
                                         className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400 text-xs font-semibold hover:text-yellow-300 transition-colors"
                                         onClick={(e) => {
                                             e.stopPropagation();
@@ -95,7 +94,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                         }}
                                     >
                                         <Coins size={12} />
-                                        <span>{t('workspace.credits', {count: currentWorkspace.credits})}</span>
+                                        <span>{t('workspace.credits', { count: currentWorkspace.credits })}</span>
                                         <Plus size={10} className="bg-yellow-500/20 rounded-full p-0.5" />
                                     </div>
                                 </div>
@@ -211,9 +210,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         open={isCreateModalOpen}
                         onOpenChange={setIsCreateModalOpen}
                     />
-                    <RechargeModal 
-                         open={isRechargeModalOpen}
-                         onOpenChange={setIsRechargeModalOpen}
+                    <RechargeModal
+                        open={isRechargeModalOpen}
+                        onOpenChange={setIsRechargeModalOpen}
                     />
                 </div>
             </aside>

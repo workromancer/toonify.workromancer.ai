@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import api from '@/lib/api';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
 import {
     LayoutGrid, Paintbrush, LayoutTemplate, FolderOpen, Settings,
@@ -101,97 +101,97 @@ const ProjectCard = ({ project }: { project: Project }) => {
 const TemplateCard = ({ template, onSelect }: { template: Template; onSelect: (t: Template | null) => void }) => {
     const t = useTranslations('Dashboard');
     return (
-    <div
-        onClick={() => onSelect(template.isAction ? null : template)}
-        className={`
+        <div
+            onClick={() => onSelect(template.isAction ? null : template)}
+            className={`
         group relative w-full aspect-square rounded-2xl border overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1.5 shadow-md hover:shadow-xl
         ${template.isAction
-                ? 'border-dashed border-slate-700 bg-slate-900/30 hover:border-purple-500 hover:bg-purple-900/10 flex flex-col items-center justify-center gap-4'
-                : 'border-slate-800 bg-[#0f0f16] hover:border-slate-600'
-            }
+                    ? 'border-dashed border-slate-700 bg-slate-900/30 hover:border-purple-500 hover:bg-purple-900/10 flex flex-col items-center justify-center gap-4'
+                    : 'border-slate-800 bg-[#0f0f16] hover:border-slate-600'
+                }
     `}>
-        {template.isAction ? (
-            <>
-                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-purple-900/40 group-hover:scale-110 transition-transform duration-300">
-                    <Plus size={28} className="text-white" />
-                </div>
-                <div className="text-center">
-                    <span className="block text-sm font-bold text-slate-300 group-hover:text-white transition-colors">{template.title}</span>
-                    <span className="block text-[10px] text-slate-500 mt-1">{template.description}</span>
-                </div>
-            </>
-        ) : (
-            <>
-                <div className="w-full h-full relative">
-                    {/* Use placebo/placeholder if no image */}
-                    <img
-                        src={template.image_url || `https://picsum.photos/seed/${template.id}/300/300`}
-                        alt={template.title}
-                        className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-all duration-500 scale-100 group-hover:scale-110"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f16] via-transparent to-transparent opacity-90" />
-                </div>
+            {template.isAction ? (
+                <>
+                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-purple-900/40 group-hover:scale-110 transition-transform duration-300">
+                        <Plus size={28} className="text-white" />
+                    </div>
+                    <div className="text-center">
+                        <span className="block text-sm font-bold text-slate-300 group-hover:text-white transition-colors">{template.title}</span>
+                        <span className="block text-[10px] text-slate-500 mt-1">{template.description}</span>
+                    </div>
+                </>
+            ) : (
+                <>
+                    <div className="w-full h-full relative">
+                        {/* Use placebo/placeholder if no image */}
+                        <img
+                            src={template.image_url || `https://picsum.photos/seed/${template.id}/300/300`}
+                            alt={template.title}
+                            className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-all duration-500 scale-100 group-hover:scale-110"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f16] via-transparent to-transparent opacity-90" />
+                    </div>
 
-                <div className="absolute bottom-0 left-0 w-full p-4 transform translate-y-1 group-hover:translate-y-0 transition-transform">
-                    <span className="text-xs font-bold text-slate-200 group-hover:text-white block truncate mb-0.5">
-                        {template.title}
-                    </span>
-                    <span className="text-[10px] text-purple-400 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-                        {t('useTemplate')} <ChevronDown size={10} className="-rotate-90" />
-                    </span>
-                </div>
-            </>
-        )}
-    </div>
-);
+                    <div className="absolute bottom-0 left-0 w-full p-4 transform translate-y-1 group-hover:translate-y-0 transition-transform">
+                        <span className="text-xs font-bold text-slate-200 group-hover:text-white block truncate mb-0.5">
+                            {template.title}
+                        </span>
+                        <span className="text-[10px] text-purple-400 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                            {t('useTemplate')} <ChevronDown size={10} className="-rotate-90" />
+                        </span>
+                    </div>
+                </>
+            )}
+        </div>
+    );
 };
 
 // --- Draft Card Component ---
 const DraftCard = ({ draft, onClick }: { draft: any, onClick: () => void }) => {
     const t = useTranslations('Dashboard');
     return (
-    <div
-        onClick={onClick}
-        className="group relative w-full aspect-[3/4] bg-[#0f0f16] rounded-2xl border-2 border-dashed border-purple-500/30 hover:border-purple-500 transition-all duration-300 ease-out overflow-hidden flex flex-col cursor-pointer hover:-translate-y-1.5 shadow-lg hover:shadow-purple-900/20"
-    >
-        <div className="absolute top-3 left-3 z-20">
-            <span className="bg-purple-600/90 text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider animate-pulse shadow-lg">{t('inProgress')}</span>
-        </div>
+        <div
+            onClick={onClick}
+            className="group relative w-full aspect-[3/4] bg-[#0f0f16] rounded-2xl border-2 border-dashed border-purple-500/30 hover:border-purple-500 transition-all duration-300 ease-out overflow-hidden flex flex-col cursor-pointer hover:-translate-y-1.5 shadow-lg hover:shadow-purple-900/20"
+        >
+            <div className="absolute top-3 left-3 z-20">
+                <span className="bg-purple-600/90 text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider animate-pulse shadow-lg">{t('inProgress')}</span>
+            </div>
 
-        {/* Thumbnail Area - Placeholder for Draft */}
-        <div className="flex-1 bg-slate-900/50 relative flex items-center justify-center overflow-hidden">
-            <div className="flex flex-col items-center justify-center gap-3 h-full w-full bg-slate-900 group-hover:bg-slate-800 transition-colors relative">
-                {/* Abstract Pattern */}
-                <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-purple-900/40 via-slate-900 to-black" />
+            {/* Thumbnail Area - Placeholder for Draft */}
+            <div className="flex-1 bg-slate-900/50 relative flex items-center justify-center overflow-hidden">
+                <div className="flex flex-col items-center justify-center gap-3 h-full w-full bg-slate-900 group-hover:bg-slate-800 transition-colors relative">
+                    {/* Abstract Pattern */}
+                    <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-purple-900/40 via-slate-900 to-black" />
 
-                <div className="w-16 h-16 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform duration-500 border border-purple-500/20">
-                    <Wand2 size={32} />
+                    <div className="w-16 h-16 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform duration-500 border border-purple-500/20">
+                        <Wand2 size={32} />
+                    </div>
+                </div>
+
+                {/* Hover Action */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                    <div className="bg-purple-600 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg flex items-center gap-2 transform translate-y-2 group-hover:translate-y-0 transition-all">
+                        {t('resume')} <ArrowRight size={12} />
+                    </div>
                 </div>
             </div>
 
-            {/* Hover Action */}
-            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                <div className="bg-purple-600 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg flex items-center gap-2 transform translate-y-2 group-hover:translate-y-0 transition-all">
-                    {t('resume')} <ArrowRight size={12} />
+            {/* Info Area */}
+            <div className="p-5 border-t border-slate-800 bg-[#0f0f16] group-hover:bg-[#13131c] transition-colors relative z-10">
+                <h3 className="text-white font-bold truncate mb-1.5 text-sm">{draft.title || t('untitledDraft')}</h3>
+                <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-mono">
+                        <Clock size={10} />
+                        <span>{t('justNow')}</span>
+                    </div>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-900/20 text-purple-400 border border-purple-500/30">
+                        {t('draft')}
+                    </span>
                 </div>
             </div>
         </div>
-
-        {/* Info Area */}
-        <div className="p-5 border-t border-slate-800 bg-[#0f0f16] group-hover:bg-[#13131c] transition-colors relative z-10">
-            <h3 className="text-white font-bold truncate mb-1.5 text-sm">{draft.title || t('untitledDraft')}</h3>
-            <div className="flex justify-between items-center">
-                <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-mono">
-                    <Clock size={10} />
-                    <span>{t('justNow')}</span>
-                </div>
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-900/20 text-purple-400 border border-purple-500/30">
-                    {t('draft')}
-                </span>
-            </div>
-        </div>
-    </div>
-);
+    );
 };
 
 // --- Main Page ---

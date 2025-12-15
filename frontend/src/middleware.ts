@@ -1,16 +1,16 @@
 import createMiddleware from 'next-intl/middleware';
- 
+import { localePrefix, locales } from './navigation';
+
 export default createMiddleware({
   // A list of all locales that are supported
-  locales: ['en', 'ko'],
- 
+  locales,
+
   // Used when no locale matches
   defaultLocale: 'en',
-  
-  // Disable locale prefix in URLs since we don't have a [locale] folder structure
-  localePrefix: 'never'
+
+  localePrefix
 });
- 
+
 export const config = {
   // Match all pathnames except for
   // - … if they start with `/api`, `/_next` or `/_vercel`

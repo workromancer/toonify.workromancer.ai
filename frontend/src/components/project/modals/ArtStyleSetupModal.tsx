@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/navigation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Sparkles, Lock, Plus, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -352,7 +352,7 @@ export default function ArtStyleSetupModal({
                             onClick={onClose}
                             className="text-gray-400 hover:text-white"
                         >
-                            {t('apply').replace('Style', '').trim() === 'Apply' ? 'Cancel' : 'Cancel'} 
+                            {t('apply').replace('Style', '').trim() === 'Apply' ? 'Cancel' : 'Cancel'}
                             {/* Actually 'Cancel' is mostly universal but we can translate it too if we add it to json, 
                                 but I used 'apply' key which is 'Apply Style', and I need 'Cancel'. 
                                 I missed adding 'Cancel' to ArtStyle json, but I have 'Modals.AddCharacter.create' etc.

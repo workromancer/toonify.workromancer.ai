@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from '@/navigation';
+import { useParams } from 'next/navigation';
 import api from '@/lib/api';
 import CharacterCastingWizard from '@/components/project/CharacterCastingWizard';
 import { Button } from '@/components/ui/button';

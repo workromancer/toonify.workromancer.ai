@@ -20,6 +20,29 @@
     "loading": "Loading...",
     "create": "Create"
   },
+  "Auth": {
+    "loginTitle": "Director Login",
+    "signupTitle": "New Workspace",
+    "email": "Email",
+    "password": "Password",
+    "submitLogin": "Enter Studio",
+    "submitSignup": "Create Workspace",
+    "noAccount": "Don't have a workspace?",
+    "hasAccount": "Already a director?",
+    "createAccount": "Create one",
+    "loginLink": "Login",
+    "invalidCredentials": "Invalid email or password",
+    "unknownError": "An unexpected error occurred."
+  },
+  "Landing": {
+    "title": "Toonify",
+    "subtitle": "Be the Director.",
+    "loggedIn": "Currently logged in.",
+    "dashboard": "Go to Dashboard",
+    "logout": "Logout",
+    "login": "Login",
+    "signup": "Sign Up"
+  },
   "Dashboard": {
     "subtitle": "AI Webtoon Tool",
     "nav": {
@@ -109,6 +132,11 @@
       "comedy": "Comedy",
       "mystery": "Mystery",
       "horror": "Horror"
+    },
+    "errors": {
+      "noSuggestions": "No suggestions generated.",
+      "augmentFailed": "Failed to generate suggestions. Please check API Key.",
+      "createFailed": "Failed: "
     }
   },
   "Project": {
@@ -219,7 +247,11 @@
         "autoEnhance": "Auto-Enhance",
         "promptPlaceholder": "Describe the scene...",
         "aspectRatio": "ASPECT RATIO",
-        "ratios": { "scroll": "Scroll", "square": "Square", "wide": "Wide" },
+        "ratios": {
+          "scroll": "Scroll",
+          "square": "Square",
+          "wide": "Wide"
+        },
         "activeCharacters": "ACTIVE CHARACTERS",
         "noCharacters": "No characters found.",
         "generateImage": "Generate Image",

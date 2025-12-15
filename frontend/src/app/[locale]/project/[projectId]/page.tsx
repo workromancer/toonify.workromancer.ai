@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter } from '@/navigation';
+import { useParams } from 'next/navigation';
 import api from '@/lib/api';
 import ProjectHome from '@/components/project/ProjectHome';
 import { Character } from '@/components/project/CharacterCard';

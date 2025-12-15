@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import ViewStyleModal from './modals/ViewStyleModal';
 import { cn } from '@/lib/utils';
-import Link from 'next/link';
-import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { Link, useRouter, usePathname } from '@/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import api from '@/lib/api';
 import ProjectLayout from '@/components/layout/ProjectLayout';

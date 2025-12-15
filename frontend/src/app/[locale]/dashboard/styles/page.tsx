@@ -7,7 +7,8 @@ import {
     HelpCircle, ChevronDown, Sparkles, Wand2,
     Zap, Command, Layers, Trash2, Edit3, Copy, Check, Loader2, Image as ImageIcon, ArrowRight
 } from 'lucide-react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useRouter } from '@/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import api from '@/lib/api';

@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from '@/navigation';
+import { useParams } from 'next/navigation';
 import api from '@/lib/api';
 import ProjectLayout from '@/components/layout/ProjectLayout';
 import { Button } from '@/components/ui/button';

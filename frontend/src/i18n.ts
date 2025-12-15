@@ -1,10 +1,17 @@
-import {getRequestConfig} from 'next-intl/server';
- 
-export default getRequestConfig(async () => {
-  // Provide a static locale, fetch a user setting,
-  // read from `cookies()`, `headers()`, etc.
-  const locale = 'en';
- 
+import { getRequestConfig } from 'next-intl/server';
+
+const locales = ['en', 'ko'];
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export default getRequestConfig(async ({ requestLocale }: { requestLocale: Promise<any> }) => {
+  // This typically handles validation of the locale
+  let locale = await requestLocale;
+
+  // Validate that the incoming `locale` parameter is valid
+  if (!locale || !locales.includes(locale as any)) {
+    locale = 'en';
+  }
+
   return {
     locale,
     messages: (await import(`../messages/${locale}.json`)).default
