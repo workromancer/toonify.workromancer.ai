@@ -16,12 +16,13 @@ const validateEnv = (key: string, value: string | undefined): string => {
 // NEXT_PUBLIC_API_URL is critical for API calls.
 
 export const config = {
-    // Determine API_URL. We enforce it unless you really want to hardcode fallback logic elsewhere.
-    // Next.js replaces process.env.NEXT_PUBLIC_API_BASE_URL at build time, so we must access it directly.
-    API_URL: validateEnv('NEXT_PUBLIC_API_BASE_URL', process.env.NEXT_PUBLIC_API_BASE_URL), 
-    
+    // For Cookie-based auth, we MUST request via the Next.js Proxy (/api)
+    // so that the server can attach the HttpOnly cookie.
+    // If request goes directly to backend (e.g. :8000), browser sends no cookie -> 401.
+    API_URL: '/api/v1', // Maps to frontend/src/app/api/[...path] -> backend/api/v1 
+
     // Internal Backend URL (only used server-side usually, but might be needed)
     // We can make this optional if it's not strictly required for client-side rendering,
     // but requested was "all injected values".
-    INTERNAL_BACKEND_URL: process.env.INTERNAL_BACKEND_URL || '', 
+    INTERNAL_BACKEND_URL: process.env.INTERNAL_BACKEND_URL || '',
 } as const;

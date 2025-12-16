@@ -13,40 +13,24 @@ const publicPages = ['/', '/login', '/signup'];
 export default function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // 1. Run i18n middleware first to handle locale prefixes
+  // 1. Run i18n middleware first to handle locale detection (cookies/headers)
   const response = intlMiddleware(req);
 
   // 2. Check for Auth Token
   const token = req.cookies.get('access_token')?.value;
 
-  // Remove locale prefix to check against publicPages
-  // e.g. /en/login -> /login
-  const pathnameWithoutLocale = pathname.replace(/^\/(en|ko)/, '') || '/';
-
-  const isPublicPage = publicPages.includes(pathnameWithoutLocale);
+  const isPublicPage = publicPages.includes(pathname);
 
   // 3. Auth Logic
   if (token) {
     // If authenticated and trying to access login/signup, redirect to dashboard
-    if (pathnameWithoutLocale === '/login' || pathnameWithoutLocale === '/signup') {
-      const dashboardUrl = new URL('/dashboard', req.url);
-      // Keep locale if present
-      const locale = pathname.match(/^\/(en|ko)/)?.[1];
-      if (locale) {
-        dashboardUrl.pathname = `/${locale}/dashboard`;
-      }
-      return NextResponse.redirect(dashboardUrl);
+    if (pathname === '/login' || pathname === '/signup') {
+      return NextResponse.redirect(new URL('/dashboard', req.url));
     }
   } else {
     // If not authenticated and trying to access protected page
     if (!isPublicPage) {
-      const loginUrl = new URL('/login', req.url);
-      // Keep locale if present
-      const locale = pathname.match(/^\/(en|ko)/)?.[1];
-      if (locale) {
-        loginUrl.pathname = `/${locale}/login`;
-      }
-      return NextResponse.redirect(loginUrl);
+      return NextResponse.redirect(new URL('/login', req.url));
     }
   }
 

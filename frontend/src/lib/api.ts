@@ -22,8 +22,11 @@ api.interceptors.request.use(
         // This ensures we get the token even if it's stored in a nested structure by persist middleware.
         const token = useAuthStore.getState().token;
         console.log("API Request Interceptor - URL:", config.url, "Token:", token ? "Present" : "Missing");
-        if (token) {
+        if (token && token !== 'undefined' && token !== 'null') {
             config.headers.Authorization = `Bearer ${token}`;
+        } else {
+            // Explicitly remove it if it was set by default
+            delete config.headers.Authorization;
         }
 
         return config;

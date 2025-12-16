@@ -14,7 +14,7 @@ interface AuthState {
     setToken: (token: string) => void;
     setUser: (user: User) => void;
     setHasHydrated: (state: boolean) => void;
-    logout: () => void;
+    logout: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -26,7 +26,15 @@ export const useAuthStore = create<AuthState>()(
             setToken: (token) => set({ token }),
             setUser: (user) => set({ user }),
             setHasHydrated: (state) => set({ hasHydrated: state }),
-            logout: () => set({ token: null, user: null }),
+            logout: async () => {
+                try {
+                    await fetch('/api/auth/logout', { method: 'POST' });
+                } catch (e) {
+                    console.error("Failed to logout server-side", e);
+                }
+                set({ token: null, user: null });
+                window.location.href = '/login';
+            },
         }),
         {
             name: 'auth-storage', // unique name
