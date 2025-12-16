@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { User, CreditCard, Shield, Globe, Loader2 } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { useRouter, usePathname } from '@/navigation';
-import axios from 'axios';
+import api from '@/lib/api';
 import { useToast } from "@/hooks/use-toast";
 
 export default function SettingsPage() {
@@ -30,10 +30,8 @@ export default function SettingsPage() {
             try {
                 // Update backend
                 if (user) {
-                    const response = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/users/me`, {
+                    const response = await api.put('/users/me', {
                         language: newLanguage
-                    }, {
-                        headers: { Authorization: `Bearer ${useAuthStore.getState().token}` }
                     });
 
                     if (response.data) {

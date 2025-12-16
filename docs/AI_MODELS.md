@@ -29,6 +29,7 @@
 - `title` (선택): 프로젝트 제목.
 - `subtitle` (선택): 프로젝트 부제목.
 - `genres` (선택): 장르 목록.
+- `language`: 출력 언어 코드 (예: "ko", "en").
 
 **프롬프트 구조:**
 ```text
@@ -43,6 +44,8 @@ Subtitle: {subtitle}
 Genres: {genres}
 
 Original Description: "{description}"
+
+{IMPORTANT: All output text (titles, summaries, descriptions) MUST be in {language} language.}
 
 Return ONLY a JSON object with the following structure:
 {
@@ -71,7 +74,9 @@ Return ONLY a JSON object with the following structure:
 - `style`: 화풍 이름.
 - `tones` (선택): 톤(Tone) 목록.
 - `style_ref_url` (선택): 스타일 참조 이미지 URL.
+- `style_ref_url` (선택): 스타일 참조 이미지 URL.
 - `character_image_urls` (선택): 포함할 캐릭터 이미지 URL 목록.
+- `language`: 프로젝트 언어 설정.
 
 **프롬프트 구조:**
 ```text
@@ -91,6 +96,7 @@ Requirements:
 - Aspect Ratio: Wide (16:9).
 - Composition: Cinematic, showing the atmosphere.
 - No text overlay.
+- (If language is 'ko'): If any text appears, it MUST be in Korean.
 
 (If character references provided):
 - INCLUDE the characters provided in the reference images. Place them naturally in the scene according to the worldview.
@@ -110,6 +116,7 @@ Requirements:
 
 **파라미터:**
 - `description`: 세계관 또는 스토리 설명.
+- `language`: 출력 언어 설정.
 
 **프롬프트 구조:**
 ```text
@@ -117,6 +124,8 @@ You are an expert art director for webtoons.
 Based on the following story or worldview description, recommend 3 distinct art styles that would suit the project.
 
 Description: "{description}"
+
+{IMPORTANT: All output text (descriptions, labels) MUST be in {language} language.}
 
 Return ONLY a JSON object with the following structure:
 {
@@ -151,6 +160,7 @@ Return ONLY a JSON object with the following structure:
 - `mood`: 성격/분위기 키워드.
 - `style`: 화풍.
 - `project_context`: 제목, 장르, 세계관.
+- `language`: 출력 언어 설정.
 
 **프롬프트 구조:**
 ```text
@@ -163,6 +173,8 @@ Project Context:
 Input Name: {name}
 Initial Tags: {tags}
 Mood: {mood}
+
+{IMPORTANT: All output text MUST be in {language} language.}
 
 For each option, provide:
 - Unique Name
@@ -252,6 +264,7 @@ NEGATIVE PROMPT: Do NOT include any text, logos, watermarks, signature, charts, 
 **파라미터:**
 - `project_title`, `worldview`.
 - `recent_episodes`: 최근 3개 에피소드 요약.
+- `language`: 출력 언어 설정.
 
 **프롬프트 구조:**
 ```text
@@ -259,6 +272,8 @@ You are a webtoon writer.
 Project: {project_title}
 Worldview: {worldview}
 Recent Episodes: {recent_episodes}
+
+{IMPORTANT: All output text MUST be in {language} language.}
 
 Propose 3 distinct episode ideas for the next chapter.
 Return ONLY JSON...
@@ -271,7 +286,9 @@ Return ONLY JSON...
 **파라미터:**
 - `episode_title`, `summary`.
 - `style`: 화풍.
+- `style`: 화풍.
 - `num_cuts`: 컷 수 (기본 6개).
+- `language`: 출력 언어 설정.
 
 **프롬프트 구조:**
 ```text
@@ -279,6 +296,8 @@ Plan a {num_cuts}-cut webtoon episode.
 Title: {episode_title}
 Summary: {summary}
 Style: {style}
+
+{IMPORTANT: All output text MUST be in {language} language.}
 
 For each cut, determine:
 - Script (Visual Description)
@@ -294,7 +313,9 @@ Return ONLY JSON...
 
 **파라미터:**
 - `script`: 씬 스크립트.
+- `script`: 씬 스크립트.
 - `character_context`: (선택) 캐릭터 상세 정보.
+- `language`: 출력 언어 설정.
 
 **프롬프트 구조:**
 ```text
@@ -303,6 +324,8 @@ Analyze the following script and suggest 3 distinct visual direction options (ca
 
 Script: "{script}"
 {character_context}
+
+{IMPORTANT: All output text MUST be in {language} language.}
 
 Return ONLY a JSON object...
 ```

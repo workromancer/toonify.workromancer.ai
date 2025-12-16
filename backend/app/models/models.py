@@ -98,6 +98,7 @@ class Project(SQLModel, table=True):
     style_preset: str
     art_style: Optional[str] = None # Detailed style description or name
     style_reference_url: Optional[str] = None # URL of the selected style image
+    language: str = Field(default="en")
     
     cover_image_status: str = "pending" # pending, processing, completed, failed
     

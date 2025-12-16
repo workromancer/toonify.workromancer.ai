@@ -43,6 +43,7 @@ class ProjectOut(BaseModel):
     worldview: dict | str | None
     style_preset: str
     style_reference_url: str | None = None
+    language: str = "en"
     thumbnail_url: str | None = None
     cover_image_status: str | None = None
     created_at: datetime
@@ -69,15 +70,16 @@ class WorldviewAugmentRequest(BaseModel):
     title: str | None = None
     subtitle: str | None = None
     genres: List[str] | None = None
+    language: str | None = "en"
 
-def generate_project_cover_task(project_id: str, title: str, genre_name: str, worldview_content: str, style: str, tones: List[str] = None, style_ref_url: str = None, character_image_urls: List[str] = None):
+def generate_project_cover_task(project_id: str, title: str, genre_name: str, worldview_content: str, style: str, tones: List[str] = None, style_ref_url: str = None, character_image_urls: List[str] = None, language: str = "en"):
     """
     Background task to generate and update project cover image.
     """
     try:
         print(f"Starting background cover generation for project {project_id}")
         # Generate Image
-        img_bytes = ai_service.generate_project_cover_image(title, genre_name, worldview_content, style, tones, style_ref_url, character_image_urls)
+        img_bytes = ai_service.generate_project_cover_image(title, genre_name, worldview_content, style, tones, style_ref_url, character_image_urls, language=language)
         
         # Upload to Storage
         if img_bytes:
@@ -195,6 +197,10 @@ def create_project(
              if isinstance(final_worldview.get("tone"), str):
                   final_worldview["tone"] = [final_worldview["tone"]]
 
+        # Get User Language
+        user = session.get(User, current_user_id)
+        user_lang = user.language if user else "en"
+
         project = Project(
             title=project_in.title,
             subtitle=project_in.subtitle,
@@ -204,6 +210,7 @@ def create_project(
             style_reference_url=project_in.style_reference_url,
             workspace_id=workspace_id,
             owner_id=current_user_id,
+            language=user_lang
         )
         session.add(project)
         session.commit()
@@ -251,12 +258,16 @@ def augment_worldview(
              raise HTTPException(status_code=404, detail="No workspace found for user.")
         
         billing_service.deduct_credits(session, member.workspace_id, UUID(current_user_id), "augment_worldview")
+        
+        user = session.get(User, current_user_id)
+        user_lang = user.language if user else "en"
 
         result = ai_service.augment_worldview(
             description=request.description,
             title=request.title,
             subtitle=request.subtitle,
-            genres=request.genres
+            genres=request.genres,
+            language=user_lang
         )
         return result
     except HTTPException as he:
@@ -430,7 +441,8 @@ def generate_cover(
         project.style_preset,
         tones,
         project.style_reference_url if project.style_reference_url else None,
-        char_urls
+        char_urls,
+        language=project.language
     )
 
     return {"message": "Cover generation started"}
@@ -454,7 +466,10 @@ def recommend_styles(
         
         billing_service.deduct_credits(session, member.workspace_id, UUID(current_user_id), "recommend_style")
 
-        styles = ai_service.recommend_style(request.description)
+        user = session.get(User, current_user_id)
+        user_lang = user.language if user else "en"
+
+        styles = ai_service.recommend_style(request.description, language=user_lang)
         return styles
     except HTTPException as he:
         raise he
