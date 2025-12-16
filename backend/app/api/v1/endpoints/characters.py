@@ -196,7 +196,7 @@ def augment_character(
 
     project_context = f"""
     Title: {project.title}
-    Genre: {project.genre or 'Unknown'}
+    Genre: {", ".join([g.name for g in project.genres]) if project.genres else 'Unknown'}
     Worldview: {wv_desc}
     """
 
@@ -342,7 +342,7 @@ def suggest_character_attribute(
 
     project_context = f"""
     Title: {project.title}
-    Genre: {project.genre.name if project.genre else 'Unknown'}
+    Genre: {", ".join([g.name for g in project.genres]) if project.genres else 'Unknown'}
     Worldview: {wv_desc}
     """
 
@@ -397,7 +397,7 @@ def analyze_character(
 
     project_context = f"""
     Title: {project.title}
-    Genre: {project.genre.name if project.genre else 'Unknown'}
+    Genre: {", ".join([g.name for g in project.genres]) if project.genres else 'Unknown'}
     Worldview: {wv_desc}
     """
 
