@@ -45,7 +45,7 @@ const ProgressBar = ({ currentStep }: { currentStep: number }) => {
                 : 'bg-slate-900 border-slate-700'
                 }`}
             />
-            <span className={`text-[10px] font-mono font-bold tracking-wider absolute top-6 ${idx <= currentStep ? 'text-white' : 'text-slate-600'
+            <span className={`text-[10px] font-mono font-bold tracking-wider absolute top-6 whitespace-nowrap ${idx <= currentStep ? 'text-white' : 'text-slate-600'
               }`}>
               {label}
             </span>
