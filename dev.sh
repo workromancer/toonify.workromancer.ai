@@ -8,12 +8,16 @@ NC='\033[0m' # No Color
 # Parse Arguments
 LOG_LEVEL="info"
 DEBUG_MODE=false
+USE_NGROK=false
 
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         -d|--debug) 
             DEBUG_MODE=true
             LOG_LEVEL="debug" 
+            ;;
+        -o)
+            USE_NGROK=true
             ;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
     esac
@@ -117,7 +121,16 @@ npm run dev &
 FRONTEND_PID=$!
 echo "Frontend started (PID: $FRONTEND_PID)"
 
+# Start Ngrok if requested
+NGROK_PID=""
+if [ "$USE_NGROK" = true ]; then
+    echo -e "${BLUE}Starting Ngrok on port 3000...${NC}"
+    ngrok http 3000 &
+    NGROK_PID=$!
+    echo "Ngrok started (PID: $NGROK_PID)"
+fi
+
 # Handle Shutdown
-trap "kill $BACKEND_PID $FRONTEND_PID $DOCKER_PID; exit" SIGINT SIGTERM
+trap "kill $BACKEND_PID $FRONTEND_PID $DOCKER_PID $NGROK_PID; exit" SIGINT SIGTERM
 
 wait
