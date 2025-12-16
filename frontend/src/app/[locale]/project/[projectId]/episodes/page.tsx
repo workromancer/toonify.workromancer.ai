@@ -22,7 +22,7 @@ import {
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
-} from "../../../../components/ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu";
 import GenerateEpisodeModal from '@/components/project/modals/GenerateEpisodeModal';
 import { cn } from '@/lib/utils';
 import { useTranslations } from 'next-intl';

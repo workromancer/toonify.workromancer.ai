@@ -79,7 +79,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
     const searchParams = useSearchParams();
     const pathname = usePathname();
     const t = useTranslations('Project.Home');
-    const tGenres = useTranslations('genres');
+    const tGenres = useTranslations('NewProject.genres');
 
     // Polling for cover image status
     useEffect(() => {

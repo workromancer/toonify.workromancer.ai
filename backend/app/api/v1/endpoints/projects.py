@@ -251,11 +251,6 @@ def get_project(
     """
     Get project details.
     """
-    try:
-        project_uuid = UUID(project_id)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid UUID")
-
     project = session.get(Project, project_uuid)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -264,7 +259,20 @@ def get_project(
     p_dict['genre'] = project.genre.name if project.genre else None
     p_dict['thumbnail_url'] = project.thumbnail_asset.file_url if project.thumbnail_asset else None
     p_dict['cover_image_status'] = project.cover_image_status
-    p_dict['characters'] = project.characters
+    
+    # Robust serialization
+    chars_data = []
+    try:
+        if project.characters:
+            for c in project.characters:
+                try:
+                    chars_data.append(c.dict())
+                except Exception as e:
+                    print(f"Failed to serialize character {c.id}: {e}")
+    except Exception as e:
+        print(f"Failed to load characters: {e}")
+        
+    p_dict['characters'] = chars_data
     
     return p_dict
 

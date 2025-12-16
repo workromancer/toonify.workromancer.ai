@@ -56,7 +56,8 @@ export default function ProjectPage() {
 
             } catch (err: any) {
                 console.error("Failed to fetch project data", err);
-                setError(err.message || "Failed to load project");
+                const msg = err.response?.data?.detail || err.message || "Failed to load project";
+                setError(msg);
             } finally {
                 setLoading(false);
             }
