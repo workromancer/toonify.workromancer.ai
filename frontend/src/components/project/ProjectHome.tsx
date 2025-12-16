@@ -300,9 +300,16 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                             <div className="flex flex-col gap-4 max-w-2xl">
                                 <div className="flex items-center gap-3">
                                     <span className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-xs font-bold text-white border border-white/20">
-                                        {(project.genre_id ? tGenres(project.genre_id) : (
-                                            Array.isArray(project.genre) ? project.genre.join(', ') : (project.genre || t('genreNotSet'))
-                                        ))}
+                                        {/* Display Genre - Prefer translated ID if standard, else Name, else ID */
+                                            (() => {
+                                                const knownGenres = ['fantasy', 'romance', 'sciFi', 'sliceOfLife', 'action', 'thriller', 'historical', 'comedy', 'mystery', 'horror'];
+                                                if (project.genre_id && knownGenres.includes(project.genre_id)) {
+                                                    return tGenres(project.genre_id);
+                                                }
+                                                if (Array.isArray(project.genre)) return project.genre.join(', ');
+                                                if (project.genre) return project.genre;
+                                                return t('genreNotSet');
+                                            })()}
                                     </span>
                                     {project.worldview?.tone && Array.isArray(project.worldview.tone) && project.worldview.tone.map((t: string) => (
                                         <span key={t} className="px-3 py-1 rounded-full bg-purple-500/20 backdrop-blur-md text-xs font-bold text-purple-200 border border-purple-500/30">
@@ -501,7 +508,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                             <section>
                                 <div className="flex items-center justify-between mb-4">
                                     <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                        {t('episodes')} <span className="text-slate-500 text-sm font-normal">{episodes?.length || 0}</span>
+                                        {t('episodes')} <span className="text-slate-500 text-sm font-normal ml-1 translate-y-[1px]">{episodes?.length || 0}</span>
                                     </h3>
                                     <Button
                                         className="h-9 px-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold shadow-lg shadow-purple-900/20 text-xs flex items-center gap-2"

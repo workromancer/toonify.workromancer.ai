@@ -330,7 +330,7 @@ export default function NewProjectWizard() {
             <ProgressBar currentStep={step} />
 
             {/* Content Area */}
-            <div className="flex-1 flex flex-col justify-center mb-8 animate-fade-in">
+            <div className="flex-1 flex flex-col justify-start pt-16 mb-8 animate-fade-in">
 
               {/* Step 0: Title */}
               {step === 0 && (
