@@ -14,6 +14,12 @@ class SceneStructureRequest(BaseModel):
     script: str
     project_id: str | None = None
 
+class SceneOut(BaseModel):
+    option_id: int
+    title: str
+    description: str
+    visual_prompt: str
+
 class SceneRenderRequest(BaseModel):
     prompt: str
     width: int = 1024
