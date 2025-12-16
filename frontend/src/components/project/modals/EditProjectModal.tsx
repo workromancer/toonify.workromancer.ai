@@ -26,8 +26,10 @@ interface Project {
     description?: string;
     style_preset: string;
     worldview?: any;
-    genre_id?: string | null;
+    genre_id?: string | null; // deprecated
+    genre_ids?: string[];
     genre?: string;
+
 }
 
 interface EditProjectModalProps {
@@ -45,7 +47,9 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate }:
         description: '',
         worldview_content: '',
         style_preset: '',
-        genre_id: ''
+        worldview_content: '',
+        style_preset: '',
+        genre_ids: [] as string[]
     });
 
     // Detailed Worldview Data
@@ -80,7 +84,9 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate }:
                 description: project.description || '',
                 worldview_content: wvContent,
                 style_preset: project.style_preset || '',
-                genre_id: project.genre_id || ''
+                worldview_content: wvContent,
+                style_preset: project.style_preset || '',
+                genre_ids: project.genre_ids || (project.genre_id ? [project.genre_id] : [])
             });
             setTones(wvTones);
             setKeyFeatures(wvFeatures);
@@ -117,7 +123,8 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate }:
                 subtitle: formData.subtitle,
                 description: formData.description,
                 worldview: worldviewUpdate,
-                genre_id: formData.genre_id || null
+                worldview: worldviewUpdate,
+                genre_ids: formData.genre_ids
                 // Note: style_preset typically updated via setup, but can safeguard here if needed
             });
             onUpdate(response.data);
@@ -170,18 +177,43 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate }:
                                     className="col-span-3"
                                 />
                             </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="genre" className="text-right text-gray-300">{t('genreLabel')}</Label>
-                                <div className="col-span-3">
+                            <div className="grid grid-cols-4 items-start gap-4">
+                                <Label htmlFor="genre" className="text-right text-gray-300 mt-2">{t('genreLabel')}</Label>
+                                <div className="col-span-3 flex flex-col gap-2">
+                                    {/* Selected Genres */}
+                                    <div className="flex flex-wrap gap-2">
+                                        {formData.genre_ids.map(gid => {
+                                            const g = genres.find(x => x.id === gid);
+                                            return (
+                                                <Badge key={gid} variant="secondary" className="gap-1 pl-2 pr-1 py-1">
+                                                    {g?.name || gid}
+                                                    <div
+                                                        className="cursor-pointer hover:bg-black/20 rounded-full p-0.5"
+                                                        onClick={() => setFormData({
+                                                            ...formData,
+                                                            genre_ids: formData.genre_ids.filter(id => id !== gid)
+                                                        })}
+                                                    >
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                                                    </div>
+                                                </Badge>
+                                            );
+                                        })}
+                                    </div>
+
                                     <Select
-                                        value={formData.genre_id || "default"}
-                                        onValueChange={(val: string) => setFormData({ ...formData, genre_id: val === "default" ? "" : val })}
+                                        value="default"
+                                        onValueChange={(val: string) => {
+                                            if (val !== "default" && !formData.genre_ids.includes(val)) {
+                                                setFormData({ ...formData, genre_ids: [...formData.genre_ids, val] })
+                                            }
+                                        }}
                                     >
                                         <SelectTrigger className="bg-black/20 border-white/10 text-white w-full">
-                                            <SelectValue placeholder="Select Genre" />
+                                            <SelectValue placeholder={t('selectGenrePlaceholder') || "Add Genre"} />
                                         </SelectTrigger>
                                         <SelectContent className="bg-[#2c2c44] border-white/10 text-white">
-                                            {genres.map(g => (
+                                            {genres.filter(g => !formData.genre_ids.includes(g.id)).map(g => (
                                                 <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
                                             ))}
                                         </SelectContent>

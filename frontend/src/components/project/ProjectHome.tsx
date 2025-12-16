@@ -37,6 +37,7 @@ interface Project {
     subtitle?: string;
     genre?: string;
     genre_id?: string | null;
+    genres?: string[];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     worldview?: any;
     art_style?: string;
@@ -123,13 +124,16 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
     };
 
     const handleGenerateCover = async () => {
-        if (!project.genre || !project.worldview) {
+        if ((!project.genres || project.genres.length === 0) && !project.genre) {
             toast({
                 title: t('missingInfo'),
                 description: t('setGenreFirst'),
                 // variant: 'default', // Changed from destructive to friendly
             });
             setIsEditModalOpen(true);
+
+            // Check worldview
+            if (!project.worldview) return;
             return;
         }
 
@@ -224,7 +228,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
     // Priority Logic for CTA
     const getHeroAction = () => {
         // Priority 1: Missing Settings
-        if (!project.genre || !project.worldview) {
+        if ((!project.genres || project.genres.length === 0) && !project.genre || !project.worldview) {
             return {
                 label: t('setupProject'),
                 icon: <Settings className="mr-2 h-4 w-4" />,
@@ -299,9 +303,17 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                         <div className="absolute bottom-0 left-0 w-full p-8 sm:p-12 flex flex-col sm:flex-row items-start sm:items-end justify-between gap-6 z-10">
                             <div className="flex flex-col gap-4 max-w-2xl">
                                 <div className="flex items-center gap-3">
-                                    <span className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-xs font-bold text-white border border-white/20">
-                                        {/* Display Genre - Prefer translated ID if standard, else Name, else ID */
-                                            (() => {
+                                    {/* Genres */}
+                                    {project.genres && project.genres.length > 0 ? (
+                                        project.genres.map((gName, idx) => (
+                                            <span key={idx} className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-xs font-bold text-white border border-white/20">
+                                                {gName}
+                                            </span>
+                                        ))
+                                    ) : (
+                                        <span className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-xs font-bold text-white border border-white/20">
+                                            {/* Legacy Display */}
+                                            {(() => {
                                                 const knownGenres = ['fantasy', 'romance', 'sciFi', 'sliceOfLife', 'action', 'thriller', 'historical', 'comedy', 'mystery', 'horror'];
                                                 if (project.genre_id && knownGenres.includes(project.genre_id)) {
                                                     return tGenres(project.genre_id);
@@ -310,7 +322,8 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                                 if (project.genre) return project.genre;
                                                 return t('genreNotSet');
                                             })()}
-                                    </span>
+                                        </span>
+                                    )}
                                     {project.worldview?.tone && Array.isArray(project.worldview.tone) && project.worldview.tone.map((t: string) => (
                                         <span key={t} className="px-3 py-1 rounded-full bg-purple-500/20 backdrop-blur-md text-xs font-bold text-purple-200 border border-purple-500/30">
                                             {t}

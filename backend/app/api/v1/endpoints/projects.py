@@ -18,7 +18,7 @@ router = APIRouter()
 class ProjectCreate(BaseModel):
     title: str
     subtitle: str | None = None
-    genre_id: UUID | None = None
+    genre_ids: List[UUID] = []
     worldview: dict | str | None = None
     style_preset: str = "anime_webtoon" # Default
     style_reference_url: str | None = None
@@ -26,7 +26,7 @@ class ProjectCreate(BaseModel):
 class ProjectUpdate(BaseModel):
     title: str | None = None
     subtitle: str | None = None
-    genre_id: UUID | None = None
+    genre_ids: List[UUID] | None = None
     worldview: dict | str | None = None
     style_preset: str | None = None
     style_reference_url: str | None = None
@@ -36,8 +36,10 @@ class ProjectOut(BaseModel):
     id: Any
     title: str
     subtitle: str | None
-    genre: str | None = None # Resolved Name
-    genre_id: UUID | None = None
+    genres: List[str] = []
+    genre_ids: List[UUID] = []
+    # genre: str | None = None # Deprecated
+    # genre_id: UUID | None = None # Deprecated
     worldview: dict | str | None
     style_preset: str
     style_reference_url: str | None = None
@@ -48,8 +50,9 @@ class ProjectOut(BaseModel):
 
     @root_validator(pre=True)
     def resolve_fields(cls, values):
-        if hasattr(values, "genre") and values.genre:
-            values.genre_name = values.genre.name
+        # Flatten genres if they exist in ORM object
+        if hasattr(values, "genres") and values.genres:
+             pass 
         return values
         
     class Config:
@@ -139,8 +142,9 @@ def list_projects(
     # Manual mapping to valid dicts for ProjectOut
     results = []
     for p in projects:
-        # Resolve Genre
-        g_name = p.genre.name if p.genre else None
+        # Resolve Genres
+        g_names = [g.name for g in p.genres] if p.genres else []
+        g_ids = [g.id for g in p.genres] if p.genres else []
         
         # Resolve Thumbnail
         thumb = None
@@ -150,7 +154,11 @@ def list_projects(
              thumb = p.thumbnail_asset.file_url if p.thumbnail_asset else None
         
         p_dict = p.dict()
-        p_dict['genre'] = g_name
+        p_dict['genres'] = g_names
+        p_dict['genre_ids'] = g_ids
+        # Backward compatibility for frontend
+        p_dict['genre'] = ", ".join(g_names)
+        
         p_dict['thumbnail_url'] = thumb
         p_dict['cover_image_status'] = p.cover_image_status
         results.append(p_dict)
@@ -190,7 +198,7 @@ def create_project(
         project = Project(
             title=project_in.title,
             subtitle=project_in.subtitle,
-            genre_id=project_in.genre_id,
+            # genre_id=project_in.genre_id, # Deprecated
             worldview=final_worldview,
             style_preset=project_in.style_preset,
             style_reference_url=project_in.style_reference_url,
@@ -200,9 +208,24 @@ def create_project(
         session.add(project)
         session.commit()
         session.refresh(project)
+
+        # Handle Genres
+        if project_in.genre_ids:
+            for gid in project_in.genre_ids:
+                if isinstance(gid, str):
+                    gid = UUID(gid)
+                genre = session.get(Genre, gid)
+                if genre:
+                    project.genres.append(genre)
+            session.add(project)
+            session.commit()
+            session.refresh(project)
         
         p_dict = project.dict()
-        p_dict['genre'] = project.genre.name if project.genre else None
+        p_dict['genres'] = [g.name for g in project.genres]
+        p_dict['genre_ids'] = [g.id for g in project.genres]
+        p_dict['genre'] = ", ".join([g.name for g in project.genres])
+        
         p_dict['thumbnail_url'] = project.thumbnail_asset.file_url if project.thumbnail_asset else None
         p_dict['cover_image_status'] = project.cover_image_status
 
@@ -249,6 +272,8 @@ def get_project(
     current_user_id: str = Depends(deps.get_current_user_id),
 ) -> Any:
     """
+    Get project details.
+    """
     try:
         project_uuid = UUID(project_id)
     except ValueError:
@@ -259,7 +284,11 @@ def get_project(
         raise HTTPException(status_code=404, detail="Project not found")
     
     p_dict = project.dict()
-    p_dict['genre'] = project.genre.name if project.genre else None
+    g_names = [g.name for g in project.genres] if project.genres else []
+    p_dict['genres'] = g_names
+    p_dict['genre_ids'] = [g.id for g in project.genres] if project.genres else []
+    p_dict['genre'] = ", ".join(g_names)
+
     p_dict['thumbnail_url'] = project.thumbnail_asset.file_url if project.thumbnail_asset else None
     p_dict['cover_image_status'] = project.cover_image_status
     
@@ -311,16 +340,31 @@ def update_project(
                   wv["tone"] = [wv["tone"]]
          project_data['worldview'] = wv
 
+    # Update basic fields
     for key, value in project_data.items():
+        if key in ['genre_ids', 'characters']: continue # skip special fields
         if hasattr(project, key):
             setattr(project, key, value)
+
+    # Update Genres if provided
+    if project_in.genre_ids is not None:
+        project.genres = [] # Clear existing
+        for gid in project_in.genre_ids:
+             if isinstance(gid, str): gid = UUID(gid)
+             genre = session.get(Genre, gid)
+             if genre:
+                 project.genres.append(genre)
 
     session.add(project)
     session.commit()
     session.refresh(project)
     
     p_dict = project.dict()
-    p_dict['genre'] = project.genre.name if project.genre else None
+    g_names = [g.name for g in project.genres] if project.genres else []
+    p_dict['genres'] = g_names
+    p_dict['genre_ids'] = [g.id for g in project.genres] if project.genres else []
+    p_dict['genre'] = ", ".join(g_names)
+
     p_dict['thumbnail_url'] = project.thumbnail_asset.file_url if project.thumbnail_asset else None
     p_dict['cover_image_status'] = project.cover_image_status
 
@@ -357,10 +401,11 @@ def generate_cover(
              tones = project.worldview.get("tone", [])
              if isinstance(tones, str):
                  tones = [tones]
-        else:
              wv_content = str(project.worldview)
     
-    genre_name = project.genre.name if project.genre else "Fantasy"
+    # genre_name = project.genre.name if project.genre else "Fantasy"
+    genre_names = [g.name for g in project.genres] if project.genres else ["Fantasy"]
+    genre_name = ", ".join(genre_names)
     
     char_statement = select(Character).where(Character.project_id == project.id).limit(6)
     chars = session.exec(char_statement).all()

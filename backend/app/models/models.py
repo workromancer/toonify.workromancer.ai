@@ -48,6 +48,11 @@ class Workspace(SQLModel, table=True):
     custom_styles: List["CustomStyle"] = Relationship(back_populates="workspace")
 
 
+class ProjectGenreLink(SQLModel, table=True):
+    project_id: UUID = Field(foreign_key="project.id", primary_key=True)
+    genre_id: UUID = Field(foreign_key="genre.id", primary_key=True)
+
+
 class Genre(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     name: str = Field(unique=True)
@@ -55,7 +60,9 @@ class Genre(SQLModel, table=True):
     is_active: bool = True
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
-    projects: List["Project"] = Relationship(back_populates="genre")
+
+    projects: List["Project"] = Relationship(back_populates="genres", link_model=ProjectGenreLink)
+
 
 class Asset(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
@@ -83,8 +90,7 @@ class Project(SQLModel, table=True):
     title: str
     subtitle: Optional[str] = None
     
-    # Genre link
-    genre_id: Optional[UUID] = Field(foreign_key="genre.id", default=None)
+    # genre_id: Optional[UUID] = Field(foreign_key="genre.id", default=None) # DEPRECATED
     
     worldview: Optional[dict] = Field(default=None, sa_column=Column(JSON))
     workspace_id: UUID = Field(foreign_key="workspace.id")
@@ -102,7 +108,8 @@ class Project(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     workspace: Workspace = Relationship(back_populates="projects")
-    genre: Optional[Genre] = Relationship(back_populates="projects")
+    # genre: Optional[Genre] = Relationship(back_populates="projects") # DEPRECATED
+    genres: List[Genre] = Relationship(back_populates="projects", link_model=ProjectGenreLink)
     
     cover_image_asset: Optional["Asset"] = Relationship(
         sa_relationship_kwargs={
