@@ -1,5 +1,5 @@
 from typing import Any, List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Header
 from sqlmodel import Session, select, col
 
 from app.api import deps
@@ -120,6 +120,7 @@ def generate_episode_options(
     project_id: UUID,
     session: Session = Depends(deps.get_session),
     current_user_id: str = Depends(deps.get_current_user_id),
+    accept_language: str = Header("en", alias="Accept-Language")
 ):
     """
     Generate 3 episode ideas based on project context.
@@ -140,7 +141,8 @@ def generate_episode_options(
     result = ai_service.generate_episode_ideas(
         project_title=project.title,
         worldview=worldview_str,
-        recent_episodes=recent_summaries
+        recent_episodes=recent_summaries,
+        language=accept_language.split(',')[0].strip()[:2]
     )
     return result
 
@@ -150,6 +152,7 @@ def generate_episode_cuts(
     request: GenerateCutsRequest,
     session: Session = Depends(deps.get_session),
     current_user_id: str = Depends(deps.get_current_user_id),
+    accept_language: str = Header("en", alias="Accept-Language")
 ):
     """
     Generate and save initial cuts (script, dialogue, panel type).
@@ -181,7 +184,8 @@ def generate_episode_cuts(
             episode_title=request.episode_title,
             summary=request.episode_summary,
             style=style,
-            num_cuts=request.num_cuts
+            num_cuts=request.num_cuts,
+            language=accept_language.split(',')[0].strip()[:2]
         )
     except Exception as e:
         # If AI fails, we might still want the episode? Or rollback?
@@ -236,6 +240,7 @@ def generate_cut_image(
     background_tasks: BackgroundTasks,
     session: Session = Depends(deps.get_session),
     current_user_id: str = Depends(deps.get_current_user_id),
+    accept_language: str = Header("en", alias="Accept-Language")
 ):
     """
     Start background image generation for a specific cut.
@@ -247,12 +252,15 @@ def generate_cut_image(
     # Pass everything needed to background task
     prompt_override = request.prompt_override
     
-    background_tasks.add_task(generate_cut_task, cut_id, prompt_override)
+    prompt_override = request.prompt_override
+    
+    lang = accept_language.split(',')[0].strip()[:2]
+    background_tasks.add_task(generate_cut_task, cut_id, prompt_override, lang)
     
     return {"message": "Generation started", "cut_id": cut_id}
-
-def generate_cut_task(cut_id: UUID, prompt_override: Optional[str]):
-    print(f"Background Task: Generating image for cut {cut_id}")
+    
+def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: str = "en"):
+    print(f"Background Task: Generating image for cut {cut_id}, language={language}")
     with Session(engine) as session:
         cut = session.get(StoryCut, cut_id)
         if not cut: return
@@ -315,7 +323,8 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str]):
                 height=height,
                 style_ref_url=style_ref_url,
                 character_data=char_data,
-                prev_scene_url=prev_scene_url
+                prev_scene_url=prev_scene_url,
+                language=language
             )
             
             url = storage.upload_image(img_bytes)

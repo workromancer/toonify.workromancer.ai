@@ -1,5 +1,5 @@
 from typing import Any, List, Dict
-from fastapi import APIRouter, Depends, HTTPException, Body
+from fastapi import APIRouter, Depends, HTTPException, Body, Header
 from sqlmodel import Session, select
 from app.api import deps
 from app.services.ai import ai_service
@@ -46,6 +46,7 @@ def generate_scene_structure(
     request: SceneStructureRequest,
     session: Session = Depends(deps.get_session),
     current_user_id: str = Depends(deps.get_current_user_id),
+    accept_language: str = Header("en", alias="Accept-Language")
 ) -> Dict:
     """
     Generate 3 visual direction options based on the script.
@@ -114,8 +115,10 @@ def generate_scene_structure(
                         context_str += "SIMILAR PREVIOUS SCENES (For Visual Consistency):\n" + "\n".join(rag_parts)
             except Exception as e:
                 print(f"RAG Retrieval warning: {e}")
-
-        options = ai_service.generate_direction_options(request.script, context_str)
+        
+        # Parse language
+        lang = accept_language.split(',')[0].strip()[:2]
+        options = ai_service.generate_direction_options(request.script, context_str, language=lang)
         return options
     except HTTPException as he:
         raise he
@@ -133,6 +136,7 @@ def modify_scene(
     request: SceneModifyRequest,
     session: Session = Depends(deps.get_session),
     current_user_id: str = Depends(deps.get_current_user_id),
+    accept_language: str = Header("en", alias="Accept-Language")
 ) -> Any:
     """
     Modify an existing scene image based on instruction.
@@ -144,7 +148,8 @@ def modify_scene(
     billing_service.deduct_credits(session, workspace_id, UUID(current_user_id), "modify_image")
 
     try:
-        image_bytes = ai_service.modify_image(request.original_image_url, request.instruction)
+        lang = accept_language.split(',')[0].strip()[:2]
+        image_bytes = ai_service.modify_image(request.original_image_url, request.instruction, language=lang)
         
         import base64
         base64_image = base64.b64encode(image_bytes).decode("utf-8")
@@ -161,6 +166,7 @@ def render_scene(
     request: SceneRenderRequest,
     session: Session = Depends(deps.get_session),
     current_user_id: str = Depends(deps.get_current_user_id),
+    accept_language: str = Header("en", alias="Accept-Language")
 ) -> Any:
     """
     Render a scene based on the selected direction prompt.
@@ -174,7 +180,8 @@ def render_scene(
         # In a real app, we would upload to GCS and return URL.
         # For now, we return raw bytes or a base64 string.
         
-        image_bytes = ai_service.generate_image(request.prompt, request.width, request.height, request.seed)
+        lang = accept_language.split(',')[0].strip()[:2]
+        image_bytes = ai_service.generate_image(request.prompt, request.width, request.height, request.seed, language=lang)
         
         # Convert to base64 for easy frontend display without storage setup
         import base64

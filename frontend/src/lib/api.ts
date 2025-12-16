@@ -18,8 +18,6 @@ const api = axios.create({
 // Add a request interceptor to include the auth token
 api.interceptors.request.use(
     (config) => {
-        // We'll read token from the store directly.
-        // This ensures we get the token even if it's stored in a nested structure by persist middleware.
         const token = useAuthStore.getState().token;
         console.log("API Request Interceptor - URL:", config.url, "Token:", token ? "Present" : "Missing");
         if (token && token !== 'undefined' && token !== 'null') {
@@ -27,6 +25,14 @@ api.interceptors.request.use(
         } else {
             // Explicitly remove it if it was set by default
             delete config.headers.Authorization;
+        }
+
+        // Set Accept-Language from cookie if available
+        if (typeof document !== 'undefined') {
+            const match = document.cookie.match(new RegExp('(^| )NEXT_LOCALE=([^;]+)'));
+            if (match) {
+                config.headers['Accept-Language'] = match[2];
+            }
         }
 
         return config;

@@ -51,7 +51,7 @@ class AIService:
         text = re.sub(r'```\s*$', '', text, flags=re.MULTILINE)
         return text.strip()
 
-    def recommend_style(self, description: str) -> dict:
+    def recommend_style(self, description: str, language: str = "en") -> dict:
         if not self.client:
              raise Exception("AI Service not initialized provided")
 
@@ -61,6 +61,8 @@ class AIService:
         Based on the following story or worldview description, recommend 3 distinct art styles that would suit the project.
 
         Description: "{description}"
+        
+        {f'IMPORTANT: All output text (descriptions, labels) MUST be in {language} language.' if language else ''}
 
         Return ONLY a JSON object with the following structure:
         {{
@@ -114,7 +116,7 @@ class AIService:
             print(f"Style Director Error: {e}")
             raise e
 
-    def augment_worldview(self, description: str, title: str = None, subtitle: str = None, genres: List[str] = None) -> dict:
+    def augment_worldview(self, description: str, title: str = None, subtitle: str = None, genres: List[str] = None, language: str = "en") -> dict:
 
              
         context_str = ""
@@ -140,6 +142,8 @@ class AIService:
         
         Original Description: {desc_str}
         
+        {f'IMPORTANT: All output text (titles, summaries, descriptions) MUST be in {language} language.' if language else ''}
+
         Return ONLY a JSON object with the following structure:
         {{
             "options": [
@@ -172,7 +176,7 @@ class AIService:
 
     # Updated signature to accept List[str] explicitly, or Union handled by type hint if we import Union
     # But for cleaner code let's just assume simple type or check instance
-    def augment_character_text(self, name: str, tags: List[str], mood: list | str, style: str, project_context: str = "") -> dict:
+    def augment_character_text(self, name: str, tags: List[str], mood: list | str, style: str, project_context: str = "", language: str = "en") -> dict:
         if not self.client:
              raise Exception("AI Service not initialized")
 
@@ -200,8 +204,10 @@ class AIService:
             - Origin: Where they came from or their past.
             - Goals: What they want to achieve.
             - Quirk: A unique habit or trait.
-        - Visual Description (Detailed prompt for image generation, ensuring it respects the Project Context/Worldview)
+         - Visual Description (Detailed prompt for image generation, ensuring it respects the Project Context/Worldview)
         
+        {f'IMPORTANT: All output text (names, personalities, bios) MUST be in {language} language.' if language else ''}
+
         Return ONLY a JSON object:
         {{
             "options": [
@@ -259,7 +265,7 @@ class AIService:
         # Using 9:16 ratio for vertical character sheet (576x1024)
         return self.generate_image(prompt, width=576, height=1024) 
 
-    def generate_direction_options(self, script: str, character_context: str = "") -> dict:
+    def generate_direction_options(self, script: str, character_context: str = "", language: str = "en") -> dict:
 
 
         prompt = f"""
@@ -270,6 +276,8 @@ class AIService:
         
         {f'Ensure the visual description includes the following character details if relevant: {character_context}' if character_context else ''}
         
+        {f'IMPORTANT: All output text (labels, descriptions) MUST be in {language} language.' if language else ''}
+
         Return ONLY a JSON object with the following structure:
         {{
             "options": [
@@ -300,7 +308,8 @@ class AIService:
             print(f"Director AI Error: {e}")
             raise e
 
-    def generate_image(self, prompt: str, width: int = 1024, height: int = 1024, seed: int = None) -> bytes:
+
+    def generate_image(self, prompt: str, width: int = 1024, height: int = 1024, seed: int = None, language: str = "en") -> bytes:
         if not self.client:
              raise Exception("AI Service not initialized")
 
@@ -319,6 +328,10 @@ class AIService:
                 aspect_ratio = "16:9"
             
             print(f"Generating image with prompt: {prompt[:50]}..., ratio: {aspect_ratio}")
+            
+            # Inject language instruction for image generation
+            if language == 'ko':
+                prompt += " (Any text inside the image must be in Korean)"
             
             config = types.GenerateContentConfig(
                 response_modalities=['IMAGE'], 
@@ -345,7 +358,7 @@ class AIService:
             print(f"GenAI Generation Error: {e}")
             raise e
 
-    def modify_image(self, original_image_url: str, instruction: str) -> bytes:
+    def modify_image(self, original_image_url: str, instruction: str, language: str = "en") -> bytes:
 
 
         print(f"Modifying image with instruction: {instruction}")
@@ -376,7 +389,9 @@ class AIService:
 
             # 2. Call GenAI
             image_part = types.Part.from_bytes(data=img_bytes, mime_type="image/png") 
-            text_part = types.Part.from_text(text=f"Edit this image: {instruction}")
+            
+            lang_instruction = f" Ensure any text is in {language}." if language else ""
+            text_part = types.Part.from_text(text=f"Edit this image: {instruction}{lang_instruction}")
             
             contents = [
                 types.Content(
@@ -456,7 +471,7 @@ class AIService:
             print(f"Error downloading image: {e}")
             return None
 
-    def generate_project_cover_image(self, title: str, genre: str, worldview: str, style: str, tones: List[str] = None, style_ref_url: str = None, character_image_urls: List[str] = None) -> bytes:
+    def generate_project_cover_image(self, title: str, genre: str, worldview: str, style: str, tones: List[str] = None, style_ref_url: str = None, character_image_urls: List[str] = None, language: str = "en") -> bytes:
 
         tone_str = f"Tone: {', '.join(tones)}" if tones else ""
 
@@ -476,7 +491,9 @@ class AIService:
         - Use the user-defined art style: {style}.
         - Aspect Ratio: Wide (16:9).
         - Composition: Cinematic, showing the atmosphere.
+        - Composition: Cinematic, showing the atmosphere.
         - No text overlay.
+        {f'- If any text appears in the image (e.g. signage, background), it MUST be in {language}.' if language == 'ko' else ''}
         """
         
         if character_image_urls:
@@ -541,7 +558,7 @@ class AIService:
         # Requesting 16:9 as it's standard wide
         return self.generate_image(prompt, width=1920, height=1080) 
 
-    def generate_episode_ideas(self, project_title: str, worldview: str, recent_episodes: str) -> dict:
+    def generate_episode_ideas(self, project_title: str, worldview: str, recent_episodes: str, language: str = "en") -> dict:
         if not self.client:
              raise Exception("AI Service not initialized")
              
@@ -551,6 +568,8 @@ class AIService:
         Worldview: {worldview}
         Recent Episodes: {recent_episodes}
         
+        {f'IMPORTANT: All output text (titles, summaries, reasons) MUST be in {language} language.' if language else ''}
+
         Propose 3 distinct episode ideas for the next chapter.
         Return ONLY JSON:
         {{
@@ -576,7 +595,7 @@ class AIService:
             print(f"Episode Idea Gen Failed: {e}")
             raise e
 
-    def generate_initial_cuts(self, episode_title: str, summary: str, style: str, num_cuts: int = 6) -> List[dict]:
+    def generate_initial_cuts(self, episode_title: str, summary: str, style: str, num_cuts: int = 6, language: str = "en") -> List[dict]:
         if not self.client:
              raise Exception("AI Service not initialized")
 
@@ -591,6 +610,8 @@ class AIService:
         - Dialogues (List of {{speaker, text}})
         - Panel Type (Wide, Vertical, Square)
         
+        {f'IMPORTANT: All output text (scripts, dialogues) MUST be in {language} language.' if language else ''}
+
         Return ONLY JSON:
         {{
             "cuts": [
@@ -615,7 +636,7 @@ class AIService:
         except Exception as e:
             print(f"Cut Gen Failed: {e}")
             raise e
-    def get_character_suggestion(self, suggestion_type: str, project_context: str, current_data: dict) -> dict:
+    def get_character_suggestion(self, suggestion_type: str, project_context: str, current_data: dict, language: str = "en") -> dict:
         """
         Generates character suggestions based on project context using a lightweight model.
         """
@@ -633,6 +654,7 @@ class AIService:
             {project_context}
             
             Format: JSON object with "name" and "age" (int or string). Example: {{"name": "Jiwoo", "age": "19"}}
+            {f'If language is Korean ({language}), the name should be Korean style if appropriate for the world.' if language == 'ko' else ''}
             """
         elif suggestion_type == "visuals":
             prompt = f"""
@@ -642,6 +664,7 @@ class AIService:
             Age: {current_data.get('age', 'Unknown')}
             
             Format: JSON list of strings. Example: ["Tall", "Scarred eye", "Hoodie"]
+            {f'IMPORTANT: The tags MUST be in {language} language.' if language else ''}
             """
         elif suggestion_type == "lore":
              prompt = f"""
@@ -653,6 +676,7 @@ class AIService:
             Visuals: {', '.join(current_data.get('visual_keywords', []))}
             
             Format: Just the description text.
+            {f'IMPORTANT: The text MUST be in {language} language.' if language else ''}
             """
         
         try:
@@ -692,7 +716,7 @@ class AIService:
                 raise e2
 
 
-    def analyze_character_concept(self, project_context: str, name: str, age: str, visual_keywords: List[str], personality: str) -> dict:
+    def analyze_character_concept(self, project_context: str, name: str, age: str, visual_keywords: List[str], personality: str, language: str = "en") -> dict:
         """
         Analyzes the character concept and suggests a Role (Archetype) and Lore.
         Uses gemini-2.5-flash for speed and reasoning.
@@ -727,6 +751,8 @@ class AIService:
            - Luck (Fortune)
            - Empathy (Emotional understanding)
            - Leadership (Ability to command)
+        
+        {f'IMPORTANT: All output text (analysis, lore, titles) MUST be in {language} language.' if language else ''}
 
         Return ONLY a JSON object:
         {{
@@ -773,7 +799,8 @@ class AIService:
                              height: int = 1024, 
                              style_ref_url: str = None, 
                              character_data: List[dict] = None, 
-                             prev_scene_url: str = None) -> bytes:
+                             prev_scene_url: str = None,
+                             language: str = "en") -> bytes:
         """
         Generates a webtoon panel with maximum context:
         - Style Reference (Project Style)
@@ -794,6 +821,7 @@ class AIService:
         - Match the art style of the provided Style Reference (if any).
         - Maintain visual consistency with the Previous Scene (if any).
         - Include the specific characters provided (if mentioned in scene).
+        {f'- Any speech bubbles or text in the image MUST be in {language}.' if language == 'ko' else ''}
         """
         
         try:
