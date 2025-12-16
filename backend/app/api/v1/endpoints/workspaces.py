@@ -23,7 +23,7 @@ class WorkspaceOut(BaseModel):
     created_at: datetime
     role: str | None = None # Current user's role
 
-@router.get("/", response_model=List[WorkspaceOut])
+@router.get("", response_model=List[WorkspaceOut])
 def list_workspaces(
     session: Session = Depends(deps.get_session),
     current_user_id: str = Depends(deps.get_current_user_id),
@@ -54,7 +54,7 @@ def list_workspaces(
         
     return workspaces
 
-@router.post("/", response_model=WorkspaceOut)
+@router.post("", response_model=WorkspaceOut)
 def create_workspace(
     *,
     session: Session = Depends(deps.get_session),

@@ -46,7 +46,7 @@ def list_clues(
     clues = session.exec(query).all()
     return clues
 
-@router.post("/", response_model=ClueOut)
+@router.post("", response_model=ClueOut)
 def create_clue(
     *,
     session: Session = Depends(deps.get_session),

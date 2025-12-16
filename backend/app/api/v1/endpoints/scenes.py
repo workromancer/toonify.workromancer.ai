@@ -40,7 +40,7 @@ def get_workspace_id(session: Session, user_id: str, project_id: str | None = No
          raise HTTPException(status_code=400, detail="User has no workspace to charge credits to.")
     return member.workspace_id
 
-@router.post("/structure")
+@router.post("/structure", response_model=List[SceneOut])
 def generate_scene_structure(
     *,
     request: SceneStructureRequest,

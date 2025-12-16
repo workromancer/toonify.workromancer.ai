@@ -40,7 +40,7 @@ def list_assets(
     
     return assets
 
-@router.post("/", response_model=AssetOut)
+@router.post("", response_model=AssetOut)
 async def upload_asset(
     *,
     session: Session = Depends(deps.get_session),

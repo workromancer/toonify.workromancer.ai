@@ -49,7 +49,7 @@ class CharacterOut(BaseModel):
     sheet_status: Optional[str] = "pending"
     created_at: datetime
 
-@router.get("/", response_model=List[CharacterOut])
+@router.get("", response_model=List[CharacterOut])
 def list_characters(
     *,
     session: Session = Depends(deps.get_session),
@@ -68,7 +68,7 @@ def list_characters(
     characters = session.exec(statement).all()
     return characters
 
-@router.post("/", response_model=CharacterOut)
+@router.post("", response_model=CharacterOut)
 def create_character(
     *,
     session: Session = Depends(deps.get_session),

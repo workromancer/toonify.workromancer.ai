@@ -119,7 +119,7 @@ def generate_project_cover_task(project_id: str, title: str, genre_name: str, wo
             except Exception as db_e:
                 print(f"Failed to update error status: {db_e}")
 
-@router.get("/", response_model=List[ProjectOut])
+@router.get("", response_model=List[ProjectOut])
 def list_projects(
     session: Session = Depends(deps.get_session),
     current_user_id: str = Depends(deps.get_current_user_id),
@@ -157,7 +157,7 @@ def list_projects(
     
     return results
 
-@router.post("/", response_model=ProjectOut)
+@router.post("", response_model=ProjectOut)
 def create_project(
     *,
     session: Session = Depends(deps.get_session),

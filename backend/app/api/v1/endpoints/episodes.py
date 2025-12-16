@@ -44,7 +44,7 @@ class EpisodeOut(BaseModel):
     story_summary: str = ""
     created_at: datetime
 
-@router.get("/", response_model=List[EpisodeOut])
+@router.get("", response_model=List[EpisodeOut])
 def list_episodes(
     *,
     session: Session = Depends(deps.get_session),
@@ -63,7 +63,7 @@ def list_episodes(
     episodes = session.exec(statement).all()
     return episodes
 
-@router.post("/", response_model=EpisodeOut)
+@router.post("", response_model=EpisodeOut)
 def create_episode(
     *,
     session: Session = Depends(deps.get_session),

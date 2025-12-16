@@ -69,7 +69,7 @@ def generate_style_preview_task(style_id: str, description: str):
             except Exception:
                 pass
 
-@router.get("/", response_model=List[StyleOut])
+@router.get("", response_model=List[StyleOut])
 def list_my_styles(
     session: Session = Depends(deps.get_session),
     current_user_id: str = Depends(deps.get_current_user_id),

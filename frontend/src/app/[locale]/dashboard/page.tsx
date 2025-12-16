@@ -208,7 +208,7 @@ export default function DashboardPage() {
 
     const fetchProjects = async () => {
         try {
-            const res = await api.get('/projects/');
+            const res = await api.get('/projects', { timeout: 5000 });
             setProjects(res.data);
         } catch (err) {
             console.error(err);
@@ -217,7 +217,7 @@ export default function DashboardPage() {
 
     const fetchTemplates = async () => {
         try {
-            const res = await api.get('/templates/');
+            const res = await api.get('/templates', { timeout: 5000 });
             // Add "Scratch" as first item
             const scratch: Template = {
                 id: 'scratch',

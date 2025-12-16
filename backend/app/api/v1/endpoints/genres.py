@@ -23,7 +23,7 @@ class GenreOut(BaseModel):
     is_active: bool
     created_at: datetime
 
-@router.get("/", response_model=List[GenreOut])
+@router.get("", response_model=List[GenreOut])
 def list_genres(
     session: Session = Depends(deps.get_session),
     skip: int = 0,

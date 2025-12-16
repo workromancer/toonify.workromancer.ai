@@ -37,7 +37,7 @@ class StoryCutOut(BaseModel):
     image_path: Optional[str] = None
     created_at: datetime
 
-@router.get("/", response_model=List[StoryCutOut])
+@router.get("", response_model=List[StoryCutOut])
 def list_cuts(
     *,
     session: Session = Depends(deps.get_session),
@@ -51,7 +51,7 @@ def list_cuts(
     cuts = session.exec(statement).all()
     return cuts
 
-@router.post("/", response_model=StoryCutOut)
+@router.post("", response_model=StoryCutOut)
 def create_cut(
     *,
     session: Session = Depends(deps.get_session),

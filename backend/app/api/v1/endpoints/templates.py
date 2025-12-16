@@ -19,7 +19,7 @@ class TemplateOut(BaseModel):
     category: str
     is_premium: bool
 
-@router.get("/", response_model=List[TemplateOut])
+@router.get("", response_model=List[TemplateOut])
 def list_templates(
     session: Session = Depends(deps.get_session),
     category: str | None = Query(None, description="Filter by category"),
