@@ -158,7 +158,6 @@ export default function DashboardLayout({ children, accessToken }: DashboardLayo
         { name: t('nav.projects'), href: '/dashboard', icon: LayoutDashboard },
         { name: t('nav.styles'), href: '/dashboard/styles', icon: Palette },
         { name: t('nav.templates'), href: '/dashboard/templates', icon: LayoutTemplate },
-        { name: t('nav.assets'), href: '/dashboard/assets', icon: ImageIcon },
         { name: t('nav.settings'), href: '/dashboard/settings', icon: Settings },
     ];
 

@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useTransition } from 'react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useWorkspaceStore } from '@/store/useWorkspaceStore';
 import { Button } from '@/components/ui/button';
@@ -55,7 +54,7 @@ export default function SettingsPage() {
     };
 
     return (
-        <DashboardLayout>
+        <>
             <div className="max-w-4xl mx-auto p-8">
                 <header className="mb-8">
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{t('title')}</h1>
@@ -156,6 +155,6 @@ export default function SettingsPage() {
                     )}
                 </div>
             </div>
-        </DashboardLayout>
+        </>
     );
 }

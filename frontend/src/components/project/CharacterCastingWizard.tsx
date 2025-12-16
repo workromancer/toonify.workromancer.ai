@@ -23,7 +23,7 @@ import { SelectionCard } from '@/components/ui/selection-card';
 import { RadarChart } from '@/components/ui/radar-chart'; // New Import
 import api from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 
 interface CharacterCastingWizardProps {
     projectId: string;
@@ -87,6 +87,7 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
     const { toast } = useToast();
     const t = useTranslations('CharacterWizard');
     const tRoles = useTranslations('CharacterWizard.roles');
+    const locale = useLocale();
 
     // Steps state
     const [step, setStep] = useState<StepName>('concept');
@@ -203,7 +204,8 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                 age: age,
                 role: archetypes.find(a => a.id === selectedRole)?.title || selectedRole,
                 visual_keywords: visualKeywords,
-                personality: personalityTypes.join(', ')
+                personality: personalityTypes.join(', '),
+                language: locale
             });
 
             if (type === 'name' && res.data) {
@@ -244,7 +246,8 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                         name: name,
                         age: age,
                         visual_keywords: visualKeywords,
-                        personality: personalityTypes.join(', ')
+                        personality: personalityTypes.join(', '),
+                        language: locale
                     });
 
                     if (res.data) {

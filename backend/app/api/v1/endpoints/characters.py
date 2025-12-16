@@ -36,6 +36,7 @@ class CharacterAugmentRequest(BaseModel):
     tags: List[str]
     mood: List[str]
     project_id: UUID
+    language: Optional[str] = "en"
 
 class CharacterOut(BaseModel):
     id: Any
@@ -205,7 +206,8 @@ def augment_character(
         tags=request.tags,
         mood=request.mood,
         style=project.style_preset,
-        project_context=project_context
+        project_context=project_context,
+        language=request.language or project.language or "en"
     )
     return result
 
@@ -236,7 +238,16 @@ def generate_character_image_task(character_id: UUID, prompt: str):
                 # Using the specialized character sheet generation
                 # Fallback to name if no description or tags
                 desc_for_img = character.description or ", ".join(character.appearance_tags) or character.name
-                img_bytes = ai_service.generate_character_sheet(character.name, desc_for_img, project.style_preset)
+                
+                # Retrieve Style Reference
+                style_ref = project.style_reference_url
+                
+                img_bytes = ai_service.generate_character_sheet(
+                    name=character.name, 
+                    description=desc_for_img, 
+                    style=project.style_preset,
+                    style_ref_url=style_ref
+                )
                 
                 if img_bytes:
                     url = storage.upload_image(img_bytes)
@@ -314,6 +325,7 @@ class SuggestionRequest(BaseModel):
     role: Optional[str] = None
     visual_keywords: Optional[List[str]] = []
     personality: Optional[str] = None
+    language: Optional[str] = "en"
 
 @router.post("/suggest", response_model=Any)
 def suggest_character_attribute(
@@ -358,7 +370,8 @@ def suggest_character_attribute(
         result = ai_service.get_character_suggestion(
             suggestion_type=request.type,
             project_context=project_context,
-            current_data=current_data
+            current_data=current_data,
+            language=request.language or project.language or "en"
         )
         return result
     except Exception as e:
@@ -369,6 +382,7 @@ class CharacterAnalysisRequest(BaseModel):
     age: str
     visual_keywords: List[str]
     personality: str
+    language: Optional[str] = "en"
 
 @router.post("/analyze", response_model=Any)
 def analyze_character(
@@ -407,7 +421,8 @@ def analyze_character(
             name=request.name,
             age=request.age,
             visual_keywords=request.visual_keywords,
-            personality=request.personality
+            personality=request.personality,
+            language=request.language or project.language or "en"
         )
         return result
     except Exception as e:

@@ -63,6 +63,7 @@ class AIService:
         Description: "{description}"
         
         {f'IMPORTANT: All output text (descriptions, labels) MUST be in {language} language.' if language else ''}
+        {f'If language is Korean, use Hangul.' if language and language.startswith('ko') else ''}
 
         Return ONLY a JSON object with the following structure:
         {{
@@ -143,6 +144,7 @@ class AIService:
         Original Description: {desc_str}
         
         {f'IMPORTANT: All output text (titles, summaries, descriptions) MUST be in {language} language.' if language else ''}
+        {f'If language is Korean, use Hangul.' if language and language.startswith('ko') else ''}
 
         Return ONLY a JSON object with the following structure:
         {{
@@ -207,6 +209,7 @@ class AIService:
          - Visual Description (Detailed prompt for image generation, ensuring it respects the Project Context/Worldview)
         
         {f'IMPORTANT: All output text (names, personalities, bios) MUST be in {language} language.' if language else ''}
+        {f'If language is Korean, use Hangul for names and text.' if language and language.startswith('ko') else ''}
 
         Return ONLY a JSON object:
         {{
@@ -244,8 +247,7 @@ class AIService:
             print(f"Character Augment Error: {e}")
             raise e
 
-    def generate_character_sheet(self, name: str, description: str, style: str) -> bytes:
-
+    def generate_character_sheet(self, name: str, description: str, style: str, style_ref_url: str = None) -> bytes:
 
         prompt = f"""
         Create a Character Reference Sheet for a {style} webtoon character named {name}.
@@ -262,6 +264,46 @@ class AIService:
         
         NEGATIVE PROMPT: Do NOT include any text, logos, watermarks, signature, charts, buildings, scenery, trees, furniture, or complex background.
         """
+        
+        try:
+             # Prepare Multimodal Input
+            prompt, parts = self._prepare_multimodal_inputs(prompt, style_ref_url)
+
+            # If we have any image inputs, use multimodal generation
+            if parts:
+                 print(f"Generating multimodal character sheet with {len(parts)} images.")
+                 text_part = types.Part.from_text(text=prompt)
+                 
+                 contents = [
+                    types.Content(
+                        role="user",
+                        parts=parts + [text_part] # Images first, then text
+                    )
+                 ]
+                 
+                 config = types.GenerateContentConfig(
+                    response_modalities=['IMAGE'], 
+                    image_config=types.ImageConfig(
+                        aspect_ratio="9:16",
+                    )
+                 )
+
+                 response = self.client.models.generate_content(
+                    model=self.model_config["image"],
+                    contents=contents,
+                    config=config,
+                 )
+                 
+                 if response.candidates and response.candidates[0].content and response.candidates[0].content.parts:
+                    for part in response.candidates[0].content.parts:
+                        if part.inline_data:
+                            return part.inline_data.data
+                 
+                 print("Multimodal generation returned no image, falling back to text-only.")
+
+        except Exception as e:
+             print(f"Multimodal Sheet Generation Error: {e}. Falling back to text-only.")
+
         # Using 9:16 ratio for vertical character sheet (576x1024)
         return self.generate_image(prompt, width=576, height=1024) 
 
@@ -277,6 +319,7 @@ class AIService:
         {f'Ensure the visual description includes the following character details if relevant: {character_context}' if character_context else ''}
         
         {f'IMPORTANT: All output text (labels, descriptions) MUST be in {language} language.' if language else ''}
+        {f'If language is Korean, use Hangul.' if language and language.startswith('ko') else ''}
 
         Return ONLY a JSON object with the following structure:
         {{
@@ -330,8 +373,8 @@ class AIService:
             print(f"Generating image with prompt: {prompt[:50]}..., ratio: {aspect_ratio}")
             
             # Inject language instruction for image generation
-            if language == 'ko':
-                prompt += " (Any text inside the image must be in Korean)"
+            if language and language.startswith('ko'):
+                prompt += " (Any text inside the image must be in Korean Hangul)"
             
             config = types.GenerateContentConfig(
                 response_modalities=['IMAGE'], 
@@ -471,6 +514,32 @@ class AIService:
             print(f"Error downloading image: {e}")
             return None
 
+    def _prepare_multimodal_inputs(self, prompt: str, style_ref_url: str = None, character_image_urls: List[str] = None) -> tuple[str, List[types.Part]]:
+        """
+        Helper to prepare prompt and image parts for multimodal generation.
+        Returns (updated_prompt, parts_list)
+        """
+        parts = []
+        
+        # 1. Style Reference
+        if style_ref_url:
+            print(f"Using style reference image: {style_ref_url}")
+            ref_img_bytes = self._download_image(style_ref_url)
+            if ref_img_bytes:
+                parts.append(types.Part.from_bytes(data=ref_img_bytes, mime_type="image/png"))
+                prompt += "\nIMPORTANT: Mimic the art style of the first provided image exactly."
+
+        # 2. Character Images
+        if character_image_urls:
+            print(f"Using {len(character_image_urls)} character reference images.")
+            for idx, url in enumerate(character_image_urls):
+                    char_bytes = self._download_image(url)
+                    if char_bytes:
+                        parts.append(types.Part.from_bytes(data=char_bytes, mime_type="image/png"))
+                        prompt += f"\n[Reference Image {len(parts)}] is a main character. Include them."
+        
+        return prompt, parts
+
     def generate_project_cover_image(self, title: str, genre: str, worldview: str, style: str, tones: List[str] = None, style_ref_url: str = None, character_image_urls: List[str] = None, language: str = "en") -> bytes:
 
         tone_str = f"Tone: {', '.join(tones)}" if tones else ""
@@ -491,9 +560,8 @@ class AIService:
         - Use the user-defined art style: {style}.
         - Aspect Ratio: Wide (16:9).
         - Composition: Cinematic, showing the atmosphere.
-        - Composition: Cinematic, showing the atmosphere.
         - No text overlay.
-        {f'- If any text appears in the image (e.g. signage, background), it MUST be in {language}.' if language == 'ko' else ''}
+        {f'- If any text appears in the image (e.g. signage, background), it MUST be in {language}.' if language and language.startswith('ko') else ''}
         """
         
         if character_image_urls:
@@ -501,24 +569,7 @@ class AIService:
         
         try:
             # Prepare Multimodal Input
-            parts = []
-            
-            # 1. Style Reference
-            if style_ref_url:
-                print(f"Using style reference image: {style_ref_url}")
-                ref_img_bytes = self._download_image(style_ref_url)
-                if ref_img_bytes:
-                    parts.append(types.Part.from_bytes(data=ref_img_bytes, mime_type="image/png"))
-                    prompt += "\nIMPORTANT: Mimic the art style of the first provided image exactly."
-
-            # 2. Character Images
-            if character_image_urls:
-                print(f"Using {len(character_image_urls)} character reference images.")
-                for idx, url in enumerate(character_image_urls):
-                     char_bytes = self._download_image(url)
-                     if char_bytes:
-                         parts.append(types.Part.from_bytes(data=char_bytes, mime_type="image/png"))
-                         prompt += f"\n[Reference Image {idx+1}] is a main character. Include them."
+            prompt, parts = self._prepare_multimodal_inputs(prompt, style_ref_url, character_image_urls)
 
             # If we have any image inputs, use multimodal generation
             if parts:
@@ -569,6 +620,7 @@ class AIService:
         Recent Episodes: {recent_episodes}
         
         {f'IMPORTANT: All output text (titles, summaries, reasons) MUST be in {language} language.' if language else ''}
+        {f'If language is Korean, use Hangul.' if language and language.startswith('ko') else ''}
 
         Propose 3 distinct episode ideas for the next chapter.
         Return ONLY JSON:
@@ -611,6 +663,7 @@ class AIService:
         - Panel Type (Wide, Vertical, Square)
         
         {f'IMPORTANT: All output text (scripts, dialogues) MUST be in {language} language.' if language else ''}
+        {f'If language is Korean, use Hangul for scripts and dialogues.' if language and language.startswith('ko') else ''}
 
         Return ONLY JSON:
         {{
@@ -654,7 +707,7 @@ class AIService:
             {project_context}
             
             Format: JSON object with "name" and "age" (int or string). Example: {{"name": "Jiwoo", "age": "19"}}
-            {f'If language is Korean ({language}), the name should be Korean style if appropriate for the world.' if language == 'ko' else ''}
+            {f'If language is Korean ({language}), the name MUST be in Korean Hangul.' if language and language.startswith('ko') else ''}
             """
         elif suggestion_type == "visuals":
             prompt = f"""
@@ -665,6 +718,7 @@ class AIService:
             
             Format: JSON list of strings. Example: ["Tall", "Scarred eye", "Hoodie"]
             {f'IMPORTANT: The tags MUST be in {language} language.' if language else ''}
+            {f'If language is Korean, use Hangul.' if language and language.startswith('ko') else ''}
             """
         elif suggestion_type == "lore":
              prompt = f"""
@@ -677,6 +731,7 @@ class AIService:
             
             Format: Just the description text.
             {f'IMPORTANT: The text MUST be in {language} language.' if language else ''}
+            {f'If language is Korean, use Hangul.' if language and language.startswith('ko') else ''}
             """
         
         try:
@@ -752,7 +807,9 @@ class AIService:
            - Empathy (Emotional understanding)
            - Leadership (Ability to command)
         
+        
         {f'IMPORTANT: All output text (analysis, lore, titles) MUST be in {language} language.' if language else ''}
+        {f'If language is Korean, use Hangul.' if language and language.startswith('ko') else ''}
 
         Return ONLY a JSON object:
         {{
@@ -821,7 +878,7 @@ class AIService:
         - Match the art style of the provided Style Reference (if any).
         - Maintain visual consistency with the Previous Scene (if any).
         - Include the specific characters provided (if mentioned in scene).
-        {f'- Any speech bubbles or text in the image MUST be in {language}.' if language == 'ko' else ''}
+        {f'- Any speech bubbles or text in the image MUST be in {language}.' if language and language.startswith('ko') else ''}
         """
         
         try:
@@ -896,6 +953,6 @@ class AIService:
         except Exception as e:
             print(f"Panel Generation Error: {e}. Falling back to text-only.")
             # Fallback
-            return self.generate_image(prompt, width, height)
+            return self.generate_image(prompt, width, height, language=language)
 
 ai_service = AIService()
