@@ -44,7 +44,7 @@ export default function CharacterCreateModal({ onCharacterCreated }: CharacterCr
     const onSubmit = async (data: any) => {
         if (!projectId) return;
         try {
-            await api.post('/characters/', {
+            await api.post('/characters', {
                 name: data.name,
                 project_id: projectId,
                 appearance_tags: tags,

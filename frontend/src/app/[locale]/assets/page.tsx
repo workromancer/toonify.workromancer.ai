@@ -26,7 +26,7 @@ export default function AssetsPage() {
     const fetchAssets = async () => {
         try {
             setLoading(true);
-            const res = await api.get('/assets/');
+            const res = await api.get('/assets');
             setAssets(res.data);
         } catch (err) {
             console.error(err);
@@ -52,7 +52,7 @@ export default function AssetsPage() {
             const formData = new FormData();
             formData.append('file', file);
 
-            await api.post('/assets/', formData, {
+            await api.post('/assets', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },

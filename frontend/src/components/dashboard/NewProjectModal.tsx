@@ -45,7 +45,7 @@ export default function NewProjectModal({ onProjectCreated, open, onOpenChange, 
     const fetchGenres = async () => {
         setLoadingGenres(true);
         try {
-            const res = await api.get('/genres/');
+            const res = await api.get('/genres');
             setGenres(res.data);
         } catch (err) {
             console.error("Failed to fetch genres", err);
@@ -57,7 +57,7 @@ export default function NewProjectModal({ onProjectCreated, open, onOpenChange, 
     const onSubmit = async (data: any) => {
         setError('');
         try {
-            await api.post('/projects/', {
+            await api.post('/projects', {
                 title: data.title,
                 genre_id: data.genre_id, // Send ID
                 style_preset: initialValues?.style_preset || 'anime_webtoon'

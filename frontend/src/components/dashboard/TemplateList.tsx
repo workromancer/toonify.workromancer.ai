@@ -20,7 +20,7 @@ export default function TemplateList({ onSelect }: { onSelect: (template: Templa
 
     const fetchTemplates = async () => {
         try {
-            const res = await api.get('/templates/');
+            const res = await api.get('/templates');
             setTemplates(res.data);
         } catch (err) {
             console.error(err);

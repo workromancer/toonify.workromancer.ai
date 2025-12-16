@@ -29,7 +29,7 @@ export default function TemplatesPage() {
     const fetchTemplates = async () => {
         try {
             setLoading(true);
-            const res = await api.get('/templates/');
+            const res = await api.get('/templates');
             setTemplates(res.data);
         } catch (err) {
             console.error(err);

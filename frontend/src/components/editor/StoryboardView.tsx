@@ -123,7 +123,7 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
 
             // 2. Save the Cut
             const nextOrder = cuts.length > 0 ? cuts[cuts.length - 1].cut_order + 1 : 1;
-            await api.post('/cuts/', {
+            await api.post('/cuts', {
                 episode_id: activeEpisodeId,
                 cut_order: nextOrder,
                 script: scriptInput,

@@ -22,7 +22,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     currentWorkspace: null,
     fetchWorkspaces: async () => {
         try {
-            const res = await api.get('/workspaces/');
+            const res = await api.get('/workspaces');
             const workspaces = res.data;
             set({ workspaces });
 
@@ -37,7 +37,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     setCurrentWorkspace: (workspace) => set({ currentWorkspace: workspace }),
     createWorkspace: async (name: string) => {
         try {
-            const res = await api.post('/workspaces/', { name });
+            const res = await api.post('/workspaces', { name });
             const newWorkspace = res.data;
 
             // Refetch or update local state

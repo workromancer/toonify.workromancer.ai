@@ -200,7 +200,7 @@ export default function NewProjectWizard() {
         finalWorldview = dataWorldview;
       }
 
-      const response = await api.post('/projects/', {
+      const response = await api.post('/projects', {
         title: dataTitle,
         subtitle: dataSubtitle,
         genre: dataGenre,

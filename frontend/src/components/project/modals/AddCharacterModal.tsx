@@ -33,7 +33,7 @@ export default function AddCharacterModal({ isOpen, onClose, projectId, onAdd }:
         setLoading(true);
         try {
             // Ideally we also trigger image generation, but for now just create the record.
-            const response = await api.post(`/characters/`, {
+            const response = await api.post(`/characters`, {
                 ...formData,
                 project_id: projectId
             });
