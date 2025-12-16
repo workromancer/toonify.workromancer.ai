@@ -249,8 +249,11 @@ def get_project(
     current_user_id: str = Depends(deps.get_current_user_id),
 ) -> Any:
     """
-    Get project details.
-    """
+    try:
+        project_uuid = UUID(project_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid UUID")
+
     project = session.get(Project, project_uuid)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
