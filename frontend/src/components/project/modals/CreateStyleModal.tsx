@@ -4,22 +4,43 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Sparkles, Loader2 } from 'lucide-react';
+import { Sparkles, Loader2, Wand2 } from 'lucide-react';
 import api from '@/lib/api';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 
 interface CreateStyleModalProps {
     isOpen: boolean;
     onClose: () => void;
     onCreated: (style: unknown) => void;
+    projectId?: string | null;
 }
 
-export default function CreateStyleModal({ isOpen, onClose, onCreated }: CreateStyleModalProps) {
+export default function CreateStyleModal({ isOpen, onClose, onCreated, projectId }: CreateStyleModalProps) {
     const t = useTranslations('Modals.CreateStyle');
+    const locale = useLocale();
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isAugmenting, setIsAugmenting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    const handleAugment = async () => {
+        if (!description.trim()) return;
+        setIsAugmenting(true);
+        try {
+            const res = await api.post('/styles/augment', {
+                prompt: description,
+                projectId: projectId,
+                language: locale
+            });
+            setDescription(res.data.result);
+        } catch (err) {
+            console.error(err);
+            // Optional: visual error feedback for augmentation
+        } finally {
+            setIsAugmenting(false);
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -66,8 +87,21 @@ export default function CreateStyleModal({ isOpen, onClose, onCreated }: CreateS
                         />
                     </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="description" className="text-gray-300">{t('descLabel')}</Label>
+                    <div className="space-y-2 relative">
+                        <div className="flex justify-between items-center">
+                            <Label htmlFor="description" className="text-gray-300">{t('descLabel')}</Label>
+                            <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                onClick={handleAugment}
+                                disabled={isAugmenting || !description.trim()}
+                                className="h-6 text-xs text-purple-400 hover:text-purple-300 hover:bg-purple-900/20 px-2 gap-1"
+                            >
+                                <Wand2 size={12} className={isAugmenting ? "animate-spin" : ""} />
+                                {isAugmenting ? "Enhancing..." : "AI Enhance"}
+                            </Button>
+                        </div>
                         <Textarea
                             id="description"
                             value={description}

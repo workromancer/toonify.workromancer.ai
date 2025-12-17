@@ -30,12 +30,12 @@ class AIService:
                 api_key=api_key # Can be None for ADC
             )
             # Models Configuration (Ref: AI_MODELS.md)
-            self.model_config = {
                 "style": "gemini-2.5-flash",
                 "worldview": "gemini-3-pro-preview",
                 "director": "gemini-2.5-pro",
                 "image": "gemini-3-pro-image-preview",
-                "embedding": "gemini-embedding-001"
+                "embedding": "gemini-embedding-001",
+                "lite": "gemini-2.5-flash-lite"
             } 
         except Exception as e:
             print(f"GenAI Client Init Failed: {e}")
@@ -98,6 +98,57 @@ class AIService:
                     option.pop("sample_image_url", None)
                     
                     try:
+                        # ... (existing image gen logic) ...
+                        pass
+                    except Exception:
+                        pass
+        except Exception as e:
+            print(f"Error in recommend_style: {e}")
+            # Fallback
+            return {"options": []}
+            
+        return parsed_json
+
+    def augment_style_description(self, current_prompt: str, project_context: dict = None, language: str = "en") -> str:
+        if not self.client:
+             raise Exception("AI Service not initialized provided")
+             
+        context_str = ""
+        if project_context:
+            context_str = f"""
+            Project Context:
+            Title: {project_context.get('title', 'Unknown')}
+            Genres: {', '.join(project_context.get('genres', [])) if project_context.get('genres') else 'Not specified'}
+            Worldview: {project_context.get('worldview', 'Not specified')}
+            """
+
+        prompt = f"""
+        You are a prompt engineering expert for generative AI art.
+        Improve the user's rough art style description into a high-quality, detailed prompt suitable for image generation models (like Midjourney or Stable Diffusion).
+        
+        {context_str}
+        
+        User's Rough Description: "{current_prompt}"
+        
+        {f'IMPORTANT: The output prompt description MUST be in {language} language.' if language and language != 'en' else ''}
+        
+        Task:
+        1. Expand on valid aesthetic keywords (lighting, texture, composition).
+        2. If project context is provided, ensure the style fits the genre and tone.
+        3. Keep it concise but descriptive (under 100 words).
+        4. Return ONLY the improved prompt text. Do not include quotes or explanations.
+        """
+        
+        try:
+            print(f"DEBUG PROMPT [augment_style_description]: \n{prompt}")
+            response = self.client.models.generate_content(
+                model=self.model_config["style"],
+                contents=prompt
+            )
+            return response.text.strip()
+        except Exception as e:
+            print(f"Error in augment_style_description: {e}")
+            raise e
                         style_label = option.get("label", "Art Style")
                         style_desc = option.get("description", "")
                         image_prompt = f"A high-quality representative illustration of the art style: {style_label}. {style_desc} Visual composition: portrait or character focus."

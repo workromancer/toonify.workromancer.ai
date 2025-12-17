@@ -330,6 +330,7 @@ function ArtStylesContent() {
                         fetchStyles();
                         setIsCreateModalOpen(false);
                     }}
+                    projectId={projectId}
                 />
 
                 <ArtStyleSelectionModal

@@ -1,16 +1,71 @@
-from typing import Any, List
+from typing import Any, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlmodel import Session, select
 from uuid import UUID
 
 from app.api import deps
-from app.models import CustomStyle, WorkspaceMember
+from app.models import CustomStyle, WorkspaceMember, Project, Genre, ProjectGenre
 from app.services.ai import ai_service
 from app.services.storage import storage
 from pydantic import BaseModel
 from app.api.deps import engine
 
 router = APIRouter()
+
+class AugmentStyleRequest(BaseModel):
+    prompt: str
+    projectId: Optional[str] = None
+    language: str = "en"
+
+class AugmentStyleResponse(BaseModel):
+    result: str
+
+@router.post("/augment", response_model=AugmentStyleResponse)
+def augment_style(
+    *,
+    request: AugmentStyleRequest,
+    session: Session = Depends(deps.get_session),
+    current_user_id: str = Depends(deps.get_current_user_id),
+) -> Any:
+    """
+    Augment style description using AI.
+    """
+    project_context = {}
+    if request.projectId:
+        project = session.get(Project, request.projectId)
+        if project:
+            # Get genres properly
+            genres = []
+            # Assuming ProjectGenre relationship is set up or we fetch manually
+            # But based on seed_db update, we know the model Project has relations.
+            # Let's check model definition if we can, but simpler is to try getting genres.
+            # wait, I don't want to break if relationship isn't loaded.
+            # Let's peek at models.py quickly via search if needed, but I'll assume basic query for now.
+            try:
+                # Direct query for genres if relationship loading is uncertain
+                pgs = session.exec(select(Genre).join(ProjectGenre).where(ProjectGenre.project_id == project.id)).all()
+                genres = [g.name for g in pgs]
+            except Exception:
+                pass
+                
+            project_context = {
+                "title": project.title,
+                "worldview": project.worldview_description,
+                "genres": genres
+            }
+
+    try:
+        enhanced_prompt = ai_service.augment_style_description(
+            current_prompt=request.prompt,
+            project_context=project_context,
+            language=request.language
+        )
+        return AugmentStyleResponse(result=enhanced_prompt)
+    except Exception as e:
+        print(f"Augmentation failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 
 class StyleCreate(BaseModel):
     name: str
