@@ -6,11 +6,11 @@ import {
   ArrowLeft, ArrowRight, BookOpen, ChevronRight, ChevronLeft,
   Type, Hash, Sparkles, Check, X,
   Ghost, Heart, Sword, Skull, Smile, Monitor, Clock,
-  Wand2, RefreshCw
+  Wand2, RefreshCw, Clapperboard, Camera
 } from 'lucide-react';
 import api from '@/lib/api';
 import { AiSuggestionCard } from '@/components/project/AiSuggestionCard';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 
 const GENRES = [
   { id: 'fantasy', label: 'Fantasy', icon: Sparkles, color: 'bg-amber-600' },
@@ -23,6 +23,8 @@ const GENRES = [
   { id: 'comedy', label: 'Comedy', icon: Smile, color: 'bg-yellow-500' },
   { id: 'mystery', label: 'Mystery', icon: Ghost, color: 'bg-indigo-600' },
   { id: 'horror', label: 'Horror', icon: Ghost, color: 'bg-slate-700' },
+  { id: 'variety', label: 'Variety', icon: Clapperboard, color: 'bg-green-500' },
+  { id: 'documentary', label: 'Documentary', icon: Camera, color: 'bg-zinc-600' },
 ];
 
 const ProgressBar = ({ currentStep }: { currentStep: number }) => {
@@ -61,6 +63,8 @@ export default function NewProjectWizard() {
   const t = useTranslations('NewProject');
   const [step, setStep] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  const locale = useLocale();
 
   // Form State
   const [title, setTitle] = useState('');
@@ -159,7 +163,8 @@ export default function NewProjectWizard() {
         description: desc,
         title: title,
         subtitle: subtitle,
-        genres: selectedGenres
+        genres: selectedGenres,
+        language: locale
       });
 
       if (response.data.options && response.data.options.length > 0) {

@@ -147,7 +147,9 @@
       "historical": "Historical",
       "comedy": "Comedy",
       "mystery": "Mystery",
-      "horror": "Horror"
+      "horror": "Horror",
+      "variety": "Variety",
+      "documentary": "Documentary"
     },
     "errors": {
       "noSuggestions": "No suggestions generated.",

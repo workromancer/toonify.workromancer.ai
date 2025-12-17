@@ -148,7 +148,9 @@
       "historical": "시대극",
       "comedy": "개그",
       "mystery": "미스터리",
-      "horror": "공포"
+      "horror": "공포",
+      "variety": "예능",
+      "documentary": "다큐멘터리"
     },
     "errors": {
       "noSuggestions": "제안이 생성되지 않았습니다.",

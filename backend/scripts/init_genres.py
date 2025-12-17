@@ -28,6 +28,8 @@ GENRES_DATA = [
     {"name": "Comedy", "description": "Humor and amusing situations."},
     {"name": "Mystery", "description": "Solving a crime or uncovering a secret."},
     {"name": "Horror", "description": "Intended to frighten, scare, or disgust."},
+    {"name": "Variety", "description": "Entertainment focused on humor, games, and unscripted situations."},
+    {"name": "Documentary", "description": "Factual record or report on a particular subject."},
 ]
 
 def init_genres():
