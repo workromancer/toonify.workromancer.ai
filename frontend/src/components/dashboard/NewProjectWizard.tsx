@@ -128,6 +128,10 @@ export default function NewProjectWizard() {
     }
   };
 
+  const handleExit = () => {
+    router.push('/dashboard');
+  };
+
   const toggleGenre = (label: string) => {
     if (isProcessing || aiLoading || showAiResults) return; // Locking
     if (selectedGenres.includes(label)) {
@@ -276,7 +280,7 @@ export default function NewProjectWizard() {
       {/* Header */}
       <div className="absolute top-8 left-8 z-20">
         <button
-          onClick={handleBack}
+          onClick={handleExit}
           disabled={isLocked}
           className={`flex items-center gap-2 transition-colors ${isLocked ? 'text-slate-700 cursor-not-allowed' : 'text-slate-400 hover:text-white'}`}
         >

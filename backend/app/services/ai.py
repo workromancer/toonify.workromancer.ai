@@ -80,6 +80,7 @@ class AIService:
         """
         
         try:
+            print(f"DEBUG PROMPT [recommend_style]: \n{prompt}")
             response = self.client.models.generate_content(
                 model=self.model_config["style"],
                 contents=prompt,
@@ -163,6 +164,7 @@ class AIService:
         """
         
         try:
+            print(f"DEBUG PROMPT [augment_worldview]: \n{prompt}")
             response = self.client.models.generate_content(
                 model=self.model_config["worldview"],
                 contents=prompt,
@@ -234,6 +236,7 @@ class AIService:
         }}
         """
         try:
+            print(f"DEBUG PROMPT [augment_character_text]: \n{prompt}")
             response = self.client.models.generate_content(
                 model=self.model_config["worldview"],
                 contents=prompt,
@@ -288,6 +291,7 @@ class AIService:
                     )
                  )
 
+                 print(f"DEBUG PROMPT [generate_character_sheet (multimodal)]: \n{prompt}")
                  response = self.client.models.generate_content(
                     model=self.model_config["image"],
                     contents=contents,
@@ -337,6 +341,7 @@ class AIService:
         """
         
         try:
+            print(f"DEBUG PROMPT [generate_direction_options]: \n{prompt}")
             response = self.client.models.generate_content(
                 model=self.model_config["director"],
                 contents=prompt,
@@ -383,6 +388,7 @@ class AIService:
                 )
             )
 
+            print(f"DEBUG PROMPT [generate_image]: \n{prompt}")
             response = self.client.models.generate_content(
                 model=self.model_config["image"],
                 contents=prompt,
@@ -451,6 +457,7 @@ class AIService:
                 )
             )
 
+            print(f"DEBUG PROMPT [modify_image]: {instruction}")
             response = self.client.models.generate_content(
                 model=self.model_config["image"],
                 contents=contents,
@@ -590,6 +597,7 @@ class AIService:
                     )
                  )
 
+                 print(f"DEBUG PROMPT [generate_project_cover_image (multimodal)]: \n{prompt}")
                  response = self.client.models.generate_content(
                     model=self.model_config["image"],
                     contents=contents,
@@ -636,6 +644,7 @@ class AIService:
         }}
         """
         try:
+            print(f"DEBUG PROMPT [generate_episode_ideas]: \n{prompt}")
             response = self.client.models.generate_content(
                 model="gemini-2.5-pro",
                 contents=prompt,
@@ -679,6 +688,7 @@ class AIService:
         }}
         """
         try:
+            print(f"DEBUG PROMPT [generate_initial_cuts]: \n{prompt}")
             response = self.client.models.generate_content(
                 model=self.model_config["director"],
                 contents=prompt,
@@ -735,6 +745,7 @@ class AIService:
             """
         
         try:
+            print(f"DEBUG PROMPT [get_character_suggestion]: \n{prompt}")
             response = self.client.models.generate_content(
                 model=target_model,
                 contents=prompt,
@@ -828,6 +839,7 @@ class AIService:
         """
 
         try:
+            print(f"DEBUG PROMPT [analyze_character_concept]: \n{prompt}")
             response = self.client.models.generate_content(
                 model="gemini-2.5-flash", 
                 contents=prompt,
@@ -937,6 +949,7 @@ class AIService:
                 image_config=types.ImageConfig(aspect_ratio=aspect_ratio)
             )
 
+            print(f"DEBUG PROMPT [generate_panel_image]: \n{full_prompt}")
             response = self.client.models.generate_content(
                 model=self.model_config["image"],
                 contents=contents,
