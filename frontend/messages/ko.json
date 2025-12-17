@@ -558,6 +558,17 @@
       "creatingFor": "프로젝트용 스타일 생성: "
     }
   },
+  "Styles": {
+    "searchPlaceholder": "그림체 검색...",
+    "prompt": "프롬프트",
+    "generatingPreview": "미리보기 생성 중...",
+    "myStyles": "나의 그림체",
+    "subtitle": "텍스트 프롬프트로 나만의 그림체를 만드세요.",
+    "generateNew": "새로 만들기",
+    "startGenerating": "생성 시작하기",
+    "returnToSetup": "프로젝트 설정으로 복귀",
+    "creatingFor": "프로젝트용 그림체 생성: "
+  },
   "Help": {
     "title": "무엇을 도와드릴까요?",
     "searchPlaceholder": "도움말 검색...",
