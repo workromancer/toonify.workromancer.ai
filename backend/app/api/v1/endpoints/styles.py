@@ -4,7 +4,7 @@ from sqlmodel import Session, select
 from uuid import UUID
 
 from app.api import deps
-from app.models import CustomStyle, WorkspaceMember, Project, Genre, ProjectGenre
+from app.models import CustomStyle, WorkspaceMember, Project, Genre, ProjectGenreLink
 from app.services.ai import ai_service
 from app.services.storage import storage
 from pydantic import BaseModel
@@ -36,14 +36,9 @@ def augment_style(
         if project:
             # Get genres properly
             genres = []
-            # Assuming ProjectGenre relationship is set up or we fetch manually
-            # But based on seed_db update, we know the model Project has relations.
-            # Let's check model definition if we can, but simpler is to try getting genres.
-            # wait, I don't want to break if relationship isn't loaded.
-            # Let's peek at models.py quickly via search if needed, but I'll assume basic query for now.
             try:
                 # Direct query for genres if relationship loading is uncertain
-                pgs = session.exec(select(Genre).join(ProjectGenre).where(ProjectGenre.project_id == project.id)).all()
+                pgs = session.exec(select(Genre).join(ProjectGenreLink).where(ProjectGenreLink.project_id == project.id)).all()
                 genres = [g.name for g in pgs]
             except Exception:
                 pass

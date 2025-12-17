@@ -1,9 +1,12 @@
-from sqlmodel import Session, select
+from sqlmodel import Session, select, SQLModel
 from app.api.deps import engine
 from app.models.models import User, Workspace, WorkspaceMember
 from app.core.security import get_password_hash
 
 def seed():
+    # Ensure tables exist
+    SQLModel.metadata.create_all(engine)
+    
     try:
         with Session(engine) as session:
             user = session.exec(select(User).where(User.email == "test@example.com")).first()
@@ -40,7 +43,7 @@ def seed():
             from app.models.models import Genre
             genres = [
                 "Fantasy", "Sci-Fi", "Romance", "Slice of Life", "Thriller", 
-                "Action", "Comedy", "Horror", "Drama", "Mystery"
+                "Action", "Comedy", "Horror", "Drama", "Mystery", "Documentary", "Variety"
             ]
             genre_map = {}
             for g_name in genres:

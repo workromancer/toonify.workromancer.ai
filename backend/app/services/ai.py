@@ -99,10 +99,19 @@ class AIService:
                     option.pop("sample_image_url", None)
                     
                     try:
-                        # ... (existing image gen logic) ...
-                        pass
-                    except Exception:
-                        pass
+                        style_label = option.get("label", "Art Style")
+                        style_desc = option.get("description", "")
+                        image_prompt = f"A high-quality representative illustration of the art style: {style_label}. {style_desc} Visual composition: portrait or character focus."
+                        
+                        print(f"Generating sample for style: {style_label}")
+                        img_bytes = self.generate_image(image_prompt, width=768, height=1024) # 3:4 ratio approx
+                        
+                        if img_bytes:
+                            url = storage.upload_image(img_bytes)
+                            option["sample_image_url"] = url
+                    except Exception as e:
+                        print(f"Failed to generate sample for {style_label}: {e}")
+                        # Leave sample_image_url empty so frontend uses its clean fallback
         except Exception as e:
             print(f"Error in recommend_style: {e}")
             # Fallback
@@ -150,25 +159,7 @@ class AIService:
         except Exception as e:
             print(f"Error in augment_style_description: {e}")
             raise e
-                        style_label = option.get("label", "Art Style")
-                        style_desc = option.get("description", "")
-                        image_prompt = f"A high-quality representative illustration of the art style: {style_label}. {style_desc} Visual composition: portrait or character focus."
-                        
-                        print(f"Generating sample for style: {style_label}")
-                        img_bytes = self.generate_image(image_prompt, width=768, height=1024) # 3:4 ratio approx
-                        
-                        if img_bytes:
-                            url = storage.upload_image(img_bytes)
-                            option["sample_image_url"] = url
-                    except Exception as e:
-                        print(f"Failed to generate sample for {style_label}: {e}")
-                        # Leave sample_image_url empty so frontend uses its clean fallback
-            
-            return parsed_json
-            
-        except Exception as e:
-            print(f"Style Director Error: {e}")
-            raise e
+
 
     def augment_worldview(self, description: str, title: str = None, subtitle: str = None, genres: List[str] = None, language: str = "en") -> dict:
 
@@ -433,8 +424,29 @@ class AIService:
             if language and language.startswith('ko'):
                 prompt += " (Any text inside the image must be in Korean Hangul)"
             
+            # Safety Settings for creative generation
+            safety_settings = [
+                types.SafetySetting(
+                    category="HARM_CATEGORY_HATE_SPEECH",
+                    threshold="BLOCK_ONLY_HIGH"
+                ),
+                types.SafetySetting(
+                    category="HARM_CATEGORY_DANGEROUS_CONTENT",
+                    threshold="BLOCK_ONLY_HIGH"
+                ),
+                types.SafetySetting(
+                    category="HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                    threshold="BLOCK_ONLY_HIGH"
+                ),
+                types.SafetySetting(
+                    category="HARM_CATEGORY_HARASSMENT",
+                    threshold="BLOCK_ONLY_HIGH"
+                )
+            ]
+
             config = types.GenerateContentConfig(
                 response_modalities=['IMAGE'], 
+                safety_settings=safety_settings,
                 image_config=types.ImageConfig(
                     aspect_ratio=aspect_ratio,
                 )
@@ -452,7 +464,11 @@ class AIService:
                 for part in response.candidates[0].content.parts:
                     if part.inline_data:
                         return part.inline_data.data
+                    if part.text:
+                        print(f"Model refused to generate image. Reason/Message: {part.text}")
+                        raise Exception(f"Model refusal: {part.text}")
             
+            print(f"No image returned. Prompt feedback: {response.prompt_feedback}")
             raise Exception("No image part found in response")
                   
         except Exception as e:
