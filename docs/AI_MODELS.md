@@ -8,13 +8,13 @@
 
 | 키 (Key) | 모델 ID (Model ID) | 용도 (Purpose) |
 | :--- | :--- | :--- |
-| `style` | `gemini-2.5-flash` | 화풍(Art Style) 추천에 최적화됨 |
-| `worldview` | `gemini-3-pro-preview` | 세계관 구축, 서사 생성, 캐릭터 확장(Variation) |
+| `style` | `gemini-2.5-flash` -> `gemini-3-flash-preview` (변경필요) | 화풍(Art Style) 추천에 최적화됨 |
+| `worldview` | `gemini-3-pro-preview` -> `gemini-3-flash-preview` (변경필요) | 세계관 구축, 서사 생성, 캐릭터 확장(Variation) |
 | `director` | `gemini-2.5-pro` | 스토리보드 연출, 컷 기획, 시각적 디렉팅 |
 | `image` | `gemini-3-pro-image-preview` | 이미지 생성 및 수정 |
 | `embedding` | `gemini-embedding-001` | RAG/검색을 위한 텍스트 임베딩 |
 | *(Lite)* | `gemini-2.5-flash-lite` | 빠른 캐릭터 제안 (이름, 비주얼 키워드 등) |
-| *(Analysis)* | `gemini-2.5-flash` | 심층 캐릭터 분석 (역할/아키타입) |
+| *(Analysis)* | `gemini-2.5-flash` -> `gemini-3-flash-preview` (변경필요) | 심층 캐릭터 분석 (역할/아키타입) |
 
 ---
 

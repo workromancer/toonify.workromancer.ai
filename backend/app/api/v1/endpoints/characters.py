@@ -425,6 +425,115 @@ def analyze_character(
             language=request.language or project.language or "en"
         )
         return result
-    except Exception as e:
-        print(f"Analysis failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+class BatchSuggestionRequest(BaseModel):
+    project_id: UUID
+    language: Optional[str] = "en"
+
+class SuggestionUseRequest(BaseModel):
+    suggestion_id: UUID
+
+@router.post("/suggestions/batch", response_model=Any)
+def generate_batch_suggestions(
+    *,
+    request: BatchSuggestionRequest,
+    session: Session = Depends(deps.get_session),
+    current_user_id: str = Depends(deps.get_current_user_id),
+):
+    """
+    Generate and store 10 character suggestions.
+    """
+    project = session.get(Project, request.project_id)
+    if not project:
+         raise HTTPException(status_code=404, detail="Project not found")
+
+    # Deduct Credits (Cost: 5 for batch)
+    billing_service.deduct_credits(session, project.workspace_id, UUID(current_user_id), "batch_character_suggestions")
+
+    # Context
+    wv_desc = ""
+    if project.worldview:
+        if isinstance(project.worldview, dict):
+            wv_desc = project.worldview.get("content") or project.worldview.get("description") or ""
+        else:
+             wv_desc = str(project.worldview)
+    
+    project_context = f"""
+    Title: {project.title}
+    Genre: {", ".join([g.name for g in project.genres]) if project.genres else 'Unknown'}
+    Worldview: {wv_desc}
+    """
+
+    try:
+        from app.models import CharacterSuggestion
+        
+        result = ai_service.generate_character_batch_suggestions(
+            project_context=project_context,
+            count=10,
+            language=request.language or project.language or "en"
+        )
+        
+        suggestions_data = result.get("suggestions", [])
+        saved_suggestions = []
+        
+        for item in suggestions_data:
+            suggestion = CharacterSuggestion(
+                project_id=project.id,
+                name=item.get("name"),
+                age=str(item.get("age")),
+                visual_keywords=item.get("visual_keywords", []),
+                personality=item.get("personality"),
+                bio=item.get("bio"),
+                role=item.get("role"),
+                is_used=False
+            )
+            session.add(suggestion)
+            saved_suggestions.append(suggestion)
+            
+        session.commit()
+        
+        return saved_suggestions
+        
+    except Exception as e:
+        print(f"Batch Gen Failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/suggestions/{project_id}", response_model=List[Any])
+def list_suggestions(
+    *,
+    session: Session = Depends(deps.get_session),
+    project_id: UUID,
+    current_user_id: str = Depends(deps.get_current_user_id),
+):
+    """
+    List unused suggestions for a project.
+    """
+    from app.models import CharacterSuggestion
+    statement = select(CharacterSuggestion).where(
+        CharacterSuggestion.project_id == project_id,
+        CharacterSuggestion.is_used == False
+    ).order_by(CharacterSuggestion.created_at.desc())
+    
+    suggestions = session.exec(statement).all()
+    return suggestions
+
+@router.post("/suggestions/{suggestion_id}/use", response_model=Any)
+def use_suggestion(
+    *,
+    session: Session = Depends(deps.get_session),
+    suggestion_id: UUID,
+    current_user_id: str = Depends(deps.get_current_user_id),
+):
+    """
+    Mark a suggestion as used.
+    """
+    from app.models import CharacterSuggestion
+    suggestion = session.get(CharacterSuggestion, suggestion_id)
+    if not suggestion:
+        raise HTTPException(status_code=404, detail="Suggestion not found")
+        
+    suggestion.is_used = True
+    session.add(suggestion)
+    session.commit()
+    return {"status": "success"}

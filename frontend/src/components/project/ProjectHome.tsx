@@ -12,7 +12,7 @@ import EditProjectModal from './modals/EditProjectModal';
 import GenerateEpisodeModal from './modals/GenerateEpisodeModal';
 import ArtStyleSetupModal from './modals/ArtStyleSetupModal';
 import CharacterDetailModal from './modals/CharacterDetailModal';
-import { Plus, Sparkles, Clapperboard, Edit2, Palette, ArrowRight, Settings, Play, AlertCircle, Database, ChevronDown, MoreVertical, LayoutTemplate, Calendar, Film, Clock } from 'lucide-react';
+import { Plus, Sparkles, Clapperboard, Edit2, Palette, ArrowRight, Settings, Play, AlertCircle, Database, ChevronDown, MoreVertical, LayoutTemplate, Calendar, Film, Clock, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { SectionLabel } from '@/components/ui/section-label';
 import ImageGeneratingPlaceholder from '@/components/ui/ImageGeneratingPlaceholder';
@@ -81,6 +81,46 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
     const pathname = usePathname();
     const t = useTranslations('Project.Home');
     const tGenres = useTranslations('NewProject.genres');
+
+    const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+    const descriptionText = project.description || project.worldview?.content || project.worldview?.description || t('noDesc');
+    const isLongDescription = descriptionText.length > 200;
+
+    // Suggestion State
+    const [suggestionsCount, setSuggestionsCount] = useState<number>(0);
+    const [isSuggestionsLoading, setIsSuggestionsLoading] = useState(true);
+
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+
+        const checkSuggestions = async () => {
+            try {
+                const res = await api.get(`/characters/suggestions/${project.id}`);
+                const count = res.data.length;
+                setSuggestionsCount(count);
+
+                // If we found suggestions, stop polling
+                if (count > 0) {
+                    setIsSuggestionsLoading(false);
+                    if (interval) clearInterval(interval);
+                }
+            } catch (e) {
+                console.error("Failed to fetch suggestions count", e);
+            }
+        };
+
+        // Initial check
+        checkSuggestions();
+
+        // Start polling if no suggestions found yet
+        if (suggestionsCount === 0) {
+            interval = setInterval(checkSuggestions, 3000);
+        }
+
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [project.id, suggestionsCount]);
 
     // Polling for cover image status
     useEffect(() => {
@@ -333,9 +373,26 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                 <h1 className="text-4xl sm:text-6xl font-black text-white leading-tight tracking-tight drop-shadow-2xl">
                                     {project.title}
                                 </h1>
-                                <p className="text-lg text-gray-300 font-medium line-clamp-2 max-w-xl">
-                                    {project.description || project.worldview?.content || project.worldview?.description || t('noDesc')}
-                                </p>
+                                <div className="max-w-xl">
+                                    <p className={cn("text-lg text-gray-300 font-medium transition-all", isDescriptionExpanded ? "" : "line-clamp-2")}>
+                                        {descriptionText}
+                                    </p>
+                                    {isLongDescription && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setIsDescriptionExpanded(!isDescriptionExpanded);
+                                            }}
+                                            className="text-sm text-purple-400 hover:text-white mt-1 font-bold flex items-center gap-1"
+                                        >
+                                            {isDescriptionExpanded ? (
+                                                <><ChevronDown className="rotate-180 w-3 h-3" /> Show Less</>
+                                            ) : (
+                                                <><ChevronDown className="w-3 h-3" /> Show More</>
+                                            )}
+                                        </button>
+                                    )}
+                                </div>
                             </div>
 
                             <div className="flex items-center gap-2 relative">
@@ -516,6 +573,46 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                     })}
                                 </div>
                             </section>
+
+                            {/* Recommendations Section (Async) */}
+                            {(suggestionsCount > 0 || (isSuggestionsLoading && !characters.length)) && (
+                                <section>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                            <Sparkles className="w-5 h-5 text-purple-400" />
+                                            {t('recommendations') || "AI Suggestions"}
+                                            {suggestionsCount > 0 && <span className="text-xs bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full border border-purple-500/30">{suggestionsCount}</span>}
+                                        </h3>
+                                    </div>
+
+                                    <div className="bg-[#15121c] border border-dashed border-purple-500/30 rounded-xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+                                        <div className="flex flex-col gap-2">
+                                            <h4 className="font-bold text-gray-200">
+                                                {suggestionsCount > 0 ? (t('suggestionsReady') || "Character Concepts Ready") : (t('preparingSuggestions') || "Brainstorming Ideas...")}
+                                            </h4>
+                                            <p className="text-sm text-gray-400 max-w-lg">
+                                                {suggestionsCount > 0
+                                                    ? (t('suggestionsReadyDesc') || "AI has generated potential character concepts based on your worldview. Review them in the Character Wizard.")
+                                                    : (t('preparingSuggestionsDesc') || "Analyzing your story to suggest fitting characters. This may take a moment.")}
+                                            </p>
+                                        </div>
+
+                                        {suggestionsCount > 0 ? (
+                                            <Button
+                                                onClick={() => router.push(`/project/${project.id}/casting`)}
+                                                className="bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-900/20 min-w-[140px]"
+                                            >
+                                                {t('viewSuggestions') || "View Concepts"} <ArrowRight className="ml-2 w-4 h-4" />
+                                            </Button>
+                                        ) : (
+                                            <div className="flex items-center gap-2 text-purple-400 text-sm animate-pulse">
+                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                                <span>Processing...</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </section>
+                            )}
 
                             {/* Episodes List */}
                             <section>

@@ -24,6 +24,8 @@ import { RadarChart } from '@/components/ui/radar-chart'; // New Import
 import api from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslations, useLocale } from 'next-intl';
+import CharacterSuggestionList from './CharacterSuggestionList';
+import { ProcessingOverlay } from '@/components/ui/processing-overlay';
 
 interface CharacterCastingWizardProps {
     projectId: string;
@@ -162,6 +164,41 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
             case 'role': return 3;
             default: return 1;
         }
+    };
+
+    // Suggestions State
+    const [showSuggestions, setShowSuggestions] = useState(false);
+
+    const handleSuggestionSelect = (suggestion: any) => {
+        // Populate Data
+        if (suggestion.name) setName(suggestion.name);
+        if (suggestion.age) setAge(suggestion.age.toString());
+
+        if (suggestion.visual_keywords && Array.isArray(suggestion.visual_keywords)) {
+            setVisualKeywords(suggestion.visual_keywords);
+        }
+
+        // Try to map personality
+        if (suggestion.personality) {
+            // If personality is a string description, we might not map it directly to tags unless we parse it.
+            // But we can store it or try to find keywords? 
+            // For now, let's just clear types if it's new, or leave as is?
+            // Or maybe we can't map 'Quiet, Smart' to 'Serious'.
+            // Let's just reset personality types to empty to force user selection or if AI provided specific types in future.
+            setPersonalityTypes([]);
+            // We could set bio/roleDescription?
+        }
+
+        if (suggestion.bio) {
+            setRoleDescription(suggestion.bio);
+        }
+
+        // Auto-close and valid feedback
+        setShowSuggestions(false);
+        toast({
+            title: "Character Loaded",
+            description: `${suggestion.name} data applied.`,
+        });
     };
 
     const handleNextStep = (next: StepName) => {
@@ -375,26 +412,36 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                             {t('buttons.aiSuggestion')}
                         </Badge>
                     </div>
-                    <Input
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder={t('inputs.namePlaceholder')}
-                        size="xl"
-                        className="text-center"
-                        autoFocus
-                    />
+                    <div className="flex justify-center mb-4">
+                        <Button
+                            variant="outline"
+                            className="bg-purple-500/10 border-purple-500/30 text-purple-300 hover:bg-purple-500/20 w-full"
+                            onClick={() => setShowSuggestions(true)}
+                        >
+                            <Sparkles className="w-4 h-4 mr-2" />
+                            Open Batch Suggestions
+                        </Button>
+                    </div>
                 </div>
+                <Input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder={t('inputs.namePlaceholder')}
+                    size="xl"
+                    className="text-center"
+                    autoFocus
+                />
+            </div>
 
-                <div className="space-y-3">
-                    <SectionLabel className="text-[#d8b4fe]">{t('inputs.ageLabel')}</SectionLabel>
-                    <Input
-                        value={age}
-                        onChange={(e) => setAge(e.target.value)}
-                        placeholder={t('inputs.agePlaceholder')}
-                        size="xl"
-                        className="text-center"
-                    />
-                </div>
+            <div className="space-y-3">
+                <SectionLabel className="text-[#d8b4fe]">{t('inputs.ageLabel')}</SectionLabel>
+                <Input
+                    value={age}
+                    onChange={(e) => setAge(e.target.value)}
+                    placeholder={t('inputs.agePlaceholder')}
+                    size="xl"
+                    className="text-center"
+                />
             </div>
         </motion.div>
     );
@@ -644,22 +691,14 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
 
     // Placeholder for other steps to avoid errors during incremental rebuild
     const renderOtherSteps = () => (
-        <div className='text-center text-white/50 w-full h-full'>
+        <div className='text-center text-white/50 w-full h-full relative'>
+            <ProcessingOverlay
+                isVisible={step === 'analyzing'}
+                title={t('headers.analyzing')}
+                description={t('headers.analyzingDesc', { name })}
+            />
             {step === 'style' && renderStyleStep()}
             {step === 'role' && renderRoleStep()}
-            {step === 'analyzing' && (
-                <div className="flex flex-col items-center justify-center h-full gap-6 animate-in fade-in duration-700">
-                    <div className="relative w-24 h-24">
-                        <div className="absolute inset-0 rounded-full border-t-2 border-purple-500 animate-spin"></div>
-                        <div className="absolute inset-2 rounded-full border-r-2 border-indigo-500 animate-spin [animation-duration:1.5s]"></div>
-                        <div className="absolute inset-4 rounded-full border-b-2 border-blue-500 animate-spin [animation-duration:2s]"></div>
-                    </div>
-                    <div className="text-center space-y-2">
-                        <h3 className="text-xl font-bold tracking-tight text-white/80">{t('headers.analyzing')}</h3>
-                        <p className="text-gray-500 text-sm">{t('headers.analyzingDesc', { name })}</p>
-                    </div>
-                </div>
-            )}
         </div>
     );
 
@@ -689,6 +728,30 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
 
                 <div className="text-xs font-mono text-gray-600">v.2.2.1</div>
             </header>
+
+            {/* Suggestions Sidebar */}
+            <AnimatePresence>
+                {showSuggestions && (
+                    <>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-black/60 z-[60] backdrop-blur-sm"
+                            onClick={() => setShowSuggestions(false)}
+                        />
+                        <motion.div
+                            initial={{ x: '-100%' }}
+                            animate={{ x: 0 }}
+                            exit={{ x: '-100%' }}
+                            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                            className="fixed left-0 top-0 bottom-0 z-[70] shadow-2xl"
+                        >
+                            <CharacterSuggestionList projectId={projectId} onSelect={handleSuggestionSelect} />
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
 
             <main className="w-full max-w-5xl relative z-10 flex flex-col gap-8 mt-16">
                 {/* Title Section */}
@@ -731,67 +794,74 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                             </AnimatePresence>
                         </div>
                     </div>
+                    <ProcessingOverlay
+                        isVisible={isGenerating}
+                        title={t('toasts.createdTitle')}
+                        description={t('toasts.createdDesc', { name, role: currentArchetype?.title })}
+                    />
 
                     {/* Footer / Actions */}
-                    {step !== 'analyzing' && (
-                        <div className="absolute bottom-0 left-0 right-0 p-8 border-t border-white/5 bg-[#0f0b15]/50 backdrop-blur-sm flex justify-between items-center">
-                            {/* Back Button or Divider */}
-                            <div>
-                                {step !== 'concept' && (
-                                    <Button
-                                        variant="ghost"
-                                        onClick={() => {
-                                            if (step === 'style') handlePrevStep('concept');
-                                            if (step === 'role') handlePrevStep('style');
-                                        }}
-                                        className="text-gray-400 hover:text-white hover:bg-white/5 gap-2 pl-0 hover:pl-2 transition-all"
-                                    >
-                                        <MoveLeft size={16} /> {t('buttons.back')}
-                                    </Button>
-                                )}
-                            </div>
+                    {
+                        step !== 'analyzing' && (
+                            <div className="absolute bottom-0 left-0 right-0 p-8 border-t border-white/5 bg-[#0f0b15]/50 backdrop-blur-sm flex justify-between items-center">
+                                {/* Back Button or Divider */}
+                                <div>
+                                    {step !== 'concept' && (
+                                        <Button
+                                            variant="ghost"
+                                            onClick={() => {
+                                                if (step === 'style') handlePrevStep('concept');
+                                                if (step === 'role') handlePrevStep('style');
+                                            }}
+                                            className="text-gray-400 hover:text-white hover:bg-white/5 gap-2 pl-0 hover:pl-2 transition-all"
+                                        >
+                                            <MoveLeft size={16} /> {t('buttons.back')}
+                                        </Button>
+                                    )}
+                                </div>
 
-                            {/* Next Button */}
-                            <div>
-                                {step === 'concept' && (
-                                    <Button
-                                        onClick={handleConceptSubmit}
-                                        disabled={!name.trim()}
-                                        variant="dark"
-                                        size="xl"
-                                        className="w-32"
-                                    >
-                                        Next <MoveRight className="ml-2 w-4 h-4" />
-                                    </Button>
-                                )}
-                                {step === 'style' && (
-                                    <Button
-                                        onClick={handleStyleSubmit}
-                                        disabled={personalityTypes.length === 0}
-                                        variant="glow"
-                                        size="xl"
-                                        className="w-32"
-                                    >
-                                        Next <MoveRight className="ml-2 w-4 h-4" />
-                                    </Button>
-                                )}
-                                {step === 'role' && (
-                                    <Button
-                                        onClick={handleFinalize}
-                                        disabled={isGenerating}
-                                        variant="glow"
-                                        size="xl"
-                                    >
-                                        {isGenerating ? <Loader2 className="animate-spin mr-2" /> : <Sparkles className="mr-2 w-4 h-4" />}
-                                        {t('buttons.create')}
-                                    </Button>
-                                )}
-                                {/* Placeholders for buttons of other steps */}
+                                {/* Next Button */}
+                                <div>
+                                    {step === 'concept' && (
+                                        <Button
+                                            onClick={handleConceptSubmit}
+                                            disabled={!name.trim()}
+                                            variant="dark"
+                                            size="xl"
+                                            className="w-32"
+                                        >
+                                            Next <MoveRight className="ml-2 w-4 h-4" />
+                                        </Button>
+                                    )}
+                                    {step === 'style' && (
+                                        <Button
+                                            onClick={handleStyleSubmit}
+                                            disabled={personalityTypes.length === 0}
+                                            variant="glow"
+                                            size="xl"
+                                            className="w-32"
+                                        >
+                                            Next <MoveRight className="ml-2 w-4 h-4" />
+                                        </Button>
+                                    )}
+                                    {step === 'role' && (
+                                        <Button
+                                            onClick={handleFinalize}
+                                            disabled={isGenerating}
+                                            variant="glow"
+                                            size="xl"
+                                        >
+                                            {isGenerating ? <Loader2 className="animate-spin mr-2" /> : <Sparkles className="mr-2 w-4 h-4" />}
+                                            {t('buttons.create')}
+                                        </Button>
+                                    )}
+                                    {/* Placeholders for buttons of other steps */}
+                                </div>
                             </div>
-                        </div>
-                    )}
-                </div>
-            </main>
-        </div>
+                        )
+                    }
+                </div >
+            </main >
+        </div >
     );
 }

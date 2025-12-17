@@ -850,6 +850,56 @@ class AIService:
                 raise e2
 
 
+
+    def generate_character_batch_suggestions(self, project_context: str, count: int = 10, language: str = "en") -> dict:
+        """
+        Generates a batch of distinct character concepts.
+        """
+        if not self.client:
+             raise Exception("AI Service not initialized")
+
+        prompt = f"""
+        You are a casting director for a Webtoon.
+        Project Context:
+        {project_context}
+        
+        Create {count} distinct, interesting character concepts that could fit into this story.
+        They should vary in age, role, personality, and appearance.
+        Exclude the Protagonist if already defined (assume these are potential additional cast members).
+        
+        {f'IMPORTANT: All output text (names, roles, bios) MUST be in {language} language.' if language else ''}
+        {f'If language is Korean, use Hangul.' if language and language.startswith('ko') else ''}
+
+        Return ONLY a JSON object:
+        {{
+            "suggestions": [
+                {{
+                    "name": "Name",
+                    "age": "Age (e.g. 19)",
+                    "role": "Role (e.g. Rival, Best Friend)", 
+                    "visual_keywords": ["tag1", "tag2"], 
+                    "personality": "Personality summary...",
+                    "bio": "Brief background...",
+                }},
+                ...
+            ]
+        }}
+        """
+        try:
+            print(f"DEBUG PROMPT [batch_suggestions]: \n{prompt}")
+            response = self.client.models.generate_content(
+                model=self.model_config["worldview"], # Use smarter model for creative batch
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json"
+                )
+            )
+            cleaned_text = self._clean_json_text(response.text)
+            return json.loads(cleaned_text)
+        except Exception as e:
+            print(f"Batch Suggestion Error: {e}")
+            raise e
+
     def analyze_character_concept(self, project_context: str, name: str, age: str, visual_keywords: List[str], personality: str, language: str = "en") -> dict:
         """
         Analyzes the character concept and suggests a Role (Archetype) and Lore.

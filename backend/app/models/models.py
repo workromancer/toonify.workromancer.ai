@@ -128,6 +128,7 @@ class Project(SQLModel, table=True):
     characters: List["Character"] = Relationship(back_populates="project")
     episodes: List["Episode"] = Relationship(back_populates="project")
     clues: List["Clue"] = Relationship(back_populates="project")
+    suggestions: List["CharacterSuggestion"] = Relationship(back_populates="project")
 
 class Character(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
@@ -250,3 +251,21 @@ class CustomStyle(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     workspace: Workspace = Relationship(back_populates="custom_styles")
+
+class CharacterSuggestion(SQLModel, table=True):
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    project_id: UUID = Field(foreign_key="project.id")
+    
+    # Suggested Data
+    name: str
+    age: str
+    visual_keywords: List[str] = Field(sa_column=Column(JSON), default=[])
+    personality: str
+    bio: Optional[str] = Field(default=None, sa_column=Column(Text))
+    role: Optional[str] = None # Suggested role
+    
+    is_used: bool = False
+    
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    project: Project = Relationship(back_populates="suggestions")

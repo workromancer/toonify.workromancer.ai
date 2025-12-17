@@ -354,6 +354,7 @@ export default function NewProjectWizard() {
                       disabled={isLocked}
                       className="w-full bg-transparent border-2 border-slate-700 rounded-xl px-6 py-5 text-2xl font-bold text-white placeholder-slate-700 focus:border-purple-500 outline-none transition-all group-hover:border-slate-600 disabled:opacity-50"
                       autoFocus
+                      data-testid="project-title-input"
                       onKeyDown={(e) => e.key === 'Enter' && title && handleNext()}
                     />
                     <Type className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-600" />
@@ -374,6 +375,7 @@ export default function NewProjectWizard() {
                       disabled={isLocked}
                       className="w-full bg-transparent border-2 border-slate-700 rounded-xl px-6 py-5 text-xl font-medium text-white placeholder-slate-700 focus:border-purple-500 outline-none transition-all group-hover:border-slate-600 disabled:opacity-50"
                       autoFocus
+                      data-testid="project-subtitle-input"
                       onKeyDown={(e) => e.key === 'Enter' && handleNext()}
                     />
                     <Hash className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-600" />
@@ -391,6 +393,7 @@ export default function NewProjectWizard() {
                         key={genre.id}
                         onClick={() => toggleGenre(genre.id)}
                         disabled={isLocked}
+                        data-testid={`genre-select-${genre.id}`}
                         className={`p-4 rounded-xl border-2 text-left transition-all flex items-center gap-3 group relative overflow-hidden ${isSelected
                           ? 'bg-purple-900/20 border-purple-500'
                           : 'bg-slate-900/30 border-slate-800 hover:border-slate-600'
@@ -446,6 +449,7 @@ export default function NewProjectWizard() {
                       disabled={isLocked}
                       className="w-full h-40 bg-slate-900/30 border-2 border-slate-700 rounded-xl p-5 text-base text-white placeholder-slate-700 focus:border-purple-500 outline-none resize-none transition-all leading-relaxed disabled:opacity-50"
                       autoFocus
+                      data-testid="worldview-input"
                     />
                   </div>
                   {error && (
@@ -478,6 +482,7 @@ export default function NewProjectWizard() {
                   (step === 2 && selectedGenres.length === 0) ||
                   isLocked
                 }
+                data-testid="wizard-next-button"
                 className={`
                     px-8 py-3 rounded-xl font-bold text-sm shadow-lg flex items-center gap-2 transition-all
                     ${(step === 0 && !title) || (step === 2 && selectedGenres.length === 0) || isLocked

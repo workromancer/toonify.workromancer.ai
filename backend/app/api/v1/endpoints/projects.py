@@ -124,6 +124,37 @@ def generate_project_cover_task(project_id: str, title: str, genre_name: str, wo
             except Exception as db_e:
                 print(f"Failed to update error status: {db_e}")
 
+def generate_suggestions_bg_task(project_id: str, context: str, language: str):
+    """
+    Background task to generate initial character suggestions.
+    """
+    try:
+        from app.models import CharacterSuggestion
+        with Session(engine) as session:
+            # Generate
+            result = ai_service.generate_character_batch_suggestions(context, count=10, language=language)
+            items = result.get('suggestions', [])
+            
+            p_uuid = UUID(project_id)
+            
+            for item in items:
+                s = CharacterSuggestion(
+                    project_id=p_uuid,
+                    name=item.get("name"),
+                    age=str(item.get("age")),
+                    visual_keywords=item.get("visual_keywords", []),
+                    personality=item.get("personality"),
+                    bio=item.get("bio"),
+                    role=item.get("role"),
+                    is_used=False
+                )
+                session.add(s)
+            session.commit()
+            print(f"Async Suggestions: Generated {len(items)} items for {project_id}")
+            
+    except Exception as e:
+        print(f"Async Suggestion Error: {e}")
+
 @router.get("", response_model=List[ProjectOut])
 def list_projects(
     session: Session = Depends(deps.get_session),
@@ -172,11 +203,13 @@ def create_project(
     *,
     session: Session = Depends(deps.get_session),
     project_in: ProjectCreate,
+    background_tasks: BackgroundTasks,
     current_user_id: str = Depends(deps.get_current_user_id),
 ) -> Any:
     """
     Create a new project.
     """
+    print(f"DEBUG: create_project called with title={project_in.title}")
     try:
         # Get user's default workspace
         ws_statement = select(WorkspaceMember).where(WorkspaceMember.user_id == current_user_id)
@@ -235,6 +268,21 @@ def create_project(
         
         p_dict['thumbnail_url'] = project.thumbnail_asset.file_url if project.thumbnail_asset else None
         p_dict['cover_image_status'] = project.cover_image_status
+
+        # Async Character Suggestions Trigger
+        if project.worldview:
+            wv_desc = ""
+            if isinstance(project.worldview, dict):
+                wv_desc = project.worldview.get("content") or project.worldview.get("description") or ""
+            else:
+                wv_desc = str(project.worldview)
+            
+            context = f"""
+            Title: {project.title}
+            Genre: {", ".join([g.name for g in project.genres])}
+            Worldview: {wv_desc}
+            """
+            background_tasks.add_task(generate_suggestions_bg_task, str(project.id), context, project.language)
 
         return p_dict
     except Exception as e:
