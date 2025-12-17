@@ -95,8 +95,8 @@ Requirements:
 - Use the user-defined art style: {style}.
 - Aspect Ratio: Wide (16:9).
 - Composition: Cinematic, showing the atmosphere.
-- No text overlay.
-- (If language is 'ko'): If any text appears, it MUST be in Korean.
+        - Place the title ("{title}") and subtitle (if any) logo in the center of the cover image in a way that suits the cover aesthetic.
+        - (If language is 'ko'): Ensure the title text is in Korean if possible.
 
 (If character references provided):
 - INCLUDE the characters provided in the reference images. Place them naturally in the scene according to the worldview.
@@ -109,6 +109,26 @@ Requirements:
 ---
 
 ## 2. 화풍 (Art Style)
+
+### 화풍 설명 증강 (Style Augmentation)
+**메서드:** `augment_style_description`
+**모델:** `gemini-2.5-flash`
+
+**파라미터:**
+- `prompt`: 사용자의 초기/단순 화풍 설명.
+- `project_context`: 프로젝트 제목, 장르, 세계관.
+- `language`: 출력 언어 설정.
+
+**프롬프트 구조:**
+```text
+You are a prompt engineering expert for generative AI art.
+Improve the user's rough art style description into a high-quality, detailed prompt...
+
+Task:
+1. Expand on valid aesthetic keywords (lighting, texture, composition).
+2. If project context is provided, ensure the style fits the genre and tone.
+3. Return ONLY the improved prompt text.
+```
 
 ### 스타일 추천 (Style Recommendation)
 **메서드:** `recommend_style`
@@ -141,10 +161,11 @@ Return ONLY a JSON object with the following structure:
 }
 ```
 
-**후속 이미지 생성 (Follow-up Image Generation):**
-각 추천 스타일에 대해 샘플 이미지를 생성합니다:
-`Prompt`: "A high-quality representative illustration of the art style: {style_label}. {style_desc} Visual composition: portrait or character focus."
-`Model`: `gemini-3-pro-image-preview` (3:4 비율)
+**후속 이미지 생성 (Style Preview Generation):**
+각 추천 스타일 또는 사용자 생성 스타일에 대해 샘플 이미지를 생성합니다:
+`Prompt`: "Create a high-quality representative illustration of this art style: {style_desc}... Subject: A character portrait or a scenic view..."
+`Negative Prompt`: "Do NOT include any text, logos, watermarks, typography, or speech bubbles. Focus PURELY on the visual art style."
+`Model`: `gemini-3-pro-image-preview` (1:1 비율)
 
 ---
 

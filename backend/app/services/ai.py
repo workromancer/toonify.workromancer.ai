@@ -30,6 +30,7 @@ class AIService:
                 api_key=api_key # Can be None for ADC
             )
             # Models Configuration (Ref: AI_MODELS.md)
+            self.model_config = {
                 "style": "gemini-2.5-flash",
                 "worldview": "gemini-3-pro-preview",
                 "director": "gemini-2.5-pro",
