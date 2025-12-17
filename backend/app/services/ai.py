@@ -618,8 +618,8 @@ class AIService:
         - Use the user-defined art style: {style}.
         - Aspect Ratio: Wide (16:9).
         - Composition: Cinematic, showing the atmosphere.
-        - No text overlay.
-        {f'- If any text appears in the image (e.g. signage, background), it MUST be in {language}.' if language and language.startswith('ko') else ''}
+        - Place the title ("{title}") and subtitle (if any) logo in the center of the cover image in a way that suits the cover aesthetic.
+        {f'- Ensure the title text is in {language} language if possible.' if language and language.startswith('ko') else ''}
         """
         
         if character_image_urls:

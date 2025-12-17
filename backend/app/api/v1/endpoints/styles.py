@@ -95,6 +95,11 @@ def generate_style_preview_task(style_id: str, description: str):
         Usage: This image will be used as a reference preview for this art style.
         Subject: A character portrait or a scenic view that best showcases the texture, lighting, and rendering technique of this style.
         Aspect Ratio: Square (1:1).
+
+        IMPORTANT REQUIREMENTS:
+        - Do NOT include any text, logos, watermarks, typography, or speech bubbles.
+        - Focus PURELY on the visual art style, brushwork, and aesthetic.
+        - The image should look like a clean art sample.
         """
         
         img_bytes = ai_service.generate_image(prompt, width=512, height=512)
