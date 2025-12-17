@@ -123,7 +123,14 @@ def generate_scene_structure(
                 print(f"RAG Retrieval warning: {e}")
         
         # Parse language
+        # Fix: Prioritize project language if available
         lang = accept_language.split(',')[0].strip()[:2]
+        if request.project_id:
+             project_uuid = UUID(request.project_id)
+             project = session.get(Project, project_uuid)
+             if project and project.language:
+                 lang = project.language
+
         options = ai_service.generate_direction_options(request.script, context_str, language=lang)
         return options
     except HTTPException as he:
@@ -155,6 +162,12 @@ def modify_scene(
 
     try:
         lang = accept_language.split(',')[0].strip()[:2]
+        if request.project_id:
+             project_uuid = UUID(request.project_id) if isinstance(request.project_id, str) else request.project_id
+             project = session.get(Project, project_uuid)
+             if project and project.language:
+                 lang = project.language
+
         image_bytes = ai_service.modify_image(request.original_image_url, request.instruction, language=lang)
         
         import base64
@@ -187,6 +200,12 @@ def render_scene(
         # For now, we return raw bytes or a base64 string.
         
         lang = accept_language.split(',')[0].strip()[:2]
+        if request.project_id:
+             project_uuid = UUID(request.project_id) if isinstance(request.project_id, str) else request.project_id
+             project = session.get(Project, project_uuid)
+             if project and project.language:
+                 lang = project.language
+
         image_bytes = ai_service.generate_image(request.prompt, request.width, request.height, request.seed, language=lang)
         
         # Convert to base64 for easy frontend display without storage setup

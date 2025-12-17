@@ -142,7 +142,7 @@ def generate_episode_options(
         project_title=project.title,
         worldview=worldview_str,
         recent_episodes=recent_summaries,
-        language=accept_language.split(',')[0].strip()[:2]
+        language=project.language or accept_language.split(',')[0].strip()[:2]
     )
     return result
 
@@ -178,6 +178,10 @@ def generate_episode_cuts(
     session.commit()
     session.refresh(episode)
 
+    # Fetch project language
+    project = session.get(Project, request.project_id)
+    project_lang = project.language if project else "en"
+
     # 2. Generate Cuts via AI
     try:
         cuts_data = ai_service.generate_initial_cuts(
@@ -185,7 +189,7 @@ def generate_episode_cuts(
             summary=request.episode_summary,
             style=style,
             num_cuts=request.num_cuts,
-            language=accept_language.split(',')[0].strip()[:2]
+            language=project_lang
         )
     except Exception as e:
         # If AI fails, we might still want the episode? Or rollback?
@@ -254,7 +258,18 @@ def generate_cut_image(
     
     prompt_override = request.prompt_override
     
-    lang = accept_language.split(',')[0].strip()[:2]
+    # We need to fetch project language. Pass None here and let background task fetch it or fetch here?
+    # Background task fetches project again. Let's pass language argument to task.
+    # But current task signature takes language.
+    # Background task `generate_cut_task` fetches project.
+    
+    # Let's simple pass None and let background task determine language from project?
+    # Or fetch cut -> project here?
+    # cut is fetched above.
+    episode = session.get(Episode, cut.episode_id)
+    project = session.get(Project, episode.project_id)
+    lang = project.language if project else "en"
+
     background_tasks.add_task(generate_cut_task, cut_id, prompt_override, lang)
     
     return {"message": "Generation started", "cut_id": cut_id}

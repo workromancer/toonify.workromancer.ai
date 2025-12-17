@@ -260,14 +260,15 @@ def augment_worldview(
         billing_service.deduct_credits(session, member.workspace_id, UUID(current_user_id), "augment_worldview")
         
         user = session.get(User, current_user_id)
-        user_lang = user.language if user else "en"
+        # Prioritize request language, then user language, then default 'en'
+        lang = request.language or (user.language if user else "en")
 
         result = ai_service.augment_worldview(
             description=request.description,
             title=request.title,
             subtitle=request.subtitle,
             genres=request.genres,
-            language=user_lang
+            language=lang
         )
         return result
     except HTTPException as he:
