@@ -88,7 +88,7 @@ def list_my_styles(
     styles = session.exec(statement).all()
     return styles
 
-@router.post("/", response_model=StyleOut)
+@router.post("", response_model=StyleOut)
 def create_style(
     *,
     session: Session = Depends(deps.get_session),

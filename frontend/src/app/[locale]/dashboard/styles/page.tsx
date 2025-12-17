@@ -356,14 +356,12 @@ function ArtStylesContent() {
 
 export default function ArtStylesPage() {
     return (
-        <DashboardLayout>
-            <Suspense fallback={
-                <div className="flex items-center justify-center min-h-[300px] h-full">
-                    <Loader2 className="animate-spin text-purple-500" size={32} />
-                </div>
-            }>
-                <ArtStylesContent />
-            </Suspense>
-        </DashboardLayout>
+        <Suspense fallback={
+            <div className="flex items-center justify-center min-h-[300px] h-full">
+                <Loader2 className="animate-spin text-purple-500" size={32} />
+            </div>
+        }>
+            <ArtStylesContent />
+        </Suspense>
     );
 }
