@@ -15,6 +15,7 @@ import api from '@/lib/api';
 import CreateStyleModal from '@/components/project/modals/CreateStyleModal';
 import { cn } from '@/lib/utils';
 import ArtStyleSelectionModal from '@/components/styles/ArtStyleSelectionModal';
+import StyleDetailModal from '@/components/styles/StyleDetailModal';
 import { useTranslations } from 'next-intl';
 
 interface ArtStyle {
@@ -30,17 +31,21 @@ interface ArtStyle {
     image?: string; // fallback
 }
 
-const StyleCard = ({ style }: { style: ArtStyle }) => {
+const StyleCard = ({ style, onClick }: { style: ArtStyle, onClick: () => void }) => {
     const [copied, setCopied] = useState(false);
-    // Map status 'processing' or 'pending' to reference's 'Generating' behavior
+
+    // Map status 'processing' or 'pending' to reference's 'Generating' behavior.
+    // Also consider 'failed' as NOT generating, but needing attention.
     const isGenerating = style.status === 'processing' || style.status === 'pending' || style.status === 'Generating';
+    const isFailed = style.status === 'failed';
 
     // Prioritize imageUrl, fallback to image (ref style), fallback to empty
     const imageUrl = style.imageUrl || style.image || '';
     const promptText = style.prompt || style.description || "No prompt provided";
     const version = style.version || "v1.0";
 
-    const handleCopy = () => {
+    const handleCopy = (e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent modal open
         if (promptText) {
             navigator.clipboard.writeText(promptText);
             setCopied(true);
@@ -49,8 +54,10 @@ const StyleCard = ({ style }: { style: ArtStyle }) => {
     };
 
     return (
-        <div className={`group relative bg-[#0f0f16] border rounded-2xl overflow-hidden transition-all duration-500 shadow-lg hover:shadow-purple-900/20 flex flex-col
-      ${isGenerating ? 'border-purple-500/50 shadow-[0_0_15px_rgba(147,51,234,0.15)]' : 'border-slate-800 hover:border-purple-500/50 hover:-translate-y-1.5'}
+        <div
+            onClick={onClick}
+            className={`group relative bg-[#0f0f16] border rounded-2xl overflow-hidden transition-all duration-500 shadow-lg hover:shadow-purple-900/20 flex flex-col cursor-pointer
+      ${isGenerating ? 'border-purple-500/50 shadow-[0_0_15px_rgba(147,51,234,0.15)]' : isFailed ? 'border-red-500/50 hover:border-red-500' : 'border-slate-800 hover:border-purple-500/50 hover:-translate-y-1.5'}
     `}>
             {/* Image Area */}
             <div className="aspect-video bg-slate-900 relative overflow-hidden">
@@ -65,7 +72,7 @@ const StyleCard = ({ style }: { style: ArtStyle }) => {
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center bg-slate-800">
-                        {isGenerating ? null : <ImageIcon className="text-slate-600" />}
+                        {isGenerating ? null : isFailed ? <Zap className="text-red-500 rotate-12" size={32} /> : <ImageIcon className="text-slate-600" />}
                     </div>
                 )}
 
@@ -84,28 +91,23 @@ const StyleCard = ({ style }: { style: ArtStyle }) => {
                     </>
                 )}
 
+                {/* Failed Overlay */}
+                {isFailed && !isGenerating && (
+                    <div className="absolute inset-0 bg-red-900/20 flex flex-col items-center justify-center gap-2">
+                        <span className="text-xs font-bold text-red-400 uppercase tracking-widest border border-red-500/50 px-2 py-1 rounded bg-black/50 backdrop-blur">
+                            Generation Failed
+                        </span>
+                    </div>
+                )}
+
                 {/* Overlay Gradient (Always) */}
                 <div className={`absolute inset-0 bg-gradient-to-t from-[#0f0f16] via-transparent to-transparent ${isGenerating ? 'opacity-0' : 'opacity-80'}`} />
 
                 {/* Status Badge */}
-                {!isGenerating && (
+                {!isGenerating && !isFailed && (
                     <div className="absolute top-3 left-3 z-10">
                         <div className="bg-black/60 backdrop-blur px-2.5 py-1 rounded-full text-[10px] text-slate-300 border border-white/10 font-mono shadow-lg group-hover:bg-purple-600 group-hover:text-white group-hover:border-purple-500 transition-colors">
                             {version}
-                        </div>
-                    </div>
-                )}
-
-                {/* Action Menu (Hover) - Only when ready */}
-                {!isGenerating && (
-                    <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0 duration-300 z-10">
-                        <div className="flex gap-2">
-                            <button className="p-2 bg-black/60 backdrop-blur-md rounded-full text-slate-300 hover:text-white hover:bg-purple-600 transition-colors border border-white/10">
-                                <Edit3 size={14} />
-                            </button>
-                            <button className="p-2 bg-black/60 backdrop-blur-md rounded-full text-slate-300 hover:text-red-400 hover:bg-slate-800 transition-colors border border-white/10">
-                                <Trash2 size={14} />
-                            </button>
                         </div>
                     </div>
                 )}
@@ -159,12 +161,16 @@ const StyleCard = ({ style }: { style: ArtStyle }) => {
 function ArtStylesContent() {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isSelectionModalOpen, setIsSelectionModalOpen] = useState(false);
+    // Detail Modal State
+    const [selectedStyle, setSelectedStyle] = useState<ArtStyle | null>(null);
+
     const [styles, setStyles] = useState<ArtStyle[]>([]);
     const [loading, setLoading] = useState(true);
     const t = useTranslations('Styles');
 
     const searchParams = useSearchParams();
     const router = useRouter();
+    const pollingStartTimeRef = React.useRef<number | null>(null);
 
     const fromProjectSetup = searchParams?.get('from') === 'project_setup';
     const projectId = searchParams?.get('projectId');
@@ -185,17 +191,36 @@ function ArtStylesContent() {
         fetchStyles();
     }, []);
 
-    // Initial styles polling if any are processing
+    // Polling Logic with 2 min timeout
     useEffect(() => {
         const hasProcessing = styles.some(s => s.status === 'processing' || s.status === 'pending');
+
         if (hasProcessing) {
+            if (pollingStartTimeRef.current === null) {
+                pollingStartTimeRef.current = Date.now();
+            }
+
+            const elapsed = Date.now() - pollingStartTimeRef.current;
+            if (elapsed > 120000) { // 2 minutes
+                // Timeout: Force specific processing items to failed or just stop polling?
+                console.warn("Polling timeout reached (2m). Stopping auto-refresh.");
+                pollingStartTimeRef.current = null; // Reset
+                return;
+            }
+
             const timer = setTimeout(fetchStyles, 3000);
             return () => clearTimeout(timer);
+        } else {
+            pollingStartTimeRef.current = null;
         }
     }, [styles]);
 
     const handleCreateClick = () => {
         setIsCreateModalOpen(true);
+    };
+
+    const handleStyleClick = (style: ArtStyle) => {
+        setSelectedStyle(style);
     };
 
     return (
@@ -255,7 +280,11 @@ function ArtStylesContent() {
 
                             {/* Style Cards */}
                             {styles.map(style => (
-                                <StyleCard key={style.id} style={style} />
+                                <StyleCard
+                                    key={style.id}
+                                    style={style}
+                                    onClick={() => handleStyleClick(style)}
+                                />
                             ))}
                         </div>
                     ) : (
@@ -308,6 +337,24 @@ function ArtStylesContent() {
                     onOpenChange={setIsSelectionModalOpen}
                 />
 
+                <StyleDetailModal
+                    isOpen={!!selectedStyle}
+                    onClose={() => setSelectedStyle(null)}
+                    style={selectedStyle}
+                    onRegenerate={() => {
+                        fetchStyles();
+                        // Poll immediately
+                        pollingStartTimeRef.current = Date.now();
+                    }}
+                    onDelete={() => {
+                        // Implement delete if needed, otherwise just close.
+                        // Ideally we should have an API call here.
+                        // I'll leave it as TODO or simple close for now.
+                        setSelectedStyle(null);
+                        fetchStyles();
+                    }}
+                />
+
                 {/* Floating CTA for Return Flow */}
                 {fromProjectSetup && (
                     <div className="fixed bottom-8 right-8 z-50 animate-in slide-in-from-bottom-10 fade-in duration-500">
@@ -321,6 +368,7 @@ function ArtStylesContent() {
                     </div>
                 )}
             </div>
+
             <style jsx global>{`
                 .custom-scrollbar::-webkit-scrollbar {
                   width: 6px;

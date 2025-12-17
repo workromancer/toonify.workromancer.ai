@@ -121,3 +121,34 @@ def create_style(
     background_tasks.add_task(generate_style_preview_task, str(style.id), style.description)
     
     return style
+
+@router.post("/{style_id}/regenerate", response_model=StyleOut)
+def regenerate_style(
+    *,
+    style_id: str,
+    session: Session = Depends(deps.get_session),
+    background_tasks: BackgroundTasks,
+    current_user_id: str = Depends(deps.get_current_user_id),
+) -> Any:
+    """
+    Regenerate a failed style.
+    """
+    try:
+        s_uuid = UUID(style_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid UUID")
+
+    style = session.get(CustomStyle, s_uuid)
+    if not style:
+        raise HTTPException(status_code=404, detail="Style not found")
+
+    # Update status
+    style.status = "processing"
+    session.add(style)
+    session.commit()
+    session.refresh(style)
+
+    # Trigger background generation
+    background_tasks.add_task(generate_style_preview_task, str(style.id), style.description)
+    
+    return style

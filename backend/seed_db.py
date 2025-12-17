@@ -83,22 +83,11 @@ def seed():
                     title="Director AI Test", 
                     workspace_id=workspace.id, 
                     owner_id=user.id, 
-                    style_preset="anime_webtoon",
-                    genre_id=default_genre_id
+                    style_preset="anime_webtoon"
                 )
                 session.add(project)
                 session.commit()
                 session.refresh(project)
-            else:
-                # Update genre if missing
-                default_genre_id = genre_map.get("Fantasy").id if "Fantasy" in genre_map else None
-                if not project.genre_id and default_genre_id:
-                     print("Updating test project genre...")
-                     project.genre_id = default_genre_id
-                     session.add(project)
-                     session.commit()
-                     session.refresh(project)
-                     print(f"Updated Test Project Genre: {project.id}")
             
             # Check for Episode
             episode = session.exec(select(Episode).where(Episode.project_id == project.id)).first()
