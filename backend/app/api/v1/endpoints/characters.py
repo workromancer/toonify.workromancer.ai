@@ -425,6 +425,7 @@ def analyze_character(
             language=request.language or project.language or "en"
         )
         return result
+    except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 class BatchSuggestionRequest(BaseModel):

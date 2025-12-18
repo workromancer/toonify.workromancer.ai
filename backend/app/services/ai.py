@@ -31,12 +31,13 @@ class AIService:
             )
             # Models Configuration (Ref: AI_MODELS.md)
             self.model_config = {
-                "style": "gemini-2.5-flash",
-                "worldview": "gemini-3-pro-preview",
+                "style": "gemini-3-flash-preview",
+                "worldview": "gemini-3-flash-preview",
                 "director": "gemini-2.5-pro",
                 "image": "gemini-3-pro-image-preview",
                 "embedding": "gemini-embedding-001",
-                "lite": "gemini-2.5-flash-lite"
+                "lite": "gemini-2.5-flash-lite",
+                "analysis": "gemini-3-flash-preview"
             } 
         except Exception as e:
             print(f"GenAI Client Init Failed: {e}")
@@ -714,7 +715,7 @@ class AIService:
         try:
             print(f"DEBUG PROMPT [generate_episode_ideas]: \n{prompt}")
             response = self.client.models.generate_content(
-                model="gemini-2.5-pro",
+                model=self.model_config["director"],
                 contents=prompt,
                 config=types.GenerateContentConfig(response_mime_type="application/json")
             )
@@ -774,8 +775,8 @@ class AIService:
         if not self.client:
              raise Exception("AI Service not initialized")
 
-        # User requested "gemini-2.5-flash" as primary, "gemini-2.5-flash-lite" as fallback.
-        target_model = "gemini-2.5-flash"
+        # Use style/analysis model as primary for suggestions (gemini-3-flash-preview)
+        target_model = self.model_config["style"]
 
         prompt = ""
         if suggestion_type == "name":
@@ -903,9 +904,9 @@ class AIService:
     def analyze_character_concept(self, project_context: str, name: str, age: str, visual_keywords: List[str], personality: str, language: str = "en") -> dict:
         """
         Analyzes the character concept and suggests a Role (Archetype) and Lore.
-        Uses gemini-2.5-flash for speed and reasoning.
+        Uses gemini-3-flash-preview for speed and reasoning.
         """
-        # User requested gemini-2.5-flash. Using client.models.generate_content directly.
+        # Using configured analysis model.
         
         prompt = f"""
         Analyze the following character concept within the provided Project Worldview and suggest the best fitting Role (Archetype) and a unique background story (Lore).
@@ -959,7 +960,7 @@ class AIService:
         try:
             print(f"DEBUG PROMPT [analyze_character_concept]: \n{prompt}")
             response = self.client.models.generate_content(
-                model="gemini-2.5-flash", 
+                model=self.model_config["analysis"], 
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json"
