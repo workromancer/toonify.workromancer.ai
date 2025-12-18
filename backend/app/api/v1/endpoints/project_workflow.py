@@ -64,7 +64,8 @@ async def bg_generate_cover(project_id: uuid.UUID, style: str, session_factory):
                 title=project.title,
                 genre=project.genre.name if project.genre else "General",
                 worldview=worldview_text,
-                style=style
+                style=style,
+                language=project.language or "en"
             )
             
             try:
@@ -162,7 +163,7 @@ async def bg_generate_cut_image(cut_id: uuid.UUID):
             
             prompt = f"{cut.script}, Style: {project.art_style or project.style_preset}"
             
-            image_bytes = ai_service.generate_image(prompt, width=1024, height=1024) 
+            image_bytes = ai_service.generate_image(prompt, width=1024, height=1024, language=project.language or "en") 
             
             try:
                 data_url = storage.upload_image(image_bytes)
@@ -242,7 +243,8 @@ def augment_character_concept(
         name=request.name,
         tags=request.tags,
         mood=request.mood,
-        style=request.style
+        style=request.style,
+        language=project.language if project else "en"
     )
     return result
 
@@ -293,7 +295,8 @@ def generate_episode_ideas_endpoint(
     ideas = ai_service.generate_episode_ideas(
         project_title=project.title,
         worldview=str(project.worldview) if project.worldview else "",
-        recent_episodes=recent_context
+        recent_episodes=recent_context,
+        language=project.language or "en"
     )
     return ideas
 
@@ -330,7 +333,8 @@ def create_episode_with_cuts(
         episode_title=request.title,
         summary=request.summary,
         style=project.art_style or project.style_preset,
-        num_cuts=request.num_cuts
+        num_cuts=request.num_cuts,
+        language=project.language or "en"
     )
     
     created_cuts = []
@@ -341,7 +345,8 @@ def create_episode_with_cuts(
             script=c_data.get("script", ""),
             selected_layout=c_data.get("panel_type", "Square"),
             aspect_ratio="1:1", 
-            dialogues=c_data.get("dialogues", [])
+            dialogues=c_data.get("dialogues", []),
+            appearing_characters=c_data.get("appearing_characters", [])
         )
         session.add(cut)
         created_cuts.append(cut)

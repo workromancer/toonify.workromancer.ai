@@ -2,6 +2,8 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 from app.api import deps
+from app.models import User
+from sqlmodel import Session, select
 from app.services.ai import ai_service
 from app.services.storage import storage
 import time
@@ -21,6 +23,7 @@ class GenerateResponse(BaseModel):
 async def generate_image(
     *,
     request: GenerateRequest,
+    session: Session = Depends(deps.get_session),
     current_user_id: str = Depends(deps.get_current_user_id),
 ) -> Any:
     """
@@ -34,10 +37,15 @@ async def generate_image(
         # async handling depends on library. Fast API handles sync functions in threadpool.
         
         # We'll use the service synchronously for now.
+        # Fetch User Language
+        user = session.get(User, current_user_id)
+        user_lang = user.language if user else "en"
+
         image_bytes = ai_service.generate_image(
             prompt=request.prompt, 
             width=request.width, 
-            height=request.height
+            height=request.height,
+            language=user_lang
         )
         
         # 2. Upload to Storage

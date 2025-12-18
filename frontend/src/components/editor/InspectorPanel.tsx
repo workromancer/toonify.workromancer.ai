@@ -49,18 +49,24 @@ export default function InspectorPanel() {
     const [generating, setGenerating] = useState(false);
     const [aspectRatio, setAspectRatio] = useState('1:1');
     const [characters, setCharacters] = useState<Character[]>([]);
-    const [activeCharIds, setActiveCharIds] = useState<Set<string>>(new Set());
+    const [appearingCharNames, setAppearingCharNames] = useState<Set<string>>(new Set());
 
-    // Sync specific to activeCut if needed, but currently Inspector seems to rely on local state or parent selection
-    // Ideally we should listen to activeCut changes to populate prompt/ratio
-    // For now, let's just clear prompt when activeCut changes to simulate strict context
+    // Sync specific to activeCut
     useEffect(() => {
-        setPrompt('');
-        // TODO: specific fetch for cut details if not already in store?
-        // Assuming StoryboardView handles the "state" of the cut, but Inspector needs to know it.
-        // Since we don't have cuts in global store (only in StoryboardView local state), 
-        // effectively Inspector might need to fetch the cut or we need to move cuts to store.
-        // For this refactor, I will keep it simple.
+        const fetchCutDetails = async () => {
+            if (!activeCutId) return;
+            try {
+                const res = await api.get(`/cuts/${activeCutId}`);
+                const cut = res.data;
+                setPrompt(cut.script || '');
+                setAspectRatio(cut.aspect_ratio || '1:1');
+                setAppearingCharNames(new Set(cut.appearing_characters || []));
+            } catch (err) {
+                console.error("Failed to fetch cut details", err);
+            }
+        };
+
+        fetchCutDetails();
     }, [activeCutId]);
 
     // Fetch characters
@@ -70,8 +76,6 @@ export default function InspectorPanel() {
             try {
                 const res = await api.get('/characters', { params: { project_id: projectId } });
                 setCharacters(res.data);
-                // Default all to inactive or active? active for now
-                if (res.data.length > 0) setActiveCharIds(new Set([res.data[0].id]));
             } catch (err) {
                 console.error("Failed to fetch characters", err);
             }
@@ -82,7 +86,7 @@ export default function InspectorPanel() {
     const handlePromptChange = (val: string) => {
         setPrompt(val);
         if (activeCutId) {
-            updateCut({ prompt: val });
+            updateCut({ script: val });
         }
     };
 
@@ -93,11 +97,16 @@ export default function InspectorPanel() {
         }
     };
 
-    const toggleCharActive = (id: string) => {
-        setActiveCharIds(prev => {
+    const toggleCharByName = (name: string) => {
+        setAppearingCharNames(prev => {
             const next = new Set(prev);
-            if (next.has(id)) next.delete(id);
-            else next.add(id);
+            if (next.has(name)) next.delete(name);
+            else next.add(name);
+
+            // Sync with backend
+            if (activeCutId) {
+                updateCut({ appearing_characters: Array.from(next) });
+            }
             return next;
         });
     };
@@ -105,29 +114,15 @@ export default function InspectorPanel() {
     const handleGenerate = async () => {
         try {
             setGenerating(true);
-            let imageUrl = "";
-
-            // Construct prompt with active characters
-            let finalPrompt = prompt;
-            const activeChars = characters.filter(c => activeCharIds.has(c.id));
-            if (activeChars.length > 0) {
-                const charDescriptions = activeChars.map(c => `(${c.name}: ${c.tags.slice(0, 3).join(', ')})`).join(', ');
-                finalPrompt = `${finalPrompt}, Characters: [${charDescriptions}]`;
-            }
 
             if (activeEpisodeId && activeCutId) {
                 // Use Cut-specific generation
-                const res = await api.post(`/episodes/${activeEpisodeId}/cuts/${activeCutId}/generate-image`, {
-                    prompt_override: finalPrompt || undefined
+                // The backend now automatically uses the stored appearing_characters
+                await api.post(`/episodes/${activeEpisodeId}/cuts/${activeCutId}/generate-image`, {
+                    prompt_override: prompt || undefined
                 });
-                imageUrl = res.data.image_path;
 
-                // We should update the cut in state/UI - since we lack a global cuts store, we rely on refetch in StoryboardView :(
-                // Ideally this flow should be cleaner.
-                // But for now removal of Canvas is priority.
-                if (imageUrl) {
-                    updateCut({ image_path: imageUrl });
-                }
+                // StoryboardView polls for the image, so we don't need to do much here
             }
 
         } catch (err) {
@@ -184,13 +179,13 @@ export default function InspectorPanel() {
                 <div>
                     <label className="text-xs font-bold text-slate-400 mb-2 flex justify-between items-center">
                         <span>{t('activeCharacters')}</span>
-                        <span className="text-[10px] text-slate-500">{activeCharIds.size}/{characters.length}</span>
+                        <span className="text-[10px] text-slate-500">{appearingCharNames.size}/{characters.length}</span>
                     </label>
                     <div className="space-y-2">
                         {characters.map(char => (
                             <div
                                 key={char.id}
-                                onClick={() => toggleCharActive(char.id)}
+                                onClick={() => toggleCharByName(char.name)}
                                 className="flex items-center justify-between p-2 bg-[#13131c] border border-slate-800 rounded-lg hover:border-slate-600 transition-colors cursor-pointer"
                             >
                                 <div className="flex items-center gap-3">
@@ -203,8 +198,8 @@ export default function InspectorPanel() {
                                     </div>
                                     <span className="text-xs font-medium text-slate-300">{char.name}</span>
                                 </div>
-                                <div className={`w-4 h-4 rounded border flex items-center justify-center ${activeCharIds.has(char.id) ? 'bg-purple-600 border-purple-500' : 'border-slate-600'}`}>
-                                    {activeCharIds.has(char.id) && <Check size={10} className="text-white" />}
+                                <div className={`w-4 h-4 rounded border flex items-center justify-center ${appearingCharNames.has(char.name) ? 'bg-purple-600 border-purple-500' : 'border-slate-600'}`}>
+                                    {appearingCharNames.has(char.name) && <Check size={10} className="text-white" />}
                                 </div>
                             </div>
                         ))}

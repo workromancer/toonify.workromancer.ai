@@ -739,9 +739,10 @@ class AIService:
         - Script (Visual Description of action/scene)
         - Dialogues (List of {{speaker, text}})
         - Panel Type (Wide, Vertical, Square)
+        - Appearing Characters (List of character names appearing in this cut, MAX 6)
         
-        {f'IMPORTANT: All output text (scripts, dialogues) MUST be in {language} language.' if language else ''}
-        {f'If language is Korean, use Hangul for scripts and dialogues.' if language and language.startswith('ko') else ''}
+        {f'IMPORTANT: All output text (scripts, dialogues, character names) MUST be in {language} language.' if language else ''}
+        {f'If language is Korean, use Hangul for scripts, dialogues, and appearing characters(names).' if language and language.startswith('ko') else ''}
 
         Return ONLY JSON:
         {{
@@ -750,6 +751,7 @@ class AIService:
                     "cut_order": 1,
                     "script": "Visual description...",
                     "dialogues": [{{"speaker": "A", "text": "Hello"}}],
+                    "appearing_characters": ["Character A", "Character B"],
                     "panel_type": "Wide"
                 }},
                 ...

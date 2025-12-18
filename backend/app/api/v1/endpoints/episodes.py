@@ -211,6 +211,7 @@ def generate_episode_cuts(
             selected_layout=cut_item.get("panel_type", "Square"), # Mapping panel_type to layout?
             aspect_ratio=cut_item.get("panel_type", "1:1"), # Simplified mapping
             dialogues=cut_item.get("dialogues", []),
+            appearing_characters=cut_item.get("appearing_characters", []),
             image_path=None
         )
         
@@ -302,17 +303,31 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
                 prev_scene_url = prev_cut.image_path
         
         # C. Characters (Max 6)
-        # Assuming we send ALL project characters that have profile images
-        # In a refined version, we would check which characters are actually IN the scene script/dialogue.
-        # For now, let's send the top 6 characters with images to give the AI a "cast list".
-        chars = session.exec(select(Character).where(Character.project_id == project.id).limit(6)).all()
+        # 1. Start with characters explicitly listed for this cut
+        appearing_names = [name.lower() for name in (cut.appearing_characters or [])]
+        
+        # 2. Add characters from dialogues
+        suggested_names = [d.get("speaker", "").lower() for d in (cut.dialogues or []) if d.get("speaker")]
+        appearing_names.extend(suggested_names)
+        
+        # 3. Deduplicate and filter project characters
+        occurring_names = list(set(appearing_names))
+        
+        # Fetch characters from project
+        all_chars = session.exec(select(Character).where(Character.project_id == project.id)).all()
+        
         char_data = []
-        for c in chars:
-            if c.profile_image_url:
-                char_data.append({
-                    "name": c.name,
-                    "url": c.profile_image_url
-                })
+        # Priority 1: Specifically matched characters
+        matched_chars = [c for c in all_chars if c.name.lower() in occurring_names and c.profile_image_url]
+        for c in matched_chars[:6]:
+            char_data.append({"name": c.name, "url": c.profile_image_url})
+            
+        # Priority 2: Fallback to any project characters if less than 6 found and we need context
+        # But maybe better to be strict? Let's add up to 3 more from the project if none matched.
+        if len(char_data) < 3:
+            remaining_chars = [c for c in all_chars if c.id not in [mc.id for mc in matched_chars] and c.profile_image_url]
+            for c in remaining_chars[:(6 - len(char_data))]:
+                char_data.append({"name": c.name, "url": c.profile_image_url})
         
         # 2. Prompt Construction
         prompt = prompt_override

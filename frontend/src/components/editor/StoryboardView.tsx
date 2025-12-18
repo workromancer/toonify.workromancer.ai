@@ -19,6 +19,7 @@ interface StoryCut {
     aspect_ratio: string;
     image_path?: string;
     dialogues: unknown[];
+    appearing_characters?: string[];
 }
 
 interface DirectorOption {
