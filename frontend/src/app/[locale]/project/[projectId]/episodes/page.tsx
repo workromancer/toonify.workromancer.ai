@@ -15,7 +15,8 @@ import {
     Calendar,
     Film,
     MoreVertical,
-    AlertCircle
+    AlertCircle,
+    Trash2
 } from 'lucide-react';
 import {
     DropdownMenu,
@@ -24,6 +25,8 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import GenerateEpisodeModal from '@/components/project/modals/GenerateEpisodeModal';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
 
@@ -50,12 +53,19 @@ export default function EpisodesPage() {
     const projectId = params?.projectId as string;
     const t = useTranslations('Project.Episodes');
 
+    const { toast } = useToast();
+    const tCommon = useTranslations('Common');
+
     const [project, setProject] = useState<Project | null>(null);
     const [episodes, setEpisodes] = useState<Episode[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState<'ALL' | 'READY' | 'DRAFT'>('ALL');
     const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
+
+    // Delete State
+    const [episodeToDelete, setEpisodeToDelete] = useState<Episode | null>(null);
+    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -81,6 +91,32 @@ export default function EpisodesPage() {
         setEpisodes([...episodes, newEpisode]);
         // Optional: Redirect immediately or just show in list
         // router.push(`/project/${projectId}/editor?episode_id=${newEpisode.id}`);
+    };
+
+    const handleDeleteClick = (e: React.MouseEvent, episode: Episode) => {
+        e.stopPropagation();
+        setEpisodeToDelete(episode);
+        setIsDeleteConfirmOpen(true);
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (!episodeToDelete) return;
+        try {
+            await api.delete(`/episodes/${episodeToDelete.id}`);
+            setEpisodes(prev => prev.filter(ep => ep.id !== episodeToDelete.id));
+            toast({
+                title: "Episode deleted",
+            });
+        } catch (error) {
+            console.error("Failed to delete episode", error);
+            toast({
+                title: "Error",
+                description: "Failed to delete episode",
+                variant: 'destructive',
+            });
+        }
+        setIsDeleteConfirmOpen(false);
+        setEpisodeToDelete(null);
     };
 
     const filteredEpisodes = episodes.filter(ep => {
@@ -209,9 +245,26 @@ export default function EpisodesPage() {
                                         )}>
                                             {ep.thumbnail_url ? t('ready') : t('draft')}
                                         </span>
-                                        <button className="p-2 text-slate-500 hover:text-white transition-colors">
-                                            <MoreVertical size={16} />
-                                        </button>
+
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <button
+                                                    className="p-2 text-slate-500 hover:text-white transition-colors"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <MoreVertical size={16} />
+                                                </button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" className="bg-[#18181B] border-gray-800 text-gray-300">
+                                                <DropdownMenuItem
+                                                    onClick={(e) => handleDeleteClick(e, ep)}
+                                                    className="focus:bg-red-500/10 focus:text-red-400 text-red-400 cursor-pointer"
+                                                >
+                                                    <Trash2 size={14} className="mr-2" />
+                                                    {tCommon('delete')}
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </div>
                                 </div>
                             ))}
@@ -226,6 +279,17 @@ export default function EpisodesPage() {
                 projectId={projectId}
                 onGenerate={handleEpisodeAdd}
                 nextOrder={episodes.length + 1}
+            />
+
+            <ConfirmationDialog
+                open={isDeleteConfirmOpen}
+                onOpenChange={setIsDeleteConfirmOpen}
+                title={tCommon('deleteConfirm')}
+                description={tCommon('deleteConfirmDesc')}
+                confirmLabel={tCommon('delete')}
+                cancelLabel={tCommon('cancel')}
+                onConfirm={handleDeleteConfirm}
+                variant="destructive"
             />
         </ProjectLayout>
     );

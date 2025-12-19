@@ -725,7 +725,7 @@ class AIService:
             print(f"Episode Idea Gen Failed: {e}")
             raise e
 
-    def generate_initial_cuts(self, episode_title: str, summary: str, style: str, num_cuts: int = 6, language: str = "en") -> List[dict]:
+    def generate_initial_cuts(self, episode_title: str, summary: str, style: str, num_cuts: int = 6, language: str = "en", available_characters: List[str] = None) -> List[dict]:
         if not self.client:
              raise Exception("AI Service not initialized")
 
@@ -735,11 +735,13 @@ class AIService:
         Summary: {summary}
         Style: {style}
         
+        Available Characters: {', '.join(available_characters) if available_characters else 'None'}
+        
         For each cut, determine:
         - Script (Visual Description of action/scene)
         - Dialogues (List of {{speaker, text}})
-        - Panel Type (Wide, Vertical, Square)
-        - Appearing Characters (List of character names appearing in this cut, MAX 6)
+        - Panel Type (Aspect Ratio: Choose from "1:1", "3:2", "2:3", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9". Prefer vertical ratios for mobile scroll (9:16, 2:3, 4:5), or 1:1/16:9/21:9 for specific impact.)
+        - Appearing Characters (List of character names appearing in this cut, MAX 6. Use EXACT names from 'Available Characters' if applicable)
         
         {f'IMPORTANT: All output text (scripts, dialogues, character names) MUST be in {language} language.' if language else ''}
         {f'If language is Korean, use Hangul for scripts, dialogues, and appearing characters(names).' if language and language.startswith('ko') else ''}
@@ -999,6 +1001,7 @@ class AIService:
                              prompt: str, 
                              width: int = 1024, 
                              height: int = 1024, 
+                             aspect_ratio: str = None,
                              style_ref_url: str = None, 
                              character_data: List[dict] = None, 
                              prev_scene_url: str = None,
@@ -1058,15 +1061,39 @@ class AIService:
                             full_prompt += f"\n[Reference Image {len(parts)}] is character '{c_name}'. Include them if relevant to the scene."
 
             # 5. Determine Aspect Ratio
-            ratio_val = width / height
-            aspect_ratio = "1:1"
-            if abs(ratio_val - 3/4) < 0.01: aspect_ratio = "3:4"
-            elif abs(ratio_val - 9/16) < 0.01: aspect_ratio = "9:16"
-            elif abs(ratio_val - 4/3) < 0.01: aspect_ratio = "4:3"
-            elif abs(ratio_val - 16/9) < 0.01: aspect_ratio = "16:9"
+            final_ratio = "1:1"
+            if aspect_ratio:
+                 # Normalize known aliases and map to nearest supported Gemini ratio
+                 # Supported: "1:1", "3:4", "4:3", "9:16", "16:9"
+                 r_lower = aspect_ratio.lower()
+                 
+                 mapping = {
+                     "wide": "16:9",
+                     "vertical": "9:16",
+                     "square": "1:1",
+                     "21:9": "16:9", # Ultra-wide -> Wide
+                     "3:2": "4:3",   # Standard -> Standard (4:3 is 1.33, 3:2 is 1.5. 16:9 is 1.77. 1.5 is equidistant. Prefer 4:3 or 16:9? 4:3 is closer to 1.5 than 1.77? 1.5-1.33=0.17. 1.77-1.5=0.27. So 4:3.)
+                     "2:3": "3:4",   # Vertical standard -> 3:4 (0.66 vs 0.75)
+                     "4:5": "3:4",   # IG Portrait -> 3:4 (0.8 vs 0.75)
+                     "5:4": "4:3",   # 1.25 vs 1.33
+                     "1:1": "1:1",
+                     "16:9": "16:9",
+                     "9:16": "9:16",
+                     "3:4": "3:4",
+                     "4:3": "4:3"
+                 }
+                 
+                 final_ratio = mapping.get(r_lower, "1:1")
+            else:
+                # Derive from dimensions
+                ratio_val = width / height
+                if abs(ratio_val - 3/4) < 0.01: final_ratio = "3:4"
+                elif abs(ratio_val - 9/16) < 0.01: final_ratio = "9:16"
+                elif abs(ratio_val - 4/3) < 0.01: final_ratio = "4:3"
+                elif abs(ratio_val - 16/9) < 0.01: final_ratio = "16:9"
 
             # 6. Call API
-            print(f"Generating Panel with {len(parts)} images. Ratio: {aspect_ratio}")
+            print(f"Generating Panel with {len(parts)} images. Ratio: {final_ratio}")
             
             text_part = types.Part.from_text(text=full_prompt)
             
@@ -1079,7 +1106,7 @@ class AIService:
             
             config = types.GenerateContentConfig(
                 response_modalities=['IMAGE'], 
-                image_config=types.ImageConfig(aspect_ratio=aspect_ratio)
+                image_config=types.ImageConfig(aspect_ratio=final_ratio)
             )
 
             print(f"DEBUG PROMPT [generate_panel_image]: \n{full_prompt}")

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 
-import { Wand2, Smartphone, Square, Monitor, Check } from 'lucide-react';
+import { Wand2, Smartphone, Square, Monitor, Check, RectangleHorizontal, RectangleVertical } from 'lucide-react';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import api from '@/lib/api';
 import { useParams } from 'next/navigation';
@@ -16,21 +16,29 @@ interface Character {
 }
 
 const AspectRatioSelector = ({ current, onChange }: { current: string, onChange: (r: string) => void }) => (
-    <div className="flex bg-slate-900 p-1 rounded-lg border border-slate-800">
+    <div className="grid grid-cols-5 gap-1 bg-slate-900 p-1 rounded-lg border border-slate-800">
         {[
-            { id: '9:16', icon: Smartphone, label: 'Scroll' },
-            { id: '1:1', icon: Square, label: 'Square' },
-            { id: '16:9', icon: Monitor, label: 'Wide' },
+            { id: '9:16', icon: Smartphone, label: '9:16' },
+            { id: '2:3', icon: RectangleVertical, label: '2:3' },
+            { id: '3:4', icon: RectangleVertical, label: '3:4' },
+            { id: '4:5', icon: RectangleVertical, label: '4:5' },
+            { id: '1:1', icon: Square, label: '1:1' },
+            { id: '5:4', icon: RectangleHorizontal, label: '5:4' },
+            { id: '4:3', icon: RectangleHorizontal, label: '4:3' },
+            { id: '3:2', icon: RectangleHorizontal, label: '3:2' },
+            { id: '16:9', icon: Monitor, label: '16:9' },
+            { id: '21:9', icon: Monitor, label: '21:9' },
         ].map((ratio) => (
             <button
                 key={ratio.id}
                 onClick={() => onChange(ratio.id)}
-                className={`flex-1 flex flex-col items-center justify-center py-2 rounded-md text-[10px] transition-all gap-1 ${current === ratio.id
+                className={`flex flex-col items-center justify-center py-2 rounded-md text-[9px] transition-all gap-1 ${current === ratio.id
                     ? 'bg-purple-600 text-white shadow-md'
                     : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'
                     }`}
+                title={ratio.label}
             >
-                <ratio.icon size={14} />
+                <ratio.icon size={12} />
                 {ratio.label}
             </button>
         ))}

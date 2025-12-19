@@ -176,6 +176,10 @@ def generate_episode_cuts(
     project = session.get(Project, request.project_id)
     project_lang = project.language if project else "en"
 
+    # Fetch project characters for AI context
+    characters = session.exec(select(Character).where(Character.project_id == request.project_id).where(Character.deleted_at == None)).all()
+    char_names = [c.name for c in characters]
+
     # 2. Generate Cuts via AI
     try:
         cuts_data = ai_service.generate_initial_cuts(
@@ -183,7 +187,8 @@ def generate_episode_cuts(
             summary=request.episode_summary,
             style=style,
             num_cuts=request.num_cuts,
-            language=project_lang
+            language=project_lang,
+            available_characters=char_names
         )
     except Exception as e:
         # If AI fails, we might still want the episode? Or rollback?
@@ -211,12 +216,18 @@ def generate_episode_cuts(
         
         # Refine aspect ratio based on panel type
         ptype = cut_item.get("panel_type", "").lower()
-        if "wide" in ptype:
-            story_cut.aspect_ratio = "Wide"
+        
+        # Check if ptype allows specific ratio string
+        if ":" in ptype:
+             story_cut.aspect_ratio = ptype
+        elif "wide" in ptype:
+            story_cut.aspect_ratio = "16:9"
         elif "vertical" in ptype:
-            story_cut.aspect_ratio = "Vertical"
+             story_cut.aspect_ratio = "9:16"
+        elif "square" in ptype:
+             story_cut.aspect_ratio = "1:1"
         else:
-            story_cut.aspect_ratio = "Square"
+            story_cut.aspect_ratio = "1:1"
             
         session.add(story_cut)
         created_cuts.append(story_cut)
@@ -339,9 +350,11 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
 
         # 3. Determine Dimensions
         width, height = 1024, 1024
-        if cut.aspect_ratio == "Wide":
+        ratio = cut.aspect_ratio.lower() if cut.aspect_ratio else "square"
+        
+        if ratio in ["wide", "16:9"]:
             width, height = 1536, 1024 # 3:2
-        elif cut.aspect_ratio == "Vertical":
+        elif ratio in ["vertical", "9:16"]:
             width, height = 1024, 1536 # 2:3
         
         try:
@@ -349,6 +362,7 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
                 prompt=prompt,
                 width=width,
                 height=height,
+                aspect_ratio=ratio,
                 style_ref_url=style_ref_url,
                 character_data=char_data,
                 prev_scene_url=prev_scene_url,

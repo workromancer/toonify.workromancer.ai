@@ -316,7 +316,12 @@
           "scroll": "스크롤",
           "square": "정방형",
           "wide": "와이드"
-        }
+        },
+        "activeCharacters": "등장인물",
+        "noCharacters": "등록된 캐릭터가 없습니다.",
+        "generateImage": "이미지 생성",
+        "processing": "생성 중...",
+        "cost": "비용: 1 크레딧 • 소요시간: 약 5초"
       },
       "EpisodeList": {
         "title": "에피소드",
