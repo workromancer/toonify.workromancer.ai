@@ -58,6 +58,7 @@ export default function InspectorPanel() {
     const [aspectRatio, setAspectRatio] = useState('1:1');
     const [characters, setCharacters] = useState<Character[]>([]);
     const [appearingCharIds, setAppearingCharIds] = useState<Set<string>>(new Set());
+    const [usePreviousContext, setUsePreviousContext] = useState(true);
 
     // Sync specific to activeCut
     useEffect(() => {
@@ -144,7 +145,8 @@ export default function InspectorPanel() {
 
             if (activeEpisodeId && activeCutId) {
                 await api.post(`/episodes/${activeEpisodeId}/cuts/${activeCutId}/generate-image`, {
-                    prompt_override: prompt || undefined
+                    prompt_override: prompt || undefined,
+                    use_previous_context: usePreviousContext
                 });
             }
 
@@ -234,6 +236,18 @@ export default function InspectorPanel() {
 
             {/* Action Footer */}
             <div className="p-4 border-t border-slate-800 bg-[#0f0f16]">
+                <div className="flex items-center gap-2 mb-3 px-1">
+                    <input
+                        type="checkbox"
+                        id="usePreviousContext"
+                        checked={usePreviousContext}
+                        onChange={(e) => setUsePreviousContext(e.target.checked)}
+                        className="w-3.5 h-3.5 rounded border-slate-600 bg-slate-900 accent-purple-600 focus:ring-1 focus:ring-purple-500 cursor-pointer"
+                    />
+                    <label htmlFor="usePreviousContext" className="text-xs text-slate-400 cursor-pointer select-none hover:text-slate-300 transition-colors">
+                        {t('referencePreviousCut')}
+                    </label>
+                </div>
                 <button
                     onClick={handleGenerate}
                     disabled={generating}

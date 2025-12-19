@@ -27,6 +27,7 @@ class GenerateCutsRequest(BaseModel):
 
 class GenerateImageRequest(BaseModel):
     prompt_override: Optional[str] = None
+    use_previous_context: bool = True
 
 
 
@@ -294,6 +295,7 @@ def generate_cut_image(
 
     # Pass everything needed to background task
     prompt_override = request.prompt_override
+    use_previous_context = request.use_previous_context
     
     # Update status to generating
     cut.status = "generating"
@@ -305,11 +307,11 @@ def generate_cut_image(
     project = session.get(Project, episode.project_id)
     lang = project.language if project else "en"
 
-    background_tasks.add_task(generate_cut_task, cut_id, prompt_override, lang)
+    background_tasks.add_task(generate_cut_task, cut_id, prompt_override, lang, use_previous_context)
     
     return {"message": "Generation started", "cut_id": cut_id}
     
-def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: str = "en"):
+def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: str = "en", use_previous_context: bool = True):
     print(f"Background Task: Generating image for cut {cut_id}, language={language}")
     with Session(engine) as session:
         cut = session.get(StoryCut, cut_id)
@@ -329,12 +331,12 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
             
             # A. Style Reference
             style_ref_url = project.style_reference_url
-            if not style_ref_url and project.projects: # Just in case data model is weird, but typically project.style_reference_url is correct
+            if not style_ref_url:
                  pass 
     
             # B. Previous Scene (for continuity)
             prev_scene_url = None
-            if cut.cut_order > 1:
+            if use_previous_context and cut.cut_order > 1:
                 prev_cut = session.exec(
                     select(StoryCut)
                     .where(StoryCut.episode_id == cut.episode_id)
@@ -345,8 +347,15 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
             
             # C. Characters (Max 6)
             # 1. Start with characters explicitly listed for this cut
-            appearing_names = [name.lower() for name in (cut.appearing_characters or [])]
-            
+            raw_appearing = cut.appearing_characters or []
+            appearing_names = []
+            for item in raw_appearing:
+                if isinstance(item, dict):
+                    if "name" in item:
+                        appearing_names.append(item["name"].lower())
+                elif isinstance(item, str):
+                    appearing_names.append(item.lower())
+
             # 2. Add characters from dialogues
             suggested_names = [d.get("speaker", "").lower() for d in (cut.dialogues or []) if d.get("speaker")]
             appearing_names.extend(suggested_names)
@@ -423,12 +432,15 @@ def export_episode(
     current_user_id: str = Depends(deps.get_current_user_id),
 ):
     """
-    Export episode as a stitched vertical image (Webtoon strip).
+    Export episode as a stitched vertical image (Webtoon strip) or a ZIP of individual images.
     """
     from fastapi.responses import StreamingResponse
     from PIL import Image
     import io
     import base64
+    import zipfile
+    import requests
+    import urllib.parse
     
     # Fetch Episode & Cuts
     episode = session.get(Episode, episode_id)
@@ -441,23 +453,68 @@ def export_episode(
     if not cuts:
         raise HTTPException(status_code=400, detail="No cuts to export")
 
+    # Helper to get image bytes
+    def get_image_bytes(image_path: str) -> bytes | None:
+        if not image_path:
+            return None
+        try:
+            if image_path.startswith("data:image"):
+                header, encoded = image_path.split(",", 1)
+                return base64.b64decode(encoded)
+            elif image_path.startswith("http"):
+                # Fetch from URL (S3/MinIO)
+                resp = requests.get(image_path, timeout=10)
+                if resp.status_code == 200:
+                    return resp.content
+            return None
+        except Exception as e:
+            print(f"Failed to fetch image: {e}")
+            return None
+
+    if format == "zip":
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+            file_count = 0
+            for cut in cuts:
+                if not cut.image_path:
+                    continue
+                    
+                img_data = get_image_bytes(cut.image_path)
+                if img_data:
+                    # Naming: EpisodeTitle_CutNumber.png
+                    # Sanitize title
+                    safe_title = "".join(c for c in episode.title if c.isalnum() or c in (' ', '_', '-')).strip().replace(" ", "_")
+                    filename = f"{safe_title}_{cut.cut_order:02d}.png"
+                    zf.writestr(filename, img_data)
+                    file_count += 1
+            
+        if file_count == 0:
+             raise HTTPException(status_code=400, detail="No valid images found to zip")
+             
+        zip_buffer.seek(0)
+        zip_filename = f"{episode.title.replace(' ', '_')}_cuts.zip"
+        encoded_zip_filename = urllib.parse.quote(zip_filename)
+        
+        return StreamingResponse(
+            zip_buffer,
+            media_type="application/zip",
+            headers={"Content-Disposition": f"attachment; filename*=UTF-8''{encoded_zip_filename}"}
+        )
+
+    # ... Webtoon Strip Logic (Legacy support for data-uri only primarily?) ...
+    # Updating this to use the new get_image_bytes helper for consistency if generic URLs are used too
+    
     images = []
     total_height = 0
     max_width = 0
     
     # Process Images
     for cut in cuts:
-        if cut.image_path and cut.image_path.startswith("data:image"):
+        img_data = get_image_bytes(cut.image_path)
+        if img_data:
             try:
-                # Extract base64 info
-                header, encoded = cut.image_path.split(",", 1)
-                img_data = base64.b64decode(encoded)
                 img = Image.open(io.BytesIO(img_data))
-                img.load() # Force load to validate data
-                
-                # Normalize width (optional? let's stick to max found or 1024?)
-                # For webtoon, fixed width is standard. Let's force 1024 width?
-                # For MVP, just list them.
+                img.load()
                 images.append(img)
                 total_height += img.height
                 max_width = max(max_width, img.width)
@@ -468,17 +525,13 @@ def export_episode(
          raise HTTPException(status_code=400, detail="No valid images found in cuts")
 
     # Create Canvas
-    # Add some spacing? 
     spacing = 50
     final_height = total_height + (len(images) - 1) * spacing
     
-    # Default background white or black? Webtoons often white or dark mode?
-    # Let's use White for now.
     canvas = Image.new('RGB', (max_width, final_height), (255, 255, 255))
     
     y_offset = 0
     for img in images:
-        # Center image if smaller than max width?
         x_offset = (max_width - img.width) // 2
         canvas.paste(img, (x_offset, y_offset))
         y_offset += img.height + spacing
@@ -489,9 +542,10 @@ def export_episode(
     img_byte_arr.seek(0)
     
     filename = f"{episode.title.replace(' ', '_')}_export.png"
+    encoded_filename = urllib.parse.quote(filename)
     
     return StreamingResponse(
         img_byte_arr, 
         media_type="image/png",
-        headers={"Content-Disposition": f"attachment; filename={filename}"}
+        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}"}
     )

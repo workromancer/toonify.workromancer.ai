@@ -246,6 +246,8 @@
       "save": "Save",
       "saved": "Saved",
       "export": "Export",
+      "exportZip": "Download Images (ZIP)",
+      "exportWebtoon": "Webtoon Strip",
       "storyboard": "Storyboard",
       "script": "Script",
       "scriptEditor": "SCRIPT EDITOR (Read-Only)",
@@ -297,7 +299,8 @@
         "noCharacters": "No characters found.",
         "generateImage": "Generate Image",
         "processing": "Processing...",
-        "cost": "Cost: 1 Credit • Est. Time: ~5s"
+        "cost": "Cost: 1 Credit • Est. Time: ~5s",
+        "referencePreviousCut": "Reference Previous Cut"
       },
       "toasts": {
         "noCuts": "No cuts to generate",

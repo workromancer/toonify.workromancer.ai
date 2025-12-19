@@ -5,12 +5,18 @@ import { useCanvasStore } from '@/store/useCanvasStore';
 import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
 
-import { Plus, Image as ImageIcon, Trash2, Clapperboard, Loader2, Wand2, Sparkles, RefreshCw } from 'lucide-react';
+import { Plus, Image as ImageIcon, Trash2, Clapperboard, Loader2, Wand2, Sparkles, RefreshCw, Download } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import MobileEpisodeViewer from '@/components/viewer/MobileEpisodeViewer';
 import { useTranslations } from 'next-intl';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 interface StoryCut {
     id: string;
@@ -50,6 +56,7 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
     const [isSuggesting, setIsSuggesting] = useState(false);
     const [isRendering, setIsRendering] = useState<string | null>(null); // storing option ID being rendered
     const [modifyingCut, setModifyingCut] = useState<StoryCut | null>(null); // For Director's Cut modal
+    const [isBatchGenerating, setIsBatchGenerating] = useState(false);
 
 
     // Reuse existing handlers...
@@ -63,6 +70,7 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
             return;
         }
 
+        setIsBatchGenerating(true);
         toast({ title: t('toasts.batchStart'), description: t('toasts.batchStartDesc', { count: cutsToGenerate.length }) });
 
         for (const cut of cutsToGenerate) {
@@ -73,6 +81,7 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
                 break;
             }
         }
+        setIsBatchGenerating(false);
     };
 
     const fetchCuts = async () => {
@@ -174,6 +183,45 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
         }
     };
 
+    const handleExport = async (format: 'zip' | 'webtoon') => {
+        if (!activeEpisodeId) return;
+        try {
+            toast({ title: "Exporting...", description: "Preparing your download." });
+            const response = await api.post(`/episodes/${activeEpisodeId}/export?format=${format}`, {}, {
+                responseType: 'blob'
+            });
+
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+
+            // Try to extract filename from header
+            const contentDisposition = response.headers['content-disposition'];
+            let filename = `episode_export.${format === 'zip' ? 'zip' : 'png'}`;
+            if (contentDisposition) {
+                // Check for standard filename
+                let fileNameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+                if (fileNameMatch && fileNameMatch.length === 2) {
+                    filename = fileNameMatch[1];
+                }
+
+                // Check for UTF-8 encoded filename (overrides standard)
+                const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/);
+                if (utf8Match && utf8Match.length === 2) {
+                    filename = decodeURIComponent(utf8Match[1]);
+                }
+            }
+
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (err) {
+            console.error("Export failed", err);
+            toast({ title: "Export Failed", description: "Could not download the file.", variant: "destructive" });
+        }
+    };
+
     const [generatingIds, setGeneratingIds] = useState<Set<string>>(new Set());
 
     const handleGenerateImage = async (cutId: string, isBatch = false): Promise<boolean> => {
@@ -191,8 +239,8 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
             }
 
             // 2. Poll for completion
-            // Poll for up to 60 seconds (30 attempts * 2s)
-            const maxAttempts = 30;
+            // Poll for up to 180 seconds (90 attempts * 2s)
+            const maxAttempts = 90;
             let attempts = 0;
 
             while (attempts < maxAttempts) {
@@ -215,9 +263,14 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
                         });
                         return true;
                     }
+                    // Fail fast if status is 'failed'
+                    if (updatedCut.status === 'failed') {
+                        throw new Error('Generation failed on server');
+                    }
+
                 } catch (pollErr) {
                     console.error("Polling error", pollErr);
-                    // Continue polling even if one request fails? or abort?
+                    if (String(pollErr).includes("Generation failed")) throw pollErr;
                 }
 
                 attempts++;
@@ -274,10 +327,26 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
                 </h2>
                 <div className="flex gap-2">
                     {cuts.some(c => !c.image_path) && (
-                        <Button variant="outline" size="sm" onClick={handleGenerateAll} className="h-7 text-xs border-purple-500/30 text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 hover:text-purple-300">
-                            <Sparkles size={12} className="mr-1" /> {t('generateAll')}
+                        <Button variant="outline" size="sm" onClick={handleGenerateAll} disabled={isBatchGenerating} className="h-7 text-xs border-purple-500/30 text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 hover:text-purple-300">
+                            {isBatchGenerating ? <Loader2 className="animate-spin mr-1" size={12} /> : <Sparkles size={12} className="mr-1" />} {t('generateAll')}
                         </Button>
                     )}
+
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-7 px-2 text-slate-400 hover:text-white">
+                                <Download size={16} />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48 bg-[#13131c] border-slate-800 text-slate-200">
+                            <DropdownMenuItem onClick={() => handleExport('zip')} className="cursor-pointer hover:bg-slate-800 focus:bg-slate-800 focus:text-white">
+                                <span>{t('exportZip')}</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleExport('webtoon')} className="cursor-pointer hover:bg-slate-800 focus:bg-slate-800 focus:text-white">
+                                <span>{t('exportWebtoon')}</span>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
 
                 </div>
             </div>
@@ -365,10 +434,11 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
+                                                            disabled={isBatchGenerating}
                                                             onClick={(e) => { e.stopPropagation(); handleGenerateImage(cut.id); }}
-                                                            className="h-6 text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white mt-1 border border-slate-700"
+                                                            className={`h-6 text-[10px] mt-1 border border-slate-700 ${isBatchGenerating ? 'bg-slate-900 text-slate-600 cursor-not-allowed' : 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white'}`}
                                                         >
-                                                            {t('generate')}
+                                                            {isBatchGenerating ? t('waiting') : t('generate')}
                                                         </Button>
                                                     </>
                                                 )}

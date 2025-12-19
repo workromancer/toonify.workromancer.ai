@@ -36,8 +36,9 @@ class StoryCutOut(BaseModel):
     selected_layout: str
     aspect_ratio: str
     dialogues: List[dict]
-    appearing_characters: List[str] = []
+    appearing_characters: List[Any] = []
     image_path: Optional[str] = None
+    status: str = "idle"
     created_at: datetime
 
 @router.get("", response_model=List[StoryCutOut])

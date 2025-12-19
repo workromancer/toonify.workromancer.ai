@@ -96,7 +96,8 @@
         "title": "액션 팩",
         "desc": "고강도 액션 연출용"
       }
-    }
+    },
+    "logout": "로그아웃"
   },
   "CreateWorkspace": {
     "title": "워크스페이스 생성",
@@ -238,7 +239,9 @@
       "suggestionsReady": "캐릭터 컨셉 준비 완료",
       "suggestionsReadyDesc": "AI가 세계관을 분석해 새로운 캐릭터 후보들을 생성했습니다. 캐스팅 위저드에서 확인해보세요.",
       "preparingSuggestions": "아이디어 구상 중...",
-      "preparingSuggestionsDesc": "스토리에 어울리는 캐릭터들을 분석 중입니다. 잠시만 기다려주세요."
+      "preparingSuggestionsDesc": "스토리에 어울리는 캐릭터들을 분석 중입니다. 잠시만 기다려주세요.",
+      "castConfirm": "캐스팅 확정",
+      "castConfirmDesc": "이 제안을 바탕으로 캐릭터를 생성하시겠습니까? 바로 이미지 생성이 시작됩니다."
     },
     "Characters": {
       "title": "등장인물",
@@ -250,8 +253,6 @@
       "reject": "제안 거절",
       "rejectConfirm": "정말 이 제안을 삭제하시겠습니까?",
       "rejectSuccess": "제안이 삭제되었습니다.",
-      "castConfirm": "캐스팅 확정",
-      "castConfirmDesc": "이 제안을 바탕으로 캐릭터를 생성하시겠습니까? 바로 이미지 생성이 시작됩니다.",
       "castSuccess": "캐스팅이 확정되었습니다. 캐릭터가 생성 중입니다."
     },
     "Episodes": {
@@ -271,6 +272,8 @@
       "save": "저장",
       "saved": "저장됨",
       "export": "내보내기",
+      "exportZip": "이미지 ZIP 다운로드",
+      "exportWebtoon": "웹툰 스트립 (가로형)",
       "storyboard": "스토리보드",
       "script": "대본",
       "scriptEditor": "대본 에디터 (읽기 전용)",
@@ -322,7 +325,9 @@
         "noCharacters": "등록된 캐릭터가 없습니다.",
         "generateImage": "이미지 생성",
         "processing": "생성 중...",
-        "cost": "비용: 1 크레딧 • 소요시간: 약 5초"
+        "process": "생성 중...",
+        "cost": "비용: 1 크레딧 • 소요시간: 약 5초",
+        "referencePreviousCut": "이전 컷 참조"
       },
       "EpisodeList": {
         "title": "에피소드",
@@ -581,7 +586,9 @@
       "noFeatures": "추출된 특징 없음",
       "save": "변경사항 저장",
       "saving": "저장 중...",
-      "cancel": "취소"
+      "cancel": "취소",
+      "languageLabel": "생성 언어",
+      "selectGenrePlaceholder": "장르 선택"
     },
     "ViewStyle": {
       "title": "스타일 상세",

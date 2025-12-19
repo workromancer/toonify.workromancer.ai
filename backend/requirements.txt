@@ -17,3 +17,4 @@ greenlet
 google-cloud-storage
 google-cloud-aiplatform
 gunicorn
+Pillow
