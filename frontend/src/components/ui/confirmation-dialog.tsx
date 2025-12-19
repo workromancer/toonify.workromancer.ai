@@ -1,15 +1,10 @@
 'use client';
 
-// Removed unused alert-dialog imports
 import { Button } from "@/components/ui/button"
-import { ReactNode } from "react";
-
-// Wait, I need to check if alert-dialog exists first. 
-// If not, I should implement a simple one using Dialog or just raw div if Dialog is missing too.
-// I saw dialog.tsx in components/ui earlier.
-
+import { ReactNode, useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertTriangle } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 interface ConfirmationDialogProps {
     open: boolean;
@@ -23,6 +18,7 @@ interface ConfirmationDialogProps {
     variant?: 'default' | 'destructive';
     trigger?: ReactNode;
     icon?: ReactNode;
+    verificationText?: string;
 }
 
 export function ConfirmationDialog({
@@ -36,9 +32,17 @@ export function ConfirmationDialog({
     onCancel,
     variant = 'default',
     trigger,
-    icon
+    icon,
+    verificationText
 }: ConfirmationDialogProps) {
     const isDestructive = variant === 'destructive';
+    const [inputValue, setInputValue] = useState("");
+
+    useEffect(() => {
+        if (open) setInputValue("");
+    }, [open]);
+
+    const isConfirmDisabled = verificationText ? inputValue !== verificationText : false;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -57,11 +61,25 @@ export function ConfirmationDialog({
                         </div>
                     ))}
 
-                    <DialogHeader className="space-y-2">
+                    <DialogHeader className="space-y-2 w-full">
                         <DialogTitle className="text-xl font-bold tracking-tight text-white">{title}</DialogTitle>
                         <DialogDescription className="text-slate-400 text-sm leading-relaxed">
                             {description}
                         </DialogDescription>
+
+                        {verificationText && (
+                            <div className="mt-4 text-left w-full">
+                                <p className="text-xs text-slate-500 mb-2 text-center">
+                                    Type <span className="font-bold text-white select-all">{verificationText}</span> to confirm.
+                                </p>
+                                <Input
+                                    value={inputValue}
+                                    onChange={(e) => setInputValue(e.target.value)}
+                                    placeholder={verificationText}
+                                    className="bg-slate-900/50 border-slate-700 text-white placeholder:text-slate-600 text-center"
+                                />
+                            </div>
+                        )}
                     </DialogHeader>
                 </div>
 
@@ -79,11 +97,14 @@ export function ConfirmationDialog({
                     <Button
                         variant={isDestructive ? 'destructive' : 'default'}
                         onClick={() => {
-                            onConfirm();
-                            onOpenChange(false);
+                            if (!isConfirmDisabled) {
+                                onConfirm();
+                                onOpenChange(false);
+                            }
                         }}
+                        disabled={isConfirmDisabled}
                         className={`flex-1 font-bold rounded-xl shadow-lg transition-all ${isDestructive ? 'bg-red-600 hover:bg-red-500 shadow-red-900/20' : 'bg-primary hover:bg-primary/90 shadow-primary/20'
-                            }`}
+                            } ${isConfirmDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                         {confirmLabel}
                     </Button>

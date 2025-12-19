@@ -4,15 +4,14 @@ import { Link, usePathname, useRouter } from '@/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useWorkspaceStore } from '@/store/useWorkspaceStore';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { LayoutDashboard, LayoutTemplate, Settings, LogOut, HelpCircle, Plus, Palette } from 'lucide-react';
+import { LayoutDashboard, LayoutTemplate, Settings, Plus, Palette } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import CreateWorkspaceModal from '@/components/dashboard/CreateWorkspaceModal';
 import RechargeModal from '@/components/dashboard/RechargeModal';
-import LanguageSwitcher from '@/components/common/LanguageSwitcher';
 import { Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarItem, SidebarToggle } from '@/components/layout/sidebar/Sidebar';
 import WorkspaceSelector from '@/components/layout/sidebar/WorkspaceSelector';
 import { useUIStore } from '@/store/useUIStore';
+import SidebarUserProfile from '@/components/layout/sidebar/SidebarUserProfile';
 
 import { useTranslations } from 'next-intl';
 import { useToast } from '@/hooks/use-toast';
@@ -25,18 +24,15 @@ interface DashboardLayoutProps {
 export default function DashboardLayout({ children, accessToken }: DashboardLayoutProps) {
     const router = useRouter();
     const pathname = usePathname() || '';
-    const { logout, user, token, hasHydrated, setToken } = useAuthStore();
+    const { user, token, hasHydrated, setToken } = useAuthStore();
     const t = useTranslations('Dashboard');
     const tErrors = useTranslations('Errors');
     const { toast } = useToast();
 
     // Server-Side Token Sync
-    // If server provides a token (from cookie), sync it to the store immediately
-    // This allows API calls to work even if localStorage is empty
     if (accessToken && !token) {
         // Direct state mutation or use store (using store inside render is discouraged usually, 
         // but for hydration sync it might be okay or use useEffect)
-        // Better to use useEffect.
     }
 
     useEffect(() => {
@@ -44,13 +40,6 @@ export default function DashboardLayout({ children, accessToken }: DashboardLayo
             setToken(accessToken);
         }
     }, [accessToken, token, setToken]);
-
-    // ... (keep handleLogout)
-
-    const handleLogout = () => {
-        logout();
-        router.push('/login');
-    };
 
     // Only need fetchWorkspaces to initialize data
     const { fetchWorkspaces } = useWorkspaceStore();
@@ -151,7 +140,7 @@ export default function DashboardLayout({ children, accessToken }: DashboardLayo
     const navItems = [
         { name: t('nav.projects'), href: '/dashboard', icon: LayoutDashboard, exact: true },
         { name: t('nav.styles'), href: '/dashboard/styles', icon: Palette },
-        { name: t('nav.templates'), href: '/dashboard/templates', icon: LayoutTemplate },
+        { name: t('nav.templates'), href: '/templates', icon: LayoutTemplate },
         { name: t('nav.settings'), href: '/dashboard/settings', icon: Settings },
     ];
 
@@ -202,49 +191,8 @@ export default function DashboardLayout({ children, accessToken }: DashboardLayo
                 </SidebarContent>
 
                 <SidebarFooter>
-                    <SidebarItem
-                        href="/help"
-                        icon={HelpCircle}
-                        label={t('nav.help')}
-                    />
-
                     {/* Profile Section */}
-                    <div className={cn("flex items-center gap-3 mt-2 border-t border-gray-800 pt-4", isSidebarCollapsed ? "justify-center flex-col" : "justify-between px-1")}>
-                        <Link href="/dashboard/settings" title="Profile Settings" className={cn("flex items-center gap-3 min-w-0 hover:opacity-80 transition-opacity", isSidebarCollapsed && "w-full justify-center")}>
-                            <div className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-9 shrink-0" style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuDt162HoprwUvAfkIffAk7g_psL0UaRy25zgFtGaXcXyJz630egcVpIYDzYA0ixPxpVPquJLNEx4ZV74u4Bz7hTYnD9FqwuLTBLiyiG10hudXU1ScUybYIokJira71mt4ZaujtmgVCAKCBS2OanpmP0MIDIKs4x2kA6x9M1Es0Tyrvy12jCdsCzHFNSK9bNSsG4vcsF_ZAc6ynihPA35wHzJSvE4ybOejxdtr5pKz7E5E3jnU-92N1dtbTLPiYpcvKnPAZzjRGsc3U")' }}></div>
-                            {!isSidebarCollapsed && (
-                                <div className="flex flex-col min-w-0">
-                                    <p className="text-gray-900 dark:text-white text-sm font-medium leading-normal truncate">{user?.email?.split('@')[0] || "Guest"}</p>
-                                    <p className="text-gray-500 dark:text-gray-400 text-xs font-normal leading-normal truncate">{user?.email || "guest@toonify.com"}</p>
-                                </div>
-                            )}
-                        </Link>
-
-                        {!isSidebarCollapsed && (
-                            <div className="flex items-center gap-1">
-                                <LanguageSwitcher />
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="text-gray-400 hover:text-red-500 hover:bg-red-500/10 shrink-0 h-8 w-8"
-                                    onClick={handleLogout}
-                                >
-                                    <LogOut size={16} />
-                                </Button>
-                            </div>
-                        )}
-                        {isSidebarCollapsed && (
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-gray-400 hover:text-red-500 hover:bg-red-500/10 shrink-0 h-8 w-8 mt-2"
-                                onClick={handleLogout}
-                                title={t('logout')}
-                            >
-                                <LogOut size={16} />
-                            </Button>
-                        )}
-                    </div>
+                    <SidebarUserProfile />
 
                     <CreateWorkspaceModal
                         open={isCreateModalOpen}
@@ -260,9 +208,9 @@ export default function DashboardLayout({ children, accessToken }: DashboardLayo
             </Sidebar>
 
             {/* Main Content */}
-            < main className="flex-1 overflow-auto bg-[#0A0A0B]" >
+            <main className="flex-1 overflow-auto bg-[#0A0A0B]">
                 {children}
-            </main >
-        </div >
+            </main>
+        </div>
     );
 }

@@ -108,6 +108,7 @@ class Project(SQLModel, table=True):
     thumbnail_asset_id: Optional[UUID] = Field(foreign_key="asset.id", default=None)
 
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    deleted_at: Optional[datetime] = Field(default=None)
 
     workspace: Workspace = Relationship(back_populates="projects")
     # genre: Optional[Genre] = Relationship(back_populates="projects") # DEPRECATED

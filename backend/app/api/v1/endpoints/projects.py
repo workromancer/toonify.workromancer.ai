@@ -191,7 +191,10 @@ def list_projects(
     if not workspace_ids:
         return []
 
-    statement = select(Project).where(col(Project.workspace_id).in_(workspace_ids))
+    statement = select(Project).where(
+        col(Project.workspace_id).in_(workspace_ids),
+        Project.deleted_at == None
+    )
     projects = session.exec(statement).all()
 
     # Manual mapping to valid dicts for ProjectOut
@@ -552,3 +555,34 @@ def recommend_styles(
         raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/{project_id}", response_model=Any)
+def delete_project(
+    *,
+    session: Session = Depends(deps.get_session),
+    project_id: str,
+    current_user_id: str = Depends(deps.get_current_user_id),
+) -> Any:
+    """
+    Soft delete a project.
+    """
+    try:
+        project_uuid = UUID(project_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid UUID")
+
+    project = session.get(Project, project_uuid)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    # Verify Workspace Membership
+    ws_member = session.get(WorkspaceMember, (project.workspace_id, UUID(current_user_id)))
+    if not ws_member:
+        raise HTTPException(status_code=403, detail="Not a member of the project's workspace")
+
+    # Soft Delete
+    project.deleted_at = datetime.utcnow()
+    session.add(project)
+    session.commit()
+    
+    return {"message": "Project deleted successfully"}

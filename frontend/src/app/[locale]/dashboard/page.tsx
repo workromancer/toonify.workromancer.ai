@@ -9,8 +9,16 @@ import {
     LayoutGrid, Paintbrush, LayoutTemplate, FolderOpen, Settings,
     Plus, Search, MoreVertical, Clock, LogOut, User,
     HelpCircle, ChevronDown, Sparkles, Image as ImageIcon,
-    Zap, Bell, Wand2, ArrowRight
+    Zap, Bell, Wand2, ArrowRight, Trash2
 } from 'lucide-react';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 // --- Interfaces ---
 
@@ -38,7 +46,7 @@ interface Template {
 
 import { useTranslations } from 'next-intl';
 
-const ProjectCard = ({ project }: { project: Project }) => {
+const ProjectCard = ({ project, onDelete }: { project: Project; onDelete: (p: Project) => void }) => {
     const router = useRouter();
     const t = useTranslations('Dashboard');
 
@@ -68,9 +76,28 @@ const ProjectCard = ({ project }: { project: Project }) => {
 
                 {/* Overlay Actions */}
                 <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-10 translate-y-2 group-hover:translate-y-0 duration-300">
-                    <button className="p-2 bg-black/60 backdrop-blur-md rounded-full text-white hover:bg-purple-600 transition-colors border border-white/10">
-                        <MoreVertical size={16} />
-                    </button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <button
+                                onClick={(e) => e.stopPropagation()}
+                                className="p-2 bg-black/60 backdrop-blur-md rounded-full text-white hover:bg-purple-600 transition-colors border border-white/10"
+                            >
+                                <MoreVertical size={16} />
+                            </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48 bg-[#15151A] border-slate-800" onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenuItem
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onDelete(project);
+                                }}
+                                className="text-red-500 focus:text-red-500 focus:bg-red-500/10 cursor-pointer"
+                            >
+                                <Trash2 size={16} className="mr-2" />
+                                {t('deleteProject')}
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
 
                 {/* Hover Play/Open Hint */}
@@ -205,6 +232,25 @@ export default function DashboardPage() {
     const [draftProject, setDraftProject] = useState<any>(null);
     const { user } = useAuthStore();
     const router = useRouter();
+    const { toast } = useToast();
+    const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+    const handleDeleteProject = async () => {
+        if (!projectToDelete) return;
+
+        try {
+            await api.delete(`/projects/${projectToDelete.id}`);
+            setProjects(prev => prev.filter(p => p.id !== projectToDelete.id));
+            toast({ title: t('deleteSuccess') || "Project deleted" });
+        } catch (error) {
+            console.error(error);
+            toast({ title: t('deleteFailed') || "Failed to delete project", variant: "destructive" });
+        } finally {
+            setIsDeleteDialogOpen(false);
+            setProjectToDelete(null);
+        }
+    };
 
     const fetchProjects = async () => {
         try {
@@ -326,7 +372,14 @@ export default function DashboardPage() {
                                     <DraftCard draft={draftProject} onClick={() => router.push('/new-project')} />
                                 )}
                                 {filteredProjects.map(project => (
-                                    <ProjectCard key={project.id} project={project} />
+                                    <ProjectCard
+                                        key={project.id}
+                                        project={project}
+                                        onDelete={(p) => {
+                                            setProjectToDelete(p);
+                                            setIsDeleteDialogOpen(true);
+                                        }}
+                                    />
                                 ))}
                             </div>
                         ) : (
@@ -375,6 +428,17 @@ export default function DashboardPage() {
                     }
                 `}</style>
             </div>
+
+            <ConfirmationDialog
+                open={isDeleteDialogOpen}
+                onOpenChange={setIsDeleteDialogOpen}
+                title={t('deleteProjectTitle') || "Delete Project"}
+                description={t('deleteProjectDesc') || "This action will soft delete the project. Please type the project name to confirm."}
+                confirmLabel={t('delete') || "Delete"}
+                variant="destructive"
+                onConfirm={handleDeleteProject}
+                verificationText={projectToDelete?.title}
+            />
         </>
     );
 }

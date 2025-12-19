@@ -2,13 +2,15 @@
 
 import { Link, usePathname } from '@/navigation';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, Users, Clapperboard, Settings, ArrowLeft, Coins, Plus } from 'lucide-react';
+import { LayoutDashboard, Users, Clapperboard, ArrowLeft, Coins, Plus } from 'lucide-react';
 import { Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarItem, SidebarToggle } from '@/components/layout/sidebar/Sidebar';
 import { useUIStore } from '@/store/useUIStore';
 import { useEffect, useState } from 'react';
 import RechargeModal from '@/components/dashboard/RechargeModal';
 import { useWorkspaceStore } from '@/store/useWorkspaceStore';
 import { useTranslations } from 'next-intl';
+import SidebarUserProfile from '@/components/layout/sidebar/SidebarUserProfile';
+import WorkspaceSelector from '@/components/layout/sidebar/WorkspaceSelector';
 
 interface ProjectLayoutProps {
     children: React.ReactNode;
@@ -53,30 +55,12 @@ export default function ProjectLayout({ children, projectId, projectTitle }: Pro
                     </Link>
 
                     {/* Workspace Info (Read-only) */}
-                    <div className="mb-2 mt-4 px-2">
-                        {!isSidebarCollapsed ? (
-                            <div className="w-full bg-[#15151A] rounded-xl p-3 border border-gray-800">
-                                <div className="text-sm font-semibold text-gray-200 truncate mb-1.5">
-                                    {currentWorkspace?.name || '...'}
-                                </div>
-                                <div
-                                    className="inline-flex items-center gap-1.5 bg-yellow-500/10 px-2 py-1 rounded-md text-yellow-500 text-xs font-semibold hover:bg-yellow-500/20 hover:text-yellow-400 transition-colors cursor-pointer shadow-sm"
-                                    onClick={() => setIsRechargeModalOpen(true)}
-                                >
-                                    <Coins size={12} />
-                                    <span>{currentWorkspace?.credits.toLocaleString() || 0} Cr</span>
-                                    <Plus size={10} className="bg-yellow-500/20 rounded-full p-0.5" />
-                                </div>
-                            </div>
-                        ) : (
-                            <div
-                                className="size-10 mx-auto rounded-xl bg-[#15151A] hover:bg-[#1A1A20] border border-gray-800 flex items-center justify-center text-yellow-500 cursor-pointer transition-colors"
-                                onClick={() => setIsRechargeModalOpen(true)}
-                                title={currentWorkspace ? `${currentWorkspace.name}: ${currentWorkspace.credits} Cr` : 'Credits'}
-                            >
-                                <Coins size={18} />
-                            </div>
-                        )}
+                    <div className="mb-2 mt-1">
+                        <WorkspaceSelector
+                            readOnly
+                            isCollapsed={isSidebarCollapsed}
+                            onOpenRecharge={() => setIsRechargeModalOpen(true)}
+                        />
                     </div>
                 </SidebarHeader>
 
@@ -93,12 +77,8 @@ export default function ProjectLayout({ children, projectId, projectTitle }: Pro
 
                 {/* Footer Settings */}
                 <SidebarFooter>
-                    <SidebarItem
-                        icon={Settings}
-                        label="Project Settings"
-                        // Add href or onClick when implemented
-                        className="cursor-pointer"
-                    />
+                    {/* Profile Section */}
+                    <SidebarUserProfile />
 
                     {/* Modals */}
                     <RechargeModal
