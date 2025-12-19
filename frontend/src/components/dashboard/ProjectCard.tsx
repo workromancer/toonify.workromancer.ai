@@ -91,14 +91,14 @@ export default function ProjectCard({ project, onDelete }: ProjectCardProps) {
             {/* Info Area */}
             <div className="p-5 border-t border-slate-800 bg-[#0f0f16] group-hover:bg-[#13131c] transition-colors relative z-10">
                 <h3 className="text-white font-bold truncate mb-1.5 text-sm">{project.title}</h3>
-                <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-mono">
-                        <Clock size={10} />
-                        <span>{new Date(project.created_at).toLocaleDateString()}</span>
-                    </div>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700 max-w-[80px] truncate">
+                <div className="flex flex-col items-start gap-2 mt-1">
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700 truncate max-w-full">
                         {project.style_preset || t('defaultPreset')}
                     </span>
+                    <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-mono">
+                        <Clock size={10} />
+                        <span className="whitespace-nowrap">{new Date(project.created_at).toLocaleDateString()}</span>
+                    </div>
                 </div>
             </div>
         </div>
