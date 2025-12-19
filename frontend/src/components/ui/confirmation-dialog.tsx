@@ -19,6 +19,7 @@ interface ConfirmationDialogProps {
     confirmLabel?: string;
     cancelLabel?: string;
     onConfirm: () => void;
+    onCancel?: () => void;
     variant?: 'default' | 'destructive';
     trigger?: ReactNode;
     icon?: ReactNode;
@@ -32,6 +33,7 @@ export function ConfirmationDialog({
     confirmLabel = "Confirm",
     cancelLabel = "Cancel",
     onConfirm,
+    onCancel,
     variant = 'default',
     trigger,
     icon
@@ -66,7 +68,10 @@ export function ConfirmationDialog({
                 <DialogFooter className="mt-6 flex flex-row gap-3 sm:justify-center">
                     <Button
                         variant="ghost"
-                        onClick={() => onOpenChange(false)}
+                        onClick={() => {
+                            if (onCancel) onCancel();
+                            onOpenChange(false);
+                        }}
                         className="flex-1 bg-slate-800/50 border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 transition-all rounded-xl"
                     >
                         {cancelLabel}

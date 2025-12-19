@@ -73,6 +73,7 @@ export default function CharacterListPage() {
     const [isSuggestionDetailOpen, setIsSuggestionDetailOpen] = useState(false);
     const [suggestionToPromote, setSuggestionToPromote] = useState<Suggestion | null>(null);
     const [isPromoteConfirmOpen, setIsPromoteConfirmOpen] = useState(false);
+    const [promoteSource, setPromoteSource] = useState<'list' | 'modal'>('list');
 
     const fetchCharacters = async () => {
         if (!projectId) return;
@@ -228,6 +229,7 @@ export default function CharacterListPage() {
     const handleCastNowClick = (e: React.MouseEvent, suggestion: Suggestion) => {
         e.stopPropagation();
         setSuggestionToPromote(suggestion);
+        setPromoteSource('list');
         setIsPromoteConfirmOpen(true);
     };
 
@@ -235,7 +237,15 @@ export default function CharacterListPage() {
     const handleCastFromModal = (suggestion: Suggestion) => {
         setIsSuggestionDetailOpen(false);
         setSuggestionToPromote(suggestion);
+        setPromoteSource('modal');
         setTimeout(() => setIsPromoteConfirmOpen(true), 150);
+    };
+
+    const handlePromoteCancel = () => {
+        if (promoteSource === 'modal' && suggestionToPromote) {
+            setSelectedSuggestion(suggestionToPromote); // Ensure the correct suggestion is re-selected
+            setIsSuggestionDetailOpen(true);
+        }
     };
 
     const handlePromoteConfirm = async () => {
@@ -464,6 +474,7 @@ export default function CharacterListPage() {
                     confirmLabel={tc('castConfirm')}
                     cancelLabel={tCommon('cancel')}
                     onConfirm={handlePromoteConfirm}
+                    onCancel={handlePromoteCancel}
                 />
             </div>
         </ProjectLayout>
