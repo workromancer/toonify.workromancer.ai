@@ -170,8 +170,8 @@ export default function DashboardLayout({ children, accessToken }: DashboardLayo
                     <Link href="/dashboard" className="flex items-center gap-3 px-3 hover:opacity-80 transition-opacity">
                         <div className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 shadow-sm" style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuBN5z1oDmeTFxQPTUuZqFXRVrFpjy9QgdgN7rv824MDXj0NTjJf2cUSjH7YeclTy1qA7RfMULzL6lGPB0I4bZHNNHrSkeRlsh8ShZdCrhnIOWQrexQX3xL1OC7CAWTqbG9zjPeN6nxXKNfnX7EL9jlzWM3lPPERGqxmt9W6cV5zdFUyxhV086nH2nspTA8NdBpwgv32ZZe6ILXWL6fWCGG7q9dHiEZH9OCuBdZ3TVK_QRzEx4ItSKvZ0B4FeqhlaveTmuZFH9g2Gls")' }}></div>
                         <div className="flex flex-col">
-                            <h1 className="text-gray-900 dark:text-white text-base font-medium leading-normal">Toonify</h1>
-                            <p className="text-gray-500 dark:text-gray-400 text-sm font-normal leading-normal">{t('subtitle')}</p>
+                            <h1 className="text-white text-base font-medium leading-normal">Toonify</h1>
+                            <p className="text-gray-400 text-sm font-normal leading-normal">{t('subtitle')}</p>
                         </div>
                     </Link>
 
@@ -181,34 +181,34 @@ export default function DashboardLayout({ children, accessToken }: DashboardLayo
                         <div className="relative mx-1" ref={dropdownRef}>
                             <button
                                 onClick={() => setIsWorkspaceOpen(!isWorkspaceOpen)}
-                                className="w-full flex items-center justify-between text-left bg-[#15151A] dark:bg-gray-800/30 rounded-lg p-3 border border-gray-800 dark:border-gray-700 backdrop-blur-sm hover:bg-[#1A1A20] dark:hover:bg-gray-800/50 transition-colors"
+                                className="w-full flex items-center justify-between text-left bg-[#15151A] hover:bg-[#1A1A20] rounded-xl p-3 border border-gray-800 transition-all duration-200 group"
                             >
                                 <div className="min-w-0 flex-1">
-                                    <div className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate mb-1">
+                                    <div className="text-sm font-semibold text-gray-200 truncate mb-1.5 group-hover:text-white transition-colors">
                                         {currentWorkspace.name}
                                     </div>
                                     <div
-                                        className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400 text-xs font-semibold hover:text-yellow-300 transition-colors"
+                                        className="inline-flex items-center gap-1.5 bg-yellow-500/10 px-2 py-1 rounded-md text-yellow-500 text-xs font-semibold hover:bg-yellow-500/20 hover:text-yellow-400 transition-colors"
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             setIsRechargeModalOpen(true);
                                         }}
                                     >
                                         <Coins size={12} />
-                                        <span>{t('workspace.credits', { count: currentWorkspace.credits })}</span>
+                                        <span>{currentWorkspace.credits.toLocaleString()} Cr</span>
                                         <Plus size={10} className="bg-yellow-500/20 rounded-full p-0.5" />
                                     </div>
                                 </div>
-                                <ChevronDown size={16} className={`text-gray-500 transition-transform ${isWorkspaceOpen ? 'rotate-180' : ''}`} />
+                                <ChevronDown size={16} className={`text-gray-500 transition-transform duration-200 ${isWorkspaceOpen ? 'rotate-180' : ''}`} />
                             </button>
 
                             {/* Dropdown Menu */}
                             {isWorkspaceOpen && (
-                                <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 shadow-lg py-1 animate-in fade-in zoom-in-95 duration-100">
-                                    <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-[#15151A] rounded-xl border border-gray-800 shadow-2xl shadow-black/50 py-2 animate-in fade-in zoom-in-95 duration-100 overflow-hidden">
+                                    <div className="px-3 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
                                         {t('workspace.switch')}
                                     </div>
-                                    <div className="max-h-60 overflow-y-auto">
+                                    <div className="max-h-60 overflow-y-auto custom-scrollbar">
                                         {workspaces.map((ws) => (
                                             <button
                                                 key={ws.id}
@@ -216,30 +216,34 @@ export default function DashboardLayout({ children, accessToken }: DashboardLayo
                                                     setCurrentWorkspace(ws);
                                                     setIsWorkspaceOpen(false);
                                                 }}
-                                                className="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 text-left"
+                                                className="w-full flex items-center justify-between px-3 py-2.5 text-sm text-gray-400 hover:text-gray-100 hover:bg-gray-800/50 transition-colors text-left"
                                             >
-                                                <span className="truncate">{ws.name}</span>
+                                                <span className={cn("truncate", ws.id === currentWorkspace.id && "text-white font-medium")}>{ws.name}</span>
                                                 {ws.id === currentWorkspace.id && <Check size={14} className="text-primary" />}
                                             </button>
                                         ))}
                                     </div>
-                                    <div className="h-px bg-gray-200 dark:bg-gray-800 my-1" />
+                                    <div className="h-px bg-gray-800 my-2 mx-3" />
                                     <button
                                         onClick={() => {
                                             setIsCreateModalOpen(true);
                                             setIsWorkspaceOpen(false);
                                         }}
-                                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-primary dark:hover:text-primary transition-colors text-left font-medium"
+                                        className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-gray-400 hover:text-white hover:bg-gray-800/50 transition-colors text-left font-medium"
                                     >
-                                        <Plus size={14} />
+                                        <div className="size-6 rounded-md bg-gray-800 flex items-center justify-center">
+                                            <Plus size={14} />
+                                        </div>
                                         {t('workspace.create')}
                                     </button>
                                     <Link
                                         href="/dashboard/settings"
-                                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-primary dark:hover:text-primary transition-colors text-left font-medium"
+                                        className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-gray-400 hover:text-white hover:bg-gray-800/50 transition-colors text-left font-medium"
                                         onClick={() => setIsWorkspaceOpen(false)}
                                     >
-                                        <Settings size={14} />
+                                        <div className="size-6 rounded-md bg-gray-800 flex items-center justify-center">
+                                            <Settings size={14} />
+                                        </div>
                                         {t('workspace.settings')}
                                     </Link>
                                 </div>

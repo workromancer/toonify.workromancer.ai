@@ -57,50 +57,50 @@ export default function SettingsPage() {
         <>
             <div className="max-w-4xl mx-auto p-8">
                 <header className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{t('title')}</h1>
-                    <p className="text-gray-600 dark:text-gray-400">{t('description')}</p>
+                    <h1 className="text-3xl font-bold text-white mb-2">{t('title')}</h1>
+                    <p className="text-gray-400">{t('description')}</p>
                 </header>
 
                 <div className="space-y-6">
                     {/* Profile Section */}
-                    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">
+                    <div className="bg-[#15151A] border border-gray-800 rounded-xl p-6">
                         <div className="flex items-center gap-4 mb-6">
                             <div className="p-3 bg-primary/10 rounded-full text-primary">
                                 <User size={24} />
                             </div>
                             <div>
-                                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{t('profile')}</h2>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">{t('profileDescription')}</p>
+                                <h2 className="text-xl font-semibold text-white">{t('profile')}</h2>
+                                <p className="text-sm text-gray-400">{t('profileDescription')}</p>
                             </div>
                         </div>
 
                         <div className="grid gap-4 max-w-lg">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('email')}</label>
+                                <label className="block text-sm font-medium text-gray-300 mb-1">{t('email')}</label>
                                 <input
                                     type="email"
                                     value={user?.email || ''}
                                     disabled
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-800 text-gray-500"
+                                    className="w-full px-3 py-2 border border-gray-700 rounded-lg bg-[#0A0A0B] text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('userId')}</label>
+                                <label className="block text-sm font-medium text-gray-300 mb-1">{t('userId')}</label>
                                 <input
                                     type="text"
                                     value={user?.id || ''}
                                     disabled
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-800 text-gray-500 font-mono text-sm"
+                                    className="w-full px-3 py-2 border border-gray-700 rounded-lg bg-[#0A0A0B] text-gray-300 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('language')}</label>
+                                <label className="block text-sm font-medium text-gray-300 mb-1">{t('language')}</label>
                                 <div className="flex gap-2">
                                     <Button
                                         variant={locale === 'en' ? 'default' : 'outline'}
                                         onClick={() => handleLanguageChange('en')}
                                         disabled={isPending}
-                                        className="w-24"
+                                        className={`w-24 ${locale !== 'en' ? 'bg-[#0A0A0B] border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white' : ''}`}
                                     >
                                         {isPending && locale !== 'en' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                         English
@@ -109,7 +109,7 @@ export default function SettingsPage() {
                                         variant={locale === 'ko' ? 'default' : 'outline'}
                                         onClick={() => handleLanguageChange('ko')}
                                         disabled={isPending}
-                                        className="w-24"
+                                        className={`w-24 ${locale !== 'ko' ? 'bg-[#0A0A0B] border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white' : ''}`}
                                     >
                                         {isPending && locale !== 'ko' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                         한국어
@@ -121,34 +121,36 @@ export default function SettingsPage() {
 
                     {/* Workspace Section */}
                     {currentWorkspace && (
-                        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">
+                        <div className="bg-[#15151A] border border-gray-800 rounded-xl p-6">
                             <div className="flex items-center gap-4 mb-6">
-                                <div className="p-3 bg-purple-500/10 rounded-full text-purple-600">
+                                <div className="p-3 bg-purple-500/10 rounded-full text-purple-400">
                                     <Shield size={24} />
                                 </div>
                                 <div>
-                                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{t('workspace')} {currentWorkspace.name}</h2>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">{t('workspaceDescription')}</p>
+                                    <h2 className="text-xl font-semibold text-white">{t('workspace')} <span className="text-purple-400">{currentWorkspace.name}</span></h2>
+                                    <p className="text-sm text-gray-400">{t('workspaceDescription')}</p>
                                 </div>
                             </div>
 
                             <div className="grid md:grid-cols-2 gap-6">
-                                <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
+                                <div className="p-4 rounded-xl bg-[#0A0A0B] border border-gray-800 hover:border-gray-700 transition-colors">
                                     <div className="flex items-center gap-2 mb-2">
-                                        <CreditCard className="text-gray-400" size={16} />
-                                        <span className="text-sm font-medium text-gray-600 dark:text-gray-300">{t('currentPlan')}</span>
+                                        <CreditCard className="text-gray-500" size={16} />
+                                        <span className="text-sm font-medium text-gray-400">{t('currentPlan')}</span>
                                     </div>
-                                    <p className="text-2xl font-bold text-gray-900 dark:text-white capitalize">{currentWorkspace.tier}</p>
-                                    <Button variant="link" className="p-0 h-auto text-primary mt-2">{t('upgradePlan')}</Button>
+                                    <p className="text-2xl font-bold text-white capitalize">{currentWorkspace.tier}</p>
+                                    <Button variant="link" className="p-0 h-auto text-primary hover:text-primary/80 mt-2">{t('upgradePlan')}</Button>
                                 </div>
 
-                                <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
+                                <div className="p-4 rounded-xl bg-[#0A0A0B] border border-gray-800 hover:border-gray-700 transition-colors">
                                     <div className="flex items-center gap-2 mb-2">
-                                        <div className="size-4 rounded-full bg-yellow-400" />
-                                        <span className="text-sm font-medium text-gray-600 dark:text-gray-300">{t('creditsAvailable')}</span>
+                                        <div className="size-4 rounded-full bg-yellow-500/20 flex items-center justify-center">
+                                            <div className="size-2 rounded-full bg-yellow-500" />
+                                        </div>
+                                        <span className="text-sm font-medium text-gray-400">{t('creditsAvailable')}</span>
                                     </div>
-                                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{currentWorkspace.credits}</p>
-                                    <Button variant="link" className="p-0 h-auto text-primary mt-2">{t('purchaseCredits')}</Button>
+                                    <p className="text-2xl font-bold text-white">{currentWorkspace.credits.toLocaleString()}</p>
+                                    <Button variant="link" className="p-0 h-auto text-primary hover:text-primary/80 mt-2">{t('purchaseCredits')}</Button>
                                 </div>
                             </div>
                         </div>
