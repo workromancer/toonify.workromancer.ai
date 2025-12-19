@@ -4,7 +4,7 @@ import { Link, usePathname, useRouter } from '@/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useWorkspaceStore } from '@/store/useWorkspaceStore';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, LayoutTemplate, Settings, Plus, Palette } from 'lucide-react';
+import { LayoutDashboard, LayoutTemplate, Settings, Plus, Palette, Home, FolderOpen } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import CreateWorkspaceModal from '@/components/dashboard/CreateWorkspaceModal';
 import RechargeModal from '@/components/dashboard/RechargeModal';
@@ -138,7 +138,8 @@ export default function DashboardLayout({ children, accessToken }: DashboardLayo
     const { isSidebarCollapsed } = useUIStore();
 
     const navItems = [
-        { name: t('nav.projects'), href: '/dashboard', icon: LayoutDashboard, exact: true },
+        { name: t('nav.home'), href: '/dashboard', icon: Home, exact: true },
+        { name: t('nav.projects'), href: '/dashboard/projects', icon: FolderOpen },
         { name: t('nav.styles'), href: '/dashboard/styles', icon: Palette },
         { name: t('nav.templates'), href: '/templates', icon: LayoutTemplate },
         { name: t('nav.settings'), href: '/dashboard/settings', icon: Settings },

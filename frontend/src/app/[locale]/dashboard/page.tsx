@@ -19,17 +19,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslations } from 'next-intl';
 
 // --- Interfaces ---
 
-interface Project {
-    id: string;
-    title: string;
-    style_preset: string;
-    created_at: string;
-    thumbnail_url?: string;
-    [key: string]: any;
-}
+import ProjectCard, { Project } from '@/components/dashboard/ProjectCard';
 
 interface Template {
     id: string;
@@ -41,89 +35,6 @@ interface Template {
     image_url?: string;
     isAction?: boolean; // For "Start from Scratch"
 }
-
-// --- Components (Inline to match Ref style and ensure exact look) ---
-
-import { useTranslations } from 'next-intl';
-
-const ProjectCard = ({ project, onDelete }: { project: Project; onDelete: (p: Project) => void }) => {
-    const router = useRouter();
-    const t = useTranslations('Dashboard');
-
-    return (
-        <div
-            onClick={() => router.push(`/project/${project.id}`)}
-            className="group relative w-full aspect-[3/4] bg-[#0f0f16] rounded-2xl border border-slate-800 hover:border-purple-500/50 transition-all duration-300 ease-out overflow-hidden flex flex-col cursor-pointer hover:-translate-y-1.5 shadow-lg hover:shadow-purple-900/20"
-        >
-            {/* Thumbnail Area */}
-            <div className="flex-1 bg-slate-900/50 relative flex items-center justify-center overflow-hidden">
-                {project.thumbnail_url ? (
-                    <div className="w-full h-full relative">
-                        <img src={project.thumbnail_url} alt={project.title} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f16] via-transparent to-transparent opacity-60" />
-                    </div>
-                ) : (
-                    <div className="flex flex-col items-center justify-center gap-3 h-full w-full bg-slate-900 group-hover:bg-slate-800 transition-colors relative overflow-hidden">
-                        {/* Abstract Pattern BG */}
-                        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-purple-500 via-slate-900 to-black" />
-
-                        {/* Dynamic Character */}
-                        <span className="text-6xl font-black text-slate-700 group-hover:text-slate-600 transition-colors select-none">
-                            {project.title.charAt(0).toUpperCase()}
-                        </span>
-                    </div>
-                )}
-
-                {/* Overlay Actions */}
-                <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-10 translate-y-2 group-hover:translate-y-0 duration-300">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <button
-                                onClick={(e) => e.stopPropagation()}
-                                className="p-2 bg-black/60 backdrop-blur-md rounded-full text-white hover:bg-purple-600 transition-colors border border-white/10"
-                            >
-                                <MoreVertical size={16} />
-                            </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48 bg-[#15151A] border-slate-800" onClick={(e) => e.stopPropagation()}>
-                            <DropdownMenuItem
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onDelete(project);
-                                }}
-                                className="text-red-500 focus:text-red-500 focus:bg-red-500/10 cursor-pointer"
-                            >
-                                <Trash2 size={16} className="mr-2" />
-                                {t('deleteProject')}
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-
-                {/* Hover Play/Open Hint */}
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-0">
-                    <div className="bg-purple-600/90 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg backdrop-blur-sm transform scale-90 group-hover:scale-100 transition-transform">
-                        {t('openEditor')}
-                    </div>
-                </div>
-            </div>
-
-            {/* Info Area */}
-            <div className="p-5 border-t border-slate-800 bg-[#0f0f16] group-hover:bg-[#13131c] transition-colors relative z-10">
-                <h3 className="text-white font-bold truncate mb-1.5 text-sm">{project.title}</h3>
-                <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-mono">
-                        <Clock size={10} />
-                        <span>{new Date(project.created_at).toLocaleDateString()}</span>
-                    </div>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700 max-w-[80px] truncate">
-                        {project.style_preset || t('defaultPreset')}
-                    </span>
-                </div>
-            </div>
-        </div>
-    );
-};
 
 const TemplateCard = ({ template, onSelect }: { template: Template; onSelect: (t: Template | null) => void }) => {
     const t = useTranslations('Dashboard');

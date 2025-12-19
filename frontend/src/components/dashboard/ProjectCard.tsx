@@ -1,44 +1,104 @@
 'use client';
 
-import { Link } from '@/navigation';
-import { Button } from '@/components/ui/button';
-import { Edit } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useRouter } from '@/navigation';
+import { useTranslations } from 'next-intl';
+import { MoreVertical, Trash2, Clock } from 'lucide-react';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-interface Project {
+export interface Project {
     id: string;
     title: string;
     style_preset: string;
     created_at: string;
     thumbnail_url?: string;
+    [key: string]: any;
 }
 
-export default function ProjectCard({ project }: { project: Project }) {
+interface ProjectCardProps {
+    project: Project;
+    onDelete?: (p: Project) => void;
+}
+
+export default function ProjectCard({ project, onDelete }: ProjectCardProps) {
+    const router = useRouter();
+    const t = useTranslations('Dashboard');
+
     return (
-        <div className="flex flex-col gap-3 group cursor-pointer">
-            <Link href={`/project/${project.id}`} className="block">
-                <div
-                    className="w-full bg-center bg-no-repeat bg-cover rounded-xl aspect-[4/5] transition-all duration-300 group-hover:scale-[1.02] shadow-sm group-hover:shadow-[0_0_20px_rgba(55,19,236,0.2)] relative overflow-hidden bg-[#0F0F12] border border-gray-800 group-hover:border-primary/50"
-                    style={{ backgroundImage: project.thumbnail_url ? `url("${project.thumbnail_url}")` : undefined }}
-                >
-                    {!project.thumbnail_url && (
-                        <div className="w-full h-full flex items-center justify-center text-gray-600 dark:text-gray-500 text-4xl font-bold opacity-30 group-hover:opacity-50 transition-opacity">
+        <div
+            onClick={() => router.push(`/project/${project.id}`)}
+            className="group relative w-full aspect-[3/4] bg-[#0f0f16] rounded-2xl border border-slate-800 hover:border-purple-500/50 transition-all duration-300 ease-out overflow-hidden flex flex-col cursor-pointer hover:-translate-y-1.5 shadow-lg hover:shadow-purple-900/20"
+        >
+            {/* Thumbnail Area */}
+            <div className="flex-1 bg-slate-900/50 relative flex items-center justify-center overflow-hidden">
+                {project.thumbnail_url ? (
+                    <div className="w-full h-full relative">
+                        <img src={project.thumbnail_url} alt={project.title} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f16] via-transparent to-transparent opacity-60" />
+                    </div>
+                ) : (
+                    <div className="flex flex-col items-center justify-center gap-3 h-full w-full bg-slate-900 group-hover:bg-slate-800 transition-colors relative overflow-hidden">
+                        {/* Abstract Pattern BG */}
+                        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-purple-500 via-slate-900 to-black" />
+
+                        {/* Dynamic Character */}
+                        <span className="text-6xl font-black text-slate-700 group-hover:text-slate-600 transition-colors select-none">
                             {project.title.charAt(0).toUpperCase()}
-                        </div>
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        </span>
+                    </div>
+                )}
+
+                {/* Overlay Actions */}
+                {onDelete && (
+                    <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-10 translate-y-2 group-hover:translate-y-0 duration-300">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <button
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="p-2 bg-black/60 backdrop-blur-md rounded-full text-white hover:bg-purple-600 transition-colors border border-white/10"
+                                >
+                                    <MoreVertical size={16} />
+                                </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48 bg-[#15151A] border-slate-800" onClick={(e) => e.stopPropagation()}>
+                                <DropdownMenuItem
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onDelete(project);
+                                    }}
+                                    className="text-red-500 focus:text-red-500 focus:bg-red-500/10 cursor-pointer"
+                                >
+                                    <Trash2 size={16} className="mr-2" />
+                                    {t('deleteProject')}
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                )}
+
+                {/* Hover Play/Open Hint */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-0">
+                    <div className="bg-purple-600/90 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg backdrop-blur-sm transform scale-90 group-hover:scale-100 transition-transform">
+                        {t('openEditor')}
+                    </div>
                 </div>
-            </Link>
-            <div>
-                <Link href={`/project/${project.id}`}>
-                    <p className="text-white text-base font-bold leading-normal group-hover:text-primary transition-colors truncate">
-                        {project.title}
-                    </p>
-                </Link>
-                <div className="flex items-center justify-between mt-1">
-                    <p className="text-gray-500 text-sm font-normal leading-normal">
-                        Last modified: {new Date(project.created_at).toLocaleDateString()}
-                    </p>
+            </div>
+
+            {/* Info Area */}
+            <div className="p-5 border-t border-slate-800 bg-[#0f0f16] group-hover:bg-[#13131c] transition-colors relative z-10">
+                <h3 className="text-white font-bold truncate mb-1.5 text-sm">{project.title}</h3>
+                <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-mono">
+                        <Clock size={10} />
+                        <span>{new Date(project.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700 max-w-[80px] truncate">
+                        {project.style_preset || t('defaultPreset')}
+                    </span>
                 </div>
             </div>
         </div>
