@@ -31,14 +31,14 @@ export default function ProjectCard({ project, onDelete }: ProjectCardProps) {
     return (
         <div
             onClick={() => router.push(`/project/${project.id}`)}
-            className="group relative w-full aspect-[3/4] bg-[#0f0f16] rounded-2xl border border-slate-800 hover:border-purple-500/50 transition-all duration-300 ease-out overflow-hidden flex flex-col cursor-pointer hover:-translate-y-1.5 shadow-lg hover:shadow-purple-900/20"
+            className="group relative w-full bg-[#0f0f16] rounded-2xl border border-slate-800 hover:border-purple-500/50 transition-all duration-300 ease-out overflow-hidden flex flex-col cursor-pointer hover:-translate-y-1.5 shadow-lg hover:shadow-purple-900/20"
         >
             {/* Thumbnail Area */}
-            <div className="flex-1 bg-slate-900/50 relative flex items-center justify-center overflow-hidden">
+            <div className="w-full aspect-video bg-slate-900/50 relative flex items-center justify-center overflow-hidden">
                 {project.thumbnail_url ? (
                     <div className="w-full h-full relative">
                         <img src={project.thumbnail_url} alt={project.title} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f16] via-transparent to-transparent opacity-60" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f16] via-transparent to-transparent opacity-60 pointer-events-none" />
                     </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center gap-3 h-full w-full bg-slate-900 group-hover:bg-slate-800 transition-colors relative overflow-hidden">

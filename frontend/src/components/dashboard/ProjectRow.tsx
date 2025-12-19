@@ -23,23 +23,23 @@ export default function ProjectRow({ project, onDelete }: ProjectRowProps) {
     return (
         <div
             onClick={() => router.push(`/project/${project.id}`)}
-            className="group flex items-center justify-between p-4 bg-[#0f0f16] border border-slate-800 rounded-xl hover:border-purple-500/50 hover:bg-[#13131c] transition-all duration-200 cursor-pointer"
+            className="group flex justify-between h-28 bg-[#0f0f16] border border-slate-800 rounded-xl hover:border-purple-500/50 hover:bg-[#13131c] transition-all duration-200 cursor-pointer overflow-hidden pr-4"
         >
-            <div className="flex items-center gap-4 flex-1 min-w-0">
-                {/* Thumbnail */}
-                <div className="w-16 h-16 rounded-lg bg-slate-900 overflow-hidden shrink-0 relative border border-slate-800">
+            <div className="flex gap-6 flex-1 min-w-0 h-full">
+                {/* Thumbnail - Full Height */}
+                <div className="h-full aspect-video bg-slate-900 shrink-0 relative border-r border-slate-800">
                     {project.thumbnail_url ? (
-                        <img src={project.thumbnail_url} alt={project.title} className="w-full h-full object-cover" />
+                        <img src={project.thumbnail_url} alt={project.title} className="w-full h-full object-contain" />
                     ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-slate-800 text-slate-600 font-bold">
+                        <div className="w-full h-full flex items-center justify-center bg-slate-800 text-slate-600 font-bold text-xl">
                             {project.title.charAt(0).toUpperCase()}
                         </div>
                     )}
                 </div>
 
                 {/* Info */}
-                <div className="flex flex-col min-w-0">
-                    <h3 className="text-white font-bold truncate text-sm mb-1 group-hover:text-purple-400 transition-colors">
+                <div className="flex flex-col justify-center min-w-0 py-2">
+                    <h3 className="text-white font-bold truncate text-base mb-1.5 group-hover:text-purple-400 transition-colors">
                         {project.title}
                     </h3>
                     <div className="flex items-center gap-3 text-xs text-slate-500">
@@ -55,7 +55,7 @@ export default function ProjectRow({ project, onDelete }: ProjectRowProps) {
             </div>
 
             {/* Actions */}
-            <div className="flex items-center gap-2 pl-4">
+            <div className="flex items-center gap-2 pl-4 self-center">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <button

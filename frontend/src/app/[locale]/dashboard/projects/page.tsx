@@ -16,7 +16,7 @@ export default function ProjectsPage() {
     const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
-    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
     const { user } = useAuthStore();
     const router = useRouter();
     const { toast } = useToast();
@@ -88,18 +88,18 @@ export default function ProjectsPage() {
                     {/* View Toggle */}
                     <div className="flex bg-slate-900 p-1 rounded-lg border border-slate-800">
                         <button
-                            onClick={() => setViewMode('grid')}
-                            className={`p-2 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
-                            title="Grid View"
-                        >
-                            <LayoutGrid size={18} />
-                        </button>
-                        <button
                             onClick={() => setViewMode('list')}
                             className={`p-2 rounded-md transition-colors ${viewMode === 'list' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
                             title="List View"
                         >
                             <List size={18} />
+                        </button>
+                        <button
+                            onClick={() => setViewMode('grid')}
+                            className={`p-2 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
+                            title="Grid View"
+                        >
+                            <LayoutGrid size={18} />
                         </button>
                     </div>
                 </div>
@@ -113,7 +113,7 @@ export default function ProjectsPage() {
                     </div>
                 ) : filteredProjects.length > 0 ? (
                     viewMode === 'grid' ? (
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                             {filteredProjects.map(project => (
                                 <ProjectCard
                                     key={project.id}
