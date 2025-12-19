@@ -584,3 +584,65 @@ def reject_suggestion(
     session.add(suggestion)
     session.commit()
     return {"status": "rejected"}
+
+@router.post("/suggestions/{suggestion_id}/promote", response_model=Any)
+def promote_suggestion(
+    *,
+    session: Session = Depends(deps.get_session),
+    suggestion_id: UUID,
+    current_user_id: str = Depends(deps.get_current_user_id),
+    background_tasks: BackgroundTasks
+):
+    """
+    Promote a suggestion to a real character and start image generation.
+    """
+    from app.models import CharacterSuggestion
+    
+    # 1. Get Suggestion
+    suggestion = session.get(CharacterSuggestion, suggestion_id)
+    if not suggestion:
+        raise HTTPException(status_code=404, detail="Suggestion not found")
+        
+    # 2. Create Character
+    character = Character(
+        name=suggestion.name,
+        project_id=suggestion.project_id,
+        appearance_tags=suggestion.visual_keywords,
+        default_mood=suggestion.personality_tags or ["Neutral"],
+        consistency_seed=0, # Will be set later or randomized?
+        profile_image_url=None,
+        description=suggestion.bio or f"Role: {suggestion.role}\nPersonality: {suggestion.personality}",
+        profile={
+            "age": suggestion.age,
+            "role": suggestion.role,
+            "personality": suggestion.personality,
+            "stats": suggestion.stats
+        },
+        sheet_status="pending"
+    )
+    
+    # Generate Embedding
+    moods = character.default_mood or []
+    tags = character.appearance_tags or []
+    mood_str = " ".join(moods)
+    combined_text = f"{character.name} {mood_str} {' '.join(tags)}"
+    # Using a sync call for embedding or can be async? 
+    # Current create_character uses sync call.
+    try:
+        character.embedding = ai_service.get_embedding(combined_text)
+    except Exception as e:
+        print(f"Embedding failed: {e}")
+
+    session.add(character)
+    
+    # 3. Mark Suggestion as Used
+    suggestion.is_used = True
+    session.add(suggestion)
+    
+    session.commit()
+    session.refresh(character)
+    
+    # 4. Trigger Image Generation
+    background_tasks.add_task(generate_character_image_task, character.id, character.description)
+    
+    return character

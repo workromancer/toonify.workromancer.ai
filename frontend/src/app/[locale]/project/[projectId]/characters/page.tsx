@@ -8,6 +8,7 @@ import { useParams } from 'next/navigation';
 import api from '@/lib/api';
 import ProjectLayout from '@/components/layout/ProjectLayout';
 import CharacterDetailModal from '@/components/project/modals/CharacterDetailModal';
+import SuggestionDetailModal from '@/components/project/modals/SuggestionDetailModal';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { Plus, AlertCircle, Sparkles, Users, X } from 'lucide-react';
 import { SectionLabel } from '@/components/ui/section-label';
@@ -32,6 +33,10 @@ interface Suggestion {
     theme_color?: string;
     bio?: string;
     personality?: string;
+    stats?: Record<string, number>;
+    visual_keywords?: string[];
+    age?: string;
+    personality_tags?: string[];
 }
 
 interface Project {
@@ -62,6 +67,12 @@ export default function CharacterListPage() {
     // Suggestion Reject State
     const [suggestionToDelete, setSuggestionToDelete] = useState<Suggestion | null>(null);
     const [isRejectConfirmOpen, setIsRejectConfirmOpen] = useState(false);
+
+    // Suggestion Promote State
+    const [selectedSuggestion, setSelectedSuggestion] = useState<Suggestion | null>(null);
+    const [isSuggestionDetailOpen, setIsSuggestionDetailOpen] = useState(false);
+    const [suggestionToPromote, setSuggestionToPromote] = useState<Suggestion | null>(null);
+    const [isPromoteConfirmOpen, setIsPromoteConfirmOpen] = useState(false);
 
     const fetchCharacters = async () => {
         if (!projectId) return;
@@ -209,6 +220,50 @@ export default function CharacterListPage() {
         setSuggestionToDelete(null);
     };
 
+    const handleSuggestionClick = (suggestion: Suggestion) => {
+        setSelectedSuggestion(suggestion);
+        setIsSuggestionDetailOpen(true);
+    };
+
+    const handleCastNowClick = (e: React.MouseEvent, suggestion: Suggestion) => {
+        e.stopPropagation();
+        setSuggestionToPromote(suggestion);
+        setIsPromoteConfirmOpen(true);
+    };
+
+    // Called from SuggestionDetailModal
+    const handleCastFromModal = (suggestion: Suggestion) => {
+        setIsSuggestionDetailOpen(false);
+        setSuggestionToPromote(suggestion);
+        setTimeout(() => setIsPromoteConfirmOpen(true), 150);
+    };
+
+    const handlePromoteConfirm = async () => {
+        if (!suggestionToPromote) return;
+        try {
+            await api.post(`/characters/suggestions/${suggestionToPromote.id}/promote`);
+
+            // Optimistic Update: Remove from suggestions and add to characters (simplified)
+            setSuggestions(prev => prev.filter(s => s.id !== suggestionToPromote.id));
+
+            // We should refetch characters to see the new one
+            await fetchCharacters();
+
+            toast({
+                title: tc('castSuccess'),
+            });
+        } catch (error) {
+            console.error(error);
+            toast({
+                title: "Error",
+                description: "Failed to cast suggestion",
+                variant: 'destructive',
+            });
+        }
+        setIsPromoteConfirmOpen(false);
+        setSuggestionToPromote(null);
+    };
+
     if (loading) {
         return <div className="h-screen w-full flex items-center justify-center bg-[#13111C] text-white">Loading...</div>;
     }
@@ -332,7 +387,7 @@ export default function CharacterListPage() {
                                         {suggestions.map((suggestion) => (
                                             <div
                                                 key={suggestion.id}
-                                                onClick={handleNavigateToCasting}
+                                                onClick={() => handleSuggestionClick(suggestion)}
                                                 className="group relative aspect-[3/4] rounded-xl overflow-hidden bg-[#15121c] border border-purple-500/20 hover:border-purple-500/50 transition-all cursor-pointer flex flex-col p-4"
                                                 style={{ borderTop: suggestion.theme_color ? `4px solid ${suggestion.theme_color}` : undefined }}
                                             >
@@ -358,8 +413,11 @@ export default function CharacterListPage() {
                                                 </div>
 
                                                 {/* Hover HUD */}
-                                                <div className="absolute inset-0 bg-purple-600/0 group-hover:bg-purple-600/10 transition-colors flex items-center justify-center">
-                                                    <div className="bg-purple-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0 duration-300">
+                                                <div className="absolute inset-0 bg-purple-600/0 group-hover:bg-purple-600/10 transition-colors flex items-center justify-center pointer-events-none">
+                                                    <div
+                                                        onClick={(e) => handleCastNowClick(e as any, suggestion)}
+                                                        className="bg-purple-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0 duration-300 pointer-events-auto hover:bg-purple-500 shadow-xl shadow-purple-900/40"
+                                                    >
                                                         CAST NOW
                                                     </div>
                                                 </div>
@@ -380,6 +438,13 @@ export default function CharacterListPage() {
                     onDelete={fetchCharacters}
                 />
 
+                <SuggestionDetailModal
+                    isOpen={isSuggestionDetailOpen}
+                    onClose={() => setIsSuggestionDetailOpen(false)}
+                    suggestion={selectedSuggestion}
+                    onCast={handleCastFromModal}
+                />
+
                 <ConfirmationDialog
                     open={isRejectConfirmOpen}
                     onOpenChange={setIsRejectConfirmOpen}
@@ -389,6 +454,16 @@ export default function CharacterListPage() {
                     cancelLabel={tCommon('cancel')}
                     onConfirm={handleRejectConfirm}
                     variant="destructive"
+                />
+
+                <ConfirmationDialog
+                    open={isPromoteConfirmOpen}
+                    onOpenChange={setIsPromoteConfirmOpen}
+                    title={tc('castConfirm')}
+                    description={tc('castConfirmDesc')}
+                    confirmLabel={tc('castConfirm')}
+                    cancelLabel={tCommon('cancel')}
+                    onConfirm={handlePromoteConfirm}
                 />
             </div>
         </ProjectLayout>
