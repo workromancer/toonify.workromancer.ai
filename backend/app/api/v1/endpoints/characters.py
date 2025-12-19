@@ -538,7 +538,8 @@ def list_suggestions(
     from app.models import CharacterSuggestion
     statement = select(CharacterSuggestion).where(
         CharacterSuggestion.project_id == project_id,
-        CharacterSuggestion.is_used == False
+        CharacterSuggestion.is_used == False,
+        CharacterSuggestion.deleted_at == None
     ).order_by(CharacterSuggestion.created_at.desc())
     
     suggestions = session.exec(statement).all()
@@ -563,3 +564,23 @@ def use_suggestion(
     session.add(suggestion)
     session.commit()
     return {"status": "success"}
+
+@router.post("/suggestions/{suggestion_id}/reject", response_model=Any)
+def reject_suggestion(
+    *,
+    session: Session = Depends(deps.get_session),
+    suggestion_id: UUID,
+    current_user_id: str = Depends(deps.get_current_user_id),
+):
+    """
+    Soft delete a suggestion.
+    """
+    from app.models import CharacterSuggestion
+    suggestion = session.get(CharacterSuggestion, suggestion_id)
+    if not suggestion:
+        raise HTTPException(status_code=404, detail="Suggestion not found")
+        
+    suggestion.deleted_at = datetime.utcnow()
+    session.add(suggestion)
+    session.commit()
+    return {"status": "rejected"}

@@ -8,7 +8,8 @@ import { useParams } from 'next/navigation';
 import api from '@/lib/api';
 import ProjectLayout from '@/components/layout/ProjectLayout';
 import CharacterDetailModal from '@/components/project/modals/CharacterDetailModal';
-import { Plus, AlertCircle, Sparkles, Users } from 'lucide-react';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import { Plus, AlertCircle, Sparkles, Users, X } from 'lucide-react';
 import { SectionLabel } from '@/components/ui/section-label';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -45,6 +46,7 @@ export default function CharacterListPage() {
     const router = useRouter();
     const t = useTranslations('Project.Home');
     const tc = useTranslations('Project.Characters');
+    const tCommon = useTranslations('Common');
     const projectId = params?.projectId as string;
     const [characters, setCharacters] = useState<Character[]>([]);
     const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
@@ -56,6 +58,10 @@ export default function CharacterListPage() {
     // Modal State
     const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
+
+    // Suggestion Reject State
+    const [suggestionToDelete, setSuggestionToDelete] = useState<Suggestion | null>(null);
+    const [isRejectConfirmOpen, setIsRejectConfirmOpen] = useState(false);
 
     const fetchCharacters = async () => {
         if (!projectId) return;
@@ -175,6 +181,32 @@ export default function CharacterListPage() {
     const handleCharacterClick = (char: Character) => {
         setSelectedCharacter(char);
         setIsDetailOpen(true);
+    };
+
+    const handleRejectClick = (e: React.MouseEvent, suggestion: Suggestion) => {
+        e.stopPropagation();
+        setSuggestionToDelete(suggestion);
+        setIsRejectConfirmOpen(true);
+    };
+
+    const handleRejectConfirm = async () => {
+        if (!suggestionToDelete) return;
+        try {
+            await api.post(`/characters/suggestions/${suggestionToDelete.id}/reject`);
+            setSuggestions(prev => prev.filter(s => s.id !== suggestionToDelete.id));
+            toast({
+                title: tc('rejectSuccess'),
+            });
+        } catch (error) {
+            console.error(error);
+            toast({
+                title: "Error",
+                description: "Failed to reject suggestion",
+                variant: 'destructive',
+            });
+        }
+        setIsRejectConfirmOpen(false);
+        setSuggestionToDelete(null);
     };
 
     if (loading) {
@@ -304,6 +336,14 @@ export default function CharacterListPage() {
                                                 className="group relative aspect-[3/4] rounded-xl overflow-hidden bg-[#15121c] border border-purple-500/20 hover:border-purple-500/50 transition-all cursor-pointer flex flex-col p-4"
                                                 style={{ borderTop: suggestion.theme_color ? `4px solid ${suggestion.theme_color}` : undefined }}
                                             >
+                                                {/* Reject Button */}
+                                                <button
+                                                    onClick={(e) => handleRejectClick(e, suggestion)}
+                                                    className="absolute top-2 right-2 p-1.5 rounded-full bg-black/40 text-gray-400 hover:bg-red-500/20 hover:text-red-400 transition-colors z-20 opacity-0 group-hover:opacity-100"
+                                                >
+                                                    <X size={14} />
+                                                </button>
+
                                                 <div className="flex-1 flex flex-col justify-center items-center gap-2">
                                                     <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center mb-1">
                                                         <Sparkles className="w-5 h-5 text-purple-400" />
@@ -331,15 +371,26 @@ export default function CharacterListPage() {
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <CharacterDetailModal
-                isOpen={isDetailOpen}
-                onClose={() => setIsDetailOpen(false)}
-                character={selectedCharacter}
-                onRetry={handleRetryCharacter}
-                onDelete={fetchCharacters}
-            />
+                <CharacterDetailModal
+                    isOpen={isDetailOpen}
+                    onClose={() => setIsDetailOpen(false)}
+                    character={selectedCharacter}
+                    onRetry={(id) => handleRetryCharacter(id)}
+                    onDelete={fetchCharacters}
+                />
+
+                <ConfirmationDialog
+                    open={isRejectConfirmOpen}
+                    onOpenChange={setIsRejectConfirmOpen}
+                    title={tc('reject')}
+                    description={tc('rejectConfirm')}
+                    confirmLabel={tc('reject')}
+                    cancelLabel={tCommon('cancel')}
+                    onConfirm={handleRejectConfirm}
+                    variant="destructive"
+                />
+            </div>
         </ProjectLayout>
     );
 }

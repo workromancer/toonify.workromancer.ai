@@ -273,6 +273,7 @@ class CharacterSuggestion(SQLModel, table=True):
     stats: Optional[dict] = Field(sa_column=Column(JSON), default=None)
     
     is_used: bool = False
+    deleted_at: Optional[datetime] = None
     
     created_at: datetime = Field(default_factory=datetime.utcnow)
 

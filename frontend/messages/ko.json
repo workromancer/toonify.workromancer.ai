@@ -245,7 +245,10 @@
       "newCharacter": "새 캐릭터",
       "addCharacter": "캐릭터 추가",
       "castList": "활성 캐스팅",
-      "suggestionList": "AI 추천 캐스팅"
+      "suggestionList": "AI 추천 캐스팅",
+      "reject": "제안 거절",
+      "rejectConfirm": "정말 이 제안을 삭제하시겠습니까?",
+      "rejectSuccess": "제안이 삭제되었습니다."
     },
     "Episodes": {
       "title": "에피소드",
