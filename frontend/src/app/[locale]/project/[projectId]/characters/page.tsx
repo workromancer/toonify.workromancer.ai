@@ -41,6 +41,16 @@ export default function CharacterListPage() {
     const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
 
+    const fetchCharacters = async () => {
+        if (!projectId) return;
+        try {
+            const charRes = await api.get(`/characters/?project_id=${projectId}`);
+            setCharacters(charRes.data);
+        } catch (err) {
+            console.error("Failed to fetch characters", err);
+        }
+    };
+
     useEffect(() => {
         const fetchData = async () => {
             if (!projectId) return;
@@ -221,6 +231,7 @@ export default function CharacterListPage() {
                 onClose={() => setIsDetailOpen(false)}
                 character={selectedCharacter}
                 onRetry={handleRetryCharacter}
+                onDelete={fetchCharacters}
             />
         </ProjectLayout>
     );

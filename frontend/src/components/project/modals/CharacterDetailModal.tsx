@@ -2,9 +2,10 @@
 
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { X, Sparkles, User, Tag, FileText, Activity } from 'lucide-react';
+import { X, Sparkles, User, Tag, FileText, Activity, Trash2 } from 'lucide-react';
 import { RadarChart } from '@/components/ui/radar-chart'; // New Import
 import { cn } from '@/lib/utils';
+import api from '@/lib/api';
 
 // Redefine interface locally to match ProjectHome structure
 interface Character {
@@ -36,12 +37,26 @@ interface CharacterDetailModalProps {
     onClose: () => void;
     character: Character | null;
     onRetry?: (characterId: string) => void;
+    onDelete?: (characterId: string) => void;
 }
 
 import { useTranslations } from 'next-intl';
 
-export default function CharacterDetailModal({ isOpen, onClose, character, onRetry }: CharacterDetailModalProps) {
+export default function CharacterDetailModal({ isOpen, onClose, character, onRetry, onDelete }: CharacterDetailModalProps) {
     const t = useTranslations('Modals.CharacterDetail');
+
+    const handleRemove = async () => {
+        if (!character?.id) return;
+        if (!confirm(t('deleteConfirm'))) return;
+
+        try {
+            await api.delete(`/characters/${character.id}`);
+            if (onDelete) onDelete(character.id);
+            onClose();
+        } catch (e) {
+            console.error("Failed to delete character", e);
+        }
+    };
 
     if (!character) return null;
 
@@ -124,14 +139,25 @@ export default function CharacterDetailModal({ isOpen, onClose, character, onRet
                                     </span>
                                 </div>
                             </div>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={onClose}
-                                className="text-gray-400 hover:text-white hover:bg-white/10 rounded-full -mr-2 -mt-2"
-                            >
-                                <X size={20} />
-                            </Button>
+                            <div className="flex items-center gap-2 -mr-2 -mt-2">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={handleRemove}
+                                    className="text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-full"
+                                    title={t('delete')}
+                                >
+                                    <Trash2 size={18} />
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={onClose}
+                                    className="text-gray-400 hover:text-white hover:bg-white/10 rounded-full"
+                                >
+                                    <X size={20} />
+                                </Button>
+                            </div>
                         </div>
 
                         {/* Scrollable Content */}

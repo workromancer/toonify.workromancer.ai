@@ -739,6 +739,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                 onClose={() => setIsCharacterDetailOpen(false)}
                 character={selectedCharacter}
                 onRetry={handleCharacterRetry}
+                onDelete={onRefreshCharacters}
             />
         </ProjectLayout>
     );
