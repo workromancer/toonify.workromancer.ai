@@ -122,7 +122,7 @@ export default function CharacterListPage() {
 
         const checkSuggestions = async () => {
             try {
-                const res = await api.get(`/characters/suggestions?project_id=${projectId}`);
+                const res = await api.get(`/characters/suggestions/${projectId}`);
                 setSuggestions(res.data);
 
                 if (res.data.length > 0 || project.suggestions_status === 'completed') {
