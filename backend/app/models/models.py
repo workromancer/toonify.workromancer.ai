@@ -207,6 +207,9 @@ class StoryCut(SQLModel, table=True):
     image_path: Optional[str] = None # Direct URL/Path for MVP
     image_asset_id: Optional[UUID] = Field(foreign_key="asset.id", default=None)
     
+    # Status Tracking
+    status: str = Field(default="idle") # idle, generating, completed, failed
+    
     dialogues: List[dict] = Field(sa_column=Column(JSON), default=[]) # JSON List of {speaker, text}
     appearing_characters: List[dict] = Field(sa_column=Column(JSON), default=[]) # List of {id, name}
     

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
-// Removed unused Maximize2 import
+
 import { Plus, Image as ImageIcon, Trash2, Clapperboard, Loader2, Wand2, Sparkles, RefreshCw } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
@@ -20,6 +20,7 @@ interface StoryCut {
     image_path?: string;
     dialogues: unknown[];
     appearing_characters?: string[];
+    status?: string;
 }
 
 interface DirectorOption {
@@ -352,7 +353,7 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
                                             <img src={cut.image_path} alt="Cut" className="w-full h-full object-cover" />
                                         ) : (
                                             <div className="text-slate-600 flex flex-col items-center gap-2">
-                                                {generatingIds.has(cut.id) ? (
+                                                {generatingIds.has(cut.id) || cut.status === 'generating' ? (
                                                     <>
                                                         <RefreshCw className="animate-spin text-purple-500" size={24} />
                                                         <span className="text-[10px] text-purple-400">{t('rendering')}</span>

@@ -1,6 +1,6 @@
 from typing import Any, List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, Header
-from sqlmodel import Session, select, col
+from fastapi import APIRouter, Depends, HTTPException, Header
+from sqlmodel import Session, select
 
 from app.api import deps
 from app.models import Episode, Project, WorkspaceMember, StoryCut, Character
@@ -295,16 +295,12 @@ def generate_cut_image(
     # Pass everything needed to background task
     prompt_override = request.prompt_override
     
-    prompt_override = request.prompt_override
+    # Update status to generating
+    cut.status = "generating"
+    session.add(cut)
+    session.commit()
     
-    # We need to fetch project language. Pass None here and let background task fetch it or fetch here?
-    # Background task fetches project again. Let's pass language argument to task.
-    # But current task signature takes language.
-    # Background task `generate_cut_task` fetches project.
-    
-    # Let's simple pass None and let background task determine language from project?
-    # Or fetch cut -> project here?
-    # cut is fetched above.
+    # We need to fetch project language.
     episode = session.get(Episode, cut.episode_id)
     project = session.get(Project, episode.project_id)
     lang = project.language if project else "en"
@@ -319,74 +315,80 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
         cut = session.get(StoryCut, cut_id)
         if not cut: return
         
-        episode = session.get(Episode, cut.episode_id)
-        project = session.get(Project, episode.project_id)
-        
-        # 1. Context Gathering
-        
-        # A. Style Reference
-        style_ref_url = project.style_reference_url
-        if not style_ref_url and project.projects: # Just in case data model is weird, but typically project.style_reference_url is correct
-             pass 
-
-        # B. Previous Scene (for continuity)
-        prev_scene_url = None
-        if cut.cut_order > 1:
-            prev_cut = session.exec(
-                select(StoryCut)
-                .where(StoryCut.episode_id == cut.episode_id)
-                .where(StoryCut.cut_order == cut.cut_order - 1)
-            ).first()
-            if prev_cut and prev_cut.image_path:
-                prev_scene_url = prev_cut.image_path
-        
-        # C. Characters (Max 6)
-        # 1. Start with characters explicitly listed for this cut
-        appearing_names = [name.lower() for name in (cut.appearing_characters or [])]
-        
-        # 2. Add characters from dialogues
-        suggested_names = [d.get("speaker", "").lower() for d in (cut.dialogues or []) if d.get("speaker")]
-        appearing_names.extend(suggested_names)
-        
-        # 3. Deduplicate and filter project characters
-        occurring_names = list(set(appearing_names))
-        
-        # Fetch characters from project
-        all_chars = session.exec(select(Character).where(Character.project_id == project.id).where(Character.deleted_at == None)).all()
-        
-        char_data = []
-        # Priority 1: Specifically matched characters
-        matched_chars = [c for c in all_chars if c.name.lower() in occurring_names and c.profile_image_url]
-        for c in matched_chars[:6]:
-            char_data.append({"name": c.name, "url": c.profile_image_url})
-            
-        # Priority 2: Fallback to any project characters if less than 6 found and we need context
-        # But maybe better to be strict? Let's add up to 3 more from the project if none matched.
-        if len(char_data) < 3:
-            remaining_chars = [c for c in all_chars if c.id not in [mc.id for mc in matched_chars] and c.profile_image_url]
-            for c in remaining_chars[:(6 - len(char_data))]:
-                char_data.append({"name": c.name, "url": c.profile_image_url})
-        
-        # 2. Prompt Construction
-        prompt = prompt_override
-        if not prompt:
-            dialogue_text = " ".join([f"{d.get('speaker', 'Unknown')}: {d.get('text', '')}" for d in cut.dialogues])
-            prompt = f"""
-            Style: {project.style_preset} {f'({project.art_style})' if project.art_style else ''}
-            Action/Scene: {cut.script}
-            Dialogues: {dialogue_text}
-            """
-
-        # 3. Determine Dimensions
-        width, height = 1024, 1024
-        ratio = cut.aspect_ratio.lower() if cut.aspect_ratio else "square"
-        
-        if ratio in ["wide", "16:9"]:
-            width, height = 1536, 1024 # 3:2
-        elif ratio in ["vertical", "9:16"]:
-            width, height = 1024, 1536 # 2:3
-        
         try:
+             # Ensure status is generating if missed
+            if cut.status != "generating":
+                cut.status = "generating"
+                session.add(cut)
+                session.commit()
+
+            episode = session.get(Episode, cut.episode_id)
+            project = session.get(Project, episode.project_id)
+            
+            # 1. Context Gathering
+            
+            # A. Style Reference
+            style_ref_url = project.style_reference_url
+            if not style_ref_url and project.projects: # Just in case data model is weird, but typically project.style_reference_url is correct
+                 pass 
+    
+            # B. Previous Scene (for continuity)
+            prev_scene_url = None
+            if cut.cut_order > 1:
+                prev_cut = session.exec(
+                    select(StoryCut)
+                    .where(StoryCut.episode_id == cut.episode_id)
+                    .where(StoryCut.cut_order == cut.cut_order - 1)
+                ).first()
+                if prev_cut and prev_cut.image_path:
+                    prev_scene_url = prev_cut.image_path
+            
+            # C. Characters (Max 6)
+            # 1. Start with characters explicitly listed for this cut
+            appearing_names = [name.lower() for name in (cut.appearing_characters or [])]
+            
+            # 2. Add characters from dialogues
+            suggested_names = [d.get("speaker", "").lower() for d in (cut.dialogues or []) if d.get("speaker")]
+            appearing_names.extend(suggested_names)
+            
+            # 3. Deduplicate and filter project characters
+            occurring_names = list(set(appearing_names))
+            
+            # Fetch characters from project
+            all_chars = session.exec(select(Character).where(Character.project_id == project.id).where(Character.deleted_at == None)).all()
+            
+            char_data = []
+            # Priority 1: Specifically matched characters
+            matched_chars = [c for c in all_chars if c.name.lower() in occurring_names and c.profile_image_url]
+            for c in matched_chars[:6]:
+                char_data.append({"name": c.name, "url": c.profile_image_url})
+                
+            # Priority 2: Fallback to any project characters if less than 6 found and we need context
+            # But maybe better to be strict? Let's add up to 3 more from the project if none matched.
+            if len(char_data) < 3:
+                remaining_chars = [c for c in all_chars if c.id not in [mc.id for mc in matched_chars] and c.profile_image_url]
+                for c in remaining_chars[:(6 - len(char_data))]:
+                    char_data.append({"name": c.name, "url": c.profile_image_url})
+            
+            # 2. Prompt Construction
+            prompt = prompt_override
+            if not prompt:
+                dialogue_text = " ".join([f"{d.get('speaker', 'Unknown')}: {d.get('text', '')}" for d in cut.dialogues])
+                prompt = f"""
+                Style: {project.style_preset} {f'({project.art_style})' if project.art_style else ''}
+                Action/Scene: {cut.script}
+                Dialogues: {dialogue_text}
+                """
+    
+            # 3. Determine Dimensions
+            width, height = 1024, 1024
+            ratio = cut.aspect_ratio.lower() if cut.aspect_ratio else "square"
+            
+            if ratio in ["wide", "16:9"]:
+                width, height = 1536, 1024 # 3:2
+            elif ratio in ["vertical", "9:16"]:
+                width, height = 1024, 1536 # 2:3
+            
             img_bytes = ai_service.generate_panel_image(
                 prompt=prompt,
                 width=width,
@@ -400,13 +402,16 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
             
             url = storage.upload_image(img_bytes)
             cut.image_path = url
+            cut.status = "completed"
             session.add(cut)
             session.commit()
             print(f"Task Complete: Image saved to {url}")
-            
+
         except Exception as e:
             print(f"Background Cut Gen Error: {e}")
-            # Could update cut status to 'failed' if we had a status field
+            cut.status = "failed"
+            session.add(cut)
+            session.commit()
 
 
 @router.post("/{episode_id}/export")
