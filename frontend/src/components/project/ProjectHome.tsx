@@ -12,6 +12,8 @@ import EditProjectModal from './modals/EditProjectModal';
 import GenerateEpisodeModal from './modals/GenerateEpisodeModal';
 import ArtStyleSetupModal from './modals/ArtStyleSetupModal';
 import CharacterDetailModal from './modals/CharacterDetailModal';
+import SuggestionDetailModal from './modals/SuggestionDetailModal';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { Plus, Sparkles, Clapperboard, Edit2, Palette, ArrowRight, Settings, Play, AlertCircle, Database, ChevronDown, MoreVertical, LayoutTemplate, Calendar, Film, Clock, Loader2, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { SectionLabel } from '@/components/ui/section-label';
@@ -25,6 +27,19 @@ interface Character {
     profile_image_url?: string;
     default_mood?: string | string[];
     sheet_status?: 'pending' | 'processing' | 'completed' | 'failed';
+}
+
+interface Suggestion {
+    id: string;
+    name: string;
+    role?: string;
+    theme_color?: string;
+    bio?: string;
+    personality?: string;
+    stats?: Record<string, number>;
+    visual_keywords?: string[];
+    age?: string;
+    personality_tags?: string[];
 }
 
 interface Project {
@@ -71,11 +86,18 @@ interface ProjectHomeProps {
 export default function ProjectHome({ project, characters, episodes, onProjectUpdate, onCharacterAdd, onEpisodeAdd, onRefreshCharacters, ...props }: ProjectHomeProps) {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isEpisodeModalOpen, setIsEpisodeModalOpen] = useState(false);
-    const [isArtStyleOpen, setIsArtStyleOpen] = useState(false);
-    const [isViewStyleOpen, setIsViewStyleOpen] = useState(false);
+    const [isArtStyleModalOpen, setIsArtStyleModalOpen] = useState(false);
+    const [isViewStyleModalOpen, setIsViewStyleModalOpen] = useState(false);
     const [isCharacterDetailOpen, setIsCharacterDetailOpen] = useState(false);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
+
+    // Suggestion Promote State
+    const [selectedSuggestion, setSelectedSuggestion] = useState<Suggestion | null>(null);
+    const [isSuggestionDetailOpen, setIsSuggestionDetailOpen] = useState(false);
+    const [suggestionToPromote, setSuggestionToPromote] = useState<Suggestion | null>(null);
+    const [isPromoteConfirmOpen, setIsPromoteConfirmOpen] = useState(false);
+
     const { toast } = useToast();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -88,7 +110,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
     const isLongDescription = descriptionText.length > 200;
 
     // Suggestion State
-    const [suggestions, setSuggestions] = useState<any[]>([]);
+    const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
     const [isSuggestionsLoading, setIsSuggestionsLoading] = useState(false);
 
     useEffect(() => {
@@ -245,11 +267,53 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
         setIsCharacterDetailOpen(true);
     };
 
+    const handleSuggestionClick = (e: React.MouseEvent, suggestion: Suggestion) => {
+        e.stopPropagation(); // Avoid parent click if necessary, though cards are usually standalone
+        setSelectedSuggestion(suggestion);
+        setIsSuggestionDetailOpen(true);
+    };
+
+    const handleCastNowClick = (e: React.MouseEvent, suggestion: Suggestion) => {
+        e.stopPropagation();
+        setSuggestionToPromote(suggestion);
+        setIsPromoteConfirmOpen(true);
+    };
+
+    const handleCastFromModal = (suggestion: Suggestion) => {
+        setIsSuggestionDetailOpen(false);
+        setSuggestionToPromote(suggestion);
+        setTimeout(() => setIsPromoteConfirmOpen(true), 150);
+    };
+
+    const handlePromoteConfirm = async () => {
+        if (!suggestionToPromote) return;
+        try {
+            await api.post(`/characters/suggestions/${suggestionToPromote.id}/promote`);
+
+            // Optimistic Update
+            setSuggestions(prev => prev.filter(s => s.id !== suggestionToPromote.id));
+            if (onRefreshCharacters) onRefreshCharacters();
+
+            toast({
+                title: t('castSuccess'),
+            });
+        } catch (error) {
+            console.error(error);
+            toast({
+                title: "Error",
+                description: "Failed to cast suggestion",
+                variant: 'destructive',
+            });
+        }
+        setIsPromoteConfirmOpen(false);
+        setSuggestionToPromote(null);
+    };
+
     // Check for setup query param
     useEffect(() => {
         if (searchParams && searchParams.get('setup') === 'true') {
             const timer = setTimeout(() => {
-                setIsArtStyleOpen(true);
+                setIsArtStyleModalOpen(true);
                 const params = new URLSearchParams(searchParams);
                 params.delete('setup');
                 router.replace(`${pathname}?${params.toString()}`);
@@ -260,9 +324,9 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
 
     const handleStyleClick = () => {
         if (project.style_preset && project.style_preset !== 'anime_webtoon') {
-            setIsViewStyleOpen(true);
+            setIsViewStyleModalOpen(true);
         } else {
-            setIsArtStyleOpen(true);
+            setIsArtStyleModalOpen(true);
         }
     };
 
@@ -284,7 +348,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
             return {
                 label: t('selectStyle'),
                 icon: <Palette className="mr-2 h-4 w-4" />,
-                onClick: () => setIsArtStyleOpen(true),
+                onClick: () => setIsArtStyleModalOpen(true),
                 variant: 'primary',
                 description: t('selectStyleDesc')
             };
@@ -642,7 +706,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                     {suggestions.length > 0 && suggestions.slice(0, 3).map((suggestion, idx) => (
                                         <div
                                             key={suggestion.id}
-                                            onClick={() => router.push(`/project/${project.id}/casting`)}
+                                            onClick={(e) => handleSuggestionClick(e, suggestion)}
                                             className="group relative aspect-[3/4] rounded-xl overflow-hidden bg-[#15121c] border border-purple-500/20 hover:border-purple-500/50 transition-all cursor-pointer flex flex-col p-3"
                                             style={{ borderTop: suggestion.theme_color ? `3px solid ${suggestion.theme_color}` : undefined }}
                                         >
@@ -650,7 +714,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                                 <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center mb-1">
                                                     <Sparkles className="w-4 h-4 text-purple-400" />
                                                 </div>
-                                                <h4 className="text-white text-[11px] font-bold uppercase tracking-tight text-center">{suggestion.name}</h4>
+                                                <h4 className="text-white text-[10px] font-bold uppercase tracking-tight text-center">{suggestion.name}</h4>
                                                 <p className="text-[9px] text-purple-300/70 font-medium">{suggestion.role || "Potential Cast"}</p>
                                             </div>
                                             <div className="mt-auto pt-2 border-t border-white/5">
@@ -660,8 +724,11 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                             </div>
 
                                             {/* Hover HUD */}
-                                            <div className="absolute inset-0 bg-purple-600/0 group-hover:bg-purple-600/10 transition-colors flex items-center justify-center">
-                                                <div className="bg-purple-600 text-white text-[9px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <div className="absolute inset-0 bg-purple-600/0 group-hover:bg-purple-600/10 transition-colors flex items-center justify-center pointer-events-none">
+                                                <div
+                                                    onClick={(e) => handleCastNowClick(e, suggestion)}
+                                                    className="bg-purple-600 text-white text-[9px] font-bold px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0 duration-300 pointer-events-auto hover:bg-purple-500 shadow-xl shadow-purple-900/40"
+                                                >
                                                     CAST NOW
                                                 </div>
                                             </div>
@@ -760,8 +827,8 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
 
             {/* Modals */}
             <ViewStyleModal
-                isOpen={isViewStyleOpen}
-                onClose={() => setIsViewStyleOpen(false)}
+                isOpen={isViewStyleModalOpen}
+                onClose={() => setIsViewStyleModalOpen(false)}
                 styleName={project.style_preset}
                 styleImageUrl={project.style_reference_url}
                 description={project.art_style}
@@ -780,8 +847,8 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                 nextOrder={episodes ? episodes.length + 1 : 1}
             />
             <ArtStyleSetupModal
-                isOpen={isArtStyleOpen}
-                onClose={() => setIsArtStyleOpen(false)}
+                isOpen={isArtStyleModalOpen}
+                onClose={() => setIsArtStyleModalOpen(false)}
                 projectId={project.id}
                 currentStyle={project.style_preset}
                 onStyleUpdate={(newStyle: string) => onProjectUpdate({ ...project, style_preset: newStyle })}
@@ -789,11 +856,28 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                 projectGenre={project.genre}
             />
             <CharacterDetailModal
-                isOpen={isCharacterDetailOpen}
-                onClose={() => setIsCharacterDetailOpen(false)}
+                isOpen={!!selectedCharacter}
+                onClose={() => setSelectedCharacter(null)}
                 character={selectedCharacter}
                 onRetry={handleCharacterRetry}
                 onDelete={onRefreshCharacters}
+            />
+
+            <SuggestionDetailModal
+                isOpen={isSuggestionDetailOpen}
+                onClose={() => setIsSuggestionDetailOpen(false)}
+                suggestion={selectedSuggestion}
+                onCast={handleCastFromModal}
+            />
+
+            <ConfirmationDialog
+                open={isPromoteConfirmOpen}
+                onOpenChange={setIsPromoteConfirmOpen}
+                title={t('castConfirm')}
+                description={t('castConfirmDesc')}
+                confirmLabel={t('castConfirm')}
+                cancelLabel={useTranslations('Common')('cancel')}
+                onConfirm={handlePromoteConfirm}
             />
         </ProjectLayout>
     );
