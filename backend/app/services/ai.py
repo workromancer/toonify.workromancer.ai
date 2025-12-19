@@ -725,9 +725,29 @@ class AIService:
             print(f"Episode Idea Gen Failed: {e}")
             raise e
 
-    def generate_initial_cuts(self, episode_title: str, summary: str, style: str, num_cuts: int = 6, language: str = "en", available_characters: List[str] = None) -> List[dict]:
+    def generate_initial_cuts(self, episode_title: str, summary: str, style: str, num_cuts: int = 6, language: str = "en", available_characters: List[dict] = None) -> List[dict]:
         if not self.client:
              raise Exception("AI Service not initialized")
+
+        # Format available characters
+        chars_str = "None"
+        if available_characters:
+            chars_list = []
+            for char in available_characters:
+                c_info = f"- Name: {char.get('name')}\n"
+                c_info += f"  ID: {char.get('id')}\n" # Include ID for reference if needed
+                if char.get('personality'):
+                    c_info += f"  Personality: {char.get('personality')}\n"
+                if char.get('appearance'):
+                     # appearance can be list or string
+                    app = char.get('appearance')
+                    if isinstance(app, list):
+                        app = ", ".join(app)
+                    c_info += f"  Appearance: {app}\n"
+                if char.get('description'):
+                    c_info += f"  Description: {char.get('description')}\n"
+                chars_list.append(c_info)
+            chars_str = "\n".join(chars_list)
 
         prompt = f"""
         Plan a {num_cuts}-cut webtoon episode.
@@ -735,13 +755,14 @@ class AIService:
         Summary: {summary}
         Style: {style}
         
-        Available Characters: {', '.join(available_characters) if available_characters else 'None'}
+        Available Characters:
+        {chars_str}
         
         For each cut, determine:
         - Script (Visual Description of action/scene)
         - Dialogues (List of {{speaker, text}})
         - Panel Type (Aspect Ratio: Choose from "1:1", "3:2", "2:3", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9". Prefer vertical ratios for mobile scroll (9:16, 2:3, 4:5), or 1:1/16:9/21:9 for specific impact.)
-        - Appearing Characters (List of character names appearing in this cut, MAX 6. Use EXACT names from 'Available Characters' if applicable)
+        - Appearing Characters (List of objects: [{{"id": "CHARACTER_ID", "name": "CHARACTER_NAME"}}, ...]. Use EXACT ID and Name from 'Available Characters' list.)
         
         {f'IMPORTANT: All output text (scripts, dialogues, character names) MUST be in {language} language.' if language else ''}
         {f'If language is Korean, use Hangul for scripts, dialogues, and appearing characters(names).' if language and language.startswith('ko') else ''}

@@ -86,6 +86,21 @@ def create_episode(
     return episode
 
 
+@router.get("/{episode_id}", response_model=EpisodeOut)
+def get_episode(
+    *,
+    session: Session = Depends(deps.get_session),
+    episode_id: UUID,
+    current_user_id: str = Depends(deps.get_current_user_id),
+) -> Any:
+    """
+    Get episode by ID.
+    """
+    episode = session.get(Episode, episode_id)
+    if not episode or episode.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Episode not found")
+    return episode
+
 @router.delete("/{episode_id}")
 def delete_episode(
     *,
@@ -178,7 +193,21 @@ def generate_episode_cuts(
 
     # Fetch project characters for AI context
     characters = session.exec(select(Character).where(Character.project_id == request.project_id).where(Character.deleted_at == None)).all()
-    char_names = [c.name for c in characters]
+    
+    char_details = []
+    for c in characters:
+        # Extract personality from profile or fallback to default_mood
+        personality = c.profile.get("personality") if c.profile else None
+        if not personality and c.default_mood:
+            personality = ", ".join(c.default_mood)
+            
+        char_details.append({
+            "id": str(c.id),
+            "name": c.name,
+            "personality": personality,
+            "appearance": c.appearance_tags,
+            "description": c.description
+        })
 
     # 2. Generate Cuts via AI
     try:
@@ -188,7 +217,7 @@ def generate_episode_cuts(
             style=style,
             num_cuts=request.num_cuts,
             language=project_lang,
-            available_characters=char_names
+            available_characters=char_details
         )
     except Exception as e:
         # If AI fails, we might still want the episode? Or rollback?

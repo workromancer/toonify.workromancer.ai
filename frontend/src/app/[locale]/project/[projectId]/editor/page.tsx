@@ -10,7 +10,7 @@ import InspectorPanel from '@/components/editor/InspectorPanel';
 import StoryboardView from '@/components/editor/StoryboardView';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import api from '@/lib/api';
-import { ArrowLeft, Save, Download, Cloud, Layers, Users, Image as ImageIcon, Settings, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save, Download, Cloud, Layers, Users, Image as ImageIcon, Settings, Loader2, Smartphone } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslations } from 'next-intl';
 
@@ -18,11 +18,16 @@ export default function EditorPage() {
     const params = useParams();
     const searchParams = useSearchParams();
     const projectId = params?.projectId as string;
-    const [activeSegment, setActiveSegment] = useState('storyboard'); // script, storyboard
-    const { activeEpisodeId, setActiveEpisode } = useCanvasStore();
+
+    const [activeSegment, setActiveSegment] = useState('storyboard'); // script, storyboard (kept for reference if needed, though hidden)
+    const { activeEpisodeId, setActiveEpisode, setReviewMode } = useCanvasStore();
     const [exporting, setExporting] = useState(false);
     const { toast } = useToast();
     const t = useTranslations('Project.Editor');
+
+    const [projectTitle, setProjectTitle] = useState('');
+    const [episodeTitle, setEpisodeTitle] = useState('');
+    const [episodeOrder, setEpisodeOrder] = useState<number | null>(null);
 
     // Load episode from query param if present
     useEffect(() => {
@@ -31,6 +36,27 @@ export default function EditorPage() {
             setActiveEpisode(epId);
         }
     }, [searchParams, setActiveEpisode]);
+
+    // Fetch Project Details
+    useEffect(() => {
+        if (!projectId) return;
+        api.get(`/projects/${projectId}`).then(res => {
+            setProjectTitle(res.data.title);
+        }).catch(err => console.error("Failed to fetch project", err));
+    }, [projectId]);
+
+    // Fetch Episode Details
+    useEffect(() => {
+        if (!activeEpisodeId) {
+            setEpisodeTitle('');
+            setEpisodeOrder(null);
+            return;
+        }
+        api.get(`/episodes/${activeEpisodeId}`).then(res => {
+            setEpisodeTitle(res.data.title);
+            setEpisodeOrder(res.data.episode_order);
+        }).catch(err => console.error("Failed to fetch episode", err));
+    }, [activeEpisodeId]);
 
     const handleExport = async () => {
         if (!activeEpisodeId) {
@@ -83,20 +109,30 @@ export default function EditorPage() {
                         </Button>
                     </Link>
                     <div className="h-4 w-[1px] bg-slate-800 mx-2"></div>
-                    <h1 className="font-bold text-sm text-slate-200">
-                        {t('title')} <span className="text-slate-600 ml-2 font-mono text-xs">ID: {projectId?.toString().slice(0, 8)}...</span>
-                    </h1>
+
+                    <div className="flex items-center gap-2 text-sm">
+                        <span className="font-bold text-slate-200">{projectTitle}</span>
+                        <span className="text-slate-600">/</span>
+                        <span className="font-medium text-slate-300">{episodeTitle || t('title')}</span>
+                        {episodeOrder !== null && (
+                            <span className="ml-1 px-1.5 py-0.5 rounded-md bg-slate-800 border border-slate-700 text-[10px] text-slate-400 font-mono">
+                                #{episodeOrder}
+                            </span>
+                        )}
+                    </div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 mr-4">
-                        <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900 border border-slate-700 text-[10px] font-mono text-slate-400">
-                            <Cloud size={10} className="text-green-500" /> {t('saved')}
-                        </span>
-                    </div>
-                    <Button variant="outline" size="sm" className="bg-[#0f0f16] border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 hover:border-slate-600">
-                        <Save size={16} className="mr-2" /> {t('save')}
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setReviewMode(true)}
+                        className="bg-slate-900 border-slate-700 hover:bg-slate-800 text-slate-300"
+                    >
+                        <Smartphone size={16} className="mr-2" /> {t('review')}
                     </Button>
+
                     <Button
                         className="bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-900/20"
                         size="sm"
@@ -137,41 +173,11 @@ export default function EditorPage() {
                         {/* Center: Canvas / Editor */}
                         <Panel defaultSize={75} minSize={30}>
                             <div className="h-full flex flex-col bg-[#05050a]">
-                                {/* Toolbar */}
-                                <div className="h-12 border-b border-slate-800 flex items-center px-4 gap-2 bg-[#05050a]">
-                                    <Button
-                                        data-testid="view-storyboard-btn"
-                                        variant="ghost"
-                                        size="sm"
-                                        className={`text-xs font-medium ${activeSegment === 'storyboard' ? 'bg-purple-500/10 text-purple-400' : 'text-slate-500 hover:text-slate-300'}`}
-                                        onClick={() => setActiveSegment('storyboard')}
-                                    >
-                                        {t('storyboard')}
-                                    </Button>
-                                    <Button
-                                        data-testid="view-script-btn"
-                                        variant="ghost"
-                                        size="sm"
-                                        className={`text-xs font-medium ${activeSegment === 'script' ? 'bg-purple-500/10 text-purple-400' : 'text-slate-500 hover:text-slate-300'}`}
-                                        onClick={() => setActiveSegment('script')}
-                                    >
-                                        {t('script')}
-                                    </Button>
-                                </div>
-
-                                {/* Content Area */}
+                                {/* Content Area - Only Storyboard */}
                                 <div className="flex-1 overflow-hidden relative">
-                                    {activeSegment === 'storyboard' ? (
-                                        <StoryboardView
-                                            projectId={projectId?.toString() || ''}
-                                        />
-                                    ) : (
-                                        <div className="w-full h-full max-w-3xl bg-[#0f0f16] p-12 border border-slate-800 text-slate-300 font-mono text-sm mx-auto my-8 overflow-auto shadow-2xl rounded-xl">
-                                            <p className="text-slate-500 mb-6"># {t('scriptPlaceholderTitle')}</p>
-                                            <p className="font-bold text-white mb-2">{t('scriptPlaceholderLine1')}</p>
-                                            <p className="leading-relaxed">{t('scriptPlaceholderLine2')}</p>
-                                        </div>
-                                    )}
+                                    <StoryboardView
+                                        projectId={projectId?.toString() || ''}
+                                    />
                                 </div>
                             </div>
                         </Panel>

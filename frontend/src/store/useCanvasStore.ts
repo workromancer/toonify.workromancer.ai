@@ -12,6 +12,8 @@ interface CanvasState {
     setActiveCut: (id: string | null) => void;
     // Renamed for clarity since we don't have elements anymore, but keeping api for now
     updateCut: (updates: any) => Promise<void>;
+    isReviewMode: boolean;
+    setReviewMode: (isOpen: boolean) => void;
 }
 
 export const useCanvasStore = create<CanvasState>((set, get) => ({
@@ -21,6 +23,8 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     setActiveCharacter: (char) => set({ activeCharacter: char }),
     setActiveEpisode: (id) => set({ activeEpisodeId: id }),
     setActiveCut: (id) => set({ activeCutId: id }),
+    isReviewMode: false,
+    setReviewMode: (isOpen) => set({ isReviewMode: isOpen }),
 
     updateCut: async (updates: any) => {
         const { activeCutId } = get();

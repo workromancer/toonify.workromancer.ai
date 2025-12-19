@@ -57,7 +57,7 @@ export default function InspectorPanel() {
     const [generating, setGenerating] = useState(false);
     const [aspectRatio, setAspectRatio] = useState('1:1');
     const [characters, setCharacters] = useState<Character[]>([]);
-    const [appearingCharNames, setAppearingCharNames] = useState<Set<string>>(new Set());
+    const [appearingCharIds, setAppearingCharIds] = useState<Set<string>>(new Set());
 
     // Sync specific to activeCut
     useEffect(() => {
@@ -68,14 +68,28 @@ export default function InspectorPanel() {
                 const cut = res.data;
                 setPrompt(cut.script || '');
                 setAspectRatio(cut.aspect_ratio || '1:1');
-                setAppearingCharNames(new Set(cut.appearing_characters || []));
+
+                // robust handling for both old (string[]) and new ({id, name}[]) formats
+                const ids = new Set<string>();
+                if (Array.isArray(cut.appearing_characters)) {
+                    cut.appearing_characters.forEach((c: any) => {
+                        if (typeof c === 'string') {
+                            // legacy migration: try to find char by name
+                            const found = characters.find(ch => ch.name === c);
+                            if (found) ids.add(found.id);
+                        } else if (c && c.id) {
+                            ids.add(c.id);
+                        }
+                    });
+                }
+                setAppearingCharIds(ids);
             } catch (err) {
                 console.error("Failed to fetch cut details", err);
             }
         };
 
         fetchCutDetails();
-    }, [activeCutId]);
+    }, [activeCutId, characters]); // added characters dependency for legacy mapping
 
     // Fetch characters
     useEffect(() => {
@@ -105,15 +119,20 @@ export default function InspectorPanel() {
         }
     };
 
-    const toggleCharByName = (name: string) => {
-        setAppearingCharNames(prev => {
+    const toggleCharById = (charId: string) => {
+        setAppearingCharIds(prev => {
             const next = new Set(prev);
-            if (next.has(name)) next.delete(name);
-            else next.add(name);
+            if (next.has(charId)) next.delete(charId);
+            else next.add(charId);
 
             // Sync with backend
             if (activeCutId) {
-                updateCut({ appearing_characters: Array.from(next) });
+                // Reconstruct {id, name} objects
+                const minimalChars = Array.from(next).map(id => {
+                    const char = characters.find(c => c.id === id);
+                    return { id, name: char?.name || 'Unknown' };
+                });
+                updateCut({ appearing_characters: minimalChars });
             }
             return next;
         });
@@ -124,13 +143,9 @@ export default function InspectorPanel() {
             setGenerating(true);
 
             if (activeEpisodeId && activeCutId) {
-                // Use Cut-specific generation
-                // The backend now automatically uses the stored appearing_characters
                 await api.post(`/episodes/${activeEpisodeId}/cuts/${activeCutId}/generate-image`, {
                     prompt_override: prompt || undefined
                 });
-
-                // StoryboardView polls for the image, so we don't need to do much here
             }
 
         } catch (err) {
@@ -187,13 +202,13 @@ export default function InspectorPanel() {
                 <div>
                     <label className="text-xs font-bold text-slate-400 mb-2 flex justify-between items-center">
                         <span>{t('activeCharacters')}</span>
-                        <span className="text-[10px] text-slate-500">{appearingCharNames.size}/{characters.length}</span>
+                        <span className="text-[10px] text-slate-500">{appearingCharIds.size}/{characters.length}</span>
                     </label>
                     <div className="space-y-2">
                         {characters.map(char => (
                             <div
                                 key={char.id}
-                                onClick={() => toggleCharByName(char.name)}
+                                onClick={() => toggleCharById(char.id)}
                                 className="flex items-center justify-between p-2 bg-[#13131c] border border-slate-800 rounded-lg hover:border-slate-600 transition-colors cursor-pointer"
                             >
                                 <div className="flex items-center gap-3">
@@ -206,8 +221,8 @@ export default function InspectorPanel() {
                                     </div>
                                     <span className="text-xs font-medium text-slate-300">{char.name}</span>
                                 </div>
-                                <div className={`w-4 h-4 rounded border flex items-center justify-center ${appearingCharNames.has(char.name) ? 'bg-purple-600 border-purple-500' : 'border-slate-600'}`}>
-                                    {appearingCharNames.has(char.name) && <Check size={10} className="text-white" />}
+                                <div className={`w-4 h-4 rounded border flex items-center justify-center ${appearingCharIds.has(char.id) ? 'bg-purple-600 border-purple-500' : 'border-slate-600'}`}>
+                                    {appearingCharIds.has(char.id) && <Check size={10} className="text-white" />}
                                 </div>
                             </div>
                         ))}

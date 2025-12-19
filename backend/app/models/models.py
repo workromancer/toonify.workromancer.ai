@@ -207,7 +207,7 @@ class StoryCut(SQLModel, table=True):
     image_asset_id: Optional[UUID] = Field(foreign_key="asset.id", default=None)
     
     dialogues: List[dict] = Field(sa_column=Column(JSON), default=[]) # JSON List of {speaker, text}
-    appearing_characters: List[str] = Field(sa_column=Column(JSON), default=[]) # List of character names
+    appearing_characters: List[dict] = Field(sa_column=Column(JSON), default=[]) # List of {id, name}
     
     # RAG Embedding (Stored as JSON array for compatibility)
     embedding: List[float] = Field(sa_column=Column(JSON), default=None)

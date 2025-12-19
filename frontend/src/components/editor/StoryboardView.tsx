@@ -5,7 +5,7 @@ import { useCanvasStore } from '@/store/useCanvasStore';
 import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
 // Removed unused Maximize2 import
-import { Plus, Image as ImageIcon, Trash2, Clapperboard, Loader2, Wand2, Sparkles, Smartphone, RefreshCw } from 'lucide-react';
+import { Plus, Image as ImageIcon, Trash2, Clapperboard, Loader2, Wand2, Sparkles, RefreshCw } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
@@ -35,7 +35,7 @@ interface StoryboardViewProps {
 }
 
 export default function StoryboardView({ projectId }: StoryboardViewProps) {
-    const { activeEpisodeId, setActiveCut, activeCutId } = useCanvasStore(); // Added activeCutId to track selection
+    const { activeEpisodeId, setActiveCut, activeCutId, isReviewMode, setReviewMode } = useCanvasStore(); // Added activeCutId to track selection
     const [cuts, setCuts] = useState<StoryCut[]>([]);
     const [loading, setLoading] = useState(false);
     const { toast } = useToast();
@@ -49,7 +49,7 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
     const [isSuggesting, setIsSuggesting] = useState(false);
     const [isRendering, setIsRendering] = useState<string | null>(null); // storing option ID being rendered
     const [modifyingCut, setModifyingCut] = useState<StoryCut | null>(null); // For Director's Cut modal
-    const [isMobileViewerOpen, setIsMobileViewerOpen] = useState(false);
+
 
     // Reuse existing handlers...
     const handleGenerateAll = async () => {
@@ -277,9 +277,7 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
                             <Sparkles size={12} className="mr-1" /> {t('generateAll')}
                         </Button>
                     )}
-                    <Button variant="outline" size="sm" onClick={() => setIsMobileViewerOpen(true)} className="h-7 text-xs bg-slate-800 border-slate-700 hover:bg-slate-700 text-slate-300">
-                        <Smartphone size={12} className="mr-1" /> {t('review')}
-                    </Button>
+
                 </div>
             </div>
 
@@ -474,16 +472,17 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
             </div>
 
             {/* Mobile Viewer */}
+            {/* Mobile Viewer */}
             <MobileEpisodeViewer
-                isOpen={isMobileViewerOpen}
-                onClose={() => setIsMobileViewerOpen(false)}
+                isOpen={isReviewMode}
+                onClose={() => setReviewMode(false)}
                 title="Episode Preview"
                 episodeId={activeEpisodeId || ''}
                 cuts={cuts}
                 onUpdateCut={(cutId, newPath) => {
                     setCuts(prev => prev.map(c => c.id === cutId ? { ...c, image_path: newPath } : c));
                 }}
-                mode={isMobileViewerOpen ? 'review' : 'view'}
+                mode={isReviewMode ? 'review' : 'view'}
             />
 
             <style jsx global>{`
