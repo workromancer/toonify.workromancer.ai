@@ -5,11 +5,14 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useWorkspaceStore } from '@/store/useWorkspaceStore';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { LayoutDashboard, LayoutTemplate, Image as ImageIcon, Settings, LogOut, HelpCircle, Coins, Plus, ChevronDown, Check, Palette } from 'lucide-react';
-import { useEffect, useState, useRef } from 'react';
+import { LayoutDashboard, LayoutTemplate, Settings, LogOut, HelpCircle, Plus, Palette } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import CreateWorkspaceModal from '@/components/dashboard/CreateWorkspaceModal';
 import RechargeModal from '@/components/dashboard/RechargeModal';
 import LanguageSwitcher from '@/components/common/LanguageSwitcher';
+import { Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarItem, SidebarToggle } from '@/components/layout/sidebar/Sidebar';
+import WorkspaceSelector from '@/components/layout/sidebar/WorkspaceSelector';
+import { useUIStore } from '@/store/useUIStore';
 
 import { useTranslations } from 'next-intl';
 import { useToast } from '@/hooks/use-toast';
@@ -48,24 +51,13 @@ export default function DashboardLayout({ children, accessToken }: DashboardLayo
         logout();
         router.push('/login');
     };
-    const { currentWorkspace, workspaces, fetchWorkspaces, setCurrentWorkspace } = useWorkspaceStore();
+
+    // Only need fetchWorkspaces to initialize data
+    const { fetchWorkspaces } = useWorkspaceStore();
 
     // UI State
-    const [isWorkspaceOpen, setIsWorkspaceOpen] = useState(false);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isRechargeModalOpen, setIsRechargeModalOpen] = useState(false);
-    const dropdownRef = useRef<HTMLDivElement>(null);
-
-    // Close dropdown when clicking outside
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                setIsWorkspaceOpen(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
 
     // Listen for Recharge Event
     useEffect(() => {
@@ -154,8 +146,10 @@ export default function DashboardLayout({ children, accessToken }: DashboardLayo
     // But if we have accessToken, we are good
     if (!token && !accessToken) return null;
 
+    const { isSidebarCollapsed } = useUIStore();
+
     const navItems = [
-        { name: t('nav.projects'), href: '/dashboard', icon: LayoutDashboard },
+        { name: t('nav.projects'), href: '/dashboard', icon: LayoutDashboard, exact: true },
         { name: t('nav.styles'), href: '/dashboard/styles', icon: Palette },
         { name: t('nav.templates'), href: '/dashboard/templates', icon: LayoutTemplate },
         { name: t('nav.settings'), href: '/dashboard/settings', icon: Settings },
@@ -163,155 +157,93 @@ export default function DashboardLayout({ children, accessToken }: DashboardLayo
 
     return (
         <div className="flex h-screen w-full bg-[#0A0A0B] font-display text-gray-900 dark:text-white">
-            {/* Sidebar */}
-            <aside className="w-64 bg-[#0F0F12] border-r border-gray-800 flex flex-col sticky top-0 h-screen p-4">
-                <div className="flex flex-col gap-4">
+            <Sidebar>
+                <SidebarHeader>
                     {/* Logo Area */}
-                    <Link href="/dashboard" className="flex items-center gap-3 px-3 hover:opacity-80 transition-opacity">
-                        <div className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 shadow-sm" style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuBN5z1oDmeTFxQPTUuZqFXRVrFpjy9QgdgN7rv824MDXj0NTjJf2cUSjH7YeclTy1qA7RfMULzL6lGPB0I4bZHNNHrSkeRlsh8ShZdCrhnIOWQrexQX3xL1OC7CAWTqbG9zjPeN6nxXKNfnX7EL9jlzWM3lPPERGqxmt9W6cV5zdFUyxhV086nH2nspTA8NdBpwgv32ZZe6ILXWL6fWCGG7q9dHiEZH9OCuBdZ3TVK_QRzEx4ItSKvZ0B4FeqhlaveTmuZFH9g2Gls")' }}></div>
-                        <div className="flex flex-col">
-                            <h1 className="text-white text-base font-medium leading-normal">Toonify</h1>
-                            <p className="text-gray-400 text-sm font-normal leading-normal">{t('subtitle')}</p>
-                        </div>
+                    <Link href="/dashboard" className={cn("flex items-center gap-3 px-2 hover:opacity-80 transition-opacity", isSidebarCollapsed && "justify-center")}>
+                        <div className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 shadow-sm shrink-0" style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuBN5z1oDmeTFxQPTUuZqFXRVrFpjy9QgdgN7rv824MDXj0NTjJf2cUSjH7YeclTy1qA7RfMULzL6lGPB0I4bZHNNHrSkeRlsh8ShZdCrhnIOWQrexQX3xL1OC7CAWTqbG9zjPeN6nxXKNfnX7EL9jlzWM3lPPERGqxmt9W6cV5zdFUyxhV086nH2nspTA8NdBpwgv32ZZe6ILXWL6fWCGG7q9dHiEZH9OCuBdZ3TVK_QRzEx4ItSKvZ0B4FeqhlaveTmuZFH9g2Gls")' }}></div>
+                        {!isSidebarCollapsed && (
+                            <div className="flex flex-col animate-in fade-in duration-300">
+                                <h1 className="text-white text-base font-medium leading-normal">Toonify</h1>
+                                <p className="text-gray-400 text-sm font-normal leading-normal">{t('subtitle')}</p>
+                            </div>
+                        )}
                     </Link>
 
-                    {/* Workspace/Credit Info */}
-                    {/* Workspace/Credit Info - Switcher */}
-                    {currentWorkspace && (
-                        <div className="relative mx-1" ref={dropdownRef}>
-                            <button
-                                onClick={() => setIsWorkspaceOpen(!isWorkspaceOpen)}
-                                className="w-full flex items-center justify-between text-left bg-[#15151A] hover:bg-[#1A1A20] rounded-xl p-3 border border-gray-800 transition-all duration-200 group"
-                            >
-                                <div className="min-w-0 flex-1">
-                                    <div className="text-sm font-semibold text-gray-200 truncate mb-1.5 group-hover:text-white transition-colors">
-                                        {currentWorkspace.name}
-                                    </div>
-                                    <div
-                                        className="inline-flex items-center gap-1.5 bg-yellow-500/10 px-2 py-1 rounded-md text-yellow-500 text-xs font-semibold hover:bg-yellow-500/20 hover:text-yellow-400 transition-colors"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setIsRechargeModalOpen(true);
-                                        }}
-                                    >
-                                        <Coins size={12} />
-                                        <span>{currentWorkspace.credits.toLocaleString()} Cr</span>
-                                        <Plus size={10} className="bg-yellow-500/20 rounded-full p-0.5" />
-                                    </div>
-                                </div>
-                                <ChevronDown size={16} className={`text-gray-500 transition-transform duration-200 ${isWorkspaceOpen ? 'rotate-180' : ''}`} />
-                            </button>
+                    {/* Workspace Selector */}
+                    <WorkspaceSelector
+                        onOpenCreateWorkspace={() => setIsCreateModalOpen(true)}
+                        onOpenRecharge={() => setIsRechargeModalOpen(true)}
+                        isCollapsed={isSidebarCollapsed}
+                    />
 
-                            {/* Dropdown Menu */}
-                            {isWorkspaceOpen && (
-                                <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-[#15151A] rounded-xl border border-gray-800 shadow-2xl shadow-black/50 py-2 animate-in fade-in zoom-in-95 duration-100 overflow-hidden">
-                                    <div className="px-3 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-                                        {t('workspace.switch')}
-                                    </div>
-                                    <div className="max-h-60 overflow-y-auto custom-scrollbar">
-                                        {workspaces.map((ws) => (
-                                            <button
-                                                key={ws.id}
-                                                onClick={() => {
-                                                    setCurrentWorkspace(ws);
-                                                    setIsWorkspaceOpen(false);
-                                                }}
-                                                className="w-full flex items-center justify-between px-3 py-2.5 text-sm text-gray-400 hover:text-gray-100 hover:bg-gray-800/50 transition-colors text-left"
-                                            >
-                                                <span className={cn("truncate", ws.id === currentWorkspace.id && "text-white font-medium")}>{ws.name}</span>
-                                                {ws.id === currentWorkspace.id && <Check size={14} className="text-primary" />}
-                                            </button>
-                                        ))}
-                                    </div>
-                                    <div className="h-px bg-gray-800 my-2 mx-3" />
-                                    <button
-                                        onClick={() => {
-                                            setIsCreateModalOpen(true);
-                                            setIsWorkspaceOpen(false);
-                                        }}
-                                        className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-gray-400 hover:text-white hover:bg-gray-800/50 transition-colors text-left font-medium"
-                                    >
-                                        <div className="size-6 rounded-md bg-gray-800 flex items-center justify-center">
-                                            <Plus size={14} />
-                                        </div>
-                                        {t('workspace.create')}
-                                    </button>
-                                    <Link
-                                        href="/dashboard/settings"
-                                        className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-gray-400 hover:text-white hover:bg-gray-800/50 transition-colors text-left font-medium"
-                                        onClick={() => setIsWorkspaceOpen(false)}
-                                    >
-                                        <div className="size-6 rounded-md bg-gray-800 flex items-center justify-center">
-                                            <Settings size={14} />
-                                        </div>
-                                        {t('workspace.settings')}
-                                    </Link>
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {/* Global New Project Button */}
-                    <div className="px-1 mt-3 mb-6">
+                    {/* New Project Button */}
+                    <div className="px-1 mt-1 mb-2">
                         <Link href="/new-project">
-                            <div className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white p-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-purple-900/20 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer">
-                                <Plus size={16} strokeWidth={3} />
-                                <span className="pt-[1px]">{t('newProject')}</span>
+                            <div className={cn(
+                                "w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl font-bold text-sm flex items-center justify-center shadow-lg shadow-purple-900/20 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer",
+                                isSidebarCollapsed ? "h-10 w-10 p-0 mx-auto aspect-square" : "p-3 gap-2"
+                            )} title={isSidebarCollapsed ? t('newProject') : undefined}>
+                                <Plus size={isSidebarCollapsed ? 20 : 16} strokeWidth={3} />
+                                {!isSidebarCollapsed && <span className="pt-[1px]">{t('newProject')}</span>}
                             </div>
                         </Link>
                     </div>
+                </SidebarHeader>
 
-                    {/* Main Navigation */}
-                    <nav className="flex flex-col gap-1 mt-2">
-                        {navItems.map((item) => {
-                            const Icon = item.icon;
-                            const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
+                <SidebarContent>
+                    {navItems.map((item) => (
+                        <SidebarItem
+                            key={item.href}
+                            {...item}
+                            label={item.name}
+                        />
+                    ))}
+                </SidebarContent>
 
-                            return (
-                                <Link key={item.href} href={item.href}>
-                                    <div className={cn(
-                                        "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm font-medium border border-transparent",
-                                        isActive
-                                            ? "bg-purple-500/10 text-purple-400 border-purple-500/20"
-                                            : "text-gray-500 hover:bg-[#15151A] hover:text-white"
-                                    )}>
-                                        <Icon size={20} className={cn(isActive ? "text-purple-400" : "text-gray-500")} />
-                                        <span>{item.name}</span>
-                                    </div>
-                                </Link>
-                            )
-                        })}
-                    </nav>
-
-
-                </div>
-
-                <div className="mt-auto flex flex-col gap-1">
-                    <Link href="/help" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors">
-                        <HelpCircle size={20} className="text-gray-500 dark:text-gray-500" />
-                        <p className="text-gray-800 dark:text-white text-sm font-medium leading-normal">{t('nav.help')}</p>
-                    </Link>
+                <SidebarFooter>
+                    <SidebarItem
+                        href="/help"
+                        icon={HelpCircle}
+                        label={t('nav.help')}
+                    />
 
                     {/* Profile Section */}
-                    <div className="flex items-center justify-between p-3 mt-2 border-t border-gray-800">
-                        <Link href="/dashboard/settings" className="flex items-center gap-3 min-w-0 hover:opacity-80 transition-opacity">
+                    <div className={cn("flex items-center gap-3 mt-2 border-t border-gray-800 pt-4", isSidebarCollapsed ? "justify-center flex-col" : "justify-between px-1")}>
+                        <Link href="/dashboard/settings" title="Profile Settings" className={cn("flex items-center gap-3 min-w-0 hover:opacity-80 transition-opacity", isSidebarCollapsed && "w-full justify-center")}>
                             <div className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-9 shrink-0" style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuDt162HoprwUvAfkIffAk7g_psL0UaRy25zgFtGaXcXyJz630egcVpIYDzYA0ixPxpVPquJLNEx4ZV74u4Bz7hTYnD9FqwuLTBLiyiG10hudXU1ScUybYIokJira71mt4ZaujtmgVCAKCBS2OanpmP0MIDIKs4x2kA6x9M1Es0Tyrvy12jCdsCzHFNSK9bNSsG4vcsF_ZAc6ynihPA35wHzJSvE4ybOejxdtr5pKz7E5E3jnU-92N1dtbTLPiYpcvKnPAZzjRGsc3U")' }}></div>
-                            <div className="flex flex-col min-w-0">
-                                <p className="text-gray-900 dark:text-white text-sm font-medium leading-normal truncate">{user?.email?.split('@')[0] || "Guest"}</p>
-                                <p className="text-gray-500 dark:text-gray-400 text-xs font-normal leading-normal truncate">{user?.email || "guest@toonify.com"}</p>
-                            </div>
+                            {!isSidebarCollapsed && (
+                                <div className="flex flex-col min-w-0">
+                                    <p className="text-gray-900 dark:text-white text-sm font-medium leading-normal truncate">{user?.email?.split('@')[0] || "Guest"}</p>
+                                    <p className="text-gray-500 dark:text-gray-400 text-xs font-normal leading-normal truncate">{user?.email || "guest@toonify.com"}</p>
+                                </div>
+                            )}
                         </Link>
-                        <div className="flex items-center gap-1">
-                            <LanguageSwitcher />
+
+                        {!isSidebarCollapsed && (
+                            <div className="flex items-center gap-1">
+                                <LanguageSwitcher />
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-gray-400 hover:text-red-500 hover:bg-red-500/10 shrink-0 h-8 w-8"
+                                    onClick={handleLogout}
+                                >
+                                    <LogOut size={16} />
+                                </Button>
+                            </div>
+                        )}
+                        {isSidebarCollapsed && (
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="text-gray-400 hover:text-red-500 hover:bg-red-500/10 shrink-0"
+                                className="text-gray-400 hover:text-red-500 hover:bg-red-500/10 shrink-0 h-8 w-8 mt-2"
                                 onClick={handleLogout}
+                                title={t('logout')}
                             >
-                                <LogOut size={18} />
+                                <LogOut size={16} />
                             </Button>
-                        </div>
+                        )}
                     </div>
 
                     <CreateWorkspaceModal
@@ -322,8 +254,10 @@ export default function DashboardLayout({ children, accessToken }: DashboardLayo
                         open={isRechargeModalOpen}
                         onOpenChange={setIsRechargeModalOpen}
                     />
-                </div >
-            </aside >
+                </SidebarFooter>
+
+                <SidebarToggle />
+            </Sidebar>
 
             {/* Main Content */}
             < main className="flex-1 overflow-auto bg-[#0A0A0B]" >
