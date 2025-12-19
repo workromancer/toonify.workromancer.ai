@@ -9,6 +9,7 @@ import { useCanvasStore } from '@/store/useCanvasStore';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import EpisodeGenerationModal from './EpisodeGenerationModal';
 import { Sparkles } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 
 interface Episode {
@@ -20,6 +21,8 @@ interface Episode {
 }
 
 export default function EpisodeList() {
+    const t = useTranslations('Common');
+    const te = useTranslations('Editor.EpisodeList');
     const params = useParams();
     const projectId = params?.projectId as string;
     const [episodes, setEpisodes] = useState<Episode[]>([]);
@@ -136,8 +139,10 @@ export default function EpisodeList() {
                                 <ConfirmationDialog
                                     open={deleteConfirmationId === ep.id}
                                     onOpenChange={(open) => !open && setDeleteConfirmationId(null)}
-                                    title="Delete Episode?"
-                                    description="Are you sure? This action cannot be undone."
+                                    title={t('delete')}
+                                    description={t('deleteConfirm')}
+                                    confirmLabel={t('delete')}
+                                    cancelLabel={t('cancel')}
                                     onConfirm={() => handleDeleteConfirm(ep.id)}
                                     variant="destructive"
                                     trigger={

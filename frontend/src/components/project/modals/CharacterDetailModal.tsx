@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -6,6 +7,7 @@ import { X, Sparkles, User, Tag, FileText, Activity, Trash2 } from 'lucide-react
 import { RadarChart } from '@/components/ui/radar-chart'; // New Import
 import { cn } from '@/lib/utils';
 import api from '@/lib/api';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 
 // Redefine interface locally to match ProjectHome structure
 interface Character {
@@ -44,10 +46,14 @@ import { useTranslations } from 'next-intl';
 
 export default function CharacterDetailModal({ isOpen, onClose, character, onRetry, onDelete }: CharacterDetailModalProps) {
     const t = useTranslations('Modals.CharacterDetail');
+    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
-    const handleRemove = async () => {
+    const handleRemove = () => {
+        setIsDeleteConfirmOpen(true);
+    };
+
+    const handleActualDelete = async () => {
         if (!character?.id) return;
-        if (!confirm(t('deleteConfirm'))) return;
 
         try {
             await api.delete(`/characters/${character.id}`);
@@ -352,6 +358,17 @@ export default function CharacterDetailModal({ isOpen, onClose, character, onRet
                     </div>
                 </div>
             </DialogContent>
+
+            <ConfirmationDialog
+                open={isDeleteConfirmOpen}
+                onOpenChange={setIsDeleteConfirmOpen}
+                title={t('delete')}
+                description={t('deleteConfirm')}
+                confirmLabel={t('delete')}
+                cancelLabel={t('close')}
+                onConfirm={handleActualDelete}
+                variant="destructive"
+            />
         </Dialog>
     );
 }

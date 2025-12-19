@@ -40,6 +40,7 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
     const [loading, setLoading] = useState(false);
     const { toast } = useToast();
     const t = useTranslations('Project.Editor');
+    const tc = useTranslations('Common');
 
     // Director Mode State
     const [isDirectorMode, setIsDirectorMode] = useState(false);
@@ -327,8 +328,10 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
                                         <ConfirmationDialog
                                             open={deleteConfirmationId === cut.id}
                                             onOpenChange={(open) => !open && setDeleteConfirmationId(null)}
-                                            title={t('toasts.deleteConfirmTitle')}
-                                            description={t('toasts.deleteConfirmDesc')}
+                                            title={tc('delete')}
+                                            description={tc('deleteConfirm')}
+                                            confirmLabel={tc('delete')}
+                                            cancelLabel={tc('cancel')}
                                             onConfirm={() => handleDeleteConfirm(cut.id)}
                                             variant="destructive"
                                             trigger={

@@ -8,6 +8,7 @@ import CharacterCreateModal from '@/components/editor/CharacterCreateModal';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import { Button } from '@/components/ui/button';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import { useTranslations } from 'next-intl';
 
 interface Character {
     id: string;
@@ -17,6 +18,7 @@ interface Character {
 }
 
 export default function CharacterList() {
+    const t = useTranslations('Modals.CharacterDetail');
     const params = useParams();
     const projectId = params?.projectId as string;
     const [characters, setCharacters] = useState<Character[]>([]);
@@ -122,8 +124,10 @@ export default function CharacterList() {
                                 <ConfirmationDialog
                                     open={deleteConfirmationId === char.id}
                                     onOpenChange={(open) => !open && setDeleteConfirmationId(null)}
-                                    title="Delete Character?"
-                                    description={`Are you sure you want to remove ${char.name}?`}
+                                    title={t('delete')}
+                                    description={t('deleteConfirm')}
+                                    confirmLabel={t('delete')}
+                                    cancelLabel={t('close')}
                                     onConfirm={() => handleDeleteConfirm(char.id)}
                                     variant="destructive"
                                     trigger={
