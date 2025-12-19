@@ -239,6 +239,12 @@
       "preparingSuggestions": "아이디어 구상 중...",
       "preparingSuggestionsDesc": "스토리에 어울리는 캐릭터들을 분석 중입니다. 잠시만 기다려주세요."
     },
+    "Characters": {
+      "title": "등장인물",
+      "subtitle": "모든 캐릭터를 관리하고 상세 프로필을 확인하세요.",
+      "newCharacter": "새 캐릭터",
+      "addCharacter": "캐릭터 추가"
+    },
     "Episodes": {
       "title": "에피소드",
       "subtitle": "시리즈 에피소드를 관리하고 정리하세요.",

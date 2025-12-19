@@ -8,9 +8,10 @@ import { useParams } from 'next/navigation';
 import api from '@/lib/api';
 import ProjectLayout from '@/components/layout/ProjectLayout';
 import CharacterDetailModal from '@/components/project/modals/CharacterDetailModal';
-import { Plus, AlertCircle } from 'lucide-react';
+import { Plus, AlertCircle, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslations } from 'next-intl';
 
 interface Character {
     id: string;
@@ -22,19 +23,33 @@ interface Character {
     description?: string;
 }
 
+interface Suggestion {
+    id: string;
+    name: string;
+    role?: string;
+    theme_color?: string;
+    bio?: string;
+    personality?: string;
+}
+
 interface Project {
     id: string;
     title: string;
     style_preset?: string;
+    suggestions_status?: 'pending' | 'processing' | 'completed' | 'failed';
 }
 
 export default function CharacterListPage() {
     const params = useParams();
     const router = useRouter();
+    const t = useTranslations('Project.Home');
+    const tc = useTranslations('Project.Characters');
     const projectId = params?.projectId as string;
     const [characters, setCharacters] = useState<Character[]>([]);
+    const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
     const [project, setProject] = useState<Project | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isSuggestionsLoading, setIsSuggestionsLoading] = useState(false);
     const { toast } = useToast();
 
     // Modal State
@@ -80,10 +95,8 @@ export default function CharacterListPage() {
             interval = setInterval(async () => {
                 try {
                     const res = await api.get(`/characters/?project_id=${projectId}`);
-                    // Only update if changed to avoid unnecessary re-renders, or just simple set
                     setCharacters(res.data);
 
-                    // Also update selected character if it's open
                     if (selectedCharacter && isDetailOpen) {
                         const updatedSelected = res.data.find((c: Character) => c.id === selectedCharacter.id);
                         if (updatedSelected) {
@@ -100,6 +113,38 @@ export default function CharacterListPage() {
             if (interval) clearInterval(interval);
         };
     }, [characters, projectId, isDetailOpen, selectedCharacter]);
+
+    // Poll for AI Suggestions
+    useEffect(() => {
+        if (!project || !projectId) return;
+
+        let interval: NodeJS.Timeout;
+
+        const checkSuggestions = async () => {
+            try {
+                const res = await api.get(`/characters/suggestions?project_id=${projectId}`);
+                setSuggestions(res.data);
+
+                if (res.data.length > 0 || project.suggestions_status === 'completed') {
+                    setIsSuggestionsLoading(false);
+                    if (interval) clearInterval(interval);
+                }
+            } catch (e) {
+                console.error("Failed to fetch suggestions", e);
+            }
+        };
+
+        checkSuggestions();
+
+        if (project.suggestions_status === 'processing' || (project.suggestions_status === 'pending' && suggestions.length === 0)) {
+            setIsSuggestionsLoading(true);
+            interval = setInterval(checkSuggestions, 4000);
+        }
+
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [project?.id, project?.suggestions_status]);
 
     const handleRetryCharacter = async (charId: string) => {
         try {
@@ -150,15 +195,15 @@ export default function CharacterListPage() {
                         {/* PageHeading */}
                         <div className="flex flex-wrap items-end justify-between gap-4 mb-4">
                             <div className="flex flex-col gap-2">
-                                <h1 className="text-3xl font-black leading-tight tracking-[-0.033em] text-white sm:text-4xl">All Characters</h1>
-                                <p className="text-gray-400">Manage your cast and view detailed profiles</p>
+                                <h1 className="text-3xl font-black leading-tight tracking-[-0.033em] text-white sm:text-4xl">{tc('title')}</h1>
+                                <p className="text-gray-400">{tc('subtitle')}</p>
                             </div>
                             <button
                                 onClick={handleNavigateToCasting}
                                 className="flex h-10 min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-full bg-[#4a4aff] hover:bg-[#3d3dcc] px-6 text-sm font-bold leading-normal text-white shadow-lg shadow-blue-900/20 transition-all hover:scale-105"
                             >
                                 <span className="mr-2"><Plus size={16} /></span>
-                                <span>New Character</span>
+                                <span>{tc('newCharacter')}</span>
                             </button>
                         </div>
 
@@ -172,7 +217,7 @@ export default function CharacterListPage() {
                                 <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gray-400 group-hover:text-white transition-colors">
                                     <Plus size={20} />
                                 </div>
-                                <span className="text-sm font-medium text-gray-500 group-hover:text-gray-300">Add Character</span>
+                                <span className="text-sm font-medium text-gray-500 group-hover:text-gray-300">{tc('addCharacter')}</span>
                             </div>
 
                             {characters.map((char) => {
@@ -197,14 +242,14 @@ export default function CharacterListPage() {
                                                     {isGenerating ? (
                                                         <>
                                                             <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                                                            <span className="text-[10px] text-primary font-mono animate-pulse">CREATING...</span>
+                                                            <span className="text-[10px] text-primary font-mono animate-pulse uppercase">{t('generating')}</span>
                                                         </>
                                                     ) : isFailed ? (
                                                         <>
                                                             <div className="w-8 h-8 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center">
                                                                 <AlertCircle size={16} />
                                                             </div>
-                                                            <span className="text-[10px] text-red-400 font-bold">FAILED</span>
+                                                            <span className="text-[10px] text-red-400 font-bold uppercase">{t('failed')}</span>
                                                         </>
                                                     ) : (
                                                         <span className="font-bold text-xl">{char.name[0]}</span>
@@ -221,6 +266,46 @@ export default function CharacterListPage() {
                                     </div>
                                 );
                             })}
+
+                            {/* Suggestions */}
+                            {(project.suggestions_status === 'processing' || isSuggestionsLoading) && (
+                                <div className="aspect-[3/4] rounded-xl border border-purple-500/30 bg-purple-500/5 flex flex-col items-center justify-center gap-3 p-4 text-center animate-pulse">
+                                    <div className="w-10 h-10 rounded-full border-2 border-t-purple-500 border-r-purple-500/30 border-b-transparent border-l-transparent animate-spin" />
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] font-bold text-purple-400 uppercase tracking-widest">{t('preparingSuggestions')}</p>
+                                        <p className="text-[9px] text-gray-500 leading-tight">{t('preparingSuggestionsDesc')}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {suggestions.map((suggestion) => (
+                                <div
+                                    key={suggestion.id}
+                                    onClick={handleNavigateToCasting}
+                                    className="group relative aspect-[3/4] rounded-xl overflow-hidden bg-[#15121c] border border-purple-500/20 hover:border-purple-500/50 transition-all cursor-pointer flex flex-col p-4"
+                                    style={{ borderTop: suggestion.theme_color ? `4px solid ${suggestion.theme_color}` : undefined }}
+                                >
+                                    <div className="flex-1 flex flex-col justify-center items-center gap-2">
+                                        <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center mb-1">
+                                            <Sparkles className="w-5 h-5 text-purple-400" />
+                                        </div>
+                                        <h4 className="text-white text-xs font-bold uppercase tracking-tight text-center">{suggestion.name}</h4>
+                                        <p className="text-[10px] text-purple-300/70 font-medium">{suggestion.role || "Potential Cast"}</p>
+                                    </div>
+                                    <div className="mt-auto pt-3 border-t border-white/5">
+                                        <p className="text-[10px] text-gray-500 line-clamp-3 leading-tight italic">
+                                            "{suggestion.bio || suggestion.personality}"
+                                        </p>
+                                    </div>
+
+                                    {/* Hover HUD */}
+                                    <div className="absolute inset-0 bg-purple-600/0 group-hover:bg-purple-600/10 transition-colors flex items-center justify-center">
+                                        <div className="bg-purple-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0 duration-300">
+                                            CAST NOW
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>
