@@ -22,6 +22,7 @@ class ProjectCreate(BaseModel):
     worldview: dict | str | None = None
     style_preset: str = "anime_webtoon" # Default
     style_reference_url: str | None = None
+    language: str | None = None
 
 class ProjectUpdate(BaseModel):
     title: str | None = None
@@ -31,6 +32,7 @@ class ProjectUpdate(BaseModel):
     style_preset: str | None = None
     style_reference_url: str | None = None
     description: str | None = None
+    language: str | None = None
 
 class ProjectOut(BaseModel):
     id: Any
@@ -143,17 +145,37 @@ def generate_suggestions_bg_task(project_id: str, context: str, language: str):
                     name=item.get("name"),
                     age=str(item.get("age")),
                     visual_keywords=item.get("visual_keywords", []),
-                    personality=item.get("personality"),
+                    personality=item.get("personality", ""),
+                    personality_tags=item.get("personality_tags", []),
+                    theme_color=item.get("theme_color"),
                     bio=item.get("bio"),
                     role=item.get("role"),
+                    recommended_role=item.get("recommended_role"),
+                    stats=item.get("stats"),
                     is_used=False
                 )
                 session.add(s)
+            
+            # Update project status
+            project = session.get(Project, p_uuid)
+            if project:
+                project.suggestions_status = "completed"
+                session.add(project)
+            
             session.commit()
             print(f"Async Suggestions: Generated {len(items)} items for {project_id}")
             
     except Exception as e:
         print(f"Async Suggestion Error: {e}")
+        try:
+            with Session(engine) as session:
+                project = session.get(Project, UUID(project_id))
+                if project:
+                    project.suggestions_status = "failed"
+                    session.add(project)
+                    session.commit()
+        except:
+            pass
 
 @router.get("", response_model=List[ProjectOut])
 def list_projects(
@@ -243,7 +265,7 @@ def create_project(
             style_reference_url=project_in.style_reference_url,
             workspace_id=workspace_id,
             owner_id=current_user_id,
-            language=user_lang
+            language=project_in.language or user_lang
         )
         session.add(project)
         session.commit()
@@ -283,6 +305,10 @@ def create_project(
             Worldview: {wv_desc}
             """
             background_tasks.add_task(generate_suggestions_bg_task, str(project.id), context, project.language)
+            project.suggestions_status = "processing"
+            session.add(project)
+            session.commit()
+            session.refresh(project)
 
         return p_dict
     except Exception as e:
@@ -357,6 +383,8 @@ def get_project(
     try:
         if project.characters:
             for c in project.characters:
+                if c.deleted_at is not None:
+                    continue
                 try:
                     chars_data.append(c.dict())
                 except Exception as e:
@@ -467,7 +495,7 @@ def generate_cover(
     genre_names = [g.name for g in project.genres] if project.genres else ["Fantasy"]
     genre_name = ", ".join(genre_names)
     
-    char_statement = select(Character).where(Character.project_id == project.id).limit(6)
+    char_statement = select(Character).where(Character.project_id == project.id).where(Character.deleted_at == None).limit(6)
     chars = session.exec(char_statement).all()
     char_urls = []
     for c in chars:

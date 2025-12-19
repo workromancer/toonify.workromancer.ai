@@ -59,7 +59,7 @@ def list_episodes(
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     
-    statement = select(Episode).where(Episode.project_id == project_id).order_by(Episode.episode_order)
+    statement = select(Episode).where(Episode.project_id == project_id).where(Episode.deleted_at == None).order_by(Episode.episode_order)
     episodes = session.exec(statement).all()
     return episodes
 
@@ -97,20 +97,14 @@ def delete_episode(
     Delete an episode.
     """
     episode = session.get(Episode, episode_id)
-    if not episode:
+    if not episode or episode.deleted_at is not None:
         raise HTTPException(status_code=404, detail="Episode not found")
     
-    # Check permissions (simple check via project ownership would be strictly better, but assuming access for MVP)
-    # Ideally: Verify current_user_id owns the project the episode belongs to.
-    
-    # Delete associated cuts first (manual cascade if not handled by DB)
-    statement = select(StoryCut).where(StoryCut.episode_id == episode_id)
-    cuts = session.exec(statement).all()
-    for cut in cuts:
-        session.delete(cut)
-        
-    session.delete(episode)
+    # Soft delete: set deleted_at
+    episode.deleted_at = datetime.utcnow()
+    session.add(episode)
     session.commit()
+    
     from fastapi import Response
     return Response(status_code=204)
 
@@ -130,7 +124,7 @@ def generate_episode_options(
         raise HTTPException(status_code=404, detail="Project not found")
 
     # Fetch recent episodes for context
-    statement = select(Episode).where(Episode.project_id == project_id).order_by(Episode.episode_order.desc()).limit(3)
+    statement = select(Episode).where(Episode.project_id == project_id).where(Episode.deleted_at == None).order_by(Episode.episode_order.desc()).limit(3)
     episodes = session.exec(statement).all()
     # Reverse to chronological
     episodes.reverse()
@@ -164,7 +158,7 @@ def generate_episode_cuts(
 
     # 1. Create Episode
     # Determine order: max order + 1
-    statement = select(Episode).where(Episode.project_id == request.project_id).order_by(Episode.episode_order.desc()).limit(1)
+    statement = select(Episode).where(Episode.project_id == request.project_id).where(Episode.deleted_at == None).order_by(Episode.episode_order.desc()).limit(1)
     last_ep = session.exec(statement).first()
     new_order = (last_ep.episode_order + 1) if last_ep else 1
 
@@ -253,6 +247,10 @@ def generate_cut_image(
     cut = session.get(StoryCut, cut_id)
     if not cut:
         raise HTTPException(status_code=404, detail="Cut not found")
+        
+    episode = session.get(Episode, cut.episode_id)
+    if not episode or episode.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Episode not found")
 
     # Pass everything needed to background task
     prompt_override = request.prompt_override
@@ -314,7 +312,7 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
         occurring_names = list(set(appearing_names))
         
         # Fetch characters from project
-        all_chars = session.exec(select(Character).where(Character.project_id == project.id)).all()
+        all_chars = session.exec(select(Character).where(Character.project_id == project.id).where(Character.deleted_at == None)).all()
         
         char_data = []
         # Priority 1: Specifically matched characters
@@ -386,7 +384,7 @@ def export_episode(
     
     # Fetch Episode & Cuts
     episode = session.get(Episode, episode_id)
-    if not episode:
+    if not episode or episode.deleted_at is not None:
         raise HTTPException(status_code=404, detail="Episode not found")
         
     statement = select(StoryCut).where(StoryCut.episode_id == episode_id).order_by(StoryCut.cut_order)

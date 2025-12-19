@@ -65,7 +65,7 @@ def list_characters(
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
         
-    statement = select(Character).where(Character.project_id == project_id)
+    statement = select(Character).where(Character.project_id == project_id).where(Character.deleted_at == None)
     characters = session.exec(statement).all()
     return characters
 
@@ -117,7 +117,7 @@ def update_character(
     Update a character.
     """
     character = session.get(Character, character_id)
-    if not character:
+    if not character or character.deleted_at is not None:
         raise HTTPException(status_code=404, detail="Character not found")
         
     character_data = character_in.dict(exclude_unset=True)
@@ -151,9 +151,30 @@ def get_character(
     Get a specific character by ID.
     """
     character = session.get(Character, character_id)
-    if not character:
+    if not character or character.deleted_at is not None:
         raise HTTPException(status_code=404, detail="Character not found")
     return character
+
+@router.delete("/{character_id}")
+def delete_character(
+    *,
+    session: Session = Depends(deps.get_session),
+    character_id: UUID,
+    current_user_id: str = Depends(deps.get_current_user_id),
+) -> Any:
+    """
+    Soft delete a character.
+    """
+    character = session.get(Character, character_id)
+    if not character or character.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Character not found")
+        
+    character.deleted_at = datetime.utcnow()
+    session.add(character)
+    session.commit()
+    
+    from fastapi import Response
+    return Response(status_code=204)
 
 
 class CharacterOption(BaseModel):
@@ -485,8 +506,12 @@ def generate_batch_suggestions(
                 age=str(item.get("age")),
                 visual_keywords=item.get("visual_keywords", []),
                 personality=item.get("personality"),
+                personality_tags=item.get("personality_tags", []),
+                theme_color=item.get("theme_color"),
                 bio=item.get("bio"),
                 role=item.get("role"),
+                recommended_role=item.get("recommended_role"),
+                stats=item.get("stats"),
                 is_used=False
             )
             session.add(suggestion)

@@ -47,9 +47,8 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate }:
         description: '',
         worldview_content: '',
         style_preset: '',
-        worldview_content: '',
-        style_preset: '',
-        genre_ids: [] as string[]
+        genre_ids: [] as string[],
+        language: ''
     });
 
     // Detailed Worldview Data
@@ -84,9 +83,9 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate }:
                 description: project.description || '',
                 worldview_content: wvContent,
                 style_preset: project.style_preset || '',
-                worldview_content: wvContent,
-                style_preset: project.style_preset || '',
-                genre_ids: project.genre_ids || (project.genre_id ? [project.genre_id] : [])
+                genre_ids: project.genre_ids || (project.genre_id ? [project.genre_id] : []),
+                // @ts-ignore
+                language: project.language || 'en'
             });
             setTones(wvTones);
             setKeyFeatures(wvFeatures);
@@ -123,9 +122,8 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate }:
                 subtitle: formData.subtitle,
                 description: formData.description,
                 worldview: worldviewUpdate,
-                worldview: worldviewUpdate,
-                genre_ids: formData.genre_ids
-                // Note: style_preset typically updated via setup, but can safeguard here if needed
+                genre_ids: formData.genre_ids,
+                language: formData.language
             });
             onUpdate(response.data);
             onClose();
@@ -176,6 +174,21 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate }:
                                     onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
                                     className="col-span-3"
                                 />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="language" className="text-right text-gray-300">{t('languageLabel') || "Output Language"}</Label>
+                                <Select
+                                    value={formData.language}
+                                    onValueChange={(val) => setFormData({ ...formData, language: val })}
+                                >
+                                    <SelectTrigger id="language" className="col-span-3 bg-black/20 border-white/10 text-white">
+                                        <SelectValue placeholder="Select Language" />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-[#2c2c44] border-white/10 text-white">
+                                        <SelectItem value="en">English</SelectItem>
+                                        <SelectItem value="ko">Korean (한국어)</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
                             <div className="grid grid-cols-4 items-start gap-4">
                                 <Label htmlFor="genre" className="text-right text-gray-300 mt-2">{t('genreLabel')}</Label>

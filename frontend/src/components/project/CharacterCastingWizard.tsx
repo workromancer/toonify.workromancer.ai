@@ -178,26 +178,33 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
             setVisualKeywords(suggestion.visual_keywords);
         }
 
-        // Try to map personality
-        if (suggestion.personality) {
-            // If personality is a string description, we might not map it directly to tags unless we parse it.
-            // But we can store it or try to find keywords? 
-            // For now, let's just clear types if it's new, or leave as is?
-            // Or maybe we can't map 'Quiet, Smart' to 'Serious'.
-            // Let's just reset personality types to empty to force user selection or if AI provided specific types in future.
-            setPersonalityTypes([]);
-            // We could set bio/roleDescription?
+        if (suggestion.personality_tags && Array.isArray(suggestion.personality_tags)) {
+            setPersonalityTypes(suggestion.personality_tags);
+        }
+
+        if (suggestion.theme_color) {
+            setThemeColor(suggestion.theme_color);
+        }
+
+        if (suggestion.recommended_role) {
+            // Find valid archetype id
+            const match = archetypes.find(a => a.id === suggestion.recommended_role);
+            if (match) setSelectedRole(match.id);
         }
 
         if (suggestion.bio) {
             setRoleDescription(suggestion.bio);
         }
 
+        if (suggestion.stats) {
+            setCharacterStats(suggestion.stats);
+        }
+
         // Auto-close and valid feedback
         setShowSuggestions(false);
         toast({
             title: "Character Loaded",
-            description: `${suggestion.name} data applied.`,
+            description: `${suggestion.name} data applied fully.`,
         });
     };
 
@@ -419,7 +426,7 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                             onClick={() => setShowSuggestions(true)}
                         >
                             <Sparkles className="w-4 h-4 mr-2" />
-                            Open Batch Suggestions
+                            {t('buttons.openBatchSuggestions')}
                         </Button>
                     </div>
                 </div>
@@ -562,7 +569,7 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                                         isSelected && "bg-[#ea580c] border-[#ea580c] shadow-[0_0_15px_rgba(234,88,12,0.4)]"
                                     )}
                                 >
-                                    {pType}
+                                    {t(`personalities.${pType}`)}
                                 </SelectionCard>
                             )
                         })}

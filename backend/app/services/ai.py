@@ -869,8 +869,14 @@ class AIService:
         Create {count} distinct, interesting character concepts that could fit into this story.
         They should vary in age, role, personality, and appearance.
         Exclude the Protagonist if already defined (assume these are potential additional cast members).
+
+        For each character, you MUST provide:
+        - "personality_tags": Choose 1-3 from ["Cheerful", "Serious", "Cold", "Tsundere", "Mysterious", "Melancholic", "Pure", "Madness"].
+        - "theme_color": A Hex color code (e.g. "#ef4444", "#3b82f6") that represents the character's vibe.
+        - "recommended_role": Choose the BEST fitting internal ID from ["protagonist", "antagonist", "second_lead", "scene_stealer"].
+        - "stats": Attributes (strength, intelligence, charisma, luck, empathy, leadership) from 0-100.
         
-        {f'IMPORTANT: All output text (names, roles, bios) MUST be in {language} language.' if language else ''}
+        {f'IMPORTANT: All output text (names, role summary, bios, personality summary) MUST be in {language} language.' if language else ''}
         {f'If language is Korean, use Hangul.' if language and language.startswith('ko') else ''}
 
         Return ONLY a JSON object:
@@ -879,10 +885,16 @@ class AIService:
                 {{
                     "name": "Name",
                     "age": "Age (e.g. 19)",
-                    "role": "Role (e.g. Rival, Best Friend)", 
+                    "role": "Role Title (e.g. Rival, Best Friend)", 
+                    "recommended_role": "arch_id",
                     "visual_keywords": ["tag1", "tag2"], 
-                    "personality": "Personality summary...",
+                    "personality": "Short Personality summary sentence...",
+                    "personality_tags": ["Pure", "Cheerful"],
+                    "theme_color": "#hex",
                     "bio": "Brief background...",
+                    "stats": {{
+                        "strength": 50, "intelligence": 50, "charisma": 50, "luck": 50, "empathy": 50, "leadership": 50
+                    }}
                 }},
                 ...
             ]

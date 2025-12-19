@@ -104,7 +104,7 @@ async def bg_generate_character_sheet(character_id: uuid.UUID, name: str, desc: 
     
     with Session(engine) as session:
         char = session.get(Character, character_id)
-        if not char:
+        if not char or char.deleted_at is not None:
             return
             
         try:
@@ -257,7 +257,7 @@ def generate_character_sheet_endpoint(
     current_user_id: str = Depends(deps.get_current_user_id),
 ):
     char = session.get(Character, request.character_id)
-    if not char:
+    if not char or char.deleted_at is not None:
         raise HTTPException(status_code=404, detail="Character not found")
         
     project = session.get(Project, project_id)
@@ -289,7 +289,7 @@ def generate_episode_ideas_endpoint(
     # Deduct credits (Cost: 3)
     billing_service.deduct_credits(session, project.workspace_id, uuid.UUID(current_user_id), "generate_episode_ideas")
         
-    recent_eps = session.exec(select(Episode).where(Episode.project_id == project_id).order_by(Episode.episode_order.desc()).limit(3)).all()
+    recent_eps = session.exec(select(Episode).where(Episode.project_id == project_id).where(Episode.deleted_at == None).order_by(Episode.episode_order.desc()).limit(3)).all()
     recent_context = "\n".join([f"{ep.title}: {ep.story_summary}" for ep in recent_eps])
     
     ideas = ai_service.generate_episode_ideas(
@@ -315,8 +315,8 @@ def create_episode_with_cuts(
     billing_service.deduct_credits(session, project.workspace_id, uuid.UUID(current_user_id), "generate_initial_cuts")
 
     # 1. Create Episode
-    existing_count = session.exec(select(Episode).where(Episode.project_id == project_id)).all()
-    new_order = len(existing_count) + 1
+    last_episode = session.exec(select(Episode).where(Episode.project_id == project_id).where(Episode.deleted_at == None).order_by(Episode.episode_order.desc()).limit(1)).first()
+    new_order = (last_episode.episode_order + 1) if last_episode else 1
     
     episode = Episode(
         project_id=project_id,

@@ -42,6 +42,7 @@ interface Project {
     worldview?: any;
     art_style?: string;
     style_reference_url?: string;
+    suggestions_status?: string;
 }
 
 interface Episode {
@@ -87,8 +88,8 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
     const isLongDescription = descriptionText.length > 200;
 
     // Suggestion State
-    const [suggestionsCount, setSuggestionsCount] = useState<number>(0);
-    const [isSuggestionsLoading, setIsSuggestionsLoading] = useState(true);
+    const [suggestions, setSuggestions] = useState<any[]>([]);
+    const [isSuggestionsLoading, setIsSuggestionsLoading] = useState(false);
 
     useEffect(() => {
         let interval: NodeJS.Timeout;
@@ -96,31 +97,31 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
         const checkSuggestions = async () => {
             try {
                 const res = await api.get(`/characters/suggestions/${project.id}`);
-                const count = res.data.length;
-                setSuggestionsCount(count);
+                setSuggestions(res.data);
 
-                // If we found suggestions, stop polling
-                if (count > 0) {
+                // If suggestions status is completed or we have items, we can stop polling unless it's still processing
+                if (res.data.length > 0 || project.suggestions_status === 'completed') {
                     setIsSuggestionsLoading(false);
                     if (interval) clearInterval(interval);
                 }
             } catch (e) {
-                console.error("Failed to fetch suggestions count", e);
+                console.error("Failed to fetch suggestions", e);
             }
         };
 
         // Initial check
         checkSuggestions();
 
-        // Start polling if no suggestions found yet
-        if (suggestionsCount === 0) {
-            interval = setInterval(checkSuggestions, 3000);
+        // Start polling if status is processing or no suggestions found yet on a new project
+        if (project.suggestions_status === 'processing' || (project.suggestions_status === 'pending' && suggestions.length === 0)) {
+            setIsSuggestionsLoading(true);
+            interval = setInterval(checkSuggestions, 4000);
         }
 
         return () => {
             if (interval) clearInterval(interval);
         };
-    }, [project.id, suggestionsCount]);
+    }, [project.id, project.suggestions_status]);
 
     // Polling for cover image status
     useEffect(() => {
@@ -347,7 +348,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                     {project.genres && project.genres.length > 0 ? (
                                         project.genres.map((gName, idx) => (
                                             <span key={idx} className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-xs font-bold text-white border border-white/20">
-                                                {gName}
+                                                {tGenres(gName.toLowerCase().replace(/\s/g, '') as any)}
                                             </span>
                                         ))
                                     ) : (
@@ -571,48 +572,50 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                             </div>
                                         );
                                     })}
+
+                                    {/* Brainstorming Card */}
+                                    {(project.suggestions_status === 'processing' || (isSuggestionsLoading && suggestions.length === 0)) && (
+                                        <div className="aspect-[3/4] rounded-xl border border-purple-500/30 bg-purple-500/5 flex flex-col items-center justify-center gap-3 p-4 text-center animate-pulse">
+                                            <div className="w-10 h-10 rounded-full border-2 border-t-purple-500 border-r-purple-500/30 border-b-transparent border-l-transparent animate-spin" />
+                                            <div className="space-y-1">
+                                                <p className="text-[10px] font-bold text-purple-400 uppercase tracking-widest">{t('preparingSuggestions')}</p>
+                                                <p className="text-[9px] text-gray-500 leading-tight">{t('preparingSuggestionsDesc')}</p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Suggestions Cards (Top 3) */}
+                                    {suggestions.length > 0 && suggestions.slice(0, 3).map((suggestion, idx) => (
+                                        <div
+                                            key={suggestion.id}
+                                            onClick={() => router.push(`/project/${project.id}/casting`)}
+                                            className="group relative aspect-[3/4] rounded-xl overflow-hidden bg-[#15121c] border border-purple-500/20 hover:border-purple-500/50 transition-all cursor-pointer flex flex-col p-3"
+                                            style={{ borderTop: suggestion.theme_color ? `3px solid ${suggestion.theme_color}` : undefined }}
+                                        >
+                                            <div className="flex-1 flex flex-col justify-center items-center gap-1">
+                                                <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center mb-1">
+                                                    <Sparkles className="w-4 h-4 text-purple-400" />
+                                                </div>
+                                                <h4 className="text-white text-[11px] font-bold uppercase tracking-tight text-center">{suggestion.name}</h4>
+                                                <p className="text-[9px] text-purple-300/70 font-medium">{suggestion.role || "Potential Cast"}</p>
+                                            </div>
+                                            <div className="mt-auto pt-2 border-t border-white/5">
+                                                <p className="text-[9px] text-gray-500 line-clamp-2 leading-tight italic">
+                                                    "{suggestion.bio || suggestion.personality}"
+                                                </p>
+                                            </div>
+
+                                            {/* Hover HUD */}
+                                            <div className="absolute inset-0 bg-purple-600/0 group-hover:bg-purple-600/10 transition-colors flex items-center justify-center">
+                                                <div className="bg-purple-600 text-white text-[9px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    CAST NOW
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             </section>
 
-                            {/* Recommendations Section (Async) */}
-                            {(suggestionsCount > 0 || (isSuggestionsLoading && !characters.length)) && (
-                                <section>
-                                    <div className="flex items-center justify-between mb-4">
-                                        <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                                            <Sparkles className="w-5 h-5 text-purple-400" />
-                                            {t('recommendations') || "AI Suggestions"}
-                                            {suggestionsCount > 0 && <span className="text-xs bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full border border-purple-500/30">{suggestionsCount}</span>}
-                                        </h3>
-                                    </div>
-
-                                    <div className="bg-[#15121c] border border-dashed border-purple-500/30 rounded-xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
-                                        <div className="flex flex-col gap-2">
-                                            <h4 className="font-bold text-gray-200">
-                                                {suggestionsCount > 0 ? (t('suggestionsReady') || "Character Concepts Ready") : (t('preparingSuggestions') || "Brainstorming Ideas...")}
-                                            </h4>
-                                            <p className="text-sm text-gray-400 max-w-lg">
-                                                {suggestionsCount > 0
-                                                    ? (t('suggestionsReadyDesc') || "AI has generated potential character concepts based on your worldview. Review them in the Character Wizard.")
-                                                    : (t('preparingSuggestionsDesc') || "Analyzing your story to suggest fitting characters. This may take a moment.")}
-                                            </p>
-                                        </div>
-
-                                        {suggestionsCount > 0 ? (
-                                            <Button
-                                                onClick={() => router.push(`/project/${project.id}/casting`)}
-                                                className="bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-900/20 min-w-[140px]"
-                                            >
-                                                {t('viewSuggestions') || "View Concepts"} <ArrowRight className="ml-2 w-4 h-4" />
-                                            </Button>
-                                        ) : (
-                                            <div className="flex items-center gap-2 text-purple-400 text-sm animate-pulse">
-                                                <Loader2 className="w-4 h-4 animate-spin" />
-                                                <span>Processing...</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </section>
-                            )}
 
                             {/* Episodes List */}
                             <section>

@@ -50,6 +50,11 @@ def list_cuts(
     """
     List cuts for a specific episode.
     """
+    # Check if episode is deleted
+    episode = session.get(Episode, episode_id)
+    if not episode or episode.deleted_at is not None:
+        return []
+        
     statement = select(StoryCut).where(StoryCut.episode_id == episode_id).order_by(StoryCut.cut_order)
     cuts = session.exec(statement).all()
     return cuts
@@ -64,6 +69,11 @@ def create_cut(
     """
     Create a new story cut.
     """
+    # Check if episode is deleted
+    episode = session.get(Episode, cut_in.episode_id)
+    if not episode or episode.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Episode not found")
+        
     # Generate Embedding for RAG
     from app.services.ai import ai_service
     embedding = None
@@ -98,6 +108,11 @@ def get_cut(
     cut = session.get(StoryCut, cut_id)
     if not cut:
         raise HTTPException(status_code=404, detail="Cut not found")
+        
+    episode = session.get(Episode, cut.episode_id)
+    if not episode or episode.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Cut not found (episode deleted)")
+        
     return cut
 
 @router.put("/{cut_id}", response_model=StoryCutOut)
@@ -114,6 +129,10 @@ def update_cut(
     cut = session.get(StoryCut, cut_id)
     if not cut:
         raise HTTPException(status_code=404, detail="Cut not found")
+        
+    episode = session.get(Episode, cut.episode_id)
+    if not episode or episode.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Cut not found (episode deleted)")
         
     cut_data = cut_in.dict(exclude_unset=True)
     
@@ -144,6 +163,10 @@ def delete_cut(
     cut = session.get(StoryCut, cut_id)
     if not cut:
         raise HTTPException(status_code=404, detail="Cut not found")
+        
+    episode = session.get(Episode, cut.episode_id)
+    if not episode or episode.deleted_at is not None:
+         raise HTTPException(status_code=404, detail="Cut not found (episode deleted)")
         
     session.delete(cut)
     session.commit()

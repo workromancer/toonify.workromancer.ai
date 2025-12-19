@@ -101,6 +101,7 @@ class Project(SQLModel, table=True):
     language: str = Field(default="en")
     
     cover_image_status: str = "pending" # pending, processing, completed, failed
+    suggestions_status: str = "pending" # pending, processing, completed, failed
     
     # File References
     cover_image_asset_id: Optional[UUID] = Field(foreign_key="asset.id", default=None)
@@ -157,6 +158,7 @@ class Character(SQLModel, table=True):
     embedding: List[float] = Field(sa_column=Column(JSON), default=None)
     
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    deleted_at: Optional[datetime] = Field(default=None)
 
     project: Project = Relationship(back_populates="characters")
     
@@ -187,6 +189,7 @@ class Episode(SQLModel, table=True):
     story_summary: Optional[str] = None
     episode_order: int
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    deleted_at: Optional[datetime] = Field(default=None)
 
     project: Project = Relationship(back_populates="episodes")
     cuts: List["StoryCut"] = Relationship(back_populates="episode")
@@ -261,9 +264,13 @@ class CharacterSuggestion(SQLModel, table=True):
     name: str
     age: str
     visual_keywords: List[str] = Field(sa_column=Column(JSON), default=[])
-    personality: str
+    personality: str # Summary
+    personality_tags: List[str] = Field(sa_column=Column(JSON), default=[])
+    theme_color: Optional[str] = None
     bio: Optional[str] = Field(default=None, sa_column=Column(Text))
-    role: Optional[str] = None # Suggested role
+    role: Optional[str] = None # Suggested role text
+    recommended_role: Optional[str] = None # Internal archetype ID (e.g. protagonist)
+    stats: Optional[dict] = Field(sa_column=Column(JSON), default=None)
     
     is_used: bool = False
     

@@ -49,7 +49,8 @@ export default function EpisodeList() {
         if (creating) return;
         try {
             setCreating(true);
-            const nextNumber = episodes.length > 0 ? episodes[episodes.length - 1].episode_order + 1 : 1;
+            const maxOrder = episodes.length > 0 ? Math.max(...episodes.map(e => e.episode_order)) : 0;
+            const nextNumber = maxOrder + 1;
             await api.post('/episodes', {
                 title: `Episode ${nextNumber}`,
                 project_id: projectId,

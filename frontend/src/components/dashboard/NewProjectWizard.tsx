@@ -11,6 +11,7 @@ import {
 import api from '@/lib/api';
 import { AiSuggestionCard } from '@/components/project/AiSuggestionCard';
 import { useTranslations, useLocale } from 'next-intl';
+import { ProcessingOverlay } from "@/components/ui/processing-overlay";
 
 const GENRES = [
   { id: 'fantasy', label: 'Fantasy', icon: Sparkles, color: 'bg-amber-600' },
@@ -71,6 +72,7 @@ export default function NewProjectWizard() {
   const [subtitle, setSubtitle] = useState('');
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [worldDesc, setWorldDesc] = useState<string | any>('');
+  const [language, setLanguage] = useState(locale || 'en');
 
   // AI State
   const [showAiResults, setShowAiResults] = useState(false);
@@ -90,6 +92,7 @@ export default function NewProjectWizard() {
         if (parsed.subtitle) setSubtitle(parsed.subtitle);
         if (parsed.selectedGenres) setSelectedGenres(parsed.selectedGenres);
         if (parsed.worldDesc) setWorldDesc(parsed.worldDesc);
+        if (parsed.language) setLanguage(parsed.language);
         if (typeof parsed.step === 'number') setStep(parsed.step);
       } catch (e) {
         console.error("Failed to parse draft", e);
@@ -164,7 +167,7 @@ export default function NewProjectWizard() {
         title: title,
         subtitle: subtitle,
         genres: selectedGenres,
-        language: locale
+        language: language || locale
       });
 
       if (response.data.options && response.data.options.length > 0) {
@@ -214,7 +217,8 @@ export default function NewProjectWizard() {
         subtitle: dataSubtitle,
         genre: dataGenre,
         worldview: finalWorldview,
-        style_preset: "anime_webtoon"
+        style_preset: "anime_webtoon",
+        language: language
       });
 
       // Clear Draft on Success
@@ -247,7 +251,8 @@ export default function NewProjectWizard() {
       title: newTitle,
       subtitle: subtitle,
       genre: selectedGenres,
-      worldview: desc // Pass simple string, createProject normalizes it
+      worldview: desc, // Pass simple string, createProject normalizes it
+      language: language
     });
   };
 
@@ -341,23 +346,44 @@ export default function NewProjectWizard() {
             {/* Content Area */}
             <div className="flex-1 flex flex-col justify-start pt-16 mb-8 animate-fade-in">
 
-              {/* Step 0: Title */}
+              {/* Step 0: Title & Language */}
               {step === 0 && (
-                <div className="space-y-4">
-                  <label className="text-xs font-mono font-bold text-slate-500 ml-1 uppercase">{t('inputs.titleLabel')}</label>
-                  <div className="relative group">
-                    <input
-                      type="text"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      placeholder={t('inputs.titlePlaceholder')}
-                      disabled={isLocked}
-                      className="w-full bg-transparent border-2 border-slate-700 rounded-xl px-6 py-5 text-2xl font-bold text-white placeholder-slate-700 focus:border-purple-500 outline-none transition-all group-hover:border-slate-600 disabled:opacity-50"
-                      autoFocus
-                      data-testid="project-title-input"
-                      onKeyDown={(e) => e.key === 'Enter' && title && handleNext()}
-                    />
-                    <Type className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-600" />
+                <div className="space-y-8">
+                  <div className="space-y-4">
+                    <label className="text-xs font-mono font-bold text-slate-500 ml-1 uppercase">{t('inputs.titleLabel')}</label>
+                    <div className="relative group">
+                      <input
+                        type="text"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        placeholder={t('inputs.titlePlaceholder')}
+                        disabled={isLocked}
+                        className="w-full bg-transparent border-2 border-slate-700 rounded-xl px-6 py-5 text-2xl font-bold text-white placeholder-slate-700 focus:border-purple-500 outline-none transition-all group-hover:border-slate-600 disabled:opacity-50"
+                        autoFocus
+                        data-testid="project-title-input"
+                        onKeyDown={(e) => e.key === 'Enter' && title && handleNext()}
+                      />
+                      <Type className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-600" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <label className="text-xs font-mono font-bold text-slate-500 ml-1 uppercase">{t('inputs.languageLabel') || "Output Language"}</label>
+                    <div className="flex gap-4">
+                      {['en', 'ko'].map((lang) => (
+                        <button
+                          key={lang}
+                          onClick={() => setLanguage(lang)}
+                          className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-xl border-2 transition-all font-bold ${language === lang
+                            ? 'bg-purple-900/20 border-purple-500 text-white'
+                            : 'bg-slate-900/30 border-slate-700 text-slate-500 hover:border-slate-600'
+                            }`}
+                        >
+                          {lang === 'en' ? 'English' : '한국어 (Korean)'}
+                          {language === lang && <Check size={16} className="text-purple-400" />}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
@@ -502,8 +528,18 @@ export default function NewProjectWizard() {
             </div>
 
           </div>
-        )}
-      </div>
+        )
+        }
+        <ProcessingOverlay
+          isVisible={isProcessing}
+          title={t('buttons.processing')}
+        />
+        <ProcessingOverlay
+          isVisible={aiLoading}
+          title={t('buttons.generating')}
+          description={t('inputs.worldLabel')}
+        />
+      </div >
 
       <style>{`
         @keyframes fadeInUp {
@@ -521,6 +557,6 @@ export default function NewProjectWizard() {
             animation: fadeIn 0.4s ease-out forwards;
         }
       `}</style>
-    </div>
+    </div >
   );
 }

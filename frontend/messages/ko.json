@@ -128,7 +128,8 @@
       "subtitleLabel": "부제 / 태그라인",
       "subtitlePlaceholder": "예: 판교의 유령",
       "worldLabel": "프로젝트 세계관",
-      "worldPlaceholder": "예: 비가 그치지 않고 네온사인이 사람들의 감정을 통제하는 디스토피아적 사이버펑크 도시..."
+      "worldPlaceholder": "예: 비가 그치지 않고 네온사인이 사람들의 감정을 통제하는 디스토피아적 사이버펑크 도시...",
+      "languageLabel": "생성 언어"
     },
     "buttons": {
       "aiAugment": "AI 확장",
@@ -227,7 +228,12 @@
       "emptyEpisodes": "아직 에피소드가 없습니다.",
       "emptyEpisodesDesc": "첫 번째 에피소드를 만들어 스토리를 시작하세요.",
       "emptyCast": "추가된 캐릭터가 없습니다.",
-      "emptyCastDesc": "주연 캐릭터를 캐스팅하여 시작하세요."
+      "emptyCastDesc": "주연 캐릭터를 캐스팅하여 시작하세요.",
+      "recommendations": "AI 등장인물 추천",
+      "suggestionsReady": "캐릭터 컨셉 준비 완료",
+      "suggestionsReadyDesc": "AI가 세계관을 분석해 새로운 캐릭터 후보들을 생성했습니다. 캐스팅 위저드에서 확인해보세요.",
+      "preparingSuggestions": "아이디어 구상 중...",
+      "preparingSuggestionsDesc": "스토리에 어울리는 캐릭터들을 분석 중입니다. 잠시만 기다려주세요."
     },
     "Episodes": {
       "title": "에피소드",
@@ -316,6 +322,23 @@
         "deleteConfirmTitle": "장면 삭제?",
         "deleteConfirmDesc": "정말 삭제하시겠습니까?"
       }
+    },
+    "EditModal": {
+      "title": "작품 정보 수정",
+      "basicInfo": "기본 정보",
+      "titleLabel": "제목",
+      "subtitleLabel": "부제",
+      "genreLabel": "장르",
+      "languageLabel": "생성 언어",
+      "worldviewSection": "세계관 및 설정",
+      "worldviewLabel": "세계관 설명",
+      "worldviewPlaceholder": "세계관 내용을 입력하세요...",
+      "tonesLabel": "톤",
+      "noTones": "추출된 톤 없음",
+      "featuresLabel": "핵심 특징",
+      "save": "저장",
+      "cancel": "취소",
+      "descriptionLabel": "설명"
     }
   },
   "CharacterWizard": {
@@ -351,7 +374,30 @@
       "next": "다음",
       "back": "이전",
       "create": "캐릭터 생성",
-      "backToProject": "프로젝트로 돌아가기"
+      "backToProject": "프로젝트로 돌아가기",
+      "openBatchSuggestions": "AI 추천 목록 열기"
+    },
+    "suggestions": {
+      "title": "AI 캐릭터 추천",
+      "available": "{count}개 대기 중",
+      "loading": "추천 목록 불러오는 중...",
+      "empty": "사용하지 않은 추천이 없습니다.",
+      "generateBatch": "10개 컨셉 생성 (5 크레딧)",
+      "brainstorming": "AI가 10개의 새로운 컨셉을 구상 중입니다...",
+      "age": "나이: {age}",
+      "unknownRole": "역할 미정",
+      "generating": "생성 중...",
+      "generateNew": "새로운 추천 생성"
+    },
+    "personalities": {
+      "Cheerful": "쾌활함",
+      "Serious": "진중함",
+      "Cold": "냉철함",
+      "Tsundere": "츤데레",
+      "Mysterious": "신비로움",
+      "Melancholic": "우울함",
+      "Pure": "순수함",
+      "Madness": "광기"
     },
     "toasts": {
       "suggestionFailed": "제안 실패",

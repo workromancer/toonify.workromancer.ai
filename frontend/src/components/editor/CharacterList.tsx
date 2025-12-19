@@ -3,10 +3,11 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import api from '@/lib/api';
-import { User, Wand2, Plus } from 'lucide-react'; // Added Wand2
+import { User, Wand2, Plus, Trash2 } from 'lucide-react'; // Added Trash2
 import CharacterCreateModal from '@/components/editor/CharacterCreateModal';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import { Button } from '@/components/ui/button';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 
 interface Character {
     id: string;
@@ -34,7 +35,16 @@ export default function CharacterList() {
             setGeneratingId(null);
         }
     };
+    const [deleteConfirmationId, setDeleteConfirmationId] = useState<string | null>(null);
 
+    const handleDeleteConfirm = async (id: string) => {
+        try {
+            await api.delete(`/characters/${id}`);
+            fetchCharacters();
+        } catch (err) {
+            console.error("Failed to delete character", err);
+        }
+    };
 
     const fetchCharacters = async () => {
         if (!projectId) return;
@@ -109,6 +119,26 @@ export default function CharacterList() {
                                         <Wand2 size={14} />
                                     )}
                                 </button>
+                                <ConfirmationDialog
+                                    open={deleteConfirmationId === char.id}
+                                    onOpenChange={(open) => !open && setDeleteConfirmationId(null)}
+                                    title="Delete Character?"
+                                    description={`Are you sure you want to remove ${char.name}?`}
+                                    onConfirm={() => handleDeleteConfirm(char.id)}
+                                    variant="destructive"
+                                    trigger={
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setDeleteConfirmationId(char.id);
+                                            }}
+                                            className="p-1.5 rounded-md text-slate-400 hover:text-red-400 hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-all ml-1"
+                                            title="Delete Character"
+                                        >
+                                            <Trash2 size={14} />
+                                        </button>
+                                    }
+                                />
                             </div>
                         </div>
                     ))
