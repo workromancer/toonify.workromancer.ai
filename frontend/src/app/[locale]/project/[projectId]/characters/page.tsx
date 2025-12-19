@@ -8,7 +8,8 @@ import { useParams } from 'next/navigation';
 import api from '@/lib/api';
 import ProjectLayout from '@/components/layout/ProjectLayout';
 import CharacterDetailModal from '@/components/project/modals/CharacterDetailModal';
-import { Plus, AlertCircle, Sparkles } from 'lucide-react';
+import { Plus, AlertCircle, Sparkles, Users } from 'lucide-react';
+import { SectionLabel } from '@/components/ui/section-label';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslations } from 'next-intl';
@@ -207,105 +208,126 @@ export default function CharacterListPage() {
                             </button>
                         </div>
 
-                        {/* ImageGrid */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
-                            {/* Add Card */}
-                            <div
-                                onClick={handleNavigateToCasting}
-                                className="aspect-[3/4] cursor-pointer rounded-xl border border-dashed border-gray-800 bg-[#0F0F12] flex flex-col items-center justify-center gap-2 hover:bg-[#15151A] hover:border-gray-700 transition-all group"
-                            >
-                                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gray-400 group-hover:text-white transition-colors">
-                                    <Plus size={20} />
-                                </div>
-                                <span className="text-sm font-medium text-gray-500 group-hover:text-gray-300">{tc('addCharacter')}</span>
-                            </div>
+                        {/* Grid Content */}
+                        <div className="flex flex-col gap-12">
 
-                            {characters.map((char) => {
-                                const isGenerating = char.sheet_status === 'pending' || char.sheet_status === 'processing';
-                                const isFailed = char.sheet_status === 'failed';
-                                return (
+                            {/* Section 1: Active Cast */}
+                            <section>
+                                <SectionLabel icon={<Users size={14} />} className="mb-4 text-purple-300">
+                                    {tc('castList')} <span className="ml-2 px-2 py-0.5 rounded-full bg-white/10 text-[10px] text-white/70">{characters.length}</span>
+                                </SectionLabel>
+
+                                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                                    {/* Add Card */}
                                     <div
-                                        key={char.id}
-                                        onClick={() => handleCharacterClick(char)}
-                                        className={cn(
-                                            "group relative rounded-xl overflow-hidden bg-[#0F0F12] border transition-all cursor-pointer",
-                                            isFailed
-                                                ? "border-red-500/50 hover:border-red-500"
-                                                : "border-gray-800 hover:border-gray-700"
-                                        )}
+                                        onClick={handleNavigateToCasting}
+                                        className="aspect-[3/4] cursor-pointer rounded-xl border border-dashed border-gray-800 bg-[#0F0F12] flex flex-col items-center justify-center gap-2 hover:bg-[#15151A] hover:border-gray-700 transition-all group"
                                     >
-                                        <div className="aspect-[3/4] bg-cover bg-center relative"
-                                            style={char.profile_image_url && !isGenerating ? { backgroundImage: `url("${char.profile_image_url}")` } : {}}
-                                        >
-                                            {(!char.profile_image_url || isGenerating || isFailed) && (
-                                                <div className="w-full h-full bg-slate-800 flex flex-col items-center justify-center text-gray-600 gap-2">
-                                                    {isGenerating ? (
-                                                        <>
-                                                            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                                                            <span className="text-[10px] text-primary font-mono animate-pulse uppercase">{t('generating')}</span>
-                                                        </>
-                                                    ) : isFailed ? (
-                                                        <>
-                                                            <div className="w-8 h-8 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center">
-                                                                <AlertCircle size={16} />
-                                                            </div>
-                                                            <span className="text-[10px] text-red-400 font-bold uppercase">{t('failed')}</span>
-                                                        </>
-                                                    ) : (
-                                                        <span className="font-bold text-xl">{char.name[0]}</span>
+                                        <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gray-400 group-hover:text-white transition-colors">
+                                            <Plus size={20} />
+                                        </div>
+                                        <span className="text-sm font-medium text-gray-500 group-hover:text-gray-300">{tc('addCharacter')}</span>
+                                    </div>
+
+                                    {characters.map((char) => {
+                                        const isGenerating = char.sheet_status === 'pending' || char.sheet_status === 'processing';
+                                        const isFailed = char.sheet_status === 'failed';
+                                        return (
+                                            <div
+                                                key={char.id}
+                                                onClick={() => handleCharacterClick(char)}
+                                                className={cn(
+                                                    "group relative rounded-xl overflow-hidden bg-[#0F0F12] border transition-all cursor-pointer",
+                                                    isFailed
+                                                        ? "border-red-500/50 hover:border-red-500"
+                                                        : "border-gray-800 hover:border-gray-700"
+                                                )}
+                                            >
+                                                <div className="aspect-[3/4] bg-cover bg-center relative"
+                                                    style={char.profile_image_url && !isGenerating ? { backgroundImage: `url("${char.profile_image_url}")` } : {}}
+                                                >
+                                                    {(!char.profile_image_url || isGenerating || isFailed) && (
+                                                        <div className="w-full h-full bg-slate-800 flex flex-col items-center justify-center text-gray-600 gap-2">
+                                                            {isGenerating ? (
+                                                                <>
+                                                                    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                                                                    <span className="text-[10px] text-primary font-mono animate-pulse uppercase">{t('generating')}</span>
+                                                                </>
+                                                            ) : isFailed ? (
+                                                                <>
+                                                                    <div className="w-8 h-8 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center">
+                                                                        <AlertCircle size={16} />
+                                                                    </div>
+                                                                    <span className="text-[10px] text-red-400 font-bold uppercase">{t('failed')}</span>
+                                                                </>
+                                                            ) : (
+                                                                <span className="font-bold text-xl">{char.name[0]}</span>
+                                                            )}
+                                                        </div>
                                                     )}
                                                 </div>
-                                            )}
-                                        </div>
-                                        <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/90 to-transparent">
-                                            <h4 className="text-white text-sm font-bold truncate">{char.name}</h4>
-                                            <p className="text-xs text-gray-400 truncate">
-                                                {Array.isArray(char.default_mood) ? char.default_mood.join(', ') : (char.default_mood || 'Neutral')}
-                                            </p>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-
-                            {/* Suggestions */}
-                            {(project.suggestions_status === 'processing' || isSuggestionsLoading) && (
-                                <div className="aspect-[3/4] rounded-xl border border-purple-500/30 bg-purple-500/5 flex flex-col items-center justify-center gap-3 p-4 text-center animate-pulse">
-                                    <div className="w-10 h-10 rounded-full border-2 border-t-purple-500 border-r-purple-500/30 border-b-transparent border-l-transparent animate-spin" />
-                                    <div className="space-y-1">
-                                        <p className="text-[10px] font-bold text-purple-400 uppercase tracking-widest">{t('preparingSuggestions')}</p>
-                                        <p className="text-[9px] text-gray-500 leading-tight">{t('preparingSuggestionsDesc')}</p>
-                                    </div>
+                                                <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/90 to-transparent">
+                                                    <h4 className="text-white text-sm font-bold truncate">{char.name}</h4>
+                                                    <p className="text-xs text-gray-400 truncate">
+                                                        {Array.isArray(char.default_mood) ? char.default_mood.join(', ') : (char.default_mood || 'Neutral')}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
+                            </section>
+
+                            {/* Section 2: AI Suggestions (Only if exists or loading) */}
+                            {(suggestions.length > 0 || project.suggestions_status === 'processing' || isSuggestionsLoading) && (
+                                <section>
+                                    <SectionLabel icon={<Sparkles size={14} />} className="mb-4 text-purple-300">
+                                        {tc('suggestionList')} <span className="ml-2 px-2 py-0.5 rounded-full bg-purple-500/20 text-[10px] text-purple-300 border border-purple-500/20">{suggestions.length}</span>
+                                    </SectionLabel>
+
+                                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                                        {/* Loading Card */}
+                                        {(project.suggestions_status === 'processing' || isSuggestionsLoading) && (
+                                            <div className="aspect-[3/4] rounded-xl border border-purple-500/30 bg-purple-500/5 flex flex-col items-center justify-center gap-3 p-4 text-center animate-pulse">
+                                                <div className="w-10 h-10 rounded-full border-2 border-t-purple-500 border-r-purple-500/30 border-b-transparent border-l-transparent animate-spin" />
+                                                <div className="space-y-1">
+                                                    <p className="text-[10px] font-bold text-purple-400 uppercase tracking-widest">{t('preparingSuggestions')}</p>
+                                                    <p className="text-[9px] text-gray-500 leading-tight">{t('preparingSuggestionsDesc')}</p>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {suggestions.map((suggestion) => (
+                                            <div
+                                                key={suggestion.id}
+                                                onClick={handleNavigateToCasting}
+                                                className="group relative aspect-[3/4] rounded-xl overflow-hidden bg-[#15121c] border border-purple-500/20 hover:border-purple-500/50 transition-all cursor-pointer flex flex-col p-4"
+                                                style={{ borderTop: suggestion.theme_color ? `4px solid ${suggestion.theme_color}` : undefined }}
+                                            >
+                                                <div className="flex-1 flex flex-col justify-center items-center gap-2">
+                                                    <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center mb-1">
+                                                        <Sparkles className="w-5 h-5 text-purple-400" />
+                                                    </div>
+                                                    <h4 className="text-white text-xs font-bold uppercase tracking-tight text-center">{suggestion.name}</h4>
+                                                    <p className="text-[10px] text-purple-300/70 font-medium">{suggestion.role || "Potential Cast"}</p>
+                                                </div>
+                                                <div className="mt-auto pt-3 border-t border-white/5">
+                                                    <p className="text-[10px] text-gray-500 line-clamp-3 leading-tight italic">
+                                                        "{suggestion.bio || suggestion.personality}"
+                                                    </p>
+                                                </div>
+
+                                                {/* Hover HUD */}
+                                                <div className="absolute inset-0 bg-purple-600/0 group-hover:bg-purple-600/10 transition-colors flex items-center justify-center">
+                                                    <div className="bg-purple-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0 duration-300">
+                                                        CAST NOW
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </section>
                             )}
-
-                            {suggestions.map((suggestion) => (
-                                <div
-                                    key={suggestion.id}
-                                    onClick={handleNavigateToCasting}
-                                    className="group relative aspect-[3/4] rounded-xl overflow-hidden bg-[#15121c] border border-purple-500/20 hover:border-purple-500/50 transition-all cursor-pointer flex flex-col p-4"
-                                    style={{ borderTop: suggestion.theme_color ? `4px solid ${suggestion.theme_color}` : undefined }}
-                                >
-                                    <div className="flex-1 flex flex-col justify-center items-center gap-2">
-                                        <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center mb-1">
-                                            <Sparkles className="w-5 h-5 text-purple-400" />
-                                        </div>
-                                        <h4 className="text-white text-xs font-bold uppercase tracking-tight text-center">{suggestion.name}</h4>
-                                        <p className="text-[10px] text-purple-300/70 font-medium">{suggestion.role || "Potential Cast"}</p>
-                                    </div>
-                                    <div className="mt-auto pt-3 border-t border-white/5">
-                                        <p className="text-[10px] text-gray-500 line-clamp-3 leading-tight italic">
-                                            "{suggestion.bio || suggestion.personality}"
-                                        </p>
-                                    </div>
-
-                                    {/* Hover HUD */}
-                                    <div className="absolute inset-0 bg-purple-600/0 group-hover:bg-purple-600/10 transition-colors flex items-center justify-center">
-                                        <div className="bg-purple-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0 duration-300">
-                                            CAST NOW
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
                         </div>
                     </div>
                 </div>

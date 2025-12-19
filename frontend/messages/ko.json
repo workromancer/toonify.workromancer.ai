@@ -243,7 +243,9 @@
       "title": "등장인물",
       "subtitle": "모든 캐릭터를 관리하고 상세 프로필을 확인하세요.",
       "newCharacter": "새 캐릭터",
-      "addCharacter": "캐릭터 추가"
+      "addCharacter": "캐릭터 추가",
+      "castList": "활성 캐스팅",
+      "suggestionList": "AI 추천 캐스팅"
     },
     "Episodes": {
       "title": "에피소드",
