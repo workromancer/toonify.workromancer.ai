@@ -16,8 +16,18 @@ class GenerateRequest(BaseModel):
     height: int
     style_preset: str = "anime_webtoon"
 
+from app.core.config import settings
+from pydantic import BaseModel, validator
+
 class GenerateResponse(BaseModel):
     image_url: str
+
+    @validator("image_url", pre=True, always=True)
+    def make_full_url(cls, v: str) -> str:
+        if v and not v.startswith("http"):
+             # If v is a relative path, prepend STORAGE_HOST
+             return f"{settings.STORAGE_HOST}/{v}"
+        return v
 
 @router.post("/generate", response_model=GenerateResponse)
 async def generate_image(
@@ -49,7 +59,8 @@ async def generate_image(
         )
         
         # 2. Upload to Storage
-        image_url = storage.upload_image(image_bytes, content_type="image/png")
+        # For temp generation, use 'temp/generated'
+        image_url = storage.upload_image(image_bytes, schema="temp", identifier="generated", content_type="image/png")
         
         return GenerateResponse(image_url=image_url)
         

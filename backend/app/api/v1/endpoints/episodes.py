@@ -534,7 +534,7 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
                 language=language
             )
             
-            url = storage.upload_image(img_bytes)
+            url = storage.upload_image(img_bytes, schema="cuts", identifier=str(cut_id))
             cut.image_path = url
             cut.status = "completed"
             session.add(cut)
@@ -566,6 +566,7 @@ def export_episode(
     import zipfile
     import requests
     import urllib.parse
+    from app.core.config import settings
     
     # Fetch Episode & Cuts
     episode = session.get(Episode, episode_id)
@@ -586,11 +587,17 @@ def export_episode(
             if image_path.startswith("data:image"):
                 header, encoded = image_path.split(",", 1)
                 return base64.b64decode(encoded)
-            elif image_path.startswith("http"):
-                # Fetch from URL (S3/MinIO)
-                resp = requests.get(image_path, timeout=10)
-                if resp.status_code == 200:
-                    return resp.content
+            
+            url = image_path
+            if not url.startswith("http"):
+                 # Prepend STORAGE_HOST if relative
+                 url = f"{settings.STORAGE_HOST}/{image_path}"
+                 
+            # Fetch from URL (S3/MinIO)
+            # Use Verify=False if using self-signed or internal minio without valid certs might be needed, but sticking to standard
+            resp = requests.get(url, timeout=10)
+            if resp.status_code == 200:
+                return resp.content
             return None
         except Exception as e:
             print(f"Failed to fetch image: {e}")

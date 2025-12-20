@@ -8,7 +8,11 @@ import uuid
 
 class StorageService(ABC):
     @abstractmethod
-    def upload_image(self, image_data: bytes, content_type: str = "image/png") -> str:
+    def upload_image(self, image_data: bytes, schema: str, identifier: str, content_type: str = "image/png") -> str:
+        """
+        Uploads image to {schema}/{identifier}/{uuid}.png
+        Returns relative path: {schema}/{identifier}/{uuid}.png
+        """
         pass
 
 class MinIOStorage(StorageService):
@@ -33,23 +37,20 @@ class MinIOStorage(StorageService):
         except S3Error as e:
             print(f"Error checking/creating bucket: {e}")
 
-    def upload_image(self, image_data: bytes, content_type: str = "image/png") -> str:
+    def upload_image(self, image_data: bytes, schema: str, identifier: str, content_type: str = "image/png") -> str:
         filename = f"{uuid.uuid4()}.png"
+        relative_path = f"{schema}/{identifier}/{filename}"
+        
         try:
             self.client.put_object(
                 self.bucket_name,
-                filename,
+                relative_path,
                 io.BytesIO(image_data),
                 len(image_data),
                 content_type=content_type
             )
-            # Use settings for base URL if constructed, else default behavior
-            base_url = f"http://{settings.MINIO_ENDPOINT}"
-            if not settings.MINIO_SECURE:
-                url = f"{base_url}/{self.bucket_name}/{filename}"
-            else:
-                url = f"https://{settings.MINIO_ENDPOINT}/{self.bucket_name}/{filename}"
-            return url
+            # Return ONLY relative path as requested
+            return relative_path
         except S3Error as e:
             print(f"Error uploading file: {e}")
             raise e
@@ -62,13 +63,15 @@ class GCSStorage(StorageService):
         self.bucket_name = os.getenv("GCS_BUCKET_NAME", "toonify-assets")
         self.bucket = self.client.bucket(self.bucket_name)
 
-    def upload_image(self, image_data: bytes, content_type: str = "image/png") -> str:
+    def upload_image(self, image_data: bytes, schema: str, identifier: str, content_type: str = "image/png") -> str:
         filename = f"{uuid.uuid4()}.png"
-        blob = self.bucket.blob(filename)
+        relative_path = f"{schema}/{identifier}/{filename}"
+        
+        blob = self.bucket.blob(relative_path)
         blob.upload_from_string(image_data, content_type=content_type)
         # Assuming bucket is public or we use signed URLs (public for now based on MinIO logic)
         # Note: Bucket must be configured to be public readable
-        return blob.public_url
+        return relative_path
 
 def get_storage_service() -> StorageService:
     env = os.getenv("APP_ENV", "local")

@@ -4,7 +4,8 @@ from sqlmodel import Session, select, col
 
 from app.api import deps
 from app.models import Character, Project, Asset
-from pydantic import BaseModel
+from app.core.config import settings
+from pydantic import BaseModel, validator
 from datetime import datetime
 from uuid import UUID
 from fastapi import BackgroundTasks
@@ -49,6 +50,12 @@ class CharacterOut(BaseModel):
     profile: Optional[dict] = {}
     sheet_status: Optional[str] = "pending"
     created_at: datetime
+
+    @validator("profile_image_url", pre=True, always=True)
+    def make_full_url(cls, v: str | None) -> str | None:
+        if v and not v.startswith("http"):
+             return f"{settings.STORAGE_HOST}/{v}"
+        return v
 
 @router.get("", response_model=List[CharacterOut])
 def list_characters(
@@ -271,7 +278,7 @@ def generate_character_image_task(character_id: UUID, prompt: str):
                 )
                 
                 if img_bytes:
-                    url = storage.upload_image(img_bytes)
+                    url = storage.upload_image(img_bytes, schema="characters", identifier=str(character_id))
                     
                     # Create Asset record
                     asset = Asset(

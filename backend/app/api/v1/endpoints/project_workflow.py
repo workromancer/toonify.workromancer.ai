@@ -69,7 +69,7 @@ async def bg_generate_cover(project_id: uuid.UUID, style: str, session_factory):
             )
             
             try:
-                data_url = storage.upload_image(image_bytes)
+                data_url = storage.upload_image(image_bytes, schema="projects", identifier=str(project_id))
             except Exception as s3_e:
                 print(f"Storage upload failed, using Data URL fallback: {s3_e}")
                 b64_img = base64.b64encode(image_bytes).decode('utf-8')
@@ -113,7 +113,7 @@ async def bg_generate_character_sheet(character_id: uuid.UUID, name: str, desc: 
             image_bytes = ai_service.generate_character_sheet(name, desc, style)
             
             try:
-                data_url = storage.upload_image(image_bytes)
+                data_url = storage.upload_image(image_bytes, schema="characters", identifier=str(character_id))
             except Exception as s3_e:
                  print(f"Storage upload failed, using Data URL fallback: {s3_e}")
                  b64_img = base64.b64encode(image_bytes).decode('utf-8')
@@ -166,7 +166,7 @@ async def bg_generate_cut_image(cut_id: uuid.UUID):
             image_bytes = ai_service.generate_image(prompt, width=1024, height=1024, language=project.language or "en") 
             
             try:
-                data_url = storage.upload_image(image_bytes)
+                data_url = storage.upload_image(image_bytes, schema="cuts", identifier=str(cut_id))
             except Exception as s3_e:
                 print(f"Storage upload failed, using Data URL fallback: {s3_e}")
                 b64_img = base64.b64encode(image_bytes).decode('utf-8')

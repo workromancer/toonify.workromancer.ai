@@ -8,7 +8,7 @@ from app.core import security
 from app.models import Project, Workspace, WorkspaceMember, User, Character, Genre, Asset
 from app.services.ai import ai_service
 from app.services.billing import billing_service
-from pydantic import BaseModel, root_validator
+from pydantic import BaseModel, root_validator, validator
 from datetime import datetime
 from app.services.storage import storage
 from app.api.deps import engine
@@ -34,6 +34,18 @@ class ProjectUpdate(BaseModel):
     description: str | None = None
     language: str | None = None
 
+class WorldviewAugmentRequest(BaseModel):
+    title: str
+    description: str
+    subtitle: str | None = None
+    genres: List[str] = []
+    language: str | None = None
+
+class StyleRecommendRequest(BaseModel):
+    description: str
+
+from app.core.config import settings
+
 class ProjectOut(BaseModel):
     id: Any
     title: str
@@ -57,22 +69,20 @@ class ProjectOut(BaseModel):
         if hasattr(values, "genres") and values.genres:
              pass 
         return values
+    
+    @validator("thumbnail_url", pre=True, always=True)
+    def make_full_url(cls, v: str | None) -> str | None:
+        if v and not v.startswith("http"):
+             return f"{settings.STORAGE_HOST}/{v}"
+        return v
         
     class Config:
         orm_mode = True
 
 class ProjectDetailOut(ProjectOut):
-    characters: List[Any] = []
+    characters: List[dict] = []
 
-class StyleRecommendRequest(BaseModel):
-    description: str
-
-class WorldviewAugmentRequest(BaseModel):
-    description: str
-    title: str | None = None
-    subtitle: str | None = None
-    genres: List[str] | None = None
-    language: str | None = "en"
+# ... (existing code)
 
 def generate_project_cover_task(project_id: str, title: str, genre_name: str, worldview_content: str, style: str, tones: List[str] = None, style_ref_url: str = None, character_image_urls: List[str] = None, language: str = "en"):
     """
@@ -85,7 +95,7 @@ def generate_project_cover_task(project_id: str, title: str, genre_name: str, wo
         
         # Upload to Storage
         if img_bytes:
-            url = storage.upload_image(img_bytes)
+            url = storage.upload_image(img_bytes, schema="projects", identifier=project_id) # uuid string passed in
             print(f"Cover image uploaded to {url}")
             
             # Update Project in DB

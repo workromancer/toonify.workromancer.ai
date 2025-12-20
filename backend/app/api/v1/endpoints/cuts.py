@@ -28,6 +28,11 @@ class StoryCutUpdate(BaseModel):
     image_path: Optional[str] = None
     cut_order: Optional[int] = None
 
+from app.core.config import settings
+from pydantic import BaseModel, validator
+
+# ...
+
 class StoryCutOut(BaseModel):
     id: Any
     episode_id: Any
@@ -40,6 +45,12 @@ class StoryCutOut(BaseModel):
     image_path: Optional[str] = None
     status: str = "idle"
     created_at: datetime
+
+    @validator("image_path", pre=True, always=True)
+    def make_full_url(cls, v: str | None) -> str | None:
+        if v and not v.startswith("http") and not v.startswith("data:"):
+             return f"{settings.STORAGE_HOST}/{v}"
+        return v
 
 @router.get("", response_model=List[StoryCutOut])
 def list_cuts(

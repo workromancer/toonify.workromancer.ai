@@ -107,9 +107,9 @@ class AIService:
                         print(f"Generating sample for style: {style_label}")
                         img_bytes = self.generate_image(image_prompt, width=768, height=1024) # 3:4 ratio approx
                         
-                        if img_bytes:
-                            url = storage.upload_image(img_bytes)
-                            option["sample_image_url"] = url
+                        # Upload to 'styles/{style_name}'
+                        url = storage.upload_image(img_bytes, schema="styles", identifier=style_label)
+                        option["sample_image_url"] = url
                     except Exception as e:
                         print(f"Failed to generate sample for {style_label}: {e}")
                         # Leave sample_image_url empty so frontend uses its clean fallback

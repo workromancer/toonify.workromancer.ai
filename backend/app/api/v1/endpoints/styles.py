@@ -62,6 +62,9 @@ def augment_style(
 
 
 
+from app.core.config import settings
+from pydantic import BaseModel, validator
+
 class StyleCreate(BaseModel):
     name: str
     description: str
@@ -73,6 +76,12 @@ class StyleOut(BaseModel):
     image_url: str | None
     status: str
     created_at: Any
+
+    @validator("image_url", pre=True, always=True)
+    def make_full_url(cls, v: str | None) -> str | None:
+        if v and not v.startswith("http"):
+             return f"{settings.STORAGE_HOST}/{v}"
+        return v
 
 def generate_style_preview_task(style_id: str, description: str):
     """
@@ -100,7 +109,7 @@ def generate_style_preview_task(style_id: str, description: str):
         img_bytes = ai_service.generate_image(prompt, width=512, height=512)
         
         if img_bytes:
-            url = storage.upload_image(img_bytes)
+            url = storage.upload_image(img_bytes, schema="styles", identifier=style_id)
             print(f"Style preview uploaded to {url}")
             
             with Session(engine) as session:

@@ -43,6 +43,23 @@ class Settings(BaseSettings):
     MINIO_SECRET_KEY: str
     MINIO_BUCKET: str
     MINIO_SECURE: bool = False
+    
+    # Storage Host (Global)
+    STORAGE_HOST: str | None = None
+
+    @validator("STORAGE_HOST", pre=True, always=True)
+    def assemble_storage_host(cls, v: str | None, values: dict[str, any]) -> str:
+        if isinstance(v, str) and v:
+            return v.rstrip("/")
+        # Fallback to MinIO endpoint if not set
+        base_url = values.get("MINIO_ENDPOINT")
+        secure = values.get("MINIO_SECURE", False)
+        bucket = values.get("MINIO_BUCKET")
+        protocol = "https" if secure else "http"
+        # If base_url, assume it points to root host, we append bucket later?
+        # WAIT: storage.py logic currently is: http://{MINIO_ENDPOINT}/{bucket_name}/{filename}
+        # So host is http://{MINIO_ENDPOINT}
+        return f"{protocol}://{base_url}/{bucket}"
 
     # AI
     GEMINI_API_KEY: str
