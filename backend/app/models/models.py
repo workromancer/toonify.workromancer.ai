@@ -190,6 +190,7 @@ class Episode(SQLModel, table=True):
     story_summary: Optional[str] = None
     episode_order: int
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    status: str = Field(default="ready", sa_column_kwargs={"server_default": "ready"}) # ready, generating, failed
     deleted_at: Optional[datetime] = Field(default=None)
 
     project: Project = Relationship(back_populates="episodes")

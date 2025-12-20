@@ -45,6 +45,7 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
     const { activeEpisodeId, setActiveCut, activeCutId, isReviewMode, setReviewMode } = useCanvasStore(); // Added activeCutId to track selection
     const [cuts, setCuts] = useState<StoryCut[]>([]);
     const [loading, setLoading] = useState(false);
+    const [episodeStatus, setEpisodeStatus] = useState<string>('ready'); // Track episode status
     const { toast } = useToast();
     const t = useTranslations('Project.Editor');
     const tc = useTranslations('Common');
@@ -88,14 +89,43 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
         if (!activeEpisodeId) return;
         try {
             setLoading(true);
-            const res = await api.get(`/cuts/?episode_id=${activeEpisodeId}`);
-            setCuts(res.data);
+            const epRes = await api.get(`/episodes/${activeEpisodeId}`);
+            setEpisodeStatus(epRes.data.status || 'ready');
+
+            if (epRes.data.status !== 'generating') {
+                const res = await api.get(`/cuts/?episode_id=${activeEpisodeId}`);
+                setCuts(res.data);
+            } else {
+                setCuts([]); // Clear cuts if regenerating full episode? Or keep old?
+                // Usually if generating, we might not have cuts yet or they are being replaced.
+            }
         } catch (err) {
             console.error(err);
         } finally {
             setLoading(false);
         }
     };
+
+    // Poll for episode status if generating
+    useEffect(() => {
+        if (episodeStatus !== 'generating' || !activeEpisodeId) return;
+
+        const interval = setInterval(async () => {
+            try {
+                const res = await api.get(`/episodes/${activeEpisodeId}`);
+                const status = res.data.status;
+                setEpisodeStatus(status);
+
+                if (status === 'ready') {
+                    await fetchCuts();
+                }
+            } catch (e) {
+                console.error("Polling error", e);
+            }
+        }, 3000);
+
+        return () => clearInterval(interval);
+    }, [episodeStatus, activeEpisodeId]);
 
     const handleDirectorSuggest = async () => {
         if (!scriptInput.trim()) return;
@@ -366,6 +396,25 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
                         <div className="text-slate-500 text-center py-10 flex flex-col items-center">
                             <Loader2 className="animate-spin mb-2 text-slate-600" />
                             <span className="text-xs">{t('loadingScenes')}</span>
+                        </div>
+                    ) : episodeStatus === 'generating' ? (
+                        <div className="h-full flex flex-col items-center justify-center py-20 min-h-[300px] text-center">
+                            <div className="w-16 h-16 relative mb-6">
+                                <div className="absolute inset-0 rounded-full border-4 border-slate-800"></div>
+                                <div className="absolute inset-0 rounded-full border-4 border-t-purple-500 border-r-transparent border-b-transparent border-l-transparent animate-spin"></div>
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <Sparkles size={20} className="text-white animate-pulse" fill="currentColor" />
+                                </div>
+                            </div>
+                            <h3 className="text-xl font-bold text-white mb-2">{t('generatingEpisode')}</h3>
+                            <p className="text-slate-400 text-sm max-w-xs mx-auto mb-8 leading-relaxed">
+                                {t('generatingDesc')}
+                            </p>
+                            <div className="flex gap-2 justify-center">
+                                <div className="w-2 h-2 rounded-full bg-purple-500 animate-bounce [animation-delay:-0.3s]"></div>
+                                <div className="w-2 h-2 rounded-full bg-purple-500 animate-bounce [animation-delay:-0.15s]"></div>
+                                <div className="w-2 h-2 rounded-full bg-purple-500 animate-bounce"></div>
+                            </div>
                         </div>
                     ) : cuts.length === 0 && !isDirectorMode ? (
                         <div className="text-center py-12 border border-dashed border-slate-800 rounded-xl bg-[#0f0f16]">

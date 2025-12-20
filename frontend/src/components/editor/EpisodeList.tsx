@@ -18,6 +18,7 @@ interface Episode {
     episode_order: number;
     thumbnail_url?: string;
     created_at?: string;
+    status?: string; // ready, generating, failed
 }
 
 export default function EpisodeList() {
@@ -81,14 +82,53 @@ export default function EpisodeList() {
 
     const [genModalOpen, setGenModalOpen] = useState(false);
 
-    const handleEpisodeCreated = async (newItemId: string) => {
-        await fetchEpisodes();
-        setActiveEpisode(newItemId);
+    const handleEpisodeCreated = async (newItem: any) => {
+        // Optimistic update or just fetch
+        // If newItem contains full episode data with 'generating' status, we can optimistically add it
+        if (newItem) {
+            setEpisodes(prev => [...prev, newItem].sort((a, b) => a.episode_order - b.episode_order));
+            // Don't set active if generating? Or maybe select it so user sees it
+            // setActiveEpisode(newItem.id); 
+        } else {
+            await fetchEpisodes();
+        }
     };
 
     useEffect(() => {
         fetchEpisodes();
     }, [projectId]);
+
+    // Polling for generating episodes
+    useEffect(() => {
+        // Only run if there are episodes with 'generating' status
+        const generatingEpisodes = episodes.filter(e => e.status === 'generating');
+        if (generatingEpisodes.length === 0) return;
+
+        const interval = setInterval(async () => {
+            // console.log("Polling generating episodes...", generatingEpisodes.map(e => e.id));
+
+            // Check status of all generating episodes
+            const statuses = await Promise.all(generatingEpisodes.map(async (ep) => {
+                try {
+                    const res = await api.get(`/episodes/${ep.id}`);
+                    return { id: ep.id, status: res.data.status, data: res.data };
+                } catch {
+                    return null;
+                }
+            }));
+
+            // If any finished, update the list
+            const finished = statuses.filter(s => s && s.status !== 'generating');
+
+            if (finished.length > 0) {
+                // We could do a partial update or a full fetch. 
+                // Full fetch is safer to ensure we get creation dates, thumbnails etc.
+                await fetchEpisodes();
+            }
+        }, 3000);
+
+        return () => clearInterval(interval);
+    }, [episodes]);
 
     return (
         <div className="flex flex-col h-full bg-[#0f0f16]">
@@ -135,6 +175,12 @@ export default function EpisodeList() {
                                 <span className="flex items-center gap-1"><Film size={10} /> #{ep.episode_order}</span>
                             </div>
 
+                            {ep.status === 'generating' && (
+                                <div className="mt-2 text-[10px] text-purple-400 flex items-center gap-1 animate-pulse">
+                                    <Sparkles size={10} className="animate-spin" /> Generating...
+                                </div>
+                            )}
+
                             <div className="flex justify-end mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <ConfirmationDialog
                                     open={deleteConfirmationId === ep.id}
@@ -180,7 +226,8 @@ export default function EpisodeList() {
                 isOpen={genModalOpen}
                 onClose={() => setGenModalOpen(false)}
                 projectId={projectId}
-                onEpisodeCreated={handleEpisodeCreated}
+                onGenerate={handleEpisodeCreated}
+                nextOrder={episodes.length > 0 ? Math.max(...episodes.map(e => e.episode_order)) + 1 : 1}
             />
         </div>
     );

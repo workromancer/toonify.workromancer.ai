@@ -97,6 +97,15 @@
         "desc": "고강도 액션 연출용"
       }
     },
+    "delete": "삭제",
+    "deleteFailed": "삭제 실패",
+    "deleteProject": "프로젝트 삭제",
+    "deleteProjectDesc": "이 작업은 프로젝트를 휴지통으로 이동시킵니다. 계속하시려면 프로젝트 이름을 입력하세요.",
+    "deleteProjectTitle": "프로젝트 삭제",
+    "deleteSuccess": "프로젝트 삭제 성공",
+    "errors": {
+      "loadFailed": "로드 실패"
+    },
     "logout": "로그아웃"
   },
   "CreateWorkspace": {
@@ -241,7 +250,10 @@
       "preparingSuggestions": "아이디어 구상 중...",
       "preparingSuggestionsDesc": "스토리에 어울리는 캐릭터들을 분석 중입니다. 잠시만 기다려주세요.",
       "castConfirm": "캐스팅 확정",
-      "castConfirmDesc": "이 제안을 바탕으로 캐릭터를 생성하시겠습니까? 바로 이미지 생성이 시작됩니다."
+      "castConfirmDesc": "이 제안을 바탕으로 캐릭터를 생성하시겠습니까? 바로 이미지 생성이 시작됩니다.",
+      "castSuccess": "캐스팅이 완료되었습니다.",
+      "noCharacters": "캐릭터 없음",
+      "noCharactersDesc": "아직 등록된 캐릭터가 없습니다. 새 캐릭터를 추가해보세요."
     },
     "Characters": {
       "title": "등장인물",
@@ -253,7 +265,9 @@
       "reject": "제안 거절",
       "rejectConfirm": "정말 이 제안을 삭제하시겠습니까?",
       "rejectSuccess": "제안이 삭제되었습니다.",
-      "castSuccess": "캐스팅이 확정되었습니다. 캐릭터가 생성 중입니다."
+      "castSuccess": "캐스팅이 확정되었습니다. 캐릭터가 생성 중입니다.",
+      "castConfirm": "캐스팅 확정",
+      "castConfirmDesc": "이 제안을 바탕으로 캐릭터를 생성하시겠습니까? 바로 이미지 생성이 시작됩니다."
     },
     "Episodes": {
       "title": "에피소드",
@@ -292,6 +306,7 @@
       "generate": "생성",
       "rendering": "렌더링 중...",
       "ready": "준비됨",
+      "waiting": "대기 중...",
       "noEpisodeSelected": "에피소드 선택 안됨",
       "selectEpisodeToExport": "내보낼 에피소드를 선택하세요.",
       "exportStarted": "내보내기 시작",
@@ -423,7 +438,9 @@
       "age": "나이: {age}",
       "unknownRole": "역할 미정",
       "generating": "생성 중...",
-      "generateNew": "새로운 추천 생성"
+      "generateNew": "새로운 추천 생성",
+      "emptyTitle": "추천 없음",
+      "emptyDesc": "아직 생성된 캐릭터 추천이 없습니다."
     },
     "personalities": {
       "Cheerful": "쾌활함",
@@ -503,7 +520,11 @@
       "error": "오류",
       "ready": "완료",
       "delete": "캐릭터 삭제",
-      "deleteConfirm": "정말 이 캐릭터를 삭제하시겠습니까?"
+      "deleteConfirm": "정말 이 캐릭터를 삭제하시겠습니까?",
+      "background": "배경",
+      "detail": "상세 정보",
+      "personality": "성격",
+      "profile": "프로필"
     },
     "ArtStyle": {
       "title": "그림체 선택",
@@ -641,7 +662,14 @@
       "cancel": "취소",
       "startGenerating": "생성 시작하기",
       "returnToSetup": "프로젝트 설정으로 복귀",
-      "creatingFor": "프로젝트용 스타일 생성: "
+      "creatingFor": "프로젝트용 스타일 생성: ",
+      "apply": "변경사항 적용",
+      "failed": "수정 실패",
+      "failedDesc": "장면 수정에 실패했습니다. 다시 시도해주세요.",
+      "modify": "수정 중...",
+      "noImage": "수정할 이미지가 없습니다",
+      "success": "장면 수정됨",
+      "successDesc": "Director's Cut이 성공적으로 적용되었습니다!"
     }
   },
   "Styles": {

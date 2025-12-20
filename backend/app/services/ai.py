@@ -762,9 +762,9 @@ class AIService:
         - Script (Visual Description of action/scene)
         - Location (Setting name, e.g. "School Classroom")
         - Time of Day (e.g. "Sunset", "Night")
-        - Dialogues (List of {speaker, text})
+        - Dialogues (List of {{speaker, text}})
         - Panel Type (Aspect Ratio...)
-        - Appearing Characters (List of objects: [{"id": "...", "name": "...", "clothing": "Brief description of outfit"}]. Ensure outfit is CONSISTENT for the same character throughout the scene.)
+        - Appearing Characters (List of objects: [{{"id": "...", "name": "...", "clothing": "Brief description of outfit"}}]. Ensure outfit is CONSISTENT for the same character throughout the scene.)
         - refer_prev_cut (Boolean...)
         - transition_ref (String): Notes for transitioning from the previous cut (e.g. "Camera zooms in", "Pan right", "Fade from black"). If first cut, null.
 
@@ -772,22 +772,21 @@ class AIService:
         {f'If language is Korean, use Hangul.' if language and language.startswith('ko') else ''}
 
         Return ONLY JSON:
-        {
+        {{
             "cuts": [
-                {
+                {{
                     "cut_order": 1,
                     "script": "...",
                     "location": "Classroom",
                     "time_of_day": "Day",
-                    "dialogues": [{"speaker": "A", "text": "..."}],
-                    "appearing_characters": [{"id": "...", "name": "...", "clothing": "School Uniform"}],
+                    "dialogues": [{{"speaker": "A", "text": "..."}}],
+                    "appearing_characters": [{{"id": "...", "name": "...", "clothing": "School Uniform"}}],
                     "panel_type": "Wide",
                     "refer_prev_cut": false,
                     "transition_ref": null
-                },
-                ...
+                }}
             ]
-        }
+        }}
         """
         try:
             print(f"DEBUG PROMPT [generate_initial_cuts]: \n{prompt}")

@@ -25,6 +25,7 @@ interface Idea {
 export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGenerate, nextOrder }: GenerateEpisodeModalProps) {
     const t = useTranslations('Modals.GenerateEpisode');
     const [mode, setMode] = useState<'form' | 'suggestions' | 'generating'>('form');
+    // loadingStep is generally unused now but kept for compatibility if needed, though logic removed
     const [loadingStep, setLoadingStep] = useState(0);
 
     // Form State
@@ -87,29 +88,10 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
 
     const handleGenerate = async () => {
         setMode('generating');
-        setLoadingStep(0);
-
-        // Start animation timer
-        // Start animation timer
-        const steps = [
-            t('steps.analyzing'),
-            t('steps.drafting'),
-            t('steps.generating'),
-            t('steps.applying'),
-            t('steps.finalizing')
-        ];
-
-        let currentStep = 0;
-        const interval = setInterval(() => {
-            currentStep++;
-            if (currentStep < steps.length) {
-                setLoadingStep(currentStep);
-            }
-        }, 1500); // Slower steps to match real API time roughly
 
         try {
             console.log("Generating episode with:", formData);
-            // Real API Call
+            // Initiate Generation (Async)
             const response = await api.post('/episodes/generate-cuts', {
                 project_id: projectId,
                 episode_title: formData.title,
@@ -117,35 +99,30 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
                 num_cuts: formData.num_cuts
             });
 
-            clearInterval(interval);
-            setLoadingStep(steps.length - 1); // Finished
+            // Immediately notify and close
+            const newEpisode = {
+                id: response.data.episode_id,
+                title: formData.title,
+                story_summary: formData.story_summary,
+                episode_order: nextOrder,
+                status: 'generating',
+                cuts_count: formData.num_cuts,
+                thumbnail_url: null,
+                created_at: new Date().toISOString()
+            };
 
-            // Delay slightly to show "Finalizing"
-            setTimeout(() => {
-                const newEpisode = {
-                    id: response.data.episode_id,
-                    title: formData.title,
-                    story_summary: formData.story_summary,
-                    episode_order: nextOrder,
-                    cuts_count: response.data.cuts_count,
-                    thumbnail_url: null, // Will be generated later
-                    created_at: new Date().toISOString()
-                };
+            onGenerate(newEpisode);
 
-                onGenerate(newEpisode);
+            toast({
+                title: t('success'),
+                description: t('successDesc', { title: formData.title }),
+            });
 
-                toast({
-                    title: t('success'),
-                    description: t('successDesc', { title: formData.title }),
-                });
-
-                handleClose();
-            }, 800);
+            handleClose();
 
         } catch (error) {
-            console.error("Failed to generate episode", error);
-            clearInterval(interval);
-            setMode('form'); // Go back to form on error
+            console.error("Failed to start generation", error);
+            setMode('form');
             toast({
                 title: t('genFailed'),
                 description: t('genFailedDesc'),
@@ -188,8 +165,8 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
 
                             <h3 className="text-2xl font-bold text-white mb-2 text-center">{t('thinking')}</h3>
                             <div className="h-6 overflow-hidden relative w-full max-w-xs text-center">
-                                <p key={loadingStep} className="text-slate-400 text-sm animate-fade-in-up">
-                                    {[t('steps.analyzing'), t('steps.drafting'), t('steps.generating'), t('steps.applying'), t('steps.finalizing')][loadingStep] || "Processing..."}
+                                <p className="text-slate-400 text-sm animate-fade-in-up">
+                                    {t('steps.analyzing') || "Processing..."}
                                 </p>
                             </div>
                         </div>

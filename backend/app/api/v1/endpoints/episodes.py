@@ -43,6 +43,8 @@ class EpisodeOut(BaseModel):
     episode_order: int
     project_id: Any
     story_summary: str = ""
+    story_summary: str = ""
+    status: str
     created_at: datetime
 
 @router.get("", response_model=List[EpisodeOut])
@@ -160,12 +162,13 @@ def generate_episode_options(
 def generate_episode_cuts(
     *,
     request: GenerateCutsRequest,
+    background_tasks: BackgroundTasks,
     session: Session = Depends(deps.get_session),
     current_user_id: str = Depends(deps.get_current_user_id),
     accept_language: str = Header("en", alias="Accept-Language")
 ):
     """
-    Generate and save initial cuts (script, dialogue, panel type).
+    Generate and save initial cuts (script, dialogue, panel type) asynchronously.
     """
     style = request.style
     if not style:
@@ -182,98 +185,119 @@ def generate_episode_cuts(
         title=request.episode_title,
         story_summary=request.episode_summary,
         project_id=request.project_id,
-        episode_order=new_order
+        episode_order=new_order,
+        status="generating"
     )
     session.add(episode)
     session.commit()
     session.refresh(episode)
 
-    # Fetch project language
-    project = session.get(Project, request.project_id)
-    project_lang = project.language if project else "en"
+    # Start Background Task
+    background_tasks.add_task(
+        generate_episode_cuts_task,
+        episode_id=episode.id,
+        project_id=request.project_id,
+        episode_title=request.episode_title,
+        episode_summary=request.episode_summary,
+        style=style,
+        num_cuts=request.num_cuts,
+        language=project.language if project else "en"
+    )
 
-    # Fetch project characters for AI context
-    characters = session.exec(select(Character).where(Character.project_id == request.project_id).where(Character.deleted_at == None)).all()
-    
-    char_details = []
-    for c in characters:
-        # Extract personality from profile or fallback to default_mood
-        personality = c.profile.get("personality") if c.profile else None
-        if not personality and c.default_mood:
-            personality = ", ".join(c.default_mood)
-            
-        char_details.append({
-            "id": str(c.id),
-            "name": c.name,
-            "personality": personality,
-            "appearance": c.appearance_tags,
-            "description": c.description
-        })
-
-    # 2. Generate Cuts via AI
-    try:
-        cuts_data = ai_service.generate_initial_cuts(
-            episode_title=request.episode_title,
-            summary=request.episode_summary,
-            style=style,
-            num_cuts=request.num_cuts,
-            language=project_lang,
-            available_characters=char_details
-        )
-    except Exception as e:
-        # If AI fails, we might still want the episode? Or rollback?
-        # Let's keep episode but empty cuts.
-        print(f"AI Cut Gen Failed: {e}")
-        cuts_data = []
-
-    # 3. Save Cuts
-    created_cuts = []
-    for cut_item in cuts_data:
-        # cut_item has keys: cut_order, script, dialogues, panel_type
-        # mapping cut_item keys to StoryCut model
-        # dialogues is list of dict, compatible with JSON column
-        
-        story_cut = StoryCut(
-            episode_id=episode.id,
-            cut_order=cut_item.get("cut_order", 1),
-            script=cut_item.get("script", ""),
-            selected_layout=cut_item.get("panel_type", "Square"), # Mapping panel_type to layout?
-            aspect_ratio=cut_item.get("panel_type", "1:1"), # Simplified mapping
-            dialogues=cut_item.get("dialogues", []),
-            appearing_characters=cut_item.get("appearing_characters", []),
-            refer_prev_cut=cut_item.get("refer_prev_cut", True),
-            location=cut_item.get("location"),
-            time_of_day=cut_item.get("time_of_day"),
-            transition_ref=cut_item.get("transition_ref"),
-            image_path=None
-        )
-        
-        # Refine aspect ratio based on panel type
-        ptype = cut_item.get("panel_type", "").lower()
-        
-        # Check if ptype allows specific ratio string
-        if ":" in ptype:
-             story_cut.aspect_ratio = ptype
-        elif "wide" in ptype:
-            story_cut.aspect_ratio = "16:9"
-        elif "vertical" in ptype:
-             story_cut.aspect_ratio = "9:16"
-        elif "square" in ptype:
-             story_cut.aspect_ratio = "1:1"
-        else:
-            story_cut.aspect_ratio = "1:1"
-            
-        session.add(story_cut)
-        created_cuts.append(story_cut)
-        
-    session.commit()
-    
     return {
         "episode_id": episode.id,
         "title": episode.title,
-        "cuts_count": len(created_cuts),
-        "cuts": created_cuts
+        "status": "generating",
+        "cuts_count": 0,
+        "cuts": []
     }
+
+def generate_episode_cuts_task(
+    episode_id: UUID,
+    project_id: UUID,
+    episode_title: str,
+    episode_summary: str,
+    style: str,
+    num_cuts: int,
+    language: str
+):
+    print(f"Background Task: Generating cuts for episode {episode_id}")
+    with Session(engine) as session:
+        episode = session.get(Episode, episode_id)
+        if not episode: return
+        
+        # Fetch project characters for AI context
+        characters = session.exec(select(Character).where(Character.project_id == project_id).where(Character.deleted_at == None)).all()
+        
+        char_details = []
+        for c in characters:
+            personality = c.profile.get("personality") if c.profile else None
+            if not personality and c.default_mood:
+                personality = ", ".join(c.default_mood)
+                
+            char_details.append({
+                "id": str(c.id),
+                "name": c.name,
+                "personality": personality,
+                "appearance": c.appearance_tags,
+                "description": c.description
+            })
+
+        # Generate Cuts via AI
+        try:
+            cuts_data = ai_service.generate_initial_cuts(
+                episode_title=episode_title,
+                summary=episode_summary,
+                style=style,
+                num_cuts=num_cuts,
+                language=language,
+                available_characters=char_details
+            )
+            
+            # Save Cuts
+            created_cuts = []
+            for cut_item in cuts_data:
+                story_cut = StoryCut(
+                    episode_id=episode.id,
+                    cut_order=cut_item.get("cut_order", 1),
+                    script=cut_item.get("script", ""),
+                    selected_layout=cut_item.get("panel_type", "Square"),
+                    aspect_ratio=cut_item.get("panel_type", "1:1"),
+                    dialogues=cut_item.get("dialogues", []),
+                    appearing_characters=cut_item.get("appearing_characters", []),
+                    refer_prev_cut=cut_item.get("refer_prev_cut", True),
+                    location=cut_item.get("location"),
+                    time_of_day=cut_item.get("time_of_day"),
+                    transition_ref=cut_item.get("transition_ref"),
+                    image_path=None
+                )
+                
+                # Refine aspect ratio
+                ptype = cut_item.get("panel_type", "").lower()
+                if ":" in ptype:
+                     story_cut.aspect_ratio = ptype
+                elif "wide" in ptype:
+                    story_cut.aspect_ratio = "16:9"
+                elif "vertical" in ptype:
+                     story_cut.aspect_ratio = "9:16"
+                elif "square" in ptype:
+                     story_cut.aspect_ratio = "1:1"
+                else:
+                    story_cut.aspect_ratio = "1:1"
+                    
+                session.add(story_cut)
+                created_cuts.append(story_cut)
+            
+            episode.status = "ready"
+            session.add(episode)
+            session.commit()
+            print(f"Task Complete: Generated {len(created_cuts)} cuts for episode {episode_id}")
+            
+        except Exception as e:
+            print(f"AI Cut Gen Failed: {e}")
+            episode.status = "failed"
+            session.add(episode)
+            session.commit()
 
 @router.post("/{episode_id}/cuts/{cut_id}/generate-image")
 def generate_cut_image(
