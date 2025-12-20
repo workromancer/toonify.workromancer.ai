@@ -760,28 +760,34 @@ class AIService:
         
         For each cut, determine:
         - Script (Visual Description of action/scene)
-        - Dialogues (List of {{speaker, text}})
-        - Panel Type (Aspect Ratio: Choose from "1:1", "3:2", "2:3", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9". Prefer vertical ratios for mobile scroll (9:16, 2:3, 4:5), or 1:1/16:9/21:9 for specific impact.)
-        - Appearing Characters (List of objects: [{{"id": "CHARACTER_ID", "name": "CHARACTER_NAME"}}, ...]. Use EXACT ID and Name from 'Available Characters' list.)
-        - refer_prev_cut (Boolean): Set to true if this cut visually continues from the previous one (same scene, continuous action) and should use the previous image as context. Set to false if it's a new scene, a time jump, or if the previous image should NOT be referenced.
-        
-        {f'IMPORTANT: All output text (scripts, dialogues, character names) MUST be in {language} language.' if language else ''}
-        {f'If language is Korean, use Hangul for scripts, dialogues, and appearing characters(names).' if language and language.startswith('ko') else ''}
+        - Location (Setting name, e.g. "School Classroom")
+        - Time of Day (e.g. "Sunset", "Night")
+        - Dialogues (List of {speaker, text})
+        - Panel Type (Aspect Ratio...)
+        - Appearing Characters (List of objects: [{"id": "...", "name": "...", "clothing": "Brief description of outfit"}]. Ensure outfit is CONSISTENT for the same character throughout the scene.)
+        - refer_prev_cut (Boolean...)
+        - transition_ref (String): Notes for transitioning from the previous cut (e.g. "Camera zooms in", "Pan right", "Fade from black"). If first cut, null.
+
+        {f'IMPORTANT: All output text (scripts, dialogues, character names, locations, etc) MUST be in {language} language.' if language else ''}
+        {f'If language is Korean, use Hangul.' if language and language.startswith('ko') else ''}
 
         Return ONLY JSON:
-        {{
+        {
             "cuts": [
-                {{
+                {
                     "cut_order": 1,
-                    "script": "Visual description...",
-                    "dialogues": [{{"speaker": "A", "text": "Hello"}}],
-                    "appearing_characters": ["Character A", "Character B"],
+                    "script": "...",
+                    "location": "Classroom",
+                    "time_of_day": "Day",
+                    "dialogues": [{"speaker": "A", "text": "..."}],
+                    "appearing_characters": [{"id": "...", "name": "...", "clothing": "School Uniform"}],
                     "panel_type": "Wide",
-                    "refer_prev_cut": true
-                }},
+                    "refer_prev_cut": false,
+                    "transition_ref": null
+                },
                 ...
             ]
-        }}
+        }
         """
         try:
             print(f"DEBUG PROMPT [generate_initial_cuts]: \n{prompt}")

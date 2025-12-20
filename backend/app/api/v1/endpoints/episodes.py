@@ -242,6 +242,9 @@ def generate_episode_cuts(
             dialogues=cut_item.get("dialogues", []),
             appearing_characters=cut_item.get("appearing_characters", []),
             refer_prev_cut=cut_item.get("refer_prev_cut", True),
+            location=cut_item.get("location"),
+            time_of_day=cut_item.get("time_of_day"),
+            transition_ref=cut_item.get("transition_ref"),
             image_path=None
         )
         
@@ -352,10 +355,14 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
             # 1. Start with characters explicitly listed for this cut
             raw_appearing = cut.appearing_characters or []
             appearing_names = []
+            char_outfits = {} # Map lower_name -> clothing
             for item in raw_appearing:
                 if isinstance(item, dict):
                     if "name" in item:
-                        appearing_names.append(item["name"].lower())
+                        lower_name = item["name"].lower()
+                        appearing_names.append(lower_name)
+                        if "clothing" in item and item["clothing"]:
+                            char_outfits[lower_name] = item["clothing"]
                 elif isinstance(item, str):
                     appearing_names.append(item.lower())
 
@@ -382,10 +389,29 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
             prompt = prompt_override
             if not prompt:
                 dialogue_text = " ".join([f"{d.get('speaker', 'Unknown')}: {d.get('text', '')}" for d in cut.dialogues])
+                
+                # Construct richer prompt
+                setting_info = []
+                if cut.location: setting_info.append(f"Location: {cut.location}")
+                if cut.time_of_day: setting_info.append(f"Time: {cut.time_of_day}")
+                setting_str = ", ".join(setting_info)
+                
+                outfit_str = ""
+                if char_outfits:
+                     outfit_list = [f"{name.capitalize()}: {desc}" for name, desc in char_outfits.items()]
+                     outfit_str = f"Character Outfits: {', '.join(outfit_list)}"
+                     
+                transition_str = ""
+                if cut.transition_ref:
+                     transition_str = f"Transition Note: {cut.transition_ref}"
+
                 prompt = f"""
                 Style: {project.style_preset} {f'({project.art_style})' if project.art_style else ''}
+                Setting: {setting_str}
                 Action/Scene: {cut.script}
+                {outfit_str}
                 Dialogues: {dialogue_text}
+                {transition_str}
                 """
     
             # 3. Determine Dimensions

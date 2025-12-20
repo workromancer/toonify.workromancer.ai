@@ -200,6 +200,9 @@ class StoryCut(SQLModel, table=True):
     episode_id: UUID = Field(foreign_key="episode.id")
     cut_order: int
     script: str
+    location: Optional[str] = None
+    time_of_day: Optional[str] = None
+    transition_ref: Optional[str] = None # Notes for transition from prev cut
     selected_layout: str
     aspect_ratio: str
     
