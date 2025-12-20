@@ -362,6 +362,10 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
             if not style_ref_url:
                  pass 
     
+            # A2. Episode Global Context
+            episode_bg_info = episode.background_info
+            episode_char_outfits = episode.character_outfits or {}
+
             # B. Previous Scene (for continuity)
             prev_scene_url = None
             # Check if reference logic is enabled
@@ -379,7 +383,10 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
             # 1. Start with characters explicitly listed for this cut
             raw_appearing = cut.appearing_characters or []
             appearing_names = []
-            char_outfits = {} # Map lower_name -> clothing
+            
+            # Initialize with global outfits, then override with specific ones
+            char_outfits = episode_char_outfits.copy() 
+            
             for item in raw_appearing:
                 if isinstance(item, dict):
                     if "name" in item:
@@ -401,10 +408,23 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
             all_chars = session.exec(select(Character).where(Character.project_id == project.id).where(Character.deleted_at == None)).all()
             
             char_data = []
+            char_visuals = []
             # Priority 1: Specifically matched characters
             matched_chars = [c for c in all_chars if c.name.lower() in occurring_names and c.profile_image_url]
             for c in matched_chars[:6]:
                 char_data.append({"name": c.name, "url": c.profile_image_url})
+                
+                # Append visual description for text prompt
+                visual_desc_parts = []
+                if c.appearance_tags:
+                    visual_desc_parts.append(f"Visuals({', '.join(c.appearance_tags)})")
+                if c.description:
+                    # Truncate description to keep prompt concise
+                    desc_short = c.description[:100] + "..." if len(c.description) > 100 else c.description
+                    visual_desc_parts.append(f"Traits({desc_short})")
+                
+                if visual_desc_parts:
+                    char_visuals.append(f"{c.name}: {' '.join(visual_desc_parts)}")
                 
             # Priority 2: Fallback REMOVED to avoid polluting context with irrelevant characters
             # if len(char_data) < 3: ...
@@ -418,12 +438,17 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
                 setting_info = []
                 if cut.location: setting_info.append(f"Location: {cut.location}")
                 if cut.time_of_day: setting_info.append(f"Time: {cut.time_of_day}")
+                if episode_bg_info: setting_info.append(f"Episode Context: {episode_bg_info}")
                 setting_str = ", ".join(setting_info)
                 
                 outfit_str = ""
                 if char_outfits:
                      outfit_list = [f"{name.capitalize()}: {desc}" for name, desc in char_outfits.items()]
                      outfit_str = f"Character Outfits: {', '.join(outfit_list)}"
+
+                char_visuals_str = ""
+                if char_visuals:
+                    char_visuals_str = "Character Descriptions:\n" + "\n".join([f"- {cv}" for cv in char_visuals])
                      
                 transition_str = ""
                 if cut.transition_ref:
@@ -434,6 +459,7 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
                 Setting: {setting_str}
                 Action/Scene: {cut.script}
                 {outfit_str}
+                {char_visuals_str}
                 Dialogues: {dialogue_text}
                 {transition_str}
                 """

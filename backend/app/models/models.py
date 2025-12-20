@@ -191,6 +191,11 @@ class Episode(SQLModel, table=True):
     episode_order: int
     created_at: datetime = Field(default_factory=datetime.utcnow)
     status: str = Field(default="ready", sa_column_kwargs={"server_default": "ready"}) # ready, generating, failed
+    
+    # Context for consistency
+    background_info: Optional[str] = Field(default=None, sa_column=Column(Text))
+    character_outfits: Optional[dict] = Field(sa_column=Column(JSON), default={}) # {CharacterName: Description}
+    
     deleted_at: Optional[datetime] = Field(default=None)
 
     project: Project = Relationship(back_populates="episodes")

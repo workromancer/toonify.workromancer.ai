@@ -341,6 +341,7 @@
         "activeCharacters": "등장인물",
         "noCharacters": "등록된 캐릭터가 없습니다.",
         "generateImage": "이미지 생성",
+        "regenerateImage": "다시 생성하기",
         "processing": "생성 중...",
         "process": "생성 중...",
         "cost": "비용: 1 크레딧 • 소요시간: 약 5초",

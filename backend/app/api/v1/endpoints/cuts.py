@@ -16,7 +16,7 @@ class StoryCutCreate(BaseModel):
     selected_layout: str = "single"
     aspect_ratio: str = "1:1"
     dialogues: List[dict] = []
-    appearing_characters: List[str] = []
+    appearing_characters: List[dict] = []
     image_path: Optional[str] = None
 
 class StoryCutUpdate(BaseModel):
@@ -24,7 +24,7 @@ class StoryCutUpdate(BaseModel):
     selected_layout: Optional[str] = None
     aspect_ratio: Optional[str] = None
     dialogues: Optional[List[dict]] = None
-    appearing_characters: Optional[List[str]] = None
+    appearing_characters: Optional[List[dict]] = None
     image_path: Optional[str] = None
     cut_order: Optional[int] = None
 

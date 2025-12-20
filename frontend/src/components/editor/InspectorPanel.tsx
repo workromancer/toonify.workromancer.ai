@@ -60,6 +60,8 @@ export default function InspectorPanel() {
     const [appearingCharIds, setAppearingCharIds] = useState<Set<string>>(new Set());
     const [usePreviousContext, setUsePreviousContext] = useState(true);
 
+    const [hasImage, setHasImage] = useState(false);
+
     // Sync specific to activeCut
     useEffect(() => {
         const fetchCutDetails = async () => {
@@ -69,6 +71,7 @@ export default function InspectorPanel() {
                 const cut = res.data;
                 setPrompt(cut.script || '');
                 setAspectRatio(cut.aspect_ratio || '1:1');
+                setHasImage(!!(cut.image_path || cut.image_url));
 
                 // robust handling for both old (string[]) and new ({id, name}[]) formats
                 const ids = new Set<string>();
@@ -263,7 +266,7 @@ export default function InspectorPanel() {
                         <>{t('processing')}</>
                     ) : (
                         <>
-                            <Wand2 size={16} fill="currentColor" /> {t('generateImage')}
+                            <Wand2 size={16} fill="currentColor" /> {hasImage ? t('regenerateImage') : t('generateImage')}
                         </>
                     )}
                 </button>

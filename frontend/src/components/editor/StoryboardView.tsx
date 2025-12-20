@@ -397,7 +397,7 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
                             <Loader2 className="animate-spin mb-2 text-slate-600" />
                             <span className="text-xs">{t('loadingScenes')}</span>
                         </div>
-                    ) : episodeStatus === 'generating' ? (
+                    ) : episodeStatus === 'generating' && cuts.length === 0 ? (
                         <div className="h-full flex flex-col items-center justify-center py-20 min-h-[300px] text-center">
                             <div className="w-16 h-16 relative mb-6">
                                 <div className="absolute inset-0 rounded-full border-4 border-slate-800"></div>

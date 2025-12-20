@@ -342,11 +342,11 @@
         "activeCharacters": "ACTIVE CHARACTERS",
         "noCharacters": "No characters found.",
         "generateImage": "Generate Image",
+        "regenerateImage": "Regenerate Image",
         "processing": "Processing...",
         "cost": "Cost: 1 Credit • Est. Time: ~5s",
         "referencePreviousCut": "Reference Previous Cut"
       },
-      "waiting": "Waiting...",
       "toasts": {
         "noCuts": "No cuts to generate",
         "noCutsDesc": "All cuts already have images or are processing.",
