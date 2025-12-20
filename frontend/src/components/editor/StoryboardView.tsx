@@ -473,9 +473,36 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
                                 {/* Content Grid */}
                                 <div className="flex min-h-[160px]">
                                     {/* Image Area */}
-                                    <div className={`w-1/2 bg-slate-900 relative flex items-center justify-center border-r border-slate-800 overflow-hidden`}>
-                                        {cut.image_path && !generatingIds.has(cut.id) && cut.status !== 'generating' ? (
-                                            <img src={cut.image_path} alt="Cut" className="w-full h-full object-cover" />
+                                    <div className={`w-1/2 bg-slate-900 relative flex items-center justify-center border-r border-slate-800 overflow-hidden group/image`}>
+                                        {cut.image_path ? (
+                                            <>
+                                                <img
+                                                    src={cut.image_path}
+                                                    alt="Cut"
+                                                    className={`w-full h-full object-cover transition-all ${generatingIds.has(cut.id) || cut.status === 'generating' ? 'blur-sm scale-105 opacity-50' : ''}`}
+                                                />
+                                                {/* Loading Overlay */}
+                                                {(generatingIds.has(cut.id) || cut.status === 'generating') && (
+                                                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/20 backdrop-blur-[2px]">
+                                                        <RefreshCw className="animate-spin text-purple-500 mb-2" size={24} />
+                                                        <span className="text-[10px] text-purple-200 font-bold bg-black/50 px-2 py-0.5 rounded-full">{t('rendering')}</span>
+                                                    </div>
+                                                )}
+                                                {/* Regenerate Button Overlay (Only when not generating) */}
+                                                {!(generatingIds.has(cut.id) || cut.status === 'generating') && (
+                                                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity">
+                                                        <Button
+                                                            variant="secondary"
+                                                            size="sm"
+                                                            disabled={isBatchGenerating}
+                                                            onClick={(e) => { e.stopPropagation(); handleGenerateImage(cut.id); }}
+                                                            className="h-8 text-xs bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm border border-white/20"
+                                                        >
+                                                            <RefreshCw size={12} className="mr-2" /> {t('regenerate') || "Regenerate"}
+                                                        </Button>
+                                                    </div>
+                                                )}
+                                            </>
                                         ) : (
                                             <div className="text-slate-600 flex flex-col items-center gap-2">
                                                 {generatingIds.has(cut.id) || cut.status === 'generating' ? (

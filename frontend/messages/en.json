@@ -306,6 +306,8 @@
       "noImage": "No Image",
       "generate": "Generate",
       "rendering": "Rendering...",
+      "regenerate": "Regenerate",
+      "waiting": "Waiting...",
       "ready": "Ready",
       "noEpisodeSelected": "No Episode Selected",
       "selectEpisodeToExport": "Select an episode to export.",

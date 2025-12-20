@@ -305,6 +305,7 @@
       "noImage": "이미지 없음",
       "generate": "생성",
       "rendering": "렌더링 중...",
+      "regenerate": "다시 생성하기",
       "ready": "준비됨",
       "waiting": "대기 중...",
       "noEpisodeSelected": "에피소드 선택 안됨",
