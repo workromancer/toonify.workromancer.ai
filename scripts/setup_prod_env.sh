@@ -137,7 +137,10 @@ if ! gcloud sql instances describe $SQL_INSTANCE_NAME --format="value(name)" &>/
         --root-password="temp-root-password-change-me" 
         
     echo "데이터베이스 $DB_NAME 생성 중..."
-    gcloud sql databases create $DB_NAME --instance=$SQL_INSTANCE_NAME
+    gcloud sql databases create $DB_NAME \
+        --instance=$SQL_INSTANCE_NAME \
+        --charset=UTF8 \
+        --collation=en_US.UTF8
     
     echo "사용자 $DB_USER 생성 중..."
     # 실제로는 비밀번호를 묻거나 생성해야 함. 스크립트 단순화를 위해 플레이스홀더 사용.
