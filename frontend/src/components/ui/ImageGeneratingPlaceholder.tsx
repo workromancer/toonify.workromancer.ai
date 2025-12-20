@@ -3,6 +3,7 @@
 import React from 'react';
 import { Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { CustomLoader } from './custom-loader';
 
 interface ImageGeneratingPlaceholderProps {
     className?: string;
@@ -23,7 +24,7 @@ export default function ImageGeneratingPlaceholder({ className, text = "GENERATI
                     <div className="relative">
                         {/* Outer Glow */}
                         <div className="absolute inset-0 bg-purple-500 blur-xl opacity-50 animate-pulse" />
-                        <Sparkles className="relative w-10 h-10 text-purple-400 animate-spin-slow" />
+                        <CustomLoader size={40} className="relative text-purple-400" />
                     </div>
                     <span className="text-purple-200 font-bold tracking-widest text-lg animate-pulse drop-shadow-lg text-center px-4">
                         {text}

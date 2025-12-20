@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, Sparkles, UserPlus, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { CustomLoader } from '@/components/ui/custom-loader';
 
 interface CharacterSuggestion {
     id: string;
@@ -80,15 +81,8 @@ export function CharacterSuggestionList({ projectId, onSelect }: CharacterSugges
         }
     };
 
-    const handleSelect = async (suggestion: CharacterSuggestion) => {
-        // Mark as used
-        try {
-            await api.post(`/characters/suggestions/${suggestion.id}/use`);
-            onSelect(suggestion);
-            setSuggestions(prev => prev.filter(s => s.id !== suggestion.id));
-        } catch (e) {
-            console.error(e);
-        }
+    const handleSelect = (suggestion: CharacterSuggestion) => {
+        onSelect(suggestion);
     };
 
     return (
@@ -112,11 +106,15 @@ export function CharacterSuggestionList({ projectId, onSelect }: CharacterSugges
                 )}
 
                 {!loading && suggestions.length === 0 && !generating && (
-                    <div className="text-center py-8 text-gray-500 space-y-4">
-                        <p>{t('suggestions.empty')}</p>
-                        <Button onClick={handleGenerateBatch} variant="outline" className="gap-2 border-purple-500/30 text-purple-300 hover:bg-purple-500/10">
-                            <Sparkles className="w-4 h-4" /> {t('suggestions.generateBatch')}
-                        </Button>
+                    <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                        <div
+                            onClick={handleGenerateBatch}
+                            className="w-24 h-24 rounded-full bg-[#1c1924] hover:bg-[#252130] border border-dashed border-white/10 hover:border-white/20 flex items-center justify-center cursor-pointer transition-all duration-300 group mb-4 shadow-lg shadow-black/20"
+                        >
+                            <UserPlus className="w-8 h-8 text-gray-600 group-hover:text-purple-400 transition-colors" />
+                        </div>
+                        <h4 className="text-gray-400 font-medium text-lg mb-1">{t('suggestions.emptyTitle')}</h4>
+                        <p className="text-gray-600 text-xs max-w-[200px]">{t('suggestions.emptyDesc')}</p>
                     </div>
                 )}
 
@@ -131,7 +129,9 @@ export function CharacterSuggestionList({ projectId, onSelect }: CharacterSugges
                 {suggestions.map((suggestion) => (
                     <div
                         key={suggestion.id}
-                        className="group bg-[#1c1924] hover:bg-[#252130] border border-white/5 hover:border-purple-500/30 rounded-xl p-4 transition-all duration-200 cursor-pointer relative"
+                        className={cn(
+                            "group bg-[#1c1924] border border-white/5 rounded-xl p-4 transition-all duration-200 cursor-pointer relative hover:bg-[#252130] hover:border-purple-500/30"
+                        )}
                         onClick={() => handleSelect(suggestion)}
                         style={{ borderLeft: suggestion.theme_color ? `4px solid ${suggestion.theme_color}` : undefined }}
                     >

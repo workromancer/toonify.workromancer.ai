@@ -14,11 +14,14 @@ import ArtStyleSetupModal from './modals/ArtStyleSetupModal';
 import CharacterDetailModal from './modals/CharacterDetailModal';
 import SuggestionDetailModal from './modals/SuggestionDetailModal';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
-import { Plus, Sparkles, Clapperboard, Edit2, Palette, ArrowRight, Settings, Play, AlertCircle, Database, ChevronDown, MoreVertical, LayoutTemplate, Calendar, Film, Clock, Loader2, Users } from 'lucide-react';
+import { Plus, Sparkles, Clapperboard, Edit2, Palette, ArrowRight, Settings, Play, AlertCircle, ChevronDown, MoreVertical, LayoutTemplate, Calendar, Film, Clock, Loader2, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { SectionLabel } from '@/components/ui/section-label';
 import ImageGeneratingPlaceholder from '@/components/ui/ImageGeneratingPlaceholder';
 import { useTranslations } from 'next-intl';
+import { CustomLoader } from '@/components/ui/custom-loader';
+import CharacterSuggestionList from './CharacterSuggestionList';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface Character {
     id?: string;
@@ -97,6 +100,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
     const [isSuggestionDetailOpen, setIsSuggestionDetailOpen] = useState(false);
     const [suggestionToPromote, setSuggestionToPromote] = useState<Suggestion | null>(null);
     const [isPromoteConfirmOpen, setIsPromoteConfirmOpen] = useState(false);
+    const [isSuggestionListOpen, setIsSuggestionListOpen] = useState(false);
 
     const { toast } = useToast();
     const router = useRouter();
@@ -354,13 +358,13 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
             };
         }
 
-        // Priority 3: No Characters (New) -> Enhanced to mention AI Suggestions
+        // Priority 3: No Characters -> AI Suggestions
         if (!characters || characters.length === 0) {
             const hasSuggestions = suggestions.length > 0 && project.suggestions_status === 'completed';
             return {
-                label: hasSuggestions ? t('suggestionsReady') : t('addChar'),
-                icon: hasSuggestions ? <Sparkles className="mr-2 h-4 w-4" /> : <Plus className="mr-2 h-4 w-4" />,
-                onClick: () => router.push(`/project/${project.id}/casting`),
+                label: hasSuggestions ? t('suggestionsReady') : t('recommendations'), // Suggestion focused
+                icon: <Sparkles className="mr-2 h-4 w-4" />,
+                onClick: () => setIsSuggestionListOpen(true),
                 variant: 'primary',
                 description: hasSuggestions ? t('suggestionsReadyDesc') : t('addCharDesc')
             };
@@ -373,7 +377,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
 
         return {
             label: isCoverProcessing ? t('generating') : t('genAiCover'),
-            icon: <Sparkles className={cn("mr-2 h-4 w-4", isCoverProcessing && "animate-spin")} />,
+            icon: isCoverProcessing ? <CustomLoader size={16} className="mr-2" /> : <Sparkles className="mr-2 h-4 w-4" />,
             onClick: handleGenerateCover,
             disabled: isCoverProcessing,
             variant: 'magic',
@@ -546,7 +550,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                                     className="w-full flex items-center gap-3 px-4 py-3 text-sm text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 transition-colors text-left border-t border-white/5"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        router.push(`/project/${project.id}/casting`);
+                                                        setIsSuggestionListOpen(true);
                                                         setIsMenuOpen(false);
                                                     }}
                                                 >
@@ -560,13 +564,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                             </div>
                         </div>
 
-                        {/* Top Right Stats / Sync Status */}
-                        <div className="absolute top-8 right-8 flex flex-col items-end gap-3 z-20 pointer-events-none">
-                            {/* Sync Status */}
-                            <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/40 border border-white/10 text-[10px] font-mono text-gray-300 backdrop-blur-md shadow-lg">
-                                <Database size={10} className="text-[#4a4aff]" /> {t('synced')}
-                            </span>
-                        </div>
+
                     </div>
 
                     {/* Content Section (Episodes & Characters) */}
@@ -591,7 +589,6 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                             {/* AI Suggestions CTA Banner */}
                             {project.suggestions_status === 'completed' && suggestions.length > 0 && characters.length === 0 && (
                                 <div
-                                    onClick={() => router.push(`/project/${project.id}/casting`)}
                                     className="relative overflow-hidden p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-purple-900/40 via-purple-800/20 to-indigo-900/40 border border-purple-500/30 hover:border-purple-500/50 transition-all cursor-pointer group shadow-2xl shadow-purple-900/20 mb-4"
                                 >
                                     {/* Ambient Glow */}
@@ -603,6 +600,11 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
 
                                     <div className="relative flex flex-col md:flex-row items-center justify-between gap-8">
                                         <div className="flex gap-6 items-center">
+                                            <Button
+                                                variant="ghost"
+                                                className="absolute inset-0 w-full h-full p-0 opacity-0 z-10"
+                                                onClick={() => setIsSuggestionListOpen(true)}
+                                            />
                                             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-purple-900/40 shrink-0 transform group-hover:scale-110 transition-transform duration-500">
                                                 <Users size={32} className="text-white" />
                                             </div>
@@ -630,13 +632,39 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                             {/* Characters Section */}
                             <section>
                                 <div className="flex items-center justify-between mb-6">
-                                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                                        {t('cast')}
-                                    </h3>
+                                    <div className="flex items-center gap-4">
+                                        <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                            {t('cast')}
+                                        </h3>
+                                        <Button
+                                            size="sm"
+                                            className="bg-purple-600 hover:bg-purple-500 text-white rounded-full px-4 h-8 text-xs font-bold shadow-lg shadow-purple-900/20"
+                                            onClick={() => router.push(`/project/${project.id}/casting`)}
+                                        >
+                                            <Plus size={14} className="mr-1.5" />
+                                            {t('addChar')}
+                                        </Button>
+                                    </div>
                                     <Link href={`/project/${project.id}/characters`}>
                                         <Button variant="ghost" size="sm" className="text-sm text-gray-400 hover:text-white">{t('viewAll')} <ArrowRight size={14} className="ml-1" /></Button>
                                     </Link>
                                 </div>
+                                {characters.length === 0 && (
+                                    <div className="flex flex-col items-center justify-center py-16 border border-dashed border-gray-800 rounded-3xl bg-white/5 mb-6">
+                                        <div className="w-16 h-16 rounded-full bg-purple-500/20 flex items-center justify-center mb-4 text-purple-400">
+                                            <Users size={32} />
+                                        </div>
+                                        <h4 className="text-white font-bold text-lg mb-2">{t('noCharacters')}</h4>
+                                        <p className="text-gray-400 text-sm mb-6 max-w-sm text-center">{t('noCharactersDesc')}</p>
+                                        <Button
+                                            onClick={() => router.push(`/project/${project.id}/casting`)}
+                                            className="bg-purple-600 hover:bg-purple-500 px-8 py-6 text-md font-bold rounded-xl shadow-xl shadow-purple-900/20"
+                                        >
+                                            <Plus size={18} className="mr-2" />
+                                            {t('addChar')}
+                                        </Button>
+                                    </div>
+                                )}
                                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                                     <div
                                         onClick={() => router.push(`/project/${project.id}/casting`)}
@@ -694,7 +722,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                     {/* Brainstorming Card */}
                                     {(project.suggestions_status === 'processing' || (isSuggestionsLoading && suggestions.length === 0)) && (
                                         <div className="aspect-[3/4] rounded-xl border border-purple-500/30 bg-purple-500/5 flex flex-col items-center justify-center gap-3 p-4 text-center animate-pulse">
-                                            <div className="w-10 h-10 rounded-full border-2 border-t-purple-500 border-r-purple-500/30 border-b-transparent border-l-transparent animate-spin" />
+                                            <CustomLoader size={40} />
                                             <div className="space-y-1">
                                                 <p className="text-[10px] font-bold text-purple-400 uppercase tracking-widest">{t('preparingSuggestions')}</p>
                                                 <p className="text-[9px] text-gray-500 leading-tight">{t('preparingSuggestionsDesc')}</p>
@@ -879,6 +907,29 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                 cancelLabel={useTranslations('Common')('cancel')}
                 onConfirm={handlePromoteConfirm}
             />
-        </ProjectLayout>
+            {/* AI Suggestion List Modal */}
+            <Dialog open={isSuggestionListOpen} onOpenChange={setIsSuggestionListOpen}>
+                <DialogContent className="bg-[#0f0b15] border-white/10 p-0 max-w-md h-[80vh] flex flex-col overflow-hidden">
+                    <DialogHeader className="p-4 border-b border-white/5 bg-[#15121c]">
+                        <DialogTitle className="flex items-center gap-2">
+                            <Sparkles className="w-5 h-5 text-purple-400" />
+                            {t('recommendations')}
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="flex-1 overflow-hidden">
+                        <CharacterSuggestionList
+                            projectId={project.id}
+                            onSelect={(suggestion) => {
+                                // Close list, open confirm
+                                setIsSuggestionListOpen(false);
+                                setSuggestionToPromote(suggestion as Suggestion);
+                                setTimeout(() => setIsPromoteConfirmOpen(true), 200);
+                            }}
+                        />
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+        </ProjectLayout >
     );
 }

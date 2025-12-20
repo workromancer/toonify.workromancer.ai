@@ -12,6 +12,7 @@ import api from '@/lib/api';
 import { AiSuggestionCard } from '@/components/project/AiSuggestionCard';
 import { useTranslations, useLocale } from 'next-intl';
 import { ProcessingOverlay } from "@/components/ui/processing-overlay";
+import { CustomLoader } from '@/components/ui/custom-loader';
 
 const GENRES = [
   { id: 'fantasy', label: 'Fantasy', icon: Sparkles, color: 'bg-amber-600' },
@@ -459,7 +460,7 @@ export default function NewProjectWizard() {
                             `}
                     >
                       {aiLoading ? (
-                        <RefreshCw size={12} className="animate-spin" />
+                        <CustomLoader size={12} />
                       ) : (
                         <Wand2 size={12} />
                       )}

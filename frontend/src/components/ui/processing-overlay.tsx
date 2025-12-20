@@ -4,6 +4,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { CustomLoader } from './custom-loader';
 
 interface ProcessingOverlayProps {
     isVisible: boolean;
@@ -31,9 +32,7 @@ export function ProcessingOverlay({
                     )}
                 >
                     <div className="relative w-24 h-24">
-                        <div className="absolute inset-0 rounded-full border-t-2 border-purple-500 animate-spin"></div>
-                        <div className="absolute inset-2 rounded-full border-r-2 border-indigo-500 animate-spin [animation-duration:1.5s]"></div>
-                        <div className="absolute inset-4 rounded-full border-b-2 border-blue-500 animate-spin [animation-duration:2s]"></div>
+                        <CustomLoader size={96} className="w-full h-full" />
                     </div>
 
                     <div className="text-center space-y-2 px-4 animate-in fade-in slide-in-from-bottom-4 duration-500">

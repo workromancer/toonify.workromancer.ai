@@ -9,7 +9,7 @@ import {
     LayoutGrid, Paintbrush, LayoutTemplate, FolderOpen, Settings,
     Plus, Search, MoreVertical, Clock, LogOut, User,
     HelpCircle, ChevronDown, Sparkles, Image as ImageIcon,
-    Zap, Bell, Wand2, ArrowRight, Trash2
+    Zap, Wand2, ArrowRight, Trash2
 } from 'lucide-react';
 import {
     DropdownMenu,
@@ -236,12 +236,6 @@ export default function DashboardPage() {
                     </div>
 
                     <div className="flex items-center gap-4">
-                        {/* Notification Bell */}
-                        <button className="w-10 h-10 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:border-slate-600 transition-all relative">
-                            <Bell size={18} />
-                            <span className="absolute top-2.5 right-3 w-2 h-2 bg-red-500 rounded-full border border-slate-900" />
-                        </button>
-
                         <div className="h-6 w-px bg-slate-800" />
 
                         {/* Search */}

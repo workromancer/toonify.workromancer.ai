@@ -24,8 +24,8 @@ import { RadarChart } from '@/components/ui/radar-chart'; // New Import
 import api from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslations, useLocale } from 'next-intl';
-import CharacterSuggestionList from './CharacterSuggestionList';
 import { ProcessingOverlay } from '@/components/ui/processing-overlay';
+import { CustomLoader } from '@/components/ui/custom-loader';
 
 interface CharacterCastingWizardProps {
     projectId: string;
@@ -166,47 +166,7 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
         }
     };
 
-    // Suggestions State
-    const [showSuggestions, setShowSuggestions] = useState(false);
 
-    const handleSuggestionSelect = (suggestion: any) => {
-        // Populate Data
-        if (suggestion.name) setName(suggestion.name);
-        if (suggestion.age) setAge(suggestion.age.toString());
-
-        if (suggestion.visual_keywords && Array.isArray(suggestion.visual_keywords)) {
-            setVisualKeywords(suggestion.visual_keywords);
-        }
-
-        if (suggestion.personality_tags && Array.isArray(suggestion.personality_tags)) {
-            setPersonalityTypes(suggestion.personality_tags);
-        }
-
-        if (suggestion.theme_color) {
-            setThemeColor(suggestion.theme_color);
-        }
-
-        if (suggestion.recommended_role) {
-            // Find valid archetype id
-            const match = archetypes.find(a => a.id === suggestion.recommended_role);
-            if (match) setSelectedRole(match.id);
-        }
-
-        if (suggestion.bio) {
-            setRoleDescription(suggestion.bio);
-        }
-
-        if (suggestion.stats) {
-            setCharacterStats(suggestion.stats);
-        }
-
-        // Auto-close and valid feedback
-        setShowSuggestions(false);
-        toast({
-            title: "Character Loaded",
-            description: `${suggestion.name} data applied fully.`,
-        });
-    };
 
     const handleNextStep = (next: StepName) => {
         setDirection(1);
@@ -410,24 +370,6 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                 <div className="space-y-3">
                     <div className="flex justify-between items-center">
                         <SectionLabel className="text-[#d8b4fe]">{t('inputs.nameLabel')}</SectionLabel>
-                        <Badge
-                            variant="outline"
-                            className="border-purple-500/30 text-purple-300 bg-purple-500/10 text-[10px] px-2 py-0.5 cursor-pointer hover:bg-purple-500/20 transition-colors"
-                            onClick={() => handleSuggestion('name')}
-                        >
-                            {suggestionLoading === 'name' ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Sparkles className="w-3 h-3 mr-1" />}
-                            {t('buttons.aiSuggestion')}
-                        </Badge>
-                    </div>
-                    <div className="flex justify-center mb-4">
-                        <Button
-                            variant="outline"
-                            className="bg-purple-500/10 border-purple-500/30 text-purple-300 hover:bg-purple-500/20 w-full"
-                            onClick={() => setShowSuggestions(true)}
-                        >
-                            <Sparkles className="w-4 h-4 mr-2" />
-                            {t('buttons.openBatchSuggestions')}
-                        </Button>
                     </div>
                 </div>
                 <Input
@@ -470,14 +412,6 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                             <SectionLabel className="text-[#d8b4fe]" icon={<Sparkles className="w-3 h-3" />}>
                                 {t('inputs.visualLabel')}
                             </SectionLabel>
-                            <Badge
-                                variant="outline"
-                                className="border-purple-500/30 text-purple-300 bg-purple-500/10 text-[10px] px-2 py-0.5 cursor-pointer hover:bg-purple-500/20 transition-colors"
-                                onClick={() => handleSuggestion('visuals')}
-                            >
-                                {suggestionLoading === 'visuals' ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Wand2 className="w-3 h-3 mr-1" />}
-                                {t('buttons.aiStyleSuggestion')}
-                            </Badge>
                         </div>
 
                         <div className="bg-[#0B0d12] border border-[#2a2f3a] rounded-xl p-4 min-h-[140px] flex flex-col gap-3 transition-all focus-within:border-purple-500/50 focus-within:ring-1 focus-within:ring-purple-500/50">
@@ -667,14 +601,6 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                 <div className="space-y-2 z-10">
                     <div className="flex justify-between items-center">
                         <SectionLabel className="text-gray-500">{tRoles('profile')}</SectionLabel>
-                        <Badge
-                            variant="outline"
-                            className="border-purple-500/30 text-purple-300 bg-purple-500/10 text-[10px] px-2 py-0.5 cursor-pointer hover:bg-purple-500/20 transition-colors"
-                            onClick={() => handleSuggestion('lore')}
-                        >
-                            {suggestionLoading === 'lore' ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Wand2 className="w-3 h-3 mr-1" />}
-                            {t('buttons.aiLoreExpansion')}
-                        </Badge>
                     </div>
                     <div className="bg-[#151921] rounded-lg p-4 text-gray-300 text-sm leading-relaxed border border-white/5 min-h-[80px]">
                         {roleDescription}
@@ -736,29 +662,7 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                 <div className="text-xs font-mono text-gray-600">v.2.2.1</div>
             </header>
 
-            {/* Suggestions Sidebar */}
-            <AnimatePresence>
-                {showSuggestions && (
-                    <>
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="fixed inset-0 bg-black/60 z-[60] backdrop-blur-sm"
-                            onClick={() => setShowSuggestions(false)}
-                        />
-                        <motion.div
-                            initial={{ x: '-100%' }}
-                            animate={{ x: 0 }}
-                            exit={{ x: '-100%' }}
-                            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                            className="fixed left-0 top-0 bottom-0 z-[70] shadow-2xl"
-                        >
-                            <CharacterSuggestionList projectId={projectId} onSelect={handleSuggestionSelect} />
-                        </motion.div>
-                    </>
-                )}
-            </AnimatePresence>
+
 
             <main className="w-full max-w-5xl relative z-10 flex flex-col gap-8 mt-16">
                 {/* Title Section */}
