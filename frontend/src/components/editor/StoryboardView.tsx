@@ -327,8 +327,15 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
                 </h2>
                 <div className="flex gap-2">
                     {cuts.some(c => !c.image_path) && (
-                        <Button variant="outline" size="sm" onClick={handleGenerateAll} disabled={isBatchGenerating} className="h-7 text-xs border-purple-500/30 text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 hover:text-purple-300">
-                            {isBatchGenerating ? <Loader2 className="animate-spin mr-1" size={12} /> : <Sparkles size={12} className="mr-1" />} {t('generateAll')}
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleGenerateAll}
+                            disabled={isBatchGenerating}
+                            className="h-7 text-xs border-purple-500/30 text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 hover:text-purple-300"
+                        >
+                            {isBatchGenerating ? <Loader2 className="animate-spin mr-1" size={12} /> : <Sparkles size={12} className="mr-1" />}
+                            {cuts.some(c => c.image_path) ? t('resumeGeneration') : t('generateAll')}
                         </Button>
                     )}
 
@@ -418,7 +425,7 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
                                 <div className="flex min-h-[160px]">
                                     {/* Image Area */}
                                     <div className={`w-1/2 bg-slate-900 relative flex items-center justify-center border-r border-slate-800 overflow-hidden`}>
-                                        {cut.image_path ? (
+                                        {cut.image_path && !generatingIds.has(cut.id) && cut.status !== 'generating' ? (
                                             <img src={cut.image_path} alt="Cut" className="w-full h-full object-cover" />
                                         ) : (
                                             <div className="text-slate-600 flex flex-col items-center gap-2">

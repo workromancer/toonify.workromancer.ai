@@ -216,6 +216,8 @@ class StoryCut(SQLModel, table=True):
     # RAG Embedding (Stored as JSON array for compatibility)
     embedding: List[float] = Field(sa_column=Column(JSON), default=None)
     
+    refer_prev_cut: bool = Field(default=True)
+    
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     episode: Episode = Relationship(back_populates="cuts")

@@ -254,6 +254,7 @@
       "inspector": "Inspector",
       "storyboardTitle": "Storyboard",
       "generateAll": "Generate All",
+      "resumeGeneration": "Resume Generation",
       "review": "Review",
       "loadingScenes": "Loading scenes...",
       "noScenes": "No scenes created yet.",

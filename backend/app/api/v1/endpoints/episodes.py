@@ -241,6 +241,7 @@ def generate_episode_cuts(
             aspect_ratio=cut_item.get("panel_type", "1:1"), # Simplified mapping
             dialogues=cut_item.get("dialogues", []),
             appearing_characters=cut_item.get("appearing_characters", []),
+            refer_prev_cut=cut_item.get("refer_prev_cut", True),
             image_path=None
         )
         
@@ -336,7 +337,9 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
     
             # B. Previous Scene (for continuity)
             prev_scene_url = None
-            if use_previous_context and cut.cut_order > 1:
+            # Check if reference logic is enabled
+            should_refer = use_previous_context and cut.refer_prev_cut
+            if should_refer and cut.cut_order > 1:
                 prev_cut = session.exec(
                     select(StoryCut)
                     .where(StoryCut.episode_id == cut.episode_id)
@@ -372,12 +375,8 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
             for c in matched_chars[:6]:
                 char_data.append({"name": c.name, "url": c.profile_image_url})
                 
-            # Priority 2: Fallback to any project characters if less than 6 found and we need context
-            # But maybe better to be strict? Let's add up to 3 more from the project if none matched.
-            if len(char_data) < 3:
-                remaining_chars = [c for c in all_chars if c.id not in [mc.id for mc in matched_chars] and c.profile_image_url]
-                for c in remaining_chars[:(6 - len(char_data))]:
-                    char_data.append({"name": c.name, "url": c.profile_image_url})
+            # Priority 2: Fallback REMOVED to avoid polluting context with irrelevant characters
+            # if len(char_data) < 3: ...
             
             # 2. Prompt Construction
             prompt = prompt_override

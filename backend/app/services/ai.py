@@ -763,6 +763,7 @@ class AIService:
         - Dialogues (List of {{speaker, text}})
         - Panel Type (Aspect Ratio: Choose from "1:1", "3:2", "2:3", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9". Prefer vertical ratios for mobile scroll (9:16, 2:3, 4:5), or 1:1/16:9/21:9 for specific impact.)
         - Appearing Characters (List of objects: [{{"id": "CHARACTER_ID", "name": "CHARACTER_NAME"}}, ...]. Use EXACT ID and Name from 'Available Characters' list.)
+        - refer_prev_cut (Boolean): Set to true if this cut visually continues from the previous one (same scene, continuous action) and should use the previous image as context. Set to false if it's a new scene, a time jump, or if the previous image should NOT be referenced.
         
         {f'IMPORTANT: All output text (scripts, dialogues, character names) MUST be in {language} language.' if language else ''}
         {f'If language is Korean, use Hangul for scripts, dialogues, and appearing characters(names).' if language and language.startswith('ko') else ''}
@@ -775,7 +776,8 @@ class AIService:
                     "script": "Visual description...",
                     "dialogues": [{{"speaker": "A", "text": "Hello"}}],
                     "appearing_characters": ["Character A", "Character B"],
-                    "panel_type": "Wide"
+                    "panel_type": "Wide",
+                    "refer_prev_cut": true
                 }},
                 ...
             ]

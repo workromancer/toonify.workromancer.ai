@@ -280,6 +280,7 @@
       "inspector": "인스펙터",
       "storyboardTitle": "스토리보드",
       "generateAll": "전체 생성",
+      "resumeGeneration": "이어 생성하기",
       "review": "검토",
       "loadingScenes": "장면 로딩 중...",
       "noScenes": "아직 생성된 장면이 없습니다.",
