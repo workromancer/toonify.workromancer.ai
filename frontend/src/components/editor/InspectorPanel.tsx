@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 
-import { Wand2, Smartphone, Square, Monitor, Check, RectangleHorizontal, RectangleVertical } from 'lucide-react';
+import { Wand2, Smartphone, Square, Monitor, Check, RectangleHorizontal, RectangleVertical, MessageSquare, Cloud, Megaphone, Plus, X } from 'lucide-react';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import api from '@/lib/api';
 import { useParams } from 'next/navigation';
@@ -13,6 +13,12 @@ interface Character {
     name: string;
     profile_image_url?: string;
     tags: string[];
+}
+
+interface Dialogue {
+    speaker: string;
+    text: string;
+    type: 'speech' | 'thought' | 'shout';
 }
 
 const AspectRatioSelector = ({ current, onChange }: { current: string, onChange: (r: string) => void }) => (
@@ -60,6 +66,7 @@ export default function InspectorPanel() {
     const [aspectRatio, setAspectRatio] = useState('1:1');
     const [characters, setCharacters] = useState<Character[]>([]);
     const [appearingCharIds, setAppearingCharIds] = useState<Set<string>>(new Set());
+    const [dialogues, setDialogues] = useState<Dialogue[]>([]);
     const [usePreviousContext, setUsePreviousContext] = useState(true);
 
     const [hasImage, setHasImage] = useState(false);
@@ -74,6 +81,7 @@ export default function InspectorPanel() {
                 setPrompt(cut.script || '');
                 setAspectRatio(cut.aspect_ratio || '1:1');
                 setHasImage(!!(cut.image_path || cut.image_url));
+                setDialogues(cut.dialogues || []);
 
                 // robust handling for both old (string[]) and new ({id, name}[]) formats
                 const ids = new Set<string>();
@@ -123,6 +131,35 @@ export default function InspectorPanel() {
         if (activeCutId) {
             updateCut({ aspect_ratio: ratio });
         }
+    };
+
+    const updateDialogues = (newDialogues: Dialogue[]) => {
+        setDialogues(newDialogues);
+        if (activeCutId) {
+            updateCut({ dialogues: newDialogues });
+        }
+    };
+
+    const updateSingleDialogue = (index: number, field: keyof Dialogue, value: string) => {
+        const updated = [...dialogues];
+        updated[index] = { ...updated[index], [field]: value };
+        updateDialogues(updated);
+    };
+
+    const addDialogue = () => {
+        updateDialogues([...dialogues, { speaker: 'Unknown', text: '', type: 'speech' }]);
+    };
+
+    const removeDialogue = (index: number) => {
+        const updated = dialogues.filter((_, i) => i !== index);
+        updateDialogues(updated);
+    };
+
+    const cycleDialogueType = (index: number) => {
+        const types: Dialogue['type'][] = ['speech', 'thought', 'shout'];
+        const current = dialogues[index].type || 'speech';
+        const next = types[(types.indexOf(current) + 1) % types.length];
+        updateSingleDialogue(index, 'type', next);
     };
 
     const toggleCharById = (charId: string) => {
@@ -232,6 +269,53 @@ export default function InspectorPanel() {
                             </div>
                         ))}
                         {characters.length === 0 && <div className="text-xs text-slate-600 italic">{t('noCharacters')}</div>}
+                    </div>
+                </div>
+
+                {/* Dialogues */}
+                <div className="pt-4 border-t border-slate-800">
+                    <label className="text-xs font-bold text-slate-400 mb-2 flex justify-between items-center">
+                        <span>Dialogues</span>
+                        <button onClick={addDialogue} className="text-purple-400 hover:text-purple-300 p-1 hover:bg-slate-800 rounded">
+                            <Plus size={14} />
+                        </button>
+                    </label>
+                    <div className="space-y-2">
+                        {dialogues.map((d, idx) => (
+                            <div key={idx} className="bg-[#13131c] border border-slate-800 rounded-lg p-2 flex gap-2 items-start group hover:border-slate-600 transition-colors">
+                                {/* Type Selector Icon */}
+                                <button
+                                    onClick={() => cycleDialogueType(idx)}
+                                    title={d.type}
+                                    className="p-1.5 text-slate-400 hover:text-purple-400 hover:bg-slate-800 rounded mt-0.5"
+                                >
+                                    {d.type === 'thought' ? <Cloud size={14} /> : d.type === 'shout' ? <Megaphone size={14} /> : <MessageSquare size={14} />}
+                                </button>
+
+                                <div className="flex-1 space-y-1">
+                                    <input
+                                        value={d.speaker}
+                                        onChange={(e) => updateSingleDialogue(idx, 'speaker', e.target.value)}
+                                        className="w-full bg-transparent text-[11px] font-bold text-slate-400 focus:text-white outline-none placeholder:text-slate-700"
+                                        placeholder="Speaker Name"
+                                    />
+                                    <textarea
+                                        value={d.text}
+                                        onChange={(e) => updateSingleDialogue(idx, 'text', e.target.value)}
+                                        className="w-full bg-transparent text-xs text-slate-300 focus:text-white outline-none resize-none placeholder:text-slate-600"
+                                        rows={2}
+                                        placeholder="Dialogue text..."
+                                    />
+                                </div>
+                                <button
+                                    onClick={() => removeDialogue(idx)}
+                                    className="text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                                >
+                                    <X size={14} />
+                                </button>
+                            </div>
+                        ))}
+                        {dialogues.length === 0 && <div className="text-xs text-slate-600 italic">No dialogues</div>}
                     </div>
                 </div>
 

@@ -767,7 +767,10 @@ class AIService:
         - Script (Visual Description of action/scene). Do NOT repeat character names excessively. Mention the full name only when the character appears for the FIRST time in the context or if ambiguous; otherwise use pronouns (he/she) or generic terms.
         - Location (Setting name, e.g. "School Classroom")
         - Time of Day (e.g. "Sunset", "Night")
-        - Dialogues (List of {{speaker, text}}). IMPORTANT: For internal thoughts/monologues, prefix the text with "(속마음)" (if Korean) or "(thought)" (if English) to indicate a thought bubble style.
+        - Dialogues (List of objects: [{{"speaker": "Name", "type": "speech" | "thought" | "shout", "text": "Content"}}]). 
+          - Use "thought" for internal monologues (속마음).
+          - Use "shout" for loud/bold text.
+          - Use "speech" for normal dialogue.
         - Panel Type (Aspect Ratio...)
         - Appearing Characters (List of objects: [{{"id": "...", "name": "...", "clothing": "..."}}])
         - refer_prev_cut (Boolean)
@@ -788,7 +791,7 @@ class AIService:
                     "script": "...",
                     "location": "Classroom",
                     "time_of_day": "Day",
-                    "dialogues": [{{"speaker": "A", "text": "..."}}],
+                    "dialogues": [{{"speaker": "A", "type": "speech", "text": "..."}}],
                     "appearing_characters": [{{"id": "...", "name": "...", "clothing": "School Uniform"}}],
                     "panel_type": "Wide",
                     "refer_prev_cut": false,

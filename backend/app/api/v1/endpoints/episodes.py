@@ -465,7 +465,24 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
             # 2. Prompt Construction
             prompt = prompt_override
             if not prompt:
-                dialogue_text = " ".join([f"{d.get('speaker', 'Unknown')}: {d.get('text', '')}" for d in cut.dialogues])
+                dialogue_parts = []
+                for d in cut.dialogues:
+                    speaker = d.get('speaker', 'Unknown')
+                    text = d.get('text', '')
+                    dtype = d.get('type', 'speech')
+                    
+                    # Legacy fallback
+                    if "(속마음)" in text or "(thought)" in text:
+                         text = text.replace("(속마음)", "").replace("(thought)", "").strip()
+                         dtype = 'thought'
+                    
+                    if dtype == 'thought':
+                        dialogue_parts.append(f"{speaker} (Thinking): {text}")
+                    elif dtype == 'shout':
+                         dialogue_parts.append(f"{speaker} (Shouting): {text}")
+                    else:
+                        dialogue_parts.append(f"{speaker}: {text}")
+                dialogue_text = " ".join(dialogue_parts)
                 
                 # Construct richer prompt
                 setting_info = []

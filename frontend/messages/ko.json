@@ -325,6 +325,8 @@
         "analysing": "대본 분석 중...",
         "addNext": "다음 장면 추가"
       },
+      "generatingEpisode": "에피소드 생성 중...",
+      "generatingDesc": "AI가 컷을 생성하고 이미지를 그리고 있습니다. 잠시만 기다려주세요.",
       "inspectorPanel": {
         "title": "속성",
         "selected": "선택됨: 장면 #{id}",
@@ -345,7 +347,8 @@
         "processing": "생성 중...",
         "process": "생성 중...",
         "cost": "비용: 1 크레딧 • 소요시간: 약 5초",
-        "referencePreviousCut": "이전 컷 참조"
+        "referencePreviousCut": "이전 컷 참조",
+        "dialogues": "대사"
       },
       "EpisodeList": {
         "title": "에피소드",

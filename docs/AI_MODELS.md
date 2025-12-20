@@ -355,25 +355,33 @@ Return ONLY a JSON object...
 **메서드:** `generate_panel_image`
 **모델:** `gemini-3-pro-image-preview`
 
+**전처리 로직 (Preprocessing Logic):**
+- **대사 (Dialogues):** `(속마음)` 및 `(thought)` 마커를 제거하고 `(Thinking)` 포맷으로 변환하여 모델이 시각적 연출(표정 등)로 해석하도록 유도 (이미지 내 텍스트 출력 방지).
+- **캐릭터 (Characters):** 해당 에피소드에 처음 등장하는 캐릭터에 한해 구체적인 외모 묘사를 포함(Name Tag 방지).
+
 **파라미터:**
-- `prompt`: 씬 설명.
+- `prompt`: 씬 설명 (아래 구조로 조립됨).
 - `style_ref_url`: 프로젝트 스타일 참조 이미지.
 - `character_data`: 캐릭터 참조 이미지 목록.
 - `prev_scene_url`: 연속성을 위한 이전 씬 이미지.
 
-**프롬프트 구조:**
+**프롬프트 구조 (Prompt Construction):**
 ```text
-Create a high-quality webtoon panel.
+Style: {style}
+Setting: {setting_str}
+Action/Scene: {script}
+{outfit_str}
+{char_visuals_str}
+Dialogues: Character A (Thinking): I love him... (Markers stripped)
+{transition_str}
+```
 
-Scene Description:
-{prompt}
-
-Requirements:
-- Match the art style of the provided Style Reference.
-- Maintain visual consistency with the Previous Scene.
-- Include the specific characters provided.
-
-[Multimodal Inputs appended: Style Ref, Prev Scene, Character Refs]
+**멀티모달 입력 (Multimodal Inputs):**
+```text
+[Style Ref Image]
+[Prev Scene Image] (If applicable)
+[Character Ref Images]
+Prompt Text
 ```
 
 ### 단순 컷 이미지 - 폴백/빠른생성 (Simple Cut Image)

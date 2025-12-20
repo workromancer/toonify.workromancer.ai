@@ -326,6 +326,8 @@
         "analysing": "Analysing Script...",
         "addNext": "Add Next Scene"
       },
+      "generatingEpisode": "Generating Episode...",
+      "generatingDesc": "AI is creating cuts and generating images. Please wait.",
       "inspectorPanel": {
         "title": "Properties",
         "selected": "Selected: Scene #{id}",
@@ -345,7 +347,8 @@
         "regenerateImage": "Regenerate Image",
         "processing": "Processing...",
         "cost": "Cost: 1 Credit • Est. Time: ~5s",
-        "referencePreviousCut": "Reference Previous Cut"
+        "referencePreviousCut": "Reference Previous Cut",
+        "dialogues": "Dialogues"
       },
       "toasts": {
         "noCuts": "No cuts to generate",
