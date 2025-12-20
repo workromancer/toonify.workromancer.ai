@@ -17,6 +17,7 @@ class StoryCutCreate(BaseModel):
     aspect_ratio: str = "1:1"
     dialogues: List[dict] = []
     appearing_characters: List[dict] = []
+    refer_prev_cut: bool = True
     image_path: Optional[str] = None
 
 class StoryCutUpdate(BaseModel):
@@ -25,6 +26,7 @@ class StoryCutUpdate(BaseModel):
     aspect_ratio: Optional[str] = None
     dialogues: Optional[List[dict]] = None
     appearing_characters: Optional[List[dict]] = None
+    refer_prev_cut: Optional[bool] = None
     image_path: Optional[str] = None
     cut_order: Optional[int] = None
 
@@ -42,6 +44,7 @@ class StoryCutOut(BaseModel):
     aspect_ratio: str
     dialogues: List[dict]
     appearing_characters: List[Any] = []
+    refer_prev_cut: bool = True
     image_path: Optional[str] = None
     status: str = "idle"
     created_at: datetime

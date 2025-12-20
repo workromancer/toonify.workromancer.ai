@@ -773,8 +773,10 @@ class AIService:
           - Use "speech" for normal dialogue.
         - Panel Type (Aspect Ratio...)
         - Appearing Characters (List of objects: [{{"id": "...", "name": "...", "clothing": "..."}}])
-        - refer_prev_cut (Boolean)
-        - transition_ref (String): Notes for transitioning from the previous cut (e.g. "Camera zooms in").
+        - refer_prev_cut (Boolean): 
+            - Set to TRUE if the cut shares the same Location and Time as the previous cut (continuous scene).
+            - Set to FALSE if there is a change in Location or Time (new scene start).
+        - transition_ref (String): Notes for transitioning from the previous cut (e.g. "Zoom in to face").
         
         {f'IMPORTANT: All output text (scripts, dialogues, character names, locations, etc) MUST be in {language} language.' if language else ''}
         {f'If language is Korean, use Hangul.' if language and language.startswith('ko') else ''}
