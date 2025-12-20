@@ -14,6 +14,9 @@ interface CanvasState {
     updateCut: (updates: any) => Promise<void>;
     isReviewMode: boolean;
     setReviewMode: (isOpen: boolean) => void;
+    generatingIdsSet: Set<string>;
+    addGeneratingId: (id: string) => void;
+    removeGeneratingId: (id: string) => void;
 }
 
 export const useCanvasStore = create<CanvasState>((set, get) => ({
@@ -25,6 +28,13 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     setActiveCut: (id) => set({ activeCutId: id }),
     isReviewMode: false,
     setReviewMode: (isOpen) => set({ isReviewMode: isOpen }),
+    generatingIdsSet: new Set(),
+    addGeneratingId: (id) => set((state) => ({ generatingIdsSet: new Set(state.generatingIdsSet).add(id) })),
+    removeGeneratingId: (id) => set((state) => {
+        const next = new Set(state.generatingIdsSet);
+        next.delete(id);
+        return { generatingIdsSet: next };
+    }),
 
     updateCut: async (updates: any) => {
         const { activeCutId } = get();

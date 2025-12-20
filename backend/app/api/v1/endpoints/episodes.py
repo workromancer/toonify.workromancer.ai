@@ -245,7 +245,7 @@ def generate_episode_cuts_task(
 
         # Generate Cuts via AI
         try:
-            cuts_data = ai_service.generate_initial_cuts(
+            response_data = ai_service.generate_initial_cuts(
                 episode_title=episode_title,
                 summary=episode_summary,
                 style=style,
@@ -254,9 +254,20 @@ def generate_episode_cuts_task(
                 available_characters=char_details
             )
             
+            # Save Episode Context (Background & Outfits)
+            if isinstance(response_data, dict):
+                episode.background_info = response_data.get("background_info")
+                episode.character_outfits = response_data.get("character_outfits")
+                cuts_list = response_data.get("cuts", [])
+            else:
+                 # Fallback for legacy behavior if AI returns list
+                cuts_list = response_data
+                
+            session.add(episode)
+
             # Save Cuts
             created_cuts = []
-            for cut_item in cuts_data:
+            for cut_item in cuts_list:
                 story_cut = StoryCut(
                     episode_id=episode.id,
                     cut_order=cut_item.get("cut_order", 1),

@@ -47,14 +47,16 @@ const AspectRatioSelector = ({ current, onChange }: { current: string, onChange:
 
 
 export default function InspectorPanel() {
-    const { activeCutId, activeEpisodeId, updateCut } = useCanvasStore();
+    const { activeCutId, activeEpisodeId, updateCut, generatingIdsSet, addGeneratingId, removeGeneratingId } = useCanvasStore();
     // const selectedElement = elements.find(el => el.id === selectedId); // Removed
     const params = useParams();
     const projectId = params?.projectId as string;
     const t = useTranslations('Project.Editor.inspectorPanel');
 
     const [prompt, setPrompt] = useState('');
-    const [generating, setGenerating] = useState(false);
+    // const [generating, setGenerating] = useState(false); // Removed local state
+    const generating = activeCutId ? generatingIdsSet.has(activeCutId) : false;
+
     const [aspectRatio, setAspectRatio] = useState('1:1');
     const [characters, setCharacters] = useState<Character[]>([]);
     const [appearingCharIds, setAppearingCharIds] = useState<Set<string>>(new Set());
@@ -143,20 +145,18 @@ export default function InspectorPanel() {
     };
 
     const handleGenerate = async () => {
+        if (!activeEpisodeId || !activeCutId) return;
         try {
-            setGenerating(true);
-
-            if (activeEpisodeId && activeCutId) {
-                await api.post(`/episodes/${activeEpisodeId}/cuts/${activeCutId}/generate-image`, {
-                    prompt_override: prompt || undefined,
-                    use_previous_context: usePreviousContext
-                });
-            }
+            addGeneratingId(activeCutId);
+            await api.post(`/episodes/${activeEpisodeId}/cuts/${activeCutId}/generate-image`, {
+                prompt_override: prompt || undefined,
+                use_previous_context: usePreviousContext
+            });
+            // StoryboardView poller will handle success and removal of ID
 
         } catch (err) {
             console.error("Generation failed", err);
-        } finally {
-            setGenerating(false);
+            removeGeneratingId(activeCutId);
         }
     };
 

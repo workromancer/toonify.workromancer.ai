@@ -362,8 +362,19 @@
         "sceneDeleted": "Scene Deleted",
         "deleteFailed": "Deletion Failed",
         "deleteConfirmTitle": "Delete Scene?",
-        "deleteConfirmDesc": "Are you sure?"
-      }
+        "deleteConfirmDesc": "Are you sure?",
+        "suggestionFailedDesc": "Failed to get suggestions from Director AI.",
+        "creationFailedDesc": "Failed to create cut. Please try again.",
+        "sceneDeletedDesc": "The scene has been removed.",
+        "deleteFailedDesc": "Failed to delete scene.",
+        "exporting": "Exporting...",
+        "exportPreparing": "Preparing your download.",
+        "exportDownloadFailed": "Could not download the file.",
+        "genStartedDesc": "AI is generating the image...",
+        "genTimeoutDesc": "Image generation took too long.",
+        "genServerFailed": "Generation failed on server"
+      },
+      "selectEpisode": "Select an episode to view storyboard."
     }
   },
   "CharacterWizard": {

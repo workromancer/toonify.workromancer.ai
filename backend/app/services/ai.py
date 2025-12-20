@@ -725,7 +725,7 @@ class AIService:
             print(f"Episode Idea Gen Failed: {e}")
             raise e
 
-    def generate_initial_cuts(self, episode_title: str, summary: str, style: str, num_cuts: int = 6, language: str = "en", available_characters: List[dict] = None) -> List[dict]:
+    def generate_initial_cuts(self, episode_title: str, summary: str, style: str, num_cuts: int = 6, language: str = "en", available_characters: List[dict] = None) -> dict:
         if not self.client:
              raise Exception("AI Service not initialized")
 
@@ -758,21 +758,30 @@ class AIService:
         Available Characters:
         {chars_str}
         
+        Task:
+        1. Define the overall **Background/Setting** for the episode (e.g. "Inside a cozy cafe, raining outside").
+        2. Define the **Outfit** for each character appearing in this episode. Ensure consistency.
+        3. Create {num_cuts} cuts.
+        
         For each cut, determine:
         - Script (Visual Description of action/scene). Do NOT repeat character names excessively. Mention the full name only when the character appears for the FIRST time in the context or if ambiguous; otherwise use pronouns (he/she) or generic terms.
         - Location (Setting name, e.g. "School Classroom")
         - Time of Day (e.g. "Sunset", "Night")
         - Dialogues (List of {{speaker, text}}). IMPORTANT: For internal thoughts/monologues, prefix the text with "(속마음)" (if Korean) or "(thought)" (if English) to indicate a thought bubble style.
         - Panel Type (Aspect Ratio...)
-        - Appearing Characters (List of objects: [{{"id": "...", "name": "...", "clothing": "Brief description of outfit"}}]. Ensure outfit is CONSISTENT for the same character throughout the scene.)
-        - refer_prev_cut (Boolean...)
-        - transition_ref (String): Notes for transitioning from the previous cut (e.g. "Camera zooms in", "Pan right", "Fade from black"). If first cut, null.
-
+        - Appearing Characters (List of objects: [{{"id": "...", "name": "...", "clothing": "..."}}])
+        - refer_prev_cut (Boolean)
+        - transition_ref (String): Notes for transitioning from the previous cut (e.g. "Camera zooms in").
+        
         {f'IMPORTANT: All output text (scripts, dialogues, character names, locations, etc) MUST be in {language} language.' if language else ''}
         {f'If language is Korean, use Hangul.' if language and language.startswith('ko') else ''}
 
         Return ONLY JSON:
         {{
+            "background_info": "Overall setting description...",
+            "character_outfits": {{
+                "CharacterName": "Outfit description..."
+            }},
             "cuts": [
                 {{
                     "cut_order": 1,
@@ -796,7 +805,7 @@ class AIService:
                 config=types.GenerateContentConfig(response_mime_type="application/json")
             )
             cleaned_text = self._clean_json_text(response.text)
-            return json.loads(cleaned_text).get("cuts", [])
+            return json.loads(cleaned_text) # Return full dict
         except Exception as e:
             print(f"Cut Gen Failed: {e}")
             raise e

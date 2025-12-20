@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
@@ -42,7 +42,12 @@ interface StoryboardViewProps {
 }
 
 export default function StoryboardView({ projectId }: StoryboardViewProps) {
-    const { activeEpisodeId, setActiveCut, activeCutId, isReviewMode, setReviewMode } = useCanvasStore(); // Added activeCutId to track selection
+    const {
+        activeEpisodeId, setActiveCut, activeCutId, isReviewMode, setReviewMode,
+        generatingIdsSet: generatingIds, // Map to local name for convenience 
+        addGeneratingId,
+        removeGeneratingId
+    } = useCanvasStore();
     const [cuts, setCuts] = useState<StoryCut[]>([]);
     const [loading, setLoading] = useState(false);
     const [episodeStatus, setEpisodeStatus] = useState<string>('ready'); // Track episode status
@@ -85,47 +90,92 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
         setIsBatchGenerating(false);
     };
 
+    const activeIdRef = useRef(activeEpisodeId);
+
+    useEffect(() => {
+        activeIdRef.current = activeEpisodeId;
+    }, [activeEpisodeId]);
+
     const fetchCuts = async () => {
-        if (!activeEpisodeId) return;
+        const targetId = activeIdRef.current;
+        if (!targetId) return;
+
         try {
-            setLoading(true);
-            const epRes = await api.get(`/episodes/${activeEpisodeId}`);
+            // Don't set loading true here if it's a background refresh (polling)
+            // But if called explicitly, maybe? Let's leave loading handling to caller or purely for blocking usage
+            // For now, removing generic loading set here to avoid flickering during polling, or moving it to specific calls.
+            // But to fix the "interference", the key is the check below.
+
+            const epRes = await api.get(`/episodes/${targetId}`);
+            if (activeIdRef.current !== targetId) return; // Abort if switched
+
             setEpisodeStatus(epRes.data.status || 'ready');
 
             if (epRes.data.status !== 'generating') {
-                const res = await api.get(`/cuts/?episode_id=${activeEpisodeId}`);
-                setCuts(res.data);
+                const res = await api.get(`/cuts/?episode_id=${targetId}`);
+                if (activeIdRef.current !== targetId) return; // Abort if switched
+
+                const newCuts = res.data as StoryCut[];
+                setCuts(newCuts);
+
+                // Cleanup finished generations
+                newCuts.forEach(cut => {
+                    if (generatingIds.has(cut.id) && cut.image_path) {
+                        removeGeneratingId(cut.id);
+                        // Optional: Toast success?
+                    }
+                    if (generatingIds.has(cut.id) && cut.status === 'failed') {
+                        removeGeneratingId(cut.id);
+                        toast({ title: t('toasts.genFailed'), variant: "destructive" });
+                    }
+                });
+
             } else {
-                setCuts([]); // Clear cuts if regenerating full episode? Or keep old?
-                // Usually if generating, we might not have cuts yet or they are being replaced.
+                if (activeIdRef.current !== targetId) return;
+                // If generating, strictly don't clear cuts if we want to show 'old' ones? 
+                // But request was "interference", so likely we want clean slate if truly generating new.
+                // Assuming logic: if generating, we might want to show loading spinner.
+                // But wait, user said "interference". clearing is safer.
+                setCuts([]);
             }
         } catch (err) {
             console.error(err);
-        } finally {
-            setLoading(false);
         }
     };
 
-    // Poll for episode status if generating
+    // Initial Fetch & Reset on Change
     useEffect(() => {
-        if (episodeStatus !== 'generating' || !activeEpisodeId) return;
+        // Reset immediately to avoid stale data showing
+        // Don't clear generating IDs because they might be persisting from a previous session or view?
+        // Actually, if we switch episode, we probably shouldn't track old episode's generations in this view.
+        // But the store is global. The poller will check IDs.
+        // If we switch episode, fetchCuts will fetch NEW cuts. 
+        // We should clear generating IDs if they don't belong to this episode? 
+        // Ideally ID is unique enough. 
+        // Let's just reset cuts.
+        setCuts([]);
+        setEpisodeStatus('ready');
+        setLoading(true);
+
+        if (activeEpisodeId) {
+            fetchCuts().finally(() => setLoading(false));
+        } else {
+            setLoading(false);
+        }
+    }, [activeEpisodeId]);
+
+    // Poll for episode status if generating OR if we have specific cuts generating
+    useEffect(() => {
+        const shouldPoll = (episodeStatus === 'generating') || (generatingIds.size > 0);
+
+        if (!shouldPoll || !activeEpisodeId) return;
 
         const interval = setInterval(async () => {
-            try {
-                const res = await api.get(`/episodes/${activeEpisodeId}`);
-                const status = res.data.status;
-                setEpisodeStatus(status);
-
-                if (status === 'ready') {
-                    await fetchCuts();
-                }
-            } catch (e) {
-                console.error("Polling error", e);
-            }
-        }, 3000);
+            await fetchCuts();
+        }, 2000); // Faster polling for images (2s)
 
         return () => clearInterval(interval);
-    }, [episodeStatus, activeEpisodeId]);
+    }, [episodeStatus, activeEpisodeId, generatingIds.size]); // Depend on size to trigger/stop
 
     const handleDirectorSuggest = async () => {
         if (!scriptInput.trim()) return;
@@ -142,7 +192,7 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
             console.error("Director Suggest Error", err);
             toast({
                 title: t('toasts.suggestionFailed'),
-                description: "Failed to get suggestions from Director AI.", // Keep generic fallback or translate if critical
+                description: t('toasts.suggestionFailedDesc'),
                 variant: 'destructive',
             });
         } finally {
@@ -185,7 +235,7 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
             console.error("Render & Save Error", err);
             toast({
                 title: t('toasts.creationFailed'),
-                description: "Failed to create cut. Please try again.",
+                description: t('toasts.creationFailedDesc'),
                 variant: 'destructive',
             });
         } finally {
@@ -201,13 +251,13 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
             fetchCuts();
             toast({
                 title: t('toasts.sceneDeleted'),
-                description: "The scene has been removed.",
+                description: t('toasts.sceneDeletedDesc'),
             });
         } catch (err) {
             console.error("Failed to delete cut", err);
             toast({
                 title: t('toasts.deleteFailed'),
-                description: "Failed to delete scene.",
+                description: t('toasts.deleteFailedDesc'),
                 variant: 'destructive',
             });
         }
@@ -216,7 +266,7 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
     const handleExport = async (format: 'zip' | 'webtoon') => {
         if (!activeEpisodeId) return;
         try {
-            toast({ title: "Exporting...", description: "Preparing your download." });
+            toast({ title: t('toasts.exporting'), description: t('toasts.exportPreparing') });
             const response = await api.post(`/episodes/${activeEpisodeId}/export?format=${format}`, {}, {
                 responseType: 'blob'
             });
@@ -248,15 +298,14 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
             link.remove();
         } catch (err) {
             console.error("Export failed", err);
-            toast({ title: "Export Failed", description: "Could not download the file.", variant: "destructive" });
+            toast({ title: t('toasts.exportFailed'), description: t('toasts.exportDownloadFailed'), variant: "destructive" });
         }
     };
 
-    const [generatingIds, setGeneratingIds] = useState<Set<string>>(new Set());
-
+    // handleGenerateImage updated to use Store and rely on global poller
     const handleGenerateImage = async (cutId: string, isBatch = false): Promise<boolean> => {
         try {
-            setGeneratingIds(prev => new Set(prev).add(cutId));
+            addGeneratingId(cutId);
 
             // 1. Kick off generation
             await api.post(`/episodes/${activeEpisodeId}/cuts/${cutId}/generate-image`, {});
@@ -264,65 +313,17 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
             if (!isBatch) {
                 toast({
                     title: t('toasts.genStarted'),
-                    description: "AI is generating the image...",
+                    description: t('toasts.genStartedDesc'),
                 });
             }
 
-            // 2. Poll for completion
-            // Poll for up to 180 seconds (90 attempts * 2s)
-            const maxAttempts = 90;
-            let attempts = 0;
-
-            while (attempts < maxAttempts) {
-                await new Promise(r => setTimeout(r, 2000));
-
-                try {
-                    const res = await api.get(`/cuts/${cutId}`);
-                    const updatedCut = res.data;
-
-                    if (updatedCut.image_path) {
-                        // Success!
-                        // Update local state immediately to reflect change without full refetch if we want, 
-                        // but fetchCuts() is safer for sync.
-                        fetchCuts();
-
-                        setGeneratingIds(prev => {
-                            const next = new Set(prev);
-                            next.delete(cutId);
-                            return next;
-                        });
-                        return true;
-                    }
-                    // Fail fast if status is 'failed'
-                    if (updatedCut.status === 'failed') {
-                        throw new Error('Generation failed on server');
-                    }
-
-                } catch (pollErr) {
-                    console.error("Polling error", pollErr);
-                    if (String(pollErr).includes("Generation failed")) throw pollErr;
-                }
-
-                attempts++;
-            }
-
-            // Timeout
-            toast({ title: t('toasts.genTimeout'), description: "Image generation took too long.", variant: "destructive" });
-            setGeneratingIds(prev => {
-                const next = new Set(prev);
-                next.delete(cutId);
-                return next;
-            });
-            return false;
+            // We do NOT wait here anymore. The global poller will handle state update.
+            return true;
 
         } catch (e) {
             console.error("Gen Image Failed", e);
-            toast({ title: t('toasts.genFailed'), variant: "destructive" });
-            setGeneratingIds(prev => {
-                const next = new Set(prev);
-                next.delete(cutId);
-                return next;
-            });
+            toast({ title: t('toasts.genFailed'), description: t('toasts.genServerFailed'), variant: "destructive" });
+            removeGeneratingId(cutId);
             return false;
         }
     };
@@ -339,7 +340,7 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
     if (!activeEpisodeId) {
         return (
             <div className="h-full flex items-center justify-center text-slate-500 bg-[#05050a] font-mono text-sm">
-                Select an episode to view storyboard.
+                {t('selectEpisode')}
             </div>
         );
     }
