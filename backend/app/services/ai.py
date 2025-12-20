@@ -759,10 +759,10 @@ class AIService:
         {chars_str}
         
         For each cut, determine:
-        - Script (Visual Description of action/scene)
+        - Script (Visual Description of action/scene). Do NOT repeat character names excessively. Mention the full name only when the character appears for the FIRST time in the context or if ambiguous; otherwise use pronouns (he/she) or generic terms.
         - Location (Setting name, e.g. "School Classroom")
         - Time of Day (e.g. "Sunset", "Night")
-        - Dialogues (List of {{speaker, text}})
+        - Dialogues (List of {{speaker, text}}). IMPORTANT: For internal thoughts/monologues, prefix the text with "(속마음)" (if Korean) or "(thought)" (if English) to indicate a thought bubble style.
         - Panel Type (Aspect Ratio...)
         - Appearing Characters (List of objects: [{{"id": "...", "name": "...", "clothing": "Brief description of outfit"}}]. Ensure outfit is CONSISTENT for the same character throughout the scene.)
         - refer_prev_cut (Boolean...)

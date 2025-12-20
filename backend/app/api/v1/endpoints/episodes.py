@@ -409,6 +409,24 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
             
             char_data = []
             char_visuals = []
+
+            # Identify characters who already appeared in previous cuts
+            prev_cuts = session.exec(select(StoryCut).where(StoryCut.episode_id == cut.episode_id).where(StoryCut.cut_order < cut.cut_order)).all()
+            prev_appearing_names = set()
+            for pc in prev_cuts:
+                # Extract names from appearing_characters (list of dicts or strings)
+                if pc.appearing_characters:
+                     for item in pc.appearing_characters:
+                        if isinstance(item, dict) and "name" in item:
+                            prev_appearing_names.add(item["name"].lower())
+                        elif isinstance(item, str):
+                            prev_appearing_names.add(item.lower())
+                # Also from dialogues
+                if pc.dialogues:
+                    for d in pc.dialogues:
+                         if isinstance(d, dict) and d.get("speaker"):
+                             prev_appearing_names.add(d["speaker"].lower())
+
             # Priority 1: Specifically matched characters
             matched_chars = [c for c in all_chars if c.name.lower() in occurring_names and c.profile_image_url]
             for c in matched_chars[:6]:
@@ -423,7 +441,11 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
                     desc_short = c.description[:100] + "..." if len(c.description) > 100 else c.description
                     visual_desc_parts.append(f"Traits({desc_short})")
                 
-                if visual_desc_parts:
+                # Only add text description if character is NEW to the episode (First Appearance)
+                # to avoid repetitive naming which can cause text artifacts (name tags) in images.
+                is_first_appearance = c.name.lower() not in prev_appearing_names
+                
+                if is_first_appearance and visual_desc_parts:
                     char_visuals.append(f"{c.name}: {' '.join(visual_desc_parts)}")
                 
             # Priority 2: Fallback REMOVED to avoid polluting context with irrelevant characters
