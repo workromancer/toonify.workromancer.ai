@@ -26,6 +26,7 @@ export const metadata: Metadata = {
 
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
+import { ClerkProvider } from "@clerk/nextjs";
 
 export default async function RootLayout({
   children,
@@ -36,18 +37,20 @@ export default async function RootLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale}>
-      <body
-        suppressHydrationWarning
-        className={`${splineSans.variable} ${geistSans.variable} ${geistMono.variable} antialiased font-display bg-background-light dark:bg-background-dark`}
-      >
-        <NextIntlClientProvider messages={messages}>
-          <AuthProvider>
-            {children}
-            <Toaster />
-          </AuthProvider>
-        </NextIntlClientProvider>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang={locale}>
+        <body
+          suppressHydrationWarning
+          className={`${splineSans.variable} ${geistSans.variable} ${geistMono.variable} antialiased font-display bg-background-light dark:bg-background-dark`}
+        >
+          <NextIntlClientProvider messages={messages}>
+            <AuthProvider>
+              {children}
+              <Toaster />
+            </AuthProvider>
+          </NextIntlClientProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

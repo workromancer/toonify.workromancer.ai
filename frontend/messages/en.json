@@ -35,6 +35,7 @@
     "hasAccount": "Already a director?",
     "createAccount": "Create one",
     "loginLink": "Login",
+    "orContinueWithEmail": "Or continue with email",
     "invalidCredentials": "Invalid email or password",
     "unknownError": "An unexpected error occurred."
   },

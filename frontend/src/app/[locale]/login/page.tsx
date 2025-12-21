@@ -8,6 +8,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';
 import axios from 'axios';
+import { SignIn } from '@clerk/nextjs';
 
 export default function LoginPage() {
     const { register, handleSubmit } = useForm();
@@ -15,6 +16,9 @@ export default function LoginPage() {
     const setToken = useAuthStore((state) => state.setToken);
     const [error, setError] = useState('');
     const t = useTranslations('Auth');
+    const authMode = process.env.NEXT_PUBLIC_AUTH_MODE || 'hybrid';
+    const showClerk = authMode === 'clerk_only' || authMode === 'hybrid';
+    const showLegacy = authMode === 'legacy' || authMode === 'hybrid' || !authMode;
 
     const onSubmit = async (data: any) => {
         try {
@@ -64,42 +68,64 @@ export default function LoginPage() {
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-gray-900 text-white">
-            <div className="w-full max-w-md p-8 bg-gray-800 rounded-lg shadow-lg">
-                <h2 className="mb-6 text-3xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
+            <div className="w-full max-w-md p-8 bg-gray-800 rounded-lg shadow-lg flex flex-col gap-6">
+                <h2 className="mb-2 text-3xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
                     {t('loginTitle')}
                 </h2>
 
-                {error && <p className="mb-4 text-red-500 text-center">{error}</p>}
-
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                    <div>
-                        <label className="block mb-1 text-sm text-gray-400">{t('email')}</label>
-                        <input
-                            {...register('email')}
-                            data-testid="login-email"
-                            type="email"
-                            className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-purple-500"
-                            required
-                        />
+                {showClerk && (
+                    <div className="flex justify-center w-full">
+                        {/* Using SignIn with no specific path config to allow it to function as a standalone unit 
+                             Using forceRedirectUrl to ensure we go to dashboard after sign in
+                         */}
+                        <SignIn forceRedirectUrl="/dashboard" />
                     </div>
-                    <div>
-                        <label className="block mb-1 text-sm text-gray-400">{t('password')}</label>
-                        <input
-                            {...register('password')}
-                            data-testid="login-password"
-                            type="password"
-                            className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-purple-500"
-                            required
-                        />
-                    </div>
-                    <Button type="submit" data-testid="login-submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                        {t('submitLogin')}
-                    </Button>
-                </form>
+                )}
 
-                <p className="mt-4 text-center text-sm text-gray-500">
-                    {t('noAccount')} <Link href="/signup" className="text-purple-400 hover:text-purple-300">{t('createAccount')}</Link>
-                </p>
+                {showClerk && showLegacy && (
+                    <div className="relative">
+                        <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-gray-600"></span></div>
+                        <div className="relative flex justify-center text-sm uppercase">
+                            <span className="bg-gray-800 px-2 text-gray-400">{t('orContinueWithEmail')}</span>
+                        </div>
+                    </div>
+                )}
+
+                {showLegacy && (
+                    <>
+                        {error && <p className="mb-4 text-red-500 text-center">{error}</p>}
+
+                        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                            <div>
+                                <label className="block mb-1 text-sm text-gray-400">{t('email')}</label>
+                                <input
+                                    {...register('email')}
+                                    data-testid="login-email"
+                                    type="email"
+                                    className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-purple-500"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block mb-1 text-sm text-gray-400">{t('password')}</label>
+                                <input
+                                    {...register('password')}
+                                    data-testid="login-password"
+                                    type="password"
+                                    className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-purple-500"
+                                    required
+                                />
+                            </div>
+                            <Button type="submit" data-testid="login-submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                                {t('submitLogin')}
+                            </Button>
+                        </form>
+
+                        <p className="mt-4 text-center text-sm text-gray-500">
+                            {t('noAccount')} <Link href="/signup" className="text-purple-400 hover:text-purple-300">{t('createAccount')}</Link>
+                        </p>
+                    </>
+                )}
             </div>
         </div>
     );
