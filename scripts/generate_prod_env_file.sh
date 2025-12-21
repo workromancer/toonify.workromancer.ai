@@ -69,7 +69,7 @@ MINIO_BUCKET=$GCS_BUCKET
 # Workload Identity / Service Account를 사용하므로 GCS용 액세스 키는 필요 없습니다.
 # 코드가 키를 요구할 경우를 대비해 빈 값이나 더미 값을 설정할 수 있습니다.
 # 일반적인 사용 기준:
-GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT:-"toonify-develop"}
+GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT:-"toonify-prod"}
 
 # AI 서비스
 GEMINI_API_KEY=$GEMINI_API_KEY

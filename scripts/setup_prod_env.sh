@@ -2,7 +2,7 @@
 set -e
 
 # 설정 정의 - 환경 변수로 덮어쓸 수 있음
-PROJECT_ID=${GOOGLE_CLOUD_PROJECT:-"toonify-develop"} # 설정되지 않은 경우 기본값: toonify-develop
+PROJECT_ID=${GOOGLE_CLOUD_PROJECT:-"toonify-prod"} # 설정되지 않은 경우 기본값: toonify-prod
 REGION=${GOOGLE_CLOUD_REGION:-"asia-northeast3"}
 REPO_NAME="toonify-repo"
 SQL_INSTANCE_NAME="toonify-postgres"

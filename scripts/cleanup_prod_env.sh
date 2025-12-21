@@ -5,7 +5,7 @@
 set -e
 
 # 설정 정의 (setup_prod_env.sh와 동일하게)
-PROJECT_ID=${GOOGLE_CLOUD_PROJECT:-"toonify-develop"}
+PROJECT_ID=${GOOGLE_CLOUD_PROJECT:-"toonify-prod"}
 REGION=${GOOGLE_CLOUD_REGION:-"asia-northeast3"}
 REPO_NAME="toonify-repo"
 SQL_INSTANCE_NAME="toonify-postgres"

@@ -20,7 +20,7 @@ GitHub 레포지토리의 `Settings` > `Secrets and variables` > `Actions` > `Ne
 ### 인증 관련 (스크립트 출력값)
 | Secret 이름 | 값 설명 |
 |---|---|
-| `GCP_PROJECT_ID` | GCP 프로젝트 ID (예: `toonify-develop`) |
+| `GCP_PROJECT_ID` | GCP 프로젝트 ID (예: `toonify-prod`) |
 | `GCP_WORKLOAD_IDENTITY_PROVIDER` | `setup_github_actions_iam.sh` 실행 결과 값 |
 | `GCP_SERVICE_ACCOUNT` | `setup_github_actions_iam.sh` 실행 결과 값 (이메일) |
 
