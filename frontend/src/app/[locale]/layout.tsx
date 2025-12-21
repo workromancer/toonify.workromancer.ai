@@ -38,7 +38,7 @@ export default async function RootLayout({
 
   return (
     <ClerkProvider>
-      <html lang={locale}>
+      <html lang={locale} suppressHydrationWarning>
         <body
           suppressHydrationWarning
           className={`${splineSans.variable} ${geistSans.variable} ${geistMono.variable} antialiased font-display bg-background-light dark:bg-background-dark`}

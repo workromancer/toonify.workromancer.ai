@@ -1,0 +1,6 @@
+DB_IP=34.158.203.146
+REPO_URL=asia-northeast3-docker.pkg.dev/toonify-prod/toonify-repo
+GCS_BUCKET=toonify-prod-assets
+CONNECTOR=projects/toonify-prod/locations/asia-northeast3/connectors/vpc-connector
+BACKEND_SA=toonify-backend-sa@toonify-prod.iam.gserviceaccount.com
+FRONTEND_SA=toonify-frontend-sa@toonify-prod.iam.gserviceaccount.com

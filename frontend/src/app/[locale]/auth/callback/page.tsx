@@ -4,10 +4,13 @@ import { useEffect } from 'react';
 import { useRouter } from '@/navigation'; // Use localized router
 import { useUser } from '@clerk/nextjs';
 import axios from 'axios';
+import { useAuthStore } from '@/store/useAuthStore';
 
 export default function AuthCallbackPage() {
     const { user, isLoaded, isSignedIn } = useUser();
     const router = useRouter();
+    const setToken = useAuthStore((state) => state.setToken);
+    const setAuthUser = useAuthStore((state) => state.setUser);
 
     useEffect(() => {
         if (isLoaded) {
@@ -16,8 +19,15 @@ export default function AuthCallbackPage() {
             } else {
                 // Trigger Sync
                 axios.post('/api/auth/sync')
-                    .then(() => {
-                        // Success -> Dashboard
+                    .then((res) => {
+                        // Success -> Set Token & Dashboard
+                        if (res.data.access_token) {
+                            setToken(res.data.access_token);
+                        }
+                        // if (res.data.user) {
+                        //     setAuthUser(res.data.user);
+                        // }
+
                         router.push('/dashboard');
                     })
                     .catch((err) => {

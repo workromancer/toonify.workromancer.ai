@@ -11,11 +11,13 @@ async function proxyRequest(request: NextRequest, { params }: { params: Promise<
   const cleanBackendUrl = BACKEND_URL.replace(/\/api\/v1\/?$/, '').replace(/\/api\/?$/, '');
   const targetUrl = `${cleanBackendUrl}/api/${pathString}${request.nextUrl.search}`;
 
-  console.log(`[Proxy] Forwarding ${request.method} request to: ${targetUrl}`);
+
 
   try {
     const requestHeaders = new Headers(request.headers);
     const authHeader = requestHeaders.get('Authorization');
+
+
 
     // Check if Auth header is missing or invalid (null, undefined, empty)
     const isAuthMissingOrInvalid =
@@ -25,13 +27,9 @@ async function proxyRequest(request: NextRequest, { params }: { params: Promise<
       authHeader.trim() === 'Bearer';
 
     if (isAuthMissingOrInvalid) {
-      const cookieStore = await cookies();
       const token = cookieStore.get('access_token')?.value;
       if (token) {
         requestHeaders.set('Authorization', `Bearer ${token}`);
-        console.log(`[Proxy] Attached token from cookie (Auth header was: ${authHeader})`);
-      } else {
-        console.warn(`[Proxy] No token found in cookie, and Auth header missing/invalid`);
       }
     }
 
@@ -76,7 +74,7 @@ async function proxyRequest(request: NextRequest, { params }: { params: Promise<
           // So if redirect returns /api/v1/projects/, using that relative path is correct.
           // The Next.js router handles /api/v1/...
 
-          console.log(`[Proxy] Rewriting Redirect: ${location} -> ${newLocation}`);
+
           const responseHeaders = new Headers(res.headers);
           responseHeaders.set('location', newLocation);
 

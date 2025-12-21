@@ -139,8 +139,8 @@ export default function DashboardLayout({ children, accessToken }: DashboardLayo
     }
 
     // If hydrated but no token, return null (guard will redirect)
-    // But if we have accessToken, we are good
-    if (!token && !accessToken) return null;
+    // But if we have accessToken or Clerk userId, we are good
+    if (!token && !accessToken && !userId) return null;
 
     const navItems = [
         { name: t('nav.home'), href: '/dashboard', icon: Home, exact: true },

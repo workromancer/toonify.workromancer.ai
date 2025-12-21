@@ -100,7 +100,7 @@ class UserSync(BaseModel):
     clerk_id: str
     name: Optional[str] = None
 
-@router.post("/sync-clerk", response_model=UserOut)
+@router.post("/sync-clerk", response_model=Any)
 def sync_clerk_user(
     *,
     session: Session = Depends(deps.get_session),
@@ -174,4 +174,11 @@ def sync_clerk_user(
         session.add(member)
         session.commit()
     
-    return user
+    # Generate Access Token
+    access_token = security.create_access_token(subject=user.id)
+    
+    return {
+        "user": user,
+        "access_token": access_token,
+        "token_type": "bearer"
+    }

@@ -34,8 +34,12 @@ export default clerkMiddleware(async (auth, req) => {
   const isAuthenticated = !!legacyToken || !!userId;
 
   if (isAuthenticated) {
-    // If authenticated and trying to access login/signup, redirect to dashboard
-    if (pathname === '/login' || pathname === '/signup') {
+    // If authenticated and trying to access root, login, or signup, redirect to dashboard
+    // Handle localized paths as well (e.g. /en, /en/login)
+    const isRoot = pathname === '/' || locales.some(loc => pathname === `/${loc}`);
+    const isAuthPage = ['/login', '/signup'].some(page => pathname === page || locales.some(loc => pathname === `/${loc}${page}`));
+
+    if (isRoot || isAuthPage) {
       return NextResponse.redirect(new URL('/dashboard', req.url));
     }
   } else {
@@ -69,7 +73,7 @@ export const config = {
     // - … if they start with `/api`, `/_next` or `/_vercel`
     // - … the ones containing a dot (e.g. `favicon.ico`)
     '/((?!api|_next|_vercel|.*\\..*).*)',
-    // Always run for API routes
-    '/(api|trpc)(.*)',
+    // Always run for API routes, EXCEPT /api/v1 which is proxied to backend
+    '/(api(?!/v1)|trpc)(.*)',
   ]
 };

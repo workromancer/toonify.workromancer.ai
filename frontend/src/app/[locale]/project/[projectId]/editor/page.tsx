@@ -69,14 +69,21 @@ export default function EditorPage() {
         }
         try {
             setExporting(true);
-            const response = await api.post(`/episodes/${activeEpisodeId}/export`, { format: 'webtoon' }, {
+            const response = await api.post(`/episodes/${activeEpisodeId}/export`, { format: 'zip' }, {
                 responseType: 'blob'
             });
+
+            // Check if backend returned an error (JSON blob) instead of a file
+            if (response.data.type === 'application/json') {
+                const text = await response.data.text();
+                const error = JSON.parse(text);
+                throw new Error(error.detail || t('exportFailed'));
+            }
 
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', 'webtoon_export.png');
+            link.setAttribute('download', `${episodeTitle || 'export'}.zip`);
             document.body.appendChild(link);
             link.click();
             link.parentNode?.removeChild(link);
@@ -86,11 +93,11 @@ export default function EditorPage() {
                 description: t('exportDownloading'),
             });
 
-        } catch (err) {
+        } catch (err: any) {
             console.error("Export failed", err);
             toast({
                 title: t('exportFailed'),
-                description: t('exportFailedDesc'),
+                description: err.message || t('exportFailedDesc'),
                 variant: 'destructive'
             });
         } finally {

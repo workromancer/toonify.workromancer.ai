@@ -62,11 +62,19 @@ api.interceptors.response.use(
                     return Promise.reject(error);
                 }
 
-                useAuthStore.getState().logout();
-                // Let the UI/Store handle the redirect via state change
+                const authProvider = useAuthStore.getState().authProvider;
 
-                if (typeof window !== 'undefined') {
-                    window.dispatchEvent(new CustomEvent('api-error', { detail: { type: 'sessionExpired' } }));
+                if (authProvider === 'clerk') {
+                    // For Clerk users, just clear the backend token (and user) to trigger re-sync in AuthProvider
+                    useAuthStore.setState({ token: null, user: null });
+                    // Do NOT dispatch sessionExpired toast, as it will likely recover silently
+                } else {
+                    useAuthStore.getState().logout();
+                    // Let the UI/Store handle the redirect via state change
+
+                    if (typeof window !== 'undefined') {
+                        window.dispatchEvent(new CustomEvent('api-error', { detail: { type: 'sessionExpired' } }));
+                    }
                 }
             } else if (status === 403) {
                 if (typeof window !== 'undefined') {

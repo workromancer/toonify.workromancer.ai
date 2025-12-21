@@ -296,9 +296,26 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
             document.body.appendChild(link);
             link.click();
             link.remove();
-        } catch (err) {
+        } catch (err: any) {
             console.error("Export failed", err);
-            toast({ title: t('toasts.exportFailed'), description: t('toasts.exportDownloadFailed'), variant: "destructive" });
+
+            let errorMessage = t('toasts.exportDownloadFailed');
+            if (err.response && err.response.data instanceof Blob && err.response.data.type === 'application/json') {
+                // Try to read the blob error if Axios caught it as a Blob
+                try {
+                    const text = await err.response.data.text();
+                    const errorObj = JSON.parse(text);
+                    if (errorObj.detail) errorMessage = errorObj.detail;
+                } catch (e) { /* ignore */ }
+            } else if (err.message) {
+                // Or if we threw it manually above, wait, we didn't throw above.
+                // Actually this block catches "network errors" or "4xx/5xx" if Axios throws.
+                // But with responseType: blob, Axios might NOT throw on status code depending on config?
+                // Standard Axios throws on non-2xx.
+                // If it throws, err.response.data is the blob.
+            }
+
+            toast({ title: t('toasts.exportFailed'), description: errorMessage, variant: "destructive" });
         }
     };
 
