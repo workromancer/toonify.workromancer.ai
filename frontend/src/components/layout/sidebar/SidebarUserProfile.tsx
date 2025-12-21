@@ -7,11 +7,13 @@ import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useUIStore } from '@/store/useUIStore';
 import { useTranslations } from 'next-intl';
+import { UserButton, useUser } from '@clerk/nextjs';
 
 export default function SidebarUserProfile() {
     const router = useRouter();
     const { isSidebarCollapsed } = useUIStore();
-    const { user, logout } = useAuthStore();
+    const { user: clerkUser, isLoaded } = useUser();
+    const { user: legacyUser, logout } = useAuthStore();
     const t = useTranslations('Dashboard');
 
     const handleLogout = async () => {
@@ -23,6 +25,32 @@ export default function SidebarUserProfile() {
             router.push('/login');
         }
     };
+
+    if (!isLoaded) return null;
+
+    if (clerkUser) {
+        return (
+            <div className={cn("flex items-center gap-3 mt-2", isSidebarCollapsed ? "justify-center" : "px-1")}>
+                <UserButton
+                    appearance={{
+                        elements: {
+                            avatarBox: "size-9"
+                        }
+                    }}
+                />
+                {!isSidebarCollapsed && (
+                    <div className="flex flex-col min-w-0 overflow-hidden">
+                        <p className="text-white text-sm font-medium leading-normal truncate">
+                            {clerkUser.fullName || clerkUser.username || "User"}
+                        </p>
+                        <p className="text-gray-400 text-xs font-normal leading-normal truncate">
+                            {clerkUser.primaryEmailAddress?.emailAddress}
+                        </p>
+                    </div>
+                )}
+            </div>
+        );
+    }
 
     return (
         <div className={cn("flex items-center gap-3 mt-2", isSidebarCollapsed ? "justify-center flex-col" : "justify-between px-1")}>
@@ -41,10 +69,10 @@ export default function SidebarUserProfile() {
                 {!isSidebarCollapsed && (
                     <div className="flex flex-col min-w-0">
                         <p className="text-white text-sm font-medium leading-normal truncate">
-                            {user?.email?.split('@')[0] || "Guest"}
+                            {legacyUser?.email?.split('@')[0] || "Guest"}
                         </p>
                         <p className="text-gray-400 text-xs font-normal leading-normal truncate">
-                            {user?.email || "guest@toonify.com"}
+                            {legacyUser?.email || "guest@toonify.com"}
                         </p>
                     </div>
                 )}

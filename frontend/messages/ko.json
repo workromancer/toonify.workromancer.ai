@@ -46,7 +46,45 @@
     "dashboard": "대시보드로 이동",
     "logout": "로그아웃",
     "login": "로그인",
-    "signup": "회원가입"
+    "signup": "회원가입",
+    "Hero": {
+      "headline": "당신만의 웹툰을\n게임하듯 완성하세요.",
+      "subheadline": "AI와 함께 스토리부터 작화까지.\n상상 속 이야기를 현실로 만드는 가장 빠른 방법.",
+      "startBtn": "무료로 시작하기",
+      "learnMoreBtn": "더 알아보기"
+    },
+    "Features": {
+      "title": "강력한 AI 제작 도구",
+      "castingTitle": "AI 캐릭터 캐스팅",
+      "castingDesc": "세계관에 맞는 캐릭터를 자동으로 생성하고 일관된 작화로 유지합니다.",
+      "directorTitle": "감독 모드",
+      "directorDesc": "대본만 입력하면 컷 분할부터 연출까지 AI가 제안합니다.",
+      "worldTitle": "세계관 구축",
+      "worldDesc": "설정집을 관리하고 장르에 맞는 톤앤매너를 유지하세요.",
+      "globalTitle": "수익 창출 (예정)",
+      "globalDesc": "독자들은 스포일러 없이 캐릭터와 대화하고, 작가님은 새로운 수익을 창출할 수 있습니다.",
+      "weekly": "요일별 인기 웹툰",
+      "new": "신작 웹툰",
+      "genre": "장르별",
+      "realtimeRanking": "실시간 랭킹",
+      "promoTitle": "차세대 웹툰 작가에 도전하세요",
+      "promoDesc": "상상 속 이야기를 웹툰으로 만들어보세요. AI 도구와 함께라면 누구나 멋진 작품을 연재할 수 있습니다.",
+      "promoBtn": "작품 만들기 시작"
+    },
+    "HowItWorks": {
+      "title": "이렇게 쉬운 웹툰 제작",
+      "step1Title": "프로젝트 생성",
+      "step1Desc": "장르와 제목만 정하면 AI가 초기 설정을 잡아줍니다.",
+      "step2Title": "캐스팅 & 대본",
+      "step2Desc": "주연 배우를 캐스팅하고 대사를 입력하세요.",
+      "step3Title": "연출 & 생성",
+      "step3Desc": "감독 모드로 각 장면을 연출하고 고품질 이미지를 생성합니다."
+    },
+    "Footer": {
+      "copyright": "© 2024 Workromancer. All rights reserved.",
+      "terms": "이용약관",
+      "privacy": "개인정보처리방침"
+    }
   },
   "Dashboard": {
     "subtitle": "AI 웹툰 도구",

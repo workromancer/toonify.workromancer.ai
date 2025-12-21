@@ -41,12 +41,50 @@
   },
   "Landing": {
     "title": "Toonify",
-    "subtitle": "Be the Director.",
-    "loggedIn": "Currently logged in.",
+    "subtitle": "Direct your own Webtoon.",
+    "loggedIn": "You are logged in.",
     "dashboard": "Go to Dashboard",
-    "logout": "Logout",
-    "login": "Login",
-    "signup": "Sign Up"
+    "logout": "Log out",
+    "login": "Log in",
+    "signup": "Sign up",
+    "Hero": {
+      "headline": "Direct Your Own\nWebtoon with AI",
+      "subheadline": "From story to art using AI. The fastest way to turn your imagination into reality.",
+      "startBtn": "Start for Free",
+      "learnMoreBtn": "Learn More"
+    },
+    "Features": {
+      "title": "Powerful AI Creation Tools",
+      "castingTitle": "AI Character Casting",
+      "castingDesc": "Automatically generate characters fitting your world and maintain consistent art style.",
+      "directorTitle": "Director Mode",
+      "directorDesc": "Just input the script, and AI suggests panel layouts and directing.",
+      "worldTitle": "World Building",
+      "worldDesc": "Manage your setting bible and maintain tone & manner fitting the genre.",
+      "globalTitle": "Revenue Model (Coming Soon)",
+      "globalDesc": "Let readers chat with your characters spoiler-free while you earn revenue.",
+      "weekly": "Weekly Hot",
+      "new": "New Arrivals",
+      "genre": "Genres",
+      "realtimeRanking": "Real-time Ranking",
+      "promoTitle": "Become the Next Top Creator",
+      "promoDesc": "Turn your story into a webtoon. Anyone can become a creator with our AI tools, no drawing skills required.",
+      "promoBtn": "Start Creating"
+    },
+    "HowItWorks": {
+      "title": "Webtoon Creation Made Easy",
+      "step1Title": "Create Project",
+      "step1Desc": "Set genre and title, and AI sets up the initial configuration.",
+      "step2Title": "Cast & Script",
+      "step2Desc": "Cast lead actors and input dialogues.",
+      "step3Title": "Direct & Generate",
+      "step3Desc": "Direct scenes in Director Mode and generate high-quality images."
+    },
+    "Footer": {
+      "copyright": "© 2024 Workromancer. All rights reserved.",
+      "terms": "Terms of Service",
+      "privacy": "Privacy Policy"
+    }
   },
   "Dashboard": {
     "subtitle": "AI Webtoon Tool",

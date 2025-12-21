@@ -6,6 +6,7 @@ import { useWorkspaceStore } from '@/store/useWorkspaceStore';
 import { cn } from '@/lib/utils';
 import { LayoutDashboard, LayoutTemplate, Settings, Plus, Palette, Home, FolderOpen } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useAuth } from '@clerk/nextjs';
 import CreateWorkspaceModal from '@/components/dashboard/CreateWorkspaceModal';
 import RechargeModal from '@/components/dashboard/RechargeModal';
 import { Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarItem, SidebarToggle } from '@/components/layout/sidebar/Sidebar';
@@ -24,7 +25,8 @@ interface DashboardLayoutProps {
 export default function DashboardLayout({ children, accessToken }: DashboardLayoutProps) {
     const router = useRouter();
     const pathname = usePathname() || '';
-    const { user, token, hasHydrated, setToken } = useAuthStore();
+    const { token, hasHydrated, setToken } = useAuthStore();
+    const { isSidebarCollapsed } = useUIStore();
     const t = useTranslations('Dashboard');
     const tErrors = useTranslations('Errors');
     const { toast } = useToast();
@@ -61,7 +63,7 @@ export default function DashboardLayout({ children, accessToken }: DashboardLayo
             const { type, message } = event.detail;
             let titleKey = 'defaultTitle';
             let descKey = 'defaultMessage';
-            let customDesc = message;
+            const customDesc = message;
 
             switch (type) {
                 case 'sessionExpired':
@@ -108,15 +110,20 @@ export default function DashboardLayout({ children, accessToken }: DashboardLayo
     }, []);
 
     // Auth Guard Logic
+    const { userId, isLoaded: isClerkLoaded } = useAuth();
+
     useEffect(() => {
         // If we have a server token, we are authenticated.
         if (accessToken) return;
 
-        // Only redirect if we have finished hydrating and still have no token (and no server token)
-        if (hasHydrated && !token) {
+        // Wait for both stores to be ready
+        if (!hasHydrated || !isClerkLoaded) return;
+
+        // Only redirect if we have updated and still have no token AND no Clerk user
+        if (!token && !userId) {
             router.push('/login');
         }
-    }, [hasHydrated, token, router, accessToken]);
+    }, [hasHydrated, isClerkLoaded, token, userId, router, accessToken]);
 
     // Data Fetching
     useEffect(() => {
@@ -134,8 +141,6 @@ export default function DashboardLayout({ children, accessToken }: DashboardLayo
     // If hydrated but no token, return null (guard will redirect)
     // But if we have accessToken, we are good
     if (!token && !accessToken) return null;
-
-    const { isSidebarCollapsed } = useUIStore();
 
     const navItems = [
         { name: t('nav.home'), href: '/dashboard', icon: Home, exact: true },

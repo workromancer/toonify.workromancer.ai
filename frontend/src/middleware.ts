@@ -38,6 +38,16 @@ export default clerkMiddleware(async (auth, req) => {
   } else {
     // If not authenticated and trying to access protected page
     if (!isPublicPage) {
+      // API Routes should not redirect to login page (it breaks POST requests with "Failed to find Server Action")
+      // Instead, they should return 401 Unauthorized
+      if (pathname.startsWith('/api')) {
+        // Allow auth routes to proceed (they handle their own logic/are public)
+        if (pathname.startsWith('/api/auth')) {
+          return response;
+        }
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+
       // If we are strictly Clerk-only, we might want to redirect to Clerk?
       // But for now, ensuring redirection to our /login page covers both cases (UI handles choice)
       // NOTE: If using Clerk Protected Components, they might handle redirect themselves inside the page,
