@@ -19,6 +19,8 @@ class User(SQLModel, table=True):
     password_hash: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
     language: str = Field(default="en")
+    auth_provider: str = Field(default="email") # email, clerk
+    clerk_id: Optional[str] = Field(default=None, index=True)
     
     workspaces: List["Workspace"] = Relationship(back_populates="members", link_model=WorkspaceMember)
 

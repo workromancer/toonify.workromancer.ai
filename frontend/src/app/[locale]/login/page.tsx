@@ -28,9 +28,7 @@ export default function LoginPage() {
             formData.append('password', data.password);
 
             // POST to our new Next.js internal route
-            const res = await axios.post('/api/auth/login', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' } // or let axios handle it
-            });
+            const res = await axios.post('/api/auth/login', formData);
 
             console.log("Login Route Response:", res.data);
 
@@ -78,7 +76,7 @@ export default function LoginPage() {
                         {/* Using SignIn with no specific path config to allow it to function as a standalone unit 
                              Using forceRedirectUrl to ensure we go to dashboard after sign in
                          */}
-                        <SignIn forceRedirectUrl="/dashboard" />
+                        <SignIn forceRedirectUrl="/auth/callback" />
                     </div>
                 )}
 

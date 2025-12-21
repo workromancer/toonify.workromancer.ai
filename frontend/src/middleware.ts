@@ -17,7 +17,10 @@ export default clerkMiddleware(async (auth, req) => {
   // 1. Run i18n middleware first to handle locale detection (cookies/headers)
   // intlMiddleware returns a response with the locale header/cookie set.
   // We will return this response at the end, unless we redirect.
-  const response = intlMiddleware(req);
+  // CRITICAL FIX: Do NOT run intlMiddleware for API routes, as it rewrites them to /[locale]/api/...
+  // which implies the API route must be inside [locale] folder, causing 404s or Server Action errors.
+  const isApiRoute = pathname.startsWith('/api');
+  const response = isApiRoute ? NextResponse.next() : intlMiddleware(req);
 
   // 2. Check for Legacy Auth Token
   const legacyToken = req.cookies.get('access_token')?.value;
