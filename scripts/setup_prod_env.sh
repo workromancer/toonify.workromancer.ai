@@ -125,29 +125,68 @@ fi
 
 # 5. Cloud SQL (PostgreSQL)
 echo "[5/7] Cloud SQL 설정 중..."
+
+# 현재 공인 IP 가져오기 (로컬 접속 허용용)
+CURRENT_IP=$(curl -s ifconfig.me)
+echo "현재 공인 IP: $CURRENT_IP (Cloud SQL 접속 허용 목록에 추가됩니다)"
+
+# 5-1. 인스턴스 확인 및 생성
 if ! gcloud sql instances describe $SQL_INSTANCE_NAME --format="value(name)" &>/dev/null; then
     echo "Cloud SQL 인스턴스 $SQL_INSTANCE_NAME 생성 중 (몇 분 정도 소요됩니다)..."
-    # 참고: --no-assign-ip는 공인 IP를 막고, --network는 사설 VPC에 연결함
+    # --assign-ip: 공인 IP 활성화 (로컬 접속용)
+    # --authorized-networks: 현재 IP 허용
     gcloud sql instances create $SQL_INSTANCE_NAME \
         --database-version=POSTGRES_15 \
         --tier=db-f1-micro \
         --region=$REGION \
         --network=$VPC_NAME \
-        --no-assign-ip \
-        --root-password="temp-root-password-change-me" 
-        
+        --assign-ip \
+        --authorized-networks=$CURRENT_IP \
+        --root-password="sIzrim-bocdo8-gavbox" 
+else
+    echo "Cloud SQL 인스턴스 $SQL_INSTANCE_NAME 가 이미 존재합니다."
+    echo "인스턴스 설정 업데이트(Patch) 중... (현재 IP: $CURRENT_IP 추가 및 공인 IP 활성화)"
+    gcloud sql instances patch $SQL_INSTANCE_NAME \
+        --assign-ip \
+        --authorized-networks=$CURRENT_IP
+fi
+
+# 5-2. 데이터베이스 확인 및 생성
+echo "데이터베이스 $DB_NAME 확인 중..."
+if ! gcloud sql databases describe $DB_NAME --instance=$SQL_INSTANCE_NAME &>/dev/null; then
     echo "데이터베이스 $DB_NAME 생성 중..."
     gcloud sql databases create $DB_NAME \
         --instance=$SQL_INSTANCE_NAME \
         --charset=UTF8 \
-        --collation=ko_KR.UTF8
-    
+        --collation=en_US.UTF8
+else
+    echo "데이터베이스 $DB_NAME 이(가) 이미 존재합니다."
+fi
+
+# 5-3. 사용자 확인 및 생성
+echo "사용자 $DB_USER 확인 중..."
+# 사용자가 존재하는지 확인 (간단히 list에서 grep)
+if ! gcloud sql users list --instance=$SQL_INSTANCE_NAME --format="value(name)" | grep -q "^$DB_USER$"; then
     echo "사용자 $DB_USER 생성 중..."
-    # 실제로는 비밀번호를 묻거나 생성해야 함. 스크립트 단순화를 위해 플레이스홀더 사용.
-    DB_PASS=${DB_PASSWORD:-"db-password-change-me"}
+    
+    # 비밀번호 입력 받기 (DB_PASSWORD 환경변수가 없으면)
+    if [ -z "$DB_PASSWORD" ]; then
+        echo -n "데이터베이스($DB_USER) 비밀번호를 입력하세요: "
+        read -s DB_PASS
+        echo "" # 줄바꿈
+    else
+        DB_PASS="$DB_PASSWORD"
+    fi
+    
+    # 입력값이 비어있으면 기본값 사용 (선택 사항, 여기서는 필수라 가정하되 안전장치)
+    if [ -z "$DB_PASS" ]; then
+        echo "비밀번호가 입력되지 않아 기본값을 사용합니다."
+        DB_PASS="db-password-change-me"
+    fi
+
     gcloud sql users create $DB_USER --instance=$SQL_INSTANCE_NAME --password="$DB_PASS"
 else
-    echo "Cloud SQL 인스턴스 $SQL_INSTANCE_NAME 가 이미 존재합니다."
+    echo "사용자 $DB_USER 이(가) 이미 존재합니다."
 fi
 
 # Cloud SQL Private IP 가져오기
@@ -158,37 +197,58 @@ echo "Cloud SQL 사설 IP: $DB_IP"
 # 6. Service Accounts
 echo "[6/7] 서비스 계정(Service Accounts) 설정 중..."
 
+# SA 생성을 기다리는 함수
+wait_for_sa() {
+    local sa_email=$1
+    echo "서비스 계정 $sa_email 전파 대기 중..."
+    for i in {1..10}; do
+        if gcloud iam service-accounts describe $sa_email &>/dev/null; then
+            echo "서비스 계정 $sa_email 확인됨."
+            return 0
+        fi
+        echo "대기 중... ($i/10)"
+        sleep 5
+    done
+    echo "경고: 서비스 계정 $sa_email 을(를) 즉시 확인할 수 없습니다. 이후 단계에서 실패할 수 있습니다."
+}
+
 # Backend SA
 BACKEND_SA="toonify-backend-sa"
-if ! gcloud iam service-accounts describe $BACKEND_SA@$PROJECT_ID.iam.gserviceaccount.com &>/dev/null; then
+BACKEND_SA_EMAIL="$BACKEND_SA@$PROJECT_ID.iam.gserviceaccount.com"
+
+if ! gcloud iam service-accounts describe $BACKEND_SA_EMAIL &>/dev/null; then
     gcloud iam service-accounts create $BACKEND_SA --display-name="Toonify Backend Service Account"
+    wait_for_sa $BACKEND_SA_EMAIL
 fi
 # Backend SA에 권한 부여
 # - Storage Object Admin (GCS용)
 # - Vertex AI User (Gemini용)
 # - Cloud SQL Client
 gcloud projects add-iam-policy-binding $PROJECT_ID \
-    --member="serviceAccount:$BACKEND_SA@$PROJECT_ID.iam.gserviceaccount.com" \
+    --member="serviceAccount:$BACKEND_SA_EMAIL" \
     --role="roles/storage.objectAdmin"
 
 gcloud projects add-iam-policy-binding $PROJECT_ID \
-    --member="serviceAccount:$BACKEND_SA@$PROJECT_ID.iam.gserviceaccount.com" \
+    --member="serviceAccount:$BACKEND_SA_EMAIL" \
     --role="roles/aiplatform.user"
 
 gcloud projects add-iam-policy-binding $PROJECT_ID \
-    --member="serviceAccount:$BACKEND_SA@$PROJECT_ID.iam.gserviceaccount.com" \
+    --member="serviceAccount:$BACKEND_SA_EMAIL" \
     --role="roles/cloudsql.client"
 
 # Frontend SA (주로 호출자 역할)
 FRONTEND_SA="toonify-frontend-sa"
-if ! gcloud iam service-accounts describe $FRONTEND_SA@$PROJECT_ID.iam.gserviceaccount.com &>/dev/null; then
+FRONTEND_SA_EMAIL="$FRONTEND_SA@$PROJECT_ID.iam.gserviceaccount.com"
+
+if ! gcloud iam service-accounts describe $FRONTEND_SA_EMAIL &>/dev/null; then
     gcloud iam service-accounts create $FRONTEND_SA --display-name="Toonify Frontend Service Account"
+    wait_for_sa $FRONTEND_SA_EMAIL
 fi
 # 만약 백엔드에 내부 인증(IAM)을 적용한다면 Invoker 권한이 필요함.
 # 현재는 internal ingress와 네트워크 도달 가능성에 의존하지만, 
 # 만약을 위해(그리고 향후 IAM 인증 활성화를 위해) Invoker 권한 부여.
 gcloud projects add-iam-policy-binding $PROJECT_ID \
-    --member="serviceAccount:$FRONTEND_SA@$PROJECT_ID.iam.gserviceaccount.com" \
+    --member="serviceAccount:$FRONTEND_SA_EMAIL" \
     --role="roles/run.invoker"
 
 
@@ -200,8 +260,8 @@ echo "Repository: $REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME"
 echo "SQL Instance Private IP: $DB_IP"
 echo "Bucket: gs://$GCS_BUCKET_NAME"
 echo "VPC Connector: projects/$PROJECT_ID/locations/$REGION/connectors/$CONNECTOR_NAME"
-echo "Backend Service Account: $BACKEND_SA@$PROJECT_ID.iam.gserviceaccount.com"
-echo "Frontend Service Account: $FRONTEND_SA@$PROJECT_ID.iam.gserviceaccount.com"
+echo "Backend Service Account: $BACKEND_SA_EMAIL"
+echo "Frontend Service Account: $FRONTEND_SA_EMAIL"
 echo "==================================================="
 echo "다음 단계: scripts/generate_prod_env_file.sh 를 실행하여 .env.prod 파일을 생성하세요."
 
@@ -210,5 +270,5 @@ echo "DB_IP=$DB_IP" > .infra_output
 echo "REPO_URL=$REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME" >> .infra_output
 echo "GCS_BUCKET=$GCS_BUCKET_NAME" >> .infra_output
 echo "CONNECTOR=projects/$PROJECT_ID/locations/$REGION/connectors/$CONNECTOR_NAME" >> .infra_output
-echo "BACKEND_SA=$BACKEND_SA@$PROJECT_ID.iam.gserviceaccount.com" >> .infra_output
-echo "FRONTEND_SA=$FRONTEND_SA@$PROJECT_ID.iam.gserviceaccount.com" >> .infra_output
+echo "BACKEND_SA=$BACKEND_SA_EMAIL" >> .infra_output
+echo "FRONTEND_SA=$FRONTEND_SA_EMAIL" >> .infra_output

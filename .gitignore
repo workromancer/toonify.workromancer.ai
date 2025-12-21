@@ -4,6 +4,7 @@
 **/*$py.class
 **/venv/
 **/.env
+**/.env.**
 **/.venv
 **/env/
 **/dist/
