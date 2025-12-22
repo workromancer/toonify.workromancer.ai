@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from '@/navigation';
+import { useSearchParams } from 'next/navigation';
 import {
   ArrowLeft, ArrowRight, BookOpen, ChevronRight, ChevronLeft,
   Type, Hash, Sparkles, Check, X,
@@ -62,6 +63,7 @@ const ProgressBar = ({ currentStep }: { currentStep: number }) => {
 
 export default function NewProjectWizard() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const t = useTranslations('NewProject');
   const [step, setStep] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -218,7 +220,7 @@ export default function NewProjectWizard() {
         subtitle: dataSubtitle,
         genre: dataGenre,
         worldview: finalWorldview,
-        style_preset: "anime_webtoon",
+        style_preset: searchParams.get('style_preset') || "anime_webtoon", // Use param or default
         language: language
       });
 

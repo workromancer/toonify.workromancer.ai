@@ -137,7 +137,8 @@ const DraftCard = ({ draft, onClick }: { draft: any, onClick: () => void }) => {
 export default function DashboardPage() {
     const t = useTranslations('Dashboard');
     const [projects, setProjects] = useState<Project[]>([]);
-    const [templates, setTemplates] = useState<Template[]>([]);
+
+    const [customStyles, setCustomStyles] = useState<any[]>([]); // Added state for styles
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [draftProject, setDraftProject] = useState<any>(null);
@@ -172,32 +173,17 @@ export default function DashboardPage() {
         }
     };
 
-    const fetchTemplates = async () => {
+    const fetchCustomStyles = async () => {
         try {
-            const res = await api.get('/templates', { timeout: 5000 });
-            // Add "Scratch" as first item
-            const scratch: Template = {
-                id: 'scratch',
-                title: t('templates.scratch.title'),
-                description: t('templates.scratch.desc'),
-                style_preset: '',
-                category: '',
-                is_premium: false,
-                isAction: true
-            };
-            setTemplates([scratch, ...res.data]);
+            const res = await api.get('/styles');
+            setCustomStyles(res.data);
         } catch (err) {
-            // Fallback
-            setTemplates([
-                { id: 'scratch', title: t('templates.scratch.title'), description: t('templates.scratch.desc'), style_preset: '', category: '', is_premium: false, isAction: true },
-                { id: 'webtoon_std', title: t('templates.webtoon.title'), description: t('templates.webtoon.desc'), style_preset: 'webtoon', category: 'webtoon', is_premium: false, image_url: 'https://picsum.photos/seed/webtoon1/300/300' },
-                { id: 'action_pack', title: t('templates.action.title'), description: t('templates.action.desc'), style_preset: 'action', category: 'webtoon', is_premium: false, image_url: 'https://picsum.photos/seed/action/300/300' },
-            ]);
+            console.error("Failed to fetch styles", err);
         }
     };
 
     useEffect(() => {
-        Promise.all([fetchProjects(), fetchTemplates()]).finally(() => setLoading(false));
+        Promise.all([fetchProjects(), fetchCustomStyles()]).finally(() => setLoading(false));
 
         // Load Draft
         const savedDraft = localStorage.getItem('toontune_project_draft');
@@ -303,9 +289,58 @@ export default function DashboardPage() {
                         </div>
 
                         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-                            {templates.map(template => (
-                                <TemplateCard key={template.id} template={template} onSelect={handleTemplateSelect} />
-                            ))}
+                            {/* Custom Styles Section */}
+                            {customStyles.length > 0 ? (
+                                <>
+                                    {customStyles.map(style => (
+                                        <TemplateCard
+                                            key={style.id}
+                                            template={{
+                                                id: style.id,
+                                                title: style.name,
+                                                description: t('styles.myStyles'),
+                                                style_preset: style.id, // Use ID as preset
+                                                category: 'custom',
+                                                is_premium: false,
+                                                image_url: style.image_url
+                                            }}
+                                            onSelect={(t) => router.push(`/new-project?style_preset=${t?.style_preset}`)}
+                                        />
+                                    ))}
+                                    {/* Always show Create Style as the last card if we have some styles */}
+                                    <div
+                                        onClick={() => router.push('/dashboard/styles')}
+                                        className="group relative w-full aspect-square rounded-2xl border border-dashed border-slate-700 bg-slate-900/30 hover:border-purple-500 hover:bg-purple-900/10 flex flex-col items-center justify-center gap-4 cursor-pointer transition-all duration-300 hover:-translate-y-1.5 shadow-md hover:shadow-xl"
+                                    >
+                                        <div className="w-14 h-14 rounded-full bg-slate-800 flex items-center justify-center group-hover:bg-purple-600 transition-colors duration-300">
+                                            <Plus size={28} className="text-slate-400 group-hover:text-white" />
+                                        </div>
+                                        <div className="text-center">
+                                            <span className="block text-sm font-bold text-slate-300 group-hover:text-white transition-colors">
+                                                {t('CreateStyle.title')}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                /* Create Style Placeholder - Main Call to Action when empty */
+                                <div
+                                    onClick={() => router.push('/dashboard/styles')}
+                                    className="group relative w-full aspect-square rounded-2xl border border-dashed border-slate-700 bg-slate-900/30 hover:border-purple-500 hover:bg-purple-900/10 flex flex-col items-center justify-center gap-4 cursor-pointer transition-all duration-300 hover:-translate-y-1.5 shadow-md hover:shadow-xl"
+                                >
+                                    <div className="w-14 h-14 rounded-full bg-slate-800 flex items-center justify-center group-hover:bg-purple-600 transition-colors duration-300">
+                                        <Plus size={28} className="text-slate-400 group-hover:text-white" />
+                                    </div>
+                                    <div className="text-center">
+                                        <span className="block text-sm font-bold text-slate-300 group-hover:text-white transition-colors">
+                                            {t('CreateStyle.title')}
+                                        </span>
+                                        <span className="block text-[10px] text-slate-500 mt-1">
+                                            {t('CreateStyle.desc')}
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </section>
                 </div>
