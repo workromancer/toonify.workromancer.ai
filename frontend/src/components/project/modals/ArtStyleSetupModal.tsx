@@ -131,7 +131,12 @@ export default function ArtStyleSetupModal({
 
             // Construct a fake reference URL or use a placeholder if none exists in the mocked data
             // In a real app, STYLES would come from DB with real URLs.
-            const styleReferenceUrl = styleObj?.imageUrl || `https://placeholder.com/${styleObj?.id || 'unknown'}`;
+            let styleReferenceUrl = styleObj?.imageUrl || `https://placeholder.com/${styleObj?.id || 'unknown'}`;
+
+            // Ensure absolute URL for local images
+            if (styleReferenceUrl.startsWith('/')) {
+                styleReferenceUrl = `${window.location.protocol}//${window.location.host}${styleReferenceUrl}`;
+            }
 
             await api.patch(`/projects/${projectId}`, {
                 style_preset: selectedStyleId,

@@ -22,6 +22,7 @@ import { useTranslations } from 'next-intl';
 import { CustomLoader } from '@/components/ui/custom-loader';
 import CharacterSuggestionList from './CharacterSuggestionList';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 interface Character {
     id?: string;
@@ -410,6 +411,16 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                             <ImageGeneratingPlaceholder text={t('generatingCoverArt')} />
                         )}
 
+                        {/* Async Suggestions Banner */}
+                        {project.suggestions_status === 'processing' && (
+                            <div className="absolute top-0 left-0 w-full bg-purple-600/90 py-2 px-4 flex items-center justify-center gap-3 backdrop-blur-md z-20 animate-in slide-in-from-top-full duration-500">
+                                <Loader2 className="w-4 h-4 text-white animate-spin" />
+                                <span className="text-sm font-bold text-white tracking-wide shadow-sm">
+                                    {t('brainstormingBanner')}
+                                </span>
+                            </div>
+                        )}
+
                         <div className="absolute bottom-0 left-0 w-full p-8 sm:p-12 flex flex-col sm:flex-row items-start sm:items-end justify-between gap-6 z-10">
                             <div className="flex flex-col gap-4 max-w-2xl">
                                 <div className="flex items-center gap-3">
@@ -636,45 +647,74 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                         <h3 className="text-xl font-bold text-white flex items-center gap-2">
                                             {t('cast')}
                                         </h3>
-                                        <Button
-                                            size="sm"
-                                            className="bg-purple-600 hover:bg-purple-500 text-white rounded-full px-4 h-8 text-xs font-bold shadow-lg shadow-purple-900/20"
-                                            onClick={() => router.push(`/project/${project.id}/casting`)}
-                                        >
-                                            <Plus size={14} className="mr-1.5" />
-                                            {t('addChar')}
-                                        </Button>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button
+                                                    size="sm"
+                                                    className="bg-purple-600 hover:bg-purple-500 text-white rounded-full px-4 h-8 text-xs font-bold shadow-lg shadow-purple-900/20"
+                                                >
+                                                    <Plus size={14} className="mr-1.5" />
+                                                    {t('addChar')}
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" className="bg-[#18181B] border-white/10 text-gray-200">
+                                                <DropdownMenuItem
+                                                    className="focus:bg-white/10 cursor-pointer"
+                                                    onClick={() => router.push(`/project/${project.id}/casting`)}
+                                                >
+                                                    <Plus size={14} className="mr-2" />
+                                                    {t('manualAdd')}
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    className="focus:bg-white/10 cursor-pointer flex justify-between gap-4"
+                                                    onClick={() => setIsSuggestionListOpen(true)}
+                                                >
+                                                    <div className="flex items-center">
+                                                        <Sparkles size={14} className="mr-2 text-purple-400" />
+                                                        {t('aiAdd')}
+                                                    </div>
+                                                    <span className="text-[10px] text-purple-400 font-bold bg-purple-500/10 px-1.5 py-0.5 rounded border border-purple-500/20">{t('creditNotice')}</span>
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </div>
                                     <Link href={`/project/${project.id}/characters`}>
                                         <Button variant="ghost" size="sm" className="text-sm text-gray-400 hover:text-white">{t('viewAll')} <ArrowRight size={14} className="ml-1" /></Button>
                                     </Link>
                                 </div>
-                                {characters.length === 0 && (
-                                    <div className="flex flex-col items-center justify-center py-16 border border-dashed border-gray-800 rounded-3xl bg-white/5 mb-6">
-                                        <div className="w-16 h-16 rounded-full bg-purple-500/20 flex items-center justify-center mb-4 text-purple-400">
-                                            <Users size={32} />
-                                        </div>
-                                        <h4 className="text-white font-bold text-lg mb-2">{t('noCharacters')}</h4>
-                                        <p className="text-gray-400 text-sm mb-6 max-w-sm text-center">{t('noCharactersDesc')}</p>
-                                        <Button
-                                            onClick={() => router.push(`/project/${project.id}/casting`)}
-                                            className="bg-purple-600 hover:bg-purple-500 px-8 py-6 text-md font-bold rounded-xl shadow-xl shadow-purple-900/20"
-                                        >
-                                            <Plus size={18} className="mr-2" />
-                                            {t('addChar')}
-                                        </Button>
-                                    </div>
-                                )}
+
                                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                                    <div
-                                        onClick={() => router.push(`/project/${project.id}/casting`)}
-                                        className="aspect-[3/4] cursor-pointer rounded-xl border border-dashed border-gray-800 bg-[#0F0F12] flex flex-col items-center justify-center gap-2 hover:bg-[#15151A] hover:border-gray-700 transition-all group"
-                                    >
-                                        <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-gray-400 group-hover:text-white transition-colors">
-                                            <Plus size={16} />
-                                        </div>
-                                        <span className="text-xs font-medium text-gray-500 group-hover:text-gray-300">{t('addChar')}</span>
-                                    </div>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <div
+                                                className="aspect-[3/4] cursor-pointer rounded-xl border border-dashed border-gray-800 bg-[#0F0F12] flex flex-col items-center justify-center gap-2 hover:bg-[#15151A] hover:border-gray-700 transition-all group"
+                                            >
+                                                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-gray-400 group-hover:text-white transition-colors">
+                                                    <Plus size={16} />
+                                                </div>
+                                                <span className="text-xs font-medium text-gray-500 group-hover:text-gray-300">{t('addChar')}</span>
+                                            </div>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="start" className="bg-[#18181B] border-white/10 text-gray-200">
+                                            <DropdownMenuItem
+                                                className="focus:bg-white/10 cursor-pointer"
+                                                onClick={() => router.push(`/project/${project.id}/casting`)}
+                                            >
+                                                <Plus size={14} className="mr-2" />
+                                                {t('manualAdd')}
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                                className="focus:bg-white/10 cursor-pointer flex justify-between gap-4"
+                                                onClick={() => setIsSuggestionListOpen(true)}
+                                            >
+                                                <div className="flex items-center">
+                                                    <Sparkles size={14} className="mr-2 text-purple-400" />
+                                                    {t('aiAdd')}
+                                                </div>
+                                                <span className="text-[10px] text-purple-400 font-bold bg-purple-500/10 px-1.5 py-0.5 rounded border border-purple-500/20">{t('creditNotice')}</span>
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
 
 
                                     {[...characters].reverse().slice(0, 5).map(char => {
