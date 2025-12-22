@@ -655,6 +655,8 @@
       "generating": "Generating...",
       "failed": "Failed to suggest ideas",
       "failedDesc": "AI service could not generate suggestions.",
+      "instructionLabel": "User Instruction",
+      "instructionPlaceholder": "e.g. Make it a horror episode",
       "ideaPrompt": "Let AI suggest upcoming episode ideas based on your project and recent episodes.",
       "or": "Or",
       "startScratch": "Start from Scratch",

@@ -701,6 +701,8 @@
       "generating": "생성 중...",
       "failed": "아이디어 제안 실패",
       "failedDesc": "AI 서비스가 제안을 생성할 수 없습니다.",
+      "instructionLabel": "지시사항 (선택)",
+      "instructionPlaceholder": "예: 이번 에피소드는 좀 더 무섭게 만들어줘",
       "ideaPrompt": "프로젝트와 최근 에피소드를 기반으로 AI가 다음 에피소드 아이디어를 제안합니다.",
       "or": "또는",
       "startScratch": "직접 만들기",

@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader2, Sparkles, Film, ArrowRight } from 'lucide-react';
+import { Loader2, Sparkles, Film, ArrowRight, PenLine } from 'lucide-react';
 import api from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
@@ -35,6 +35,7 @@ export default function EpisodeGenerationModal({ isOpen, onClose, projectId, onE
     const [customTitle, setCustomTitle] = useState('');
     const [customSummary, setCustomSummary] = useState('');
     const [numCuts, setNumCuts] = useState(6);
+    const [userInstruction, setUserInstruction] = useState('');
     const { toast } = useToast();
 
     // Step 1: Generate Options
@@ -42,7 +43,10 @@ export default function EpisodeGenerationModal({ isOpen, onClose, projectId, onE
         setLoading(true);
         try {
             const res = await api.post('/episodes/generate-options', null, {
-                params: { project_id: projectId } // Send as query param if backend expects it or adjust body
+                params: {
+                    project_id: projectId,
+                    user_instruction: userInstruction || undefined
+                }
             });
             // Backend expects query param? Let's check backend signature.
             // Backend: @router.post("/generate-options") def generate_episode_options(*, project_id: UUID, ...) 
@@ -148,6 +152,21 @@ export default function EpisodeGenerationModal({ isOpen, onClose, projectId, onE
                             {options.length === 0 && !loading && (
                                 <div className="text-center space-y-4">
                                     <p className="text-gray-400">{t('ideaPrompt')}</p>
+                                    <div className="w-full max-w-sm mx-auto space-y-2">
+                                        <Label htmlFor="instruction" className="sr-only">{t('instructionLabel')}</Label>
+                                        <div className="relative">
+                                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                                                <PenLine size={14} />
+                                            </div>
+                                            <Input
+                                                id="instruction"
+                                                value={userInstruction}
+                                                onChange={(e) => setUserInstruction(e.target.value)}
+                                                placeholder={t('instructionPlaceholder')}
+                                                className="bg-gray-800 border-gray-700 text-sm pl-9 focus:border-purple-500 focus:ring-purple-500/50"
+                                            />
+                                        </div>
+                                    </div>
                                     <Button onClick={generateOptions} className="bg-purple-600 hover:bg-purple-700">
                                         <Sparkles className="mr-2 h-4 w-4" /> {t('suggestIdeas')}
                                     </Button>

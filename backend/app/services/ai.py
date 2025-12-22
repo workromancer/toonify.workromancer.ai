@@ -401,10 +401,9 @@ class AIService:
             raise e
 
 
-    def generate_image(self, prompt: str, width: int = 1024, height: int = 1024, seed: int = None, language: str = "en") -> bytes:
+    def generate_image(self, prompt: str, width: int = 1024, height: int = 1024, seed: int = None, language: str = "en", reference_image_urls: List[str] = None, prev_image_url: str = None) -> bytes:
         if not self.client:
              raise Exception("AI Service not initialized")
-
 
         try:
             # Aspect Ratio logic
@@ -424,6 +423,44 @@ class AIService:
             # Inject language instruction for image generation
             if language and language.startswith('ko'):
                 prompt += " (Any text inside the image must be in Korean Hangul)"
+            
+            # Prepare Content (Text or Multimodal)
+            contents = prompt
+            
+            # Check if we have image inputs
+            has_images = bool(reference_image_urls or prev_image_url)
+            
+            if has_images:
+                # Prepare multimodal inputs
+                # We reuse _prepare_multimodal_inputs but strictly for this context
+                # Note: _prepare_multimodal_inputs currently expects style_ref_url + char_urls
+                # We can adapt it or just handle it here locally for clarity
+                
+                parts = []
+                
+                # 1. Previous Cut (High Priority for Continuity)
+                if prev_image_url:
+                    print(f"Using previous image reference: {prev_image_url}")
+                    img_bytes = self._download_image(prev_image_url)
+                    if img_bytes:
+                        parts.append(types.Part.from_bytes(data=img_bytes, mime_type="image/png"))
+                        prompt += "\n\n[Visual Continuity]: The image provided FIRST is the previous scene. Maintain style, lighting, and character appearance from it."
+
+                # 2. Reference Images (Characters, etc.)
+                if reference_image_urls:
+                    for url in reference_image_urls:
+                        img_bytes = self._download_image(url)
+                        if img_bytes:
+                            parts.append(types.Part.from_bytes(data=img_bytes, mime_type="image/png"))
+                
+                if parts:
+                    prompt_part = types.Part.from_text(text=prompt)
+                    contents = [
+                        types.Content(
+                            role="user",
+                            parts=parts + [prompt_part] # Images first is often better
+                        )
+                    ]
             
             # Safety Settings for creative generation
             safety_settings = [
@@ -456,7 +493,7 @@ class AIService:
             print(f"DEBUG PROMPT [generate_image]: \n{prompt}")
             response = self.client.models.generate_content(
                 model=self.model_config["image"],
-                contents=prompt,
+                contents=contents,
                 config=config,
             )
             
@@ -686,7 +723,7 @@ class AIService:
         # Requesting 16:9 as it's standard wide
         return self.generate_image(prompt, width=1920, height=1080) 
 
-    def generate_episode_ideas(self, project_title: str, worldview: str, recent_episodes: str, language: str = "en") -> dict:
+    def generate_episode_ideas(self, project_title: str, worldview: str, recent_episodes: str, language: str = "en", user_instruction: str = None) -> dict:
         if not self.client:
              raise Exception("AI Service not initialized")
              
@@ -700,6 +737,8 @@ class AIService:
 
         # Story So Far (Recent Episodes)
         {recent_episodes}
+
+        {f'# User Instruction: {user_instruction}' if user_instruction else ''}
 
         {f'IMPORTANT: All output text (titles, summaries, reasons) MUST be in {language} language.' if language else ''}
         {f'If language is Korean, use Hangul.' if language and language.startswith('ko') else ''}

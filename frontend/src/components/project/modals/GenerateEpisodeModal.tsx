@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Sparkles, Zap, RotateCw, Wand2, Sliders } from 'lucide-react';
+import { Sparkles, Zap, RotateCw, Wand2, Sliders, PenLine } from 'lucide-react';
 import api from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslations } from 'next-intl';
@@ -37,6 +37,7 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
 
     const [ideas, setIdeas] = useState<Idea[]>([]);
     const [loadingIdeas, setLoadingIdeas] = useState(false);
+    const [userInstruction, setUserInstruction] = useState('');
     const { toast } = useToast();
 
     // Reset state when closing
@@ -58,7 +59,12 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
         // The ref design has a "Need inspiration?" block. 
 
         try {
-            const res = await api.post('/episodes/generate-options', null, { params: { project_id: projectId } });
+            const res = await api.post('/episodes/generate-options', null, {
+                params: {
+                    project_id: projectId,
+                    user_instruction: userInstruction || undefined
+                }
+            });
             if (res.data.options) {
                 setIdeas(res.data.options);
                 setMode('suggestions');
@@ -174,28 +180,7 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
                         /* MODE: FORM & SUGGESTIONS */
                         <div className="space-y-6">
 
-                            {/* Suggestion Toggle Area */}
-                            {mode === 'form' && (
-                                <div className="bg-gradient-to-r from-purple-900/20 to-indigo-900/20 border border-purple-500/20 rounded-xl p-4 flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-lg bg-purple-600/20 flex items-center justify-center text-purple-400">
-                                            <Wand2 size={20} />
-                                        </div>
-                                        <div>
-                                            <h4 className="text-sm font-bold text-purple-200">{t('needInspiration')}</h4>
-                                            <p className="text-xs text-purple-400/70">{t('inspirationDesc')}</p>
-                                        </div>
-                                    </div>
-                                    <button
-                                        onClick={handleSuggestIdeas}
-                                        disabled={loadingIdeas}
-                                        className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold rounded-lg shadow-lg shadow-purple-900/20 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        {loadingIdeas ? <RotateCw size={14} className="animate-spin" /> : <Sparkles size={14} />}
-                                        {loadingIdeas ? t('thinking') : t('suggestIdeas')}
-                                    </button>
-                                </div>
-                            )}
+                            {/* Introduction (Already handled in form above) */}
 
                             {/* Suggestions List */}
                             {mode === 'suggestions' && (
@@ -221,9 +206,9 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
                                 </div>
                             )}
 
-                            {/* Main Form */}
                             {mode === 'form' && (
                                 <div className="space-y-5 animate-fade-in">
+                                    {/* 1. Episode Title */}
                                     <div>
                                         <label className="text-xs font-mono text-slate-500 mb-1.5 block ml-1 uppercase">{t('episodeTitleLabel')}</label>
                                         <input
@@ -236,6 +221,7 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
                                         />
                                     </div>
 
+                                    {/* 2. Story Summary */}
                                     <div>
                                         <label className="text-xs font-mono text-slate-500 mb-1.5 block ml-1 uppercase">{t('summaryLabel')}</label>
                                         <textarea
@@ -246,6 +232,43 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
                                         />
                                     </div>
 
+                                    {/* 3. Need Inspiration (Refined Layout) */}
+                                    <div className="bg-purple-900/10 border border-purple-500/20 rounded-xl p-4">
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-400">
+                                                <Wand2 size={16} />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-sm font-bold text-white">{t('needInspiration')}</h4>
+                                                <p className="text-xs text-slate-400">{t('inspirationDesc')}</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex gap-2">
+                                            <div className="flex-1 relative">
+                                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
+                                                    <PenLine size={14} />
+                                                </div>
+                                                <input
+                                                    type="text"
+                                                    value={userInstruction}
+                                                    onChange={(e) => setUserInstruction(e.target.value)}
+                                                    placeholder={t('instructionPlaceholder')}
+                                                    className="w-full bg-white border border-slate-200 rounded-lg pl-9 pr-3 py-2 text-sm text-slate-900 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none placeholder-slate-400 transition-all dark:bg-slate-950 dark:border-slate-800 dark:text-white dark:placeholder-slate-600"
+                                                />
+                                            </div>
+                                            <button
+                                                onClick={handleSuggestIdeas}
+                                                disabled={loadingIdeas}
+                                                className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-bold rounded-lg shadow-sm transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                                            >
+                                                {loadingIdeas ? <RotateCw size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                                                {loadingIdeas ? t('thinking') : t('suggestIdeas')}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* 4. Number of Cuts */}
                                     <div>
                                         <label className="text-xs font-mono text-slate-500 mb-1.5 block ml-1 uppercase">{t('cutsLabel')}</label>
                                         <div className="bg-slate-900 border border-slate-700 rounded-xl p-4 flex items-center gap-4">

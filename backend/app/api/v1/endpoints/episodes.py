@@ -104,6 +104,41 @@ def get_episode(
         raise HTTPException(status_code=404, detail="Episode not found")
     return episode
 
+class EpisodeUpdate(BaseModel):
+    title: Optional[str] = None
+    story_summary: Optional[str] = None
+    background_info: Optional[str] = None
+    character_outfits: Optional[dict] = None
+
+@router.put("/{episode_id}", response_model=EpisodeOut)
+def update_episode(
+    *,
+    session: Session = Depends(deps.get_session),
+    episode_id: UUID,
+    episode_in: EpisodeUpdate,
+    current_user_id: str = Depends(deps.get_current_user_id),
+) -> Any:
+    """
+    Update an episode.
+    """
+    episode = session.get(Episode, episode_id)
+    if not episode or episode.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Episode not found")
+    
+    if episode_in.title is not None:
+        episode.title = episode_in.title
+    if episode_in.story_summary is not None:
+        episode.story_summary = episode_in.story_summary
+    if episode_in.background_info is not None:
+        episode.background_info = episode_in.background_info
+    if episode_in.character_outfits is not None:
+        episode.character_outfits = episode_in.character_outfits
+        
+    session.add(episode)
+    session.commit()
+    session.refresh(episode)
+    return episode
+
 @router.delete("/{episode_id}")
 def delete_episode(
     *,
@@ -130,6 +165,7 @@ def delete_episode(
 def generate_episode_options(
     *,
     project_id: UUID,
+    user_instruction: str = None,
     session: Session = Depends(deps.get_session),
     current_user_id: str = Depends(deps.get_current_user_id),
     accept_language: str = Header("en", alias="Accept-Language")
@@ -154,7 +190,8 @@ def generate_episode_options(
         project_title=project.title,
         worldview=worldview_str,
         recent_episodes=recent_summaries,
-        language=project.language or accept_language.split(',')[0].strip()[:2]
+        language=project.language or accept_language.split(',')[0].strip()[:2],
+        user_instruction=user_instruction
     )
     return result
 
@@ -304,8 +341,11 @@ def generate_episode_cuts_task(
             session.commit()
             print(f"Task Complete: Generated {len(created_cuts)} cuts for episode {episode_id}")
             
+            # Note: Automatic image generation triggering removed per user request.
+            # Images will be generated manually or via 'Generate All' in frontend.
+            
         except Exception as e:
-            print(f"AI Cut Gen Failed: {e}")
+            print(f"Error generating cuts: {e}")
             episode.status = "failed"
             session.add(episode)
             session.commit()
@@ -350,11 +390,11 @@ def generate_cut_image(
     
     return {"message": "Generation started", "cut_id": cut_id}
     
-def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: str = "en", use_previous_context: bool = True):
+def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: str = "en", use_previous_context: bool = True, prev_image_url_override: str = None) -> str | None:
     print(f"Background Task: Generating image for cut {cut_id}, language={language}")
     with Session(engine) as session:
         cut = session.get(StoryCut, cut_id)
-        if not cut: return
+        if not cut: return None
         
         try:
              # Ensure status is generating if missed
@@ -378,10 +418,13 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
             episode_char_outfits = episode.character_outfits or {}
 
             # B. Previous Scene (for continuity)
-            prev_scene_url = None
+            prev_scene_url = prev_image_url_override # Priority to override
+            
             # Check if reference logic is enabled
             should_refer = use_previous_context and cut.refer_prev_cut
-            if should_refer and cut.cut_order > 1:
+            
+            # If no override provided, look up in DB
+            if not prev_scene_url and should_refer and cut.cut_order > 1:
                 prev_cut = session.exec(
                     select(StoryCut)
                     .where(StoryCut.episode_id == cut.episode_id)
@@ -523,6 +566,7 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
             elif ratio in ["vertical", "9:16"]:
                 width, height = 1024, 1536 # 2:3
             
+            # Using generate_panel_image which now supports prev_scene_url correctly
             img_bytes = ai_service.generate_panel_image(
                 prompt=prompt,
                 width=width,
@@ -540,12 +584,14 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
             session.add(cut)
             session.commit()
             print(f"Task Complete: Image saved to {url}")
+            return url
 
         except Exception as e:
             print(f"Background Cut Gen Error: {e}")
             cut.status = "failed"
             session.add(cut)
             session.commit()
+            return None
 
 
 @router.post("/{episode_id}/export")
