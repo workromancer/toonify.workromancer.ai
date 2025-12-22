@@ -691,22 +691,32 @@ class AIService:
              raise Exception("AI Service not initialized")
              
         prompt = f"""
-        You are a webtoon writer.
-        Project: {project_title}
+        You are a professional webtoon writer.
+        Your task is to propose the NEXT 3 possible episode ideas that logically continue the story.
+
+        # Project Context
+        Title: {project_title}
         Worldview: {worldview}
-        Recent Episodes: {recent_episodes}
-        
+
+        # Story So Far (Recent Episodes)
+        {recent_episodes}
+
         {f'IMPORTANT: All output text (titles, summaries, reasons) MUST be in {language} language.' if language else ''}
         {f'If language is Korean, use Hangul.' if language and language.startswith('ko') else ''}
 
-        Propose 3 distinct episode ideas for the next chapter.
-        Return ONLY JSON:
+        # Instructions
+        1. Analyze the narrative flow of the recent episodes.
+        2. Propose 3 distinct directions for the *immediately following* episode.
+        3. Ensure continuity: The new episodes must logically succeed the incidents in the last episode.
+        4. Advance the plot or deepen character relationships based on established context.
+
+        Return ONLY a JSON object with the following structure:
         {{
             "options": [
                 {{
                     "title": "Title",
-                    "summary": "Brief summary",
-                    "reason": "Why this is interesting"
+                    "summary": "Detailed summary of the episode events.",
+                    "reason": "Explanation of how this connects to the previous plot and why it's a good next step."
                 }},
                 ...
             ]

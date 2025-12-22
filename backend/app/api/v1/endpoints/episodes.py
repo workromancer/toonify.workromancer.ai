@@ -146,7 +146,7 @@ def generate_episode_options(
     episodes = session.exec(statement).all()
     # Reverse to chronological
     episodes.reverse()
-    recent_summaries = "\n".join([f"{ep.title}: {ep.story_summary}" for ep in episodes])
+    recent_summaries = "\n".join([f"Ep {ep.episode_order} - {ep.title}: {ep.story_summary}" for ep in episodes])
 
     worldview_str = json.dumps(project.worldview) if project.worldview else ""
 

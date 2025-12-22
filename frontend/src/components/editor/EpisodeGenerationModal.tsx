@@ -11,6 +11,8 @@ import { Loader2, Sparkles, Film, ArrowRight } from 'lucide-react';
 import api from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
+import { useTranslations } from 'next-intl';
+
 interface EpisodeOption {
     title: string;
     summary: string;
@@ -25,6 +27,7 @@ interface EpisodeGenerationModalProps {
 }
 
 export default function EpisodeGenerationModal({ isOpen, onClose, projectId, onEpisodeCreated }: EpisodeGenerationModalProps) {
+    const t = useTranslations('Modals.GenerateEpisode');
     const [step, setStep] = useState<1 | 2>(1);
     const [loading, setLoading] = useState(false);
     const [options, setOptions] = useState<EpisodeOption[]>([]);
@@ -59,8 +62,8 @@ export default function EpisodeGenerationModal({ isOpen, onClose, projectId, onE
         } catch (err) {
             console.error("Failed to generate options", err);
             toast({
-                title: "Generation Failed",
-                description: "Could not generate episode ideas. Please try again.",
+                title: t('failed'),
+                description: t('failedDesc'),
                 variant: "destructive"
             });
         } finally {
@@ -98,8 +101,8 @@ export default function EpisodeGenerationModal({ isOpen, onClose, projectId, onE
             });
 
             toast({
-                title: "Episode Created",
-                description: `Created "${customTitle}" with ${res.data.cuts_count} cuts.`,
+                title: t('success'),
+                description: t('successDesc', { title: customTitle }),
             });
 
             onEpisodeCreated(res.data.episode_id);
@@ -108,8 +111,8 @@ export default function EpisodeGenerationModal({ isOpen, onClose, projectId, onE
         } catch (err) {
             console.error("Failed to create episode", err);
             toast({
-                title: "Creation Failed",
-                description: "Could not create episode. Please try again.",
+                title: t('genFailed'),
+                description: t('genFailedDesc'),
                 variant: "destructive"
             });
         } finally {
@@ -135,7 +138,7 @@ export default function EpisodeGenerationModal({ isOpen, onClose, projectId, onE
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <Sparkles className="text-purple-400" size={20} />
-                        {step === 1 ? 'Generate Episode Ideas' : 'Configure Episode'}
+                        {step === 1 ? t('title') : t('configureEpisode')}
                     </DialogTitle>
                 </DialogHeader>
 
@@ -144,20 +147,20 @@ export default function EpisodeGenerationModal({ isOpen, onClose, projectId, onE
                         <div className="flex justify-center">
                             {options.length === 0 && !loading && (
                                 <div className="text-center space-y-4">
-                                    <p className="text-gray-400">Let AI suggest upcoming episode ideas based on your project and recent episodes.</p>
+                                    <p className="text-gray-400">{t('ideaPrompt')}</p>
                                     <Button onClick={generateOptions} className="bg-purple-600 hover:bg-purple-700">
-                                        <Sparkles className="mr-2 h-4 w-4" /> Suggest Ideas
+                                        <Sparkles className="mr-2 h-4 w-4" /> {t('suggestIdeas')}
                                     </Button>
                                     <div className="relative">
                                         <div className="absolute inset-0 flex items-center">
                                             <span className="w-full border-t border-gray-700" />
                                         </div>
                                         <div className="relative flex justify-center text-xs uppercase">
-                                            <span className="bg-gray-900 px-2 text-gray-500">Or</span>
+                                            <span className="bg-gray-900 px-2 text-gray-500">{t('or')}</span>
                                         </div>
                                     </div>
                                     <Button variant="outline" onClick={handleManualEntry} className="border-gray-700 text-gray-300 hover:bg-gray-800">
-                                        Start from Scratch
+                                        {t('startScratch')}
                                     </Button>
                                 </div>
                             )}
@@ -165,7 +168,7 @@ export default function EpisodeGenerationModal({ isOpen, onClose, projectId, onE
                             {loading && (
                                 <div className="flex flex-col items-center justify-center py-8 space-y-4">
                                     <Loader2 className="h-8 w-8 text-purple-500 animate-spin" />
-                                    <p className="text-gray-400 animate-pulse">Consulting the writers' room...</p>
+                                    <p className="text-gray-400 animate-pulse">{t('consulting')}</p>
                                 </div>
                             )}
                         </div>
@@ -188,12 +191,12 @@ export default function EpisodeGenerationModal({ isOpen, onClose, projectId, onE
                                             </CardDescription>
                                         </CardHeader>
                                         <CardContent>
-                                            <p className="text-xs text-gray-500 italic">Why: {opt.reason}</p>
+                                            <p className="text-xs text-gray-500 italic">{t('why')}: {opt.reason}</p>
                                         </CardContent>
                                     </Card>
                                 ))}
                                 <Button variant="ghost" onClick={handleManualEntry} className="w-full text-gray-400 hover:text-white">
-                                    Skip to details
+                                    {t('skipToDetails')}
                                 </Button>
                             </div>
                         )}
@@ -203,7 +206,7 @@ export default function EpisodeGenerationModal({ isOpen, onClose, projectId, onE
                 {step === 2 && (
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label htmlFor="title">Episode Title</Label>
+                            <Label htmlFor="title">{t('episodeTitleLabel')}</Label>
                             <Input
                                 id="title"
                                 value={customTitle}
@@ -214,18 +217,18 @@ export default function EpisodeGenerationModal({ isOpen, onClose, projectId, onE
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="summary">Plot Summary (for AI Context)</Label>
+                            <Label htmlFor="summary">{t('summaryLabelContext')}</Label>
                             <Textarea
                                 id="summary"
                                 value={customSummary}
                                 onChange={(e) => setCustomSummary(e.target.value)}
                                 className="bg-gray-800 border-gray-700 min-h-[100px]"
-                                placeholder="Describe what happens in this episode..."
+                                placeholder={t('summaryPlaceholder')}
                             />
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="cuts">Number of Cuts</Label>
+                            <Label htmlFor="cuts">{t('cutsLabel')}</Label>
                             <div className="flex items-center gap-4">
                                 <Input
                                     id="cuts"
@@ -236,7 +239,7 @@ export default function EpisodeGenerationModal({ isOpen, onClose, projectId, onE
                                     onChange={(e) => setNumCuts(parseInt(e.target.value))}
                                     className="bg-gray-800 border-gray-700 w-24"
                                 />
-                                <span className="text-sm text-gray-400">Recommended: 4-8 for short episodes</span>
+                                <span className="text-sm text-gray-400">{t('cutsRecommendation')}</span>
                             </div>
                         </div>
                     </div>
@@ -246,7 +249,7 @@ export default function EpisodeGenerationModal({ isOpen, onClose, projectId, onE
                     {step === 2 && (
                         <div className="flex justify-between w-full">
                             <Button variant="ghost" onClick={() => setStep(1)} disabled={loading}>
-                                Back
+                                {t('back')}
                             </Button>
                             <Button
                                 onClick={handleCreate}
@@ -255,11 +258,11 @@ export default function EpisodeGenerationModal({ isOpen, onClose, projectId, onE
                             >
                                 {loading ? (
                                     <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating Cuts...
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t('generatingCuts')}
                                     </>
                                 ) : (
                                     <>
-                                        <Film className="mr-2 h-4 w-4" /> Create Episode
+                                        <Film className="mr-2 h-4 w-4" /> {t('createEpisode')}
                                     </>
                                 )}
                             </Button>
