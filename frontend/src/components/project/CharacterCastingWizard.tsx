@@ -640,7 +640,7 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
         <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center p-4 font-sans selection:bg-purple-500/30">
             {/* Header */}
             <header className="absolute top-0 left-0 w-full p-6 flex justify-between items-center z-50 border-b border-white/5 bg-[#050505]/80 backdrop-blur-sm">
-                <div className="flex items-center gap-4 text-gray-400 hover:text-white transition-colors cursor-pointer" onClick={() => router.back()}>
+                <div className="flex items-center gap-4 text-gray-400 hover:text-white transition-colors cursor-pointer" onClick={() => router.push(`/project/${projectId}`)}>
                     <MoveLeft className="w-5 h-5" />
                     <span className="font-medium">{t('buttons.backToProject')}</span>
                 </div>
