@@ -26,10 +26,13 @@ if [ ! -f "$ENV_FILE" ]; then
     exit 1
 fi
 
-# 환경 변수 로드
-set -a
-source <(grep -v '^#' $ENV_FILE | grep -v '^$')
-set +a
+# 환경 변수 로드 (eval을 사용하여 특수문자 처리)
+while IFS='=' read -r key value; do
+    # 빈 줄이나 주석 스킵
+    [[ -z "$key" || "$key" =~ ^# ]] && continue
+    # 값에서 따옴표 제거하지 않고 export
+    export "$key=$value"
+done < <(grep -v '^#' "$ENV_FILE" | grep -v '^$')
 
 # 백엔드 URL 가져오기
 echo "백엔드 서비스 URL 조회 중..."

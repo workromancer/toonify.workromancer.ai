@@ -25,10 +25,19 @@ if [ ! -f "$ENV_FILE" ]; then
     exit 1
 fi
 
-# 환경 변수 로드
-set -a
-source <(grep -v '^#' $ENV_FILE | grep -v '^$')
-set +a
+# 환경 변수 로드 (eval을 사용하여 특수문자 처리)
+while IFS='=' read -r key value; do
+    # 빈 줄이나 주석 스킵
+    [[ -z "$key" || "$key" =~ ^# ]] && continue
+    # 값에서 따옴표 제거하지 않고 export
+    export "$key=$value"
+done < <(grep -v '^#' "$ENV_FILE" | grep -v '^$')
+
+# 디버그: 핵심 변수 확인
+echo "환경 변수 확인:"
+echo "  STORAGE_TYPE=$STORAGE_TYPE"
+echo "  MINIO_BUCKET=$MINIO_BUCKET"
+echo "  POSTGRES_SERVER=$POSTGRES_SERVER"
 
 # 백엔드 환경변수 추출 함수
 get_backend_env_vars() {

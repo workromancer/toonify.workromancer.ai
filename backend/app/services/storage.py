@@ -59,8 +59,8 @@ class GCSStorage(StorageService):
     def __init__(self):
         from google.cloud import storage
         self.client = storage.Client()
-        # Default bucket from env or settings if added, currently assuming env GCS_BUCKET_NAME
-        self.bucket_name = os.getenv("GCS_BUCKET_NAME", "toonify-assets")
+        # Use MINIO_BUCKET for consistency with config (same bucket name var)
+        self.bucket_name = settings.MINIO_BUCKET or os.getenv("GCS_BUCKET_NAME", "toonify-prod-assets")
         self.bucket = self.client.bucket(self.bucket_name)
 
     def upload_image(self, image_data: bytes, schema: str, identifier: str, content_type: str = "image/png") -> str:
@@ -74,8 +74,9 @@ class GCSStorage(StorageService):
         return relative_path
 
 def get_storage_service() -> StorageService:
-    env = os.getenv("APP_ENV", "local")
-    if env == "production":
+    # Use STORAGE_TYPE env var (gcs, minio, or local)
+    storage_type = os.getenv("STORAGE_TYPE", "minio").lower()
+    if storage_type == "gcs":
         return GCSStorage()
     return MinIOStorage()
 

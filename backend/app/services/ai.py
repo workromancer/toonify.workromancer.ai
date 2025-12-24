@@ -14,21 +14,30 @@ class AIService:
     def __init__(self):
         # Initialize Google GenAI Client
         try:
-            api_key = settings.GEMINI_API_KEY or os.environ.get("GOOGLE_CLOUD_API_KEY")
+            api_key = settings.GEMINI_API_KEY or os.environ.get("GEMINI_API_KEY")
             project = settings.GOOGLE_CLOUD_PROJECT or os.environ.get("GOOGLE_CLOUD_PROJECT")
-            location = settings.GOOGLE_CLOUD_LOCATION
+            location = settings.GOOGLE_CLOUD_LOCATION or os.environ.get("GOOGLE_CLOUD_LOCATION", "global")
             
             print(f"AI Service: Initializing for project '{project}' in '{location}'")
             
-            if not api_key:
-                print(f"Info: No API Key found. Attempting to use Application Default Credentials (ADC) for project '{project}'.")
+            # Determine if we should use Vertex AI or direct API Key mode
+            # In Cloud Run, use Vertex AI with service account (no API key needed)
+            use_vertexai = os.environ.get("STORAGE_TYPE") == "gcs"  # If in GCS mode, assume Cloud Run
             
-            self.client = genai.Client(
-                vertexai=True,
-                project=project,
-                location=location,
-                api_key=api_key # Can be None for ADC
-            )
+            if use_vertexai:
+                # Vertex AI mode - use ADC (Application Default Credentials)
+                print(f"AI Service: Using Vertex AI with ADC for project '{project}'")
+                self.client = genai.Client(
+                    vertexai=True,
+                    project=project,
+                    location=location
+                    # Do NOT pass api_key when using Vertex AI with ADC
+                )
+            else:
+                # Direct API Key mode (local development)
+                print(f"AI Service: Using API Key mode")
+                self.client = genai.Client(api_key=api_key)
+            
             # Models Configuration (Ref: AI_MODELS.md)
             self.model_config = {
                 "style": "gemini-3-flash-preview",

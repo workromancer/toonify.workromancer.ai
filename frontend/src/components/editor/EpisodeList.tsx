@@ -226,8 +226,10 @@ export default function EpisodeList() {
                 isOpen={genModalOpen}
                 onClose={() => setGenModalOpen(false)}
                 projectId={projectId}
-                onGenerate={handleEpisodeCreated}
-                nextOrder={episodes.length > 0 ? Math.max(...episodes.map(e => e.episode_order)) + 1 : 1}
+                onEpisodeCreated={(episodeId) => {
+                    // Fetch episodes to get the new one
+                    fetchEpisodes();
+                }}
             />
         </div>
     );

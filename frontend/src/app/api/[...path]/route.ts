@@ -27,6 +27,7 @@ async function proxyRequest(request: NextRequest, { params }: { params: Promise<
       authHeader.trim() === 'Bearer';
 
     if (isAuthMissingOrInvalid) {
+      const cookieStore = await cookies();
       const token = cookieStore.get('access_token')?.value;
       if (token) {
         requestHeaders.set('Authorization', `Bearer ${token}`);
