@@ -144,6 +144,9 @@
     "errors": {
       "loadFailed": "Load Failed"
     },
+    "styles": {
+      "myStyles": "My Style"
+    },
     "logout": "Logout"
   },
   "CreateWorkspace": {

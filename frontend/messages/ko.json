@@ -149,6 +149,9 @@
       "title": "새 스타일 만들기",
       "desc": "나만의 그림체 생성"
     },
+    "styles": {
+      "myStyles": "나만의 그림체"
+    },
     "logout": "로그아웃"
   },
   "CreateWorkspace": {

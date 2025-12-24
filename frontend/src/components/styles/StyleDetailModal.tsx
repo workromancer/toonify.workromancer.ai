@@ -10,6 +10,7 @@ interface ArtStyle {
     name: string;
     description?: string;
     imageUrl?: string;
+    image_url?: string; // Backend returns snake_case
     status: string;
     prompt?: string;
     image?: string; // fallback
@@ -30,7 +31,7 @@ export default function StyleDetailModal({ isOpen, onClose, style, onRegenerate,
 
     if (!style) return null;
 
-    const imageUrl = style.imageUrl || style.image || '';
+    const imageUrl = style.imageUrl || style.image_url || style.image || '';
     const isFailed = style.status === 'failed';
 
     const handleCopy = () => {

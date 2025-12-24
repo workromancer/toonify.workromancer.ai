@@ -23,6 +23,7 @@ interface ArtStyle {
     name: string;
     description?: string;
     imageUrl?: string;
+    image_url?: string; // Backend returns snake_case
     status: string;
     // adding optional fields to match reference usage if backend doesn't support them yet
     version?: string;
@@ -39,8 +40,8 @@ const StyleCard = ({ style, onClick }: { style: ArtStyle, onClick: () => void })
     const isGenerating = style.status === 'processing' || style.status === 'pending' || style.status === 'Generating';
     const isFailed = style.status === 'failed';
 
-    // Prioritize imageUrl, fallback to image (ref style), fallback to empty
-    const imageUrl = style.imageUrl || style.image || '';
+    // Prioritize imageUrl, fallback to image_url (snake_case from backend), then image
+    const imageUrl = style.imageUrl || style.image_url || style.image || '';
     const promptText = style.prompt || style.description || "No prompt provided";
     const version = style.version || "v1.0";
 
@@ -102,15 +103,6 @@ const StyleCard = ({ style, onClick }: { style: ArtStyle, onClick: () => void })
 
                 {/* Overlay Gradient (Always) */}
                 <div className={`absolute inset-0 bg-gradient-to-t from-[#0f0f16] via-transparent to-transparent ${isGenerating ? 'opacity-0' : 'opacity-80'}`} />
-
-                {/* Status Badge */}
-                {!isGenerating && !isFailed && (
-                    <div className="absolute top-3 left-3 z-10">
-                        <div className="bg-black/60 backdrop-blur px-2.5 py-1 rounded-full text-[10px] text-slate-300 border border-white/10 font-mono shadow-lg group-hover:bg-purple-600 group-hover:text-white group-hover:border-purple-500 transition-colors">
-                            {version}
-                        </div>
-                    </div>
-                )}
             </div>
 
             {/* Info Area */}
@@ -125,33 +117,18 @@ const StyleCard = ({ style, onClick }: { style: ArtStyle, onClick: () => void })
                 )}
 
                 <div>
-                    <div className="flex justify-between items-start mb-3">
+                    <div className="flex justify-between items-start">
                         <h3 className={`font-bold text-sm truncate pr-2 leading-tight ${isGenerating ? 'text-purple-300 animate-pulse' : 'text-white'}`}>
                             {style.name}
                         </h3>
                         {!isGenerating && <Sparkles size={14} className="text-yellow-500 shrink-0 mt-0.5" fill="currentColor" />}
                     </div>
 
-                    <div className="space-y-2.5">
-                        {isGenerating ? (
-                            <div className="w-full flex items-center justify-center text-xs text-purple-400 bg-purple-900/10 p-2.5 rounded-lg border border-purple-500/20 font-mono animate-pulse">
-                                Generating Preview...
-                            </div>
-                        ) : (
-                            <button
-                                onClick={handleCopy}
-                                className="w-full flex items-center justify-between text-xs text-slate-500 bg-slate-900/50 p-2.5 rounded-lg border border-slate-800/50 group-hover:border-purple-500/30 transition-colors hover:bg-slate-800 cursor-pointer"
-                            >
-                                <span className="font-mono text-[10px] uppercase tracking-wide">Prompt</span>
-                                <div className="flex items-center gap-2 overflow-hidden pl-2 max-w-[120px]">
-                                    <span className="text-purple-400 font-mono truncate">
-                                        {promptText}
-                                    </span>
-                                    {copied ? <Check size={12} className="text-green-500 shrink-0" /> : <Copy size={12} className="shrink-0" />}
-                                </div>
-                            </button>
-                        )}
-                    </div>
+                    {isGenerating && (
+                        <div className="mt-2.5 w-full flex items-center justify-center text-xs text-purple-400 bg-purple-900/10 p-2.5 rounded-lg border border-purple-500/20 font-mono animate-pulse">
+                            Generating Preview...
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
@@ -270,12 +247,18 @@ function ArtStylesContent() {
                             {/* Create New Trigger Card */}
                             <button
                                 onClick={handleCreateClick}
-                                className="group relative aspect-video rounded-2xl border-2 border-dashed border-slate-800 hover:border-purple-500/50 bg-slate-900/20 hover:bg-purple-900/10 transition-all flex flex-col items-center justify-center gap-4 text-slate-500 hover:text-purple-400 cursor-pointer shadow-inner hover:shadow-lg active:scale-95 duration-200"
+                                className="group relative bg-[#0f0f16] border-2 border-dashed rounded-2xl overflow-hidden border-slate-800 hover:border-purple-500/50 hover:bg-purple-900/10 transition-all flex flex-col cursor-pointer shadow-inner hover:shadow-lg active:scale-95 duration-200"
                             >
-                                <div className="w-16 h-16 rounded-full bg-slate-800 group-hover:bg-purple-600 group-hover:shadow-[0_0_25px_rgba(147,51,234,0.5)] flex items-center justify-center transition-all duration-300 group-hover:scale-110">
-                                    <Plus size={32} className="text-slate-400 group-hover:text-white" strokeWidth={3} />
+                                {/* Image Area - matches StyleCard aspect-video */}
+                                <div className="aspect-video bg-slate-900/20 flex items-center justify-center">
+                                    <div className="w-16 h-16 rounded-full bg-slate-800 group-hover:bg-purple-600 group-hover:shadow-[0_0_25px_rgba(147,51,234,0.5)] flex items-center justify-center transition-all duration-300 group-hover:scale-110">
+                                        <Plus size={32} className="text-slate-400 group-hover:text-white" strokeWidth={3} />
+                                    </div>
                                 </div>
-                                <span className="font-bold text-sm tracking-wide group-hover:text-purple-300">{t('generateNew')}</span>
+                                {/* Info Area - matches StyleCard p-5 */}
+                                <div className="p-5 flex-1 flex items-center justify-center">
+                                    <span className="font-bold text-sm tracking-wide text-slate-500 group-hover:text-purple-300">{t('generateNew')}</span>
+                                </div>
                             </button>
 
                             {/* Style Cards */}
