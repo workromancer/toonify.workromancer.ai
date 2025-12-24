@@ -107,8 +107,12 @@ export default function ProjectLayout({ children, projectId, projectTitle }: Pro
                 <SidebarToggle />
             </Sidebar>
 
-            {/* Main Content */}
-            <main className="flex-1 min-w-0 bg-[#0A0A0B] relative pt-14 md:pt-0">
+            {/* Main Content - add left margin to account for fixed sidebar */}
+            <main className={cn(
+                "flex-1 min-w-0 bg-[#0A0A0B] relative pt-14 md:pt-0",
+                // Add left margin for fixed sidebar on desktop
+                isSidebarCollapsed ? "md:ml-20" : "md:ml-64"
+            )}>
                 {children}
             </main>
         </div>

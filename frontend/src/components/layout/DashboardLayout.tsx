@@ -223,8 +223,11 @@ export default function DashboardLayout({ children, accessToken }: DashboardLayo
                 <SidebarToggle />
             </Sidebar>
 
-            {/* Main Content */}
-            <main className="flex-1 overflow-auto bg-[#0A0A0B] pt-14 md:pt-0">
+            {/* Main Content - add left margin to account for fixed sidebar */}
+            <main className={cn(
+                "flex-1 overflow-auto bg-[#0A0A0B] pt-14 md:pt-0",
+                isSidebarCollapsed ? "md:ml-20" : "md:ml-64"
+            )}>
                 {children}
             </main>
         </div>

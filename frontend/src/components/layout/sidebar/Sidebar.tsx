@@ -57,10 +57,10 @@ export function Sidebar({ children, className }: SidebarProps) {
                 className={cn(
                     // Base styles
                     "flex flex-col border-r border-gray-800 bg-[#0F0F12] transition-all duration-300 ease-in-out h-screen shrink-0 z-50",
-                    // Desktop: sticky sidebar
-                    "md:sticky md:top-0",
+                    // Desktop: fixed sidebar (not sticky) so it doesn't scroll with content
+                    "md:fixed md:top-0 md:left-0",
                     // Mobile: fixed drawer
-                    "fixed top-0 left-0 md:relative",
+                    "fixed top-0 left-0",
                     // Mobile visibility
                     isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
                     // Width
