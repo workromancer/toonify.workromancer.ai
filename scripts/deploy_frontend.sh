@@ -86,6 +86,7 @@ gcloud run deploy $FRONTEND_SERVICE \
     --platform managed \
     --ingress all \
     --vpc-connector vpc-connector \
+    --vpc-egress all-traffic \
     --set-env-vars "$(get_frontend_env_vars $BACKEND_URL)" \
     --allow-unauthenticated \
     --service-account "toonify-frontend-sa@$PROJECT_ID.iam.gserviceaccount.com"
