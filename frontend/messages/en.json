@@ -273,6 +273,7 @@
       "selectStyle": "Select Art Style",
       "selectStyleDesc": "Choose an art style for your project",
       "addChar": "Add Character",
+      "manualAdd": "Add Manually",
       "addCharDesc": "Create your first character",
       "generating": "Generating...",
       "genAiCover": "Generate AI Cover",

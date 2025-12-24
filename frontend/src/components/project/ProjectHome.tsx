@@ -20,8 +20,6 @@ import { SectionLabel } from '@/components/ui/section-label';
 import ImageGeneratingPlaceholder from '@/components/ui/ImageGeneratingPlaceholder';
 import { useTranslations } from 'next-intl';
 import { CustomLoader } from '@/components/ui/custom-loader';
-import CharacterSuggestionList from './CharacterSuggestionList';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 interface Character {
@@ -101,7 +99,6 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
     const [isSuggestionDetailOpen, setIsSuggestionDetailOpen] = useState(false);
     const [suggestionToPromote, setSuggestionToPromote] = useState<Suggestion | null>(null);
     const [isPromoteConfirmOpen, setIsPromoteConfirmOpen] = useState(false);
-    const [isSuggestionListOpen, setIsSuggestionListOpen] = useState(false);
 
     const { toast } = useToast();
     const router = useRouter();
@@ -359,15 +356,19 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
             };
         }
 
-        // Priority 3: No Characters -> AI Suggestions
+        // Priority 3: No Characters -> scroll to cast section
         if (!characters || characters.length === 0) {
             const hasSuggestions = suggestions.length > 0 && project.suggestions_status === 'completed';
+            const isProcessing = project.suggestions_status === 'processing';
             return {
-                label: hasSuggestions ? t('suggestionsReady') : t('recommendations'), // Suggestion focused
-                icon: <Sparkles className="mr-2 h-4 w-4" />,
-                onClick: () => setIsSuggestionListOpen(true),
-                variant: 'primary',
-                description: hasSuggestions ? t('suggestionsReadyDesc') : t('addCharDesc')
+                label: isProcessing ? t('preparingSuggestions') : (hasSuggestions ? t('suggestionsReady') : t('addChar')),
+                icon: isProcessing ? <CustomLoader size={16} className="mr-2" /> : <Sparkles className="mr-2 h-4 w-4" />,
+                onClick: () => {
+                    document.getElementById('cast-section')?.scrollIntoView({ behavior: 'smooth' });
+                },
+                variant: isProcessing ? 'magic' : 'primary',
+                disabled: isProcessing,
+                description: isProcessing ? t('preparingSuggestionsDesc') : (hasSuggestions ? t('suggestionsReadyDesc') : t('addCharDesc'))
             };
         }
 
@@ -556,19 +557,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                                 {project.thumbnail_url ? t('regenCover') : t('genCover')}
                                             </button>
 
-                                            {project.suggestions_status === 'completed' && suggestions.length > 0 && (
-                                                <button
-                                                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 transition-colors text-left border-t border-white/5"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setIsSuggestionListOpen(true);
-                                                        setIsMenuOpen(false);
-                                                    }}
-                                                >
-                                                    <Sparkles size={16} />
-                                                    {t('recommendations')}
-                                                </button>
-                                            )}
+
                                         </div>
                                     )}
                                 </div>
@@ -614,7 +603,9 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                             <Button
                                                 variant="ghost"
                                                 className="absolute inset-0 w-full h-full p-0 opacity-0 z-10"
-                                                onClick={() => setIsSuggestionListOpen(true)}
+                                                onClick={() => {
+                                                    document.getElementById('cast-section')?.scrollIntoView({ behavior: 'smooth' });
+                                                }}
                                             />
                                             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-purple-900/40 shrink-0 transform group-hover:scale-110 transition-transform duration-500">
                                                 <Users size={32} className="text-white" />
@@ -640,8 +631,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                 </div>
                             )}
 
-                            {/* Characters Section */}
-                            <section>
+                            <section id="cast-section">
                                 <div className="flex items-center justify-between mb-6">
                                     <div className="flex items-center gap-4">
                                         <h3 className="text-xl font-bold text-white flex items-center gap-2">
@@ -664,16 +654,6 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                                 >
                                                     <Plus size={14} className="mr-2" />
                                                     {t('manualAdd')}
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem
-                                                    className="focus:bg-white/10 cursor-pointer flex justify-between gap-4"
-                                                    onClick={() => setIsSuggestionListOpen(true)}
-                                                >
-                                                    <div className="flex items-center">
-                                                        <Sparkles size={14} className="mr-2 text-purple-400" />
-                                                        {t('aiAdd')}
-                                                    </div>
-                                                    <span className="text-[10px] text-purple-400 font-bold bg-purple-500/10 px-1.5 py-0.5 rounded border border-purple-500/20">{t('creditNotice')}</span>
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
@@ -702,16 +682,6 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                             >
                                                 <Plus size={14} className="mr-2" />
                                                 {t('manualAdd')}
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem
-                                                className="focus:bg-white/10 cursor-pointer flex justify-between gap-4"
-                                                onClick={() => setIsSuggestionListOpen(true)}
-                                            >
-                                                <div className="flex items-center">
-                                                    <Sparkles size={14} className="mr-2 text-purple-400" />
-                                                    {t('aiAdd')}
-                                                </div>
-                                                <span className="text-[10px] text-purple-400 font-bold bg-purple-500/10 px-1.5 py-0.5 rounded border border-purple-500/20">{t('creditNotice')}</span>
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
@@ -947,28 +917,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                 cancelLabel={useTranslations('Common')('cancel')}
                 onConfirm={handlePromoteConfirm}
             />
-            {/* AI Suggestion List Modal */}
-            <Dialog open={isSuggestionListOpen} onOpenChange={setIsSuggestionListOpen}>
-                <DialogContent className="bg-[#0f0b15] border-white/10 p-0 max-w-md h-[80vh] flex flex-col overflow-hidden">
-                    <DialogHeader className="p-4 border-b border-white/5 bg-[#15121c]">
-                        <DialogTitle className="flex items-center gap-2">
-                            <Sparkles className="w-5 h-5 text-purple-400" />
-                            {t('recommendations')}
-                        </DialogTitle>
-                    </DialogHeader>
-                    <div className="flex-1 overflow-hidden">
-                        <CharacterSuggestionList
-                            projectId={project.id}
-                            onSelect={(suggestion) => {
-                                // Close list, open confirm
-                                setIsSuggestionListOpen(false);
-                                setSuggestionToPromote(suggestion as Suggestion);
-                                setTimeout(() => setIsPromoteConfirmOpen(true), 200);
-                            }}
-                        />
-                    </div>
-                </DialogContent>
-            </Dialog>
+
 
         </ProjectLayout >
     );
