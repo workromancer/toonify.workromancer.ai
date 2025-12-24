@@ -84,6 +84,39 @@
       "copyright": "© 2024 Workromancer. All rights reserved.",
       "terms": "Terms of Service",
       "privacy": "Privacy Policy"
+    },
+    "Pricing": {
+      "title": "Simple, Transparent Pricing",
+      "subtitle": "Choose the plan that fits your creative needs. Start free and scale as you grow.",
+      "mostPopular": "Most Popular",
+      "perMonth": "mo",
+      "coinsPerMonth": "Coins / month",
+      "subscribe": "Get Started",
+      "comingSoon": "Coming Soon",
+      "comingSoonDesc": "Payment system is under development. Stay tuned!",
+      "creditPacksTitle": "Need More Credits?",
+      "creditPacksSubtitle": "Purchase additional credits anytime without a subscription.",
+      "bestValue": "Best Value",
+      "credits": "Credits",
+      "plans": {
+        "plus": { "name": "Plus" },
+        "pro": { "name": "Pro" },
+        "studio": { "name": "Studio" }
+      },
+      "features": {
+        "textPromptOnly": "Text prompt generation only",
+        "standardQuality": "Standard quality (1024px)",
+        "communitySupport": "Community support",
+        "multimodalRef": "Multimodal reference (image upload)",
+        "hdQuality": "HD quality with style consistency",
+        "prioritySupport": "Priority support",
+        "advancedTools": "Advanced AI tools",
+        "dedicatedPrompt": "Dedicated prompt engineering",
+        "premiumQuality": "Premium quality + priority processing",
+        "dedicatedSupport": "Dedicated support",
+        "chatbotRevenue": "Character chatbot monetization",
+        "apiAccess": "API access"
+      }
     }
   },
   "Dashboard": {

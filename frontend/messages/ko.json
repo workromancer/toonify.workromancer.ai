@@ -84,6 +84,39 @@
       "copyright": "© 2024 Workromancer. All rights reserved.",
       "terms": "이용약관",
       "privacy": "개인정보처리방침"
+    },
+    "Pricing": {
+      "title": "간편하고 투명한 요금제",
+      "subtitle": "창작 목표에 맞는 플랜을 선택하세요. 무료로 시작하고 필요에 따라 확장하세요.",
+      "mostPopular": "가장 인기",
+      "perMonth": "월",
+      "coinsPerMonth": "코인 / 월",
+      "subscribe": "시작하기",
+      "comingSoon": "출시 예정",
+      "comingSoonDesc": "결제 시스템이 개발 중입니다. 조금만 기다려주세요!",
+      "creditPacksTitle": "추가 크레딧이 필요하신가요?",
+      "creditPacksSubtitle": "구독 없이도 언제든지 추가 크레딧을 구매할 수 있습니다.",
+      "bestValue": "가성비 최고",
+      "credits": "크레딧",
+      "plans": {
+        "plus": { "name": "플러스" },
+        "pro": { "name": "프로" },
+        "studio": { "name": "스튜디오" }
+      },
+      "features": {
+        "textPromptOnly": "텍스트 프롬프트 생성만 가능",
+        "standardQuality": "표준 화질 (1024px)",
+        "communitySupport": "커뮤니티 지원",
+        "multimodalRef": "멀티모달 참조 (이미지 업로드)",
+        "hdQuality": "HD 화질 + 스타일 일관성",
+        "prioritySupport": "우선 지원",
+        "advancedTools": "고급 AI 도구",
+        "dedicatedPrompt": "전담 프롬프트 엔지니어링",
+        "premiumQuality": "프리미엄 화질 + 우선 처리",
+        "dedicatedSupport": "전담 지원",
+        "chatbotRevenue": "캐릭터 챗봇 수익화",
+        "apiAccess": "API 액세스"
+      }
     }
   },
   "Dashboard": {

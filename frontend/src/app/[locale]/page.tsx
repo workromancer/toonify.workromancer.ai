@@ -8,6 +8,7 @@ import { useTranslations } from 'next-intl';
 import HeroSection from '@/components/landing/HeroSection';
 import FeaturesSection from '@/components/landing/FeaturesSection';
 import HowItWorksSection from '@/components/landing/HowItWorksSection';
+import PricingSection from '@/components/landing/PricingSection';
 import Footer from '@/components/landing/Footer';
 import WebtoonGridSection from '@/components/landing/WebtoonGridSection';
 import GenreNav from '@/components/landing/GenreNav';
@@ -77,6 +78,7 @@ export default function Home() {
             <CheckItOutSection />
             <FeaturesSection />
             <HowItWorksSection />
+            <PricingSection />
             <Footer />
         </main>
     );
