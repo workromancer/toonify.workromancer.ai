@@ -324,9 +324,9 @@ export default function InspectorPanel() {
     };
 
     return (
-        <div className="flex flex-col h-full bg-[#0f0f16] border-l border-slate-800">
+        <div className="flex flex-col h-full bg-[#0f0f16] md:border-l border-slate-800">
             {/* Header */}
-            <div className="p-4 border-b border-slate-800">
+            <div className="p-3 md:p-4 border-b border-slate-800">
                 <h2 className="text-sm font-bold text-white mb-1">{t('title')}</h2>
                 <p className="text-xs text-slate-500">
                     {activeCutId
@@ -346,7 +346,7 @@ export default function InspectorPanel() {
 
             {activeCutId ? (
                 <>
-                    <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar">
+                    <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-4 md:space-y-6 custom-scrollbar">
 
                         {/* Prompt Section */}
                         <div>

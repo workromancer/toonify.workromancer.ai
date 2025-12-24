@@ -10,7 +10,7 @@ import InspectorPanel from '@/components/editor/InspectorPanel';
 import StoryboardView from '@/components/editor/StoryboardView';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import api from '@/lib/api';
-import { ArrowLeft, Save, Download, Cloud, Layers, Users, Image as ImageIcon, Settings, Loader2, Smartphone } from 'lucide-react';
+import { ArrowLeft, Save, Download, Cloud, Layers, Users, Image as ImageIcon, Settings, Loader2, Smartphone, Clapperboard, SlidersHorizontal } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslations } from 'next-intl';
 
@@ -28,6 +28,9 @@ export default function EditorPage() {
     const [projectTitle, setProjectTitle] = useState('');
     const [episodeTitle, setEpisodeTitle] = useState('');
     const [episodeOrder, setEpisodeOrder] = useState<number | null>(null);
+    
+    // Mobile view toggle
+    const [mobileActiveView, setMobileActiveView] = useState<'storyboard' | 'inspector'>('storyboard');
 
     // Load episode from query param if present
     useEffect(() => {
@@ -108,19 +111,20 @@ export default function EditorPage() {
     return (
         <div className="h-screen flex flex-col bg-[#05050a] text-slate-200 overflow-hidden font-sans selection:bg-purple-500/30">
             {/* Top Bar */}
-            <header className="h-14 border-b border-slate-800 flex items-center justify-between px-6 bg-[#0f0f16]">
-                <div className="flex items-center gap-4">
+            <header className="h-14 border-b border-slate-800 flex items-center justify-between px-3 md:px-6 bg-[#0f0f16] shrink-0">
+                <div className="flex items-center gap-2 md:gap-4 min-w-0">
                     <Link href={`/project/${projectId}`}>
-                        <Button variant="ghost" size="sm" className="text-slate-400 hover:text-white hover:bg-slate-800/80 -ml-2">
-                            <ArrowLeft size={18} className="mr-2" /> {t('back')}
+                        <Button variant="ghost" size="sm" className="text-slate-400 hover:text-white hover:bg-slate-800/80 -ml-2 px-2 md:px-3">
+                            <ArrowLeft size={18} className="md:mr-2" />
+                            <span className="hidden md:inline">{t('back')}</span>
                         </Button>
                     </Link>
-                    <div className="h-4 w-[1px] bg-slate-800 mx-2"></div>
+                    <div className="hidden md:block h-4 w-[1px] bg-slate-800 mx-2"></div>
 
-                    <div className="flex items-center gap-2 text-sm">
-                        <span className="font-bold text-slate-200">{projectTitle}</span>
-                        <span className="text-slate-600">/</span>
-                        <span className="font-medium text-slate-300">{episodeTitle || t('title')}</span>
+                    <div className="flex items-center gap-2 text-sm min-w-0">
+                        <span className="font-bold text-slate-200 truncate max-w-[80px] md:max-w-none">{projectTitle}</span>
+                        <span className="text-slate-600 hidden sm:inline">/</span>
+                        <span className="font-medium text-slate-300 truncate max-w-[60px] md:max-w-none hidden sm:inline">{episodeTitle || t('title')}</span>
                         {episodeOrder !== null && (
                             <span className="ml-1 px-1.5 py-0.5 rounded-md bg-slate-800 border border-slate-700 text-[10px] text-slate-400 font-mono">
                                 #{episodeOrder}
@@ -129,37 +133,37 @@ export default function EditorPage() {
                     </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-
+                <div className="flex items-center gap-2 md:gap-3">
                     <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setReviewMode(true)}
-                        className="bg-slate-900 border-slate-700 hover:bg-slate-800 text-slate-300"
+                        className="bg-slate-900 border-slate-700 hover:bg-slate-800 text-slate-300 px-2 md:px-3"
                     >
-                        <Smartphone size={16} className="mr-2" /> {t('review')}
+                        <Smartphone size={16} className="md:mr-2" />
+                        <span className="hidden md:inline">{t('review')}</span>
                     </Button>
 
                     <Button
-                        className="bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-900/20"
+                        className="bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-900/20 px-2 md:px-3"
                         size="sm"
                         onClick={handleExport}
                         disabled={exporting}
                     >
                         {exporting ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
-                            <Download size={16} className="mr-2" />
+                            <Download size={16} className="md:mr-2" />
                         )}
-                        {t('export')}
+                        <span className="hidden md:inline">{t('export')}</span>
                     </Button>
                 </div>
             </header>
 
             {/* Main Workspace */}
-            <div className="flex-1 overflow-hidden flex">
-                {/* 2. Left Sidebar: Navigation (Fixed Icon Bar) */}
-                <aside className="w-16 bg-[#0a0a10] border-r border-slate-800 flex flex-col items-center py-4 gap-4 z-40">
+            <div className="flex-1 overflow-hidden flex pb-14 md:pb-0">
+                {/* Left Sidebar: Navigation (Fixed Icon Bar) - Hidden on mobile */}
+                <aside className="hidden md:flex w-16 bg-[#0a0a10] border-r border-slate-800 flex-col items-center py-4 gap-4 z-40">
                     <button className="p-3 bg-purple-600/20 text-purple-400 rounded-xl border border-purple-500/30 hover:bg-purple-600/30 transition-colors">
                         <Layers size={20} />
                     </button>
@@ -175,7 +179,8 @@ export default function EditorPage() {
                     </button>
                 </aside>
 
-                <div className="flex-1 overflow-hidden">
+                {/* Desktop: Panel Layout */}
+                <div className="hidden md:block flex-1 overflow-hidden">
                     <PanelGroup direction="horizontal">
                         {/* Center: Canvas / Editor */}
                         <Panel defaultSize={75} minSize={30}>
@@ -197,6 +202,43 @@ export default function EditorPage() {
                         </Panel>
                     </PanelGroup>
                 </div>
+
+                {/* Mobile: Tab-based Layout */}
+                <div className="md:hidden flex-1 overflow-hidden">
+                    {mobileActiveView === 'storyboard' ? (
+                        <StoryboardView projectId={projectId?.toString() || ''} />
+                    ) : (
+                        <div className="h-full overflow-y-auto">
+                            <InspectorPanel />
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Mobile Bottom Tab Navigation */}
+            <div className="md:hidden fixed bottom-0 left-0 right-0 h-14 bg-[#0f0f16] border-t border-slate-800 flex z-50">
+                <button
+                    onClick={() => setMobileActiveView('storyboard')}
+                    className={`flex-1 flex flex-col items-center justify-center gap-1 transition-colors ${
+                        mobileActiveView === 'storyboard'
+                            ? 'text-purple-400 bg-purple-500/10'
+                            : 'text-slate-500 hover:text-slate-300'
+                    }`}
+                >
+                    <Clapperboard size={20} />
+                    <span className="text-[10px] font-medium">{t('storyboard') || 'Storyboard'}</span>
+                </button>
+                <button
+                    onClick={() => setMobileActiveView('inspector')}
+                    className={`flex-1 flex flex-col items-center justify-center gap-1 transition-colors ${
+                        mobileActiveView === 'inspector'
+                            ? 'text-purple-400 bg-purple-500/10'
+                            : 'text-slate-500 hover:text-slate-300'
+                    }`}
+                >
+                    <SlidersHorizontal size={20} />
+                    <span className="text-[10px] font-medium">{t('inspector') || 'Inspector'}</span>
+                </button>
             </div>
         </div>
     );

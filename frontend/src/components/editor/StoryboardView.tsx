@@ -410,8 +410,8 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
             </div>
 
             {/* Main Content Area */}
-            <div className="flex-1 overflow-y-auto p-8 relative z-10 custom-scrollbar">
-                <div className="w-full max-w-2xl mx-auto space-y-6 pb-20">
+            <div className="flex-1 overflow-y-auto p-4 md:p-8 relative z-10 custom-scrollbar">
+                <div className="w-full max-w-2xl mx-auto space-y-4 md:space-y-6 pb-20">
 
                     {loading ? (
                         <div className="text-slate-500 text-center py-10 flex flex-col items-center">
@@ -487,10 +487,10 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
                                     </div>
                                 </div>
 
-                                {/* Content Grid */}
-                                <div className="flex min-h-[160px]">
+                                {/* Content Grid - Vertical on mobile, Horizontal on desktop */}
+                                <div className="flex flex-col md:flex-row min-h-[120px] md:min-h-[160px]">
                                     {/* Image Area */}
-                                    <div className={`w-1/2 bg-slate-900 relative flex items-center justify-center border-r border-slate-800 overflow-hidden group/image`}>
+                                    <div className={`w-full md:w-1/2 aspect-[4/3] md:aspect-auto bg-slate-900 relative flex items-center justify-center md:border-r border-b md:border-b-0 border-slate-800 overflow-hidden group/image`}>
                                         {cut.image_path ? (
                                             <>
                                                 <img
@@ -521,7 +521,7 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
                                                 )}
                                             </>
                                         ) : (
-                                            <div className="text-slate-600 flex flex-col items-center gap-2">
+                                            <div className="text-slate-600 flex flex-col items-center gap-2 py-4 md:py-0">
                                                 {generatingIds.has(cut.id) || cut.status === 'generating' ? (
                                                     <>
                                                         <CustomLoader size={24} />
@@ -548,12 +548,12 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
                                     </div>
 
                                     {/* Script Area */}
-                                    <div className="w-1/2 p-4 flex flex-col">
+                                    <div className="w-full md:w-1/2 p-3 md:p-4 flex flex-col">
                                         <span className="text-[10px] uppercase text-slate-500 font-bold mb-2 tracking-wider">{t('visualScript')}</span>
-                                        <p className="text-sm text-slate-300 leading-relaxed font-serif italic line-clamp-4 flex-1">
+                                        <p className="text-xs md:text-sm text-slate-300 leading-relaxed font-serif italic line-clamp-3 md:line-clamp-4 flex-1">
                                             &quot;{cut.script}&quot;
                                         </p>
-                                        <div className="mt-4 pt-3 border-t border-slate-800/50 flex justify-between items-center">
+                                        <div className="mt-3 md:mt-4 pt-2 md:pt-3 border-t border-slate-800/50 flex justify-between items-center">
                                             <span className="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-400 border border-slate-700 font-mono">{cut.aspect_ratio || '1:1'}</span>
                                             {cut.image_path && (
                                                 <span className="text-[10px] text-purple-400 flex items-center gap-1 font-bold">
