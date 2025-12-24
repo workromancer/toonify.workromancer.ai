@@ -12,8 +12,8 @@ interface AuthState {
     user: User | null;
     authProvider: 'legacy' | 'clerk';
     hasHydrated: boolean;
-    setToken: (token: string) => void;
-    setUser: (user: User) => void;
+    setToken: (token: string | null) => void;
+    setUser: (user: User | null) => void;
     setAuthProvider: (provider: 'legacy' | 'clerk') => void;
     setHasHydrated: (state: boolean) => void;
     logout: () => Promise<void>;

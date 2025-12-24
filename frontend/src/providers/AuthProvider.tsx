@@ -7,9 +7,10 @@ import { useUser } from '@clerk/nextjs';
 import axios from 'axios';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const { token, logout, setUser, setToken, setAuthProvider } = useAuthStore();
+    const { token, logout, setUser, setToken, setAuthProvider, authProvider } = useAuthStore();
     const { user: clerkUser, isLoaded } = useUser();
     const isSyncing = useRef(false);
+    const wasClerkUser = useRef(false);
 
     useEffect(() => {
         const verifySession = async () => {
@@ -56,7 +57,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
 
         syncClerkUser();
-    }, [isLoaded, clerkUser, token, setToken, setUser]);
+    }, [isLoaded, clerkUser, token, setToken, setUser, setAuthProvider]);
+
+    // Detect Clerk sign-out: if we had a Clerk user and now we don't, clear auth state
+    useEffect(() => {
+        if (!isLoaded) return;
+
+        // Track if we have a Clerk user
+        if (clerkUser) {
+            wasClerkUser.current = true;
+        } else if (wasClerkUser.current && authProvider === 'clerk') {
+            // Was a Clerk user, now signed out - clear backend session
+            wasClerkUser.current = false;
+            
+            // Clear the backend token and user
+            const clearSession = async () => {
+                try {
+                    await fetch('/api/auth/logout', { method: 'POST' });
+                } catch (e) {
+                    console.error("Failed to logout server-side", e);
+                }
+                // Reset auth state without redirecting (Clerk handles redirect)
+                setToken(null);
+                setUser(null);
+                setAuthProvider('legacy');
+            };
+            
+            clearSession();
+        }
+    }, [isLoaded, clerkUser, authProvider, setToken, setUser, setAuthProvider]);
 
     return <>{children}</>;
 }
