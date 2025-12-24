@@ -40,16 +40,19 @@ interface DirectorOption {
 
 interface StoryboardViewProps {
     projectId: string;
+    episodeId?: string;
 }
 
-export default function StoryboardView({ projectId }: StoryboardViewProps) {
+export default function StoryboardView({ projectId, episodeId: propEpisodeId }: StoryboardViewProps) {
     const {
-        activeEpisodeId, setActiveCut, activeCutId, isReviewMode, setReviewMode,
+        activeEpisodeId: storeEpisodeId, setActiveCut, activeCutId, isReviewMode, setReviewMode,
         generatingIdsSet: generatingIds, // Map to local name for convenience 
         addGeneratingId,
         removeGeneratingId,
         setActiveEpisodeStatus
     } = useCanvasStore();
+
+    const activeEpisodeId = propEpisodeId || storeEpisodeId;
     const [cuts, setCuts] = useState<StoryCut[]>([]);
     const [loading, setLoading] = useState(false);
     const [episodeStatus, setEpisodeStatus] = useState<string>('ready'); // Track episode status
@@ -109,18 +112,17 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
         activeIdRef.current = activeEpisodeId;
     }, [activeEpisodeId]);
 
-    const fetchCuts = async () => {
-        const targetId = activeIdRef.current;
+    const fetchCuts = async (targetIdOverride?: string) => {
+        const targetId = targetIdOverride || activeEpisodeId;
         if (!targetId) return;
 
         try {
-            // Don't set loading true here if it's a background refresh (polling)
-            // But if called explicitly, maybe? Let's leave loading handling to caller or purely for blocking usage
-            // For now, removing generic loading set here to avoid flickering during polling, or moving it to specific calls.
-            // But to fix the "interference", the key is the check below.
+            // Check before start
+            if (activeIdRef.current !== targetId && !targetIdOverride) return;
 
             const epRes = await api.get(`/episodes/${targetId}`);
-            if (activeIdRef.current !== targetId) return; // Abort if switched
+            // Check after episode fetch
+            if (activeIdRef.current !== targetId && !targetIdOverride) return;
 
             const status = epRes.data.status || 'ready';
             setEpisodeStatus(status);
@@ -128,7 +130,8 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
 
             if (status !== 'generating') {
                 const res = await api.get(`/cuts/?episode_id=${targetId}`);
-                if (activeIdRef.current !== targetId) return; // Abort if switched
+                // Check after cuts fetch
+                if (activeIdRef.current !== targetId && !targetIdOverride) return;
 
                 const newCuts = res.data as StoryCut[];
                 setCuts(newCuts);
@@ -137,7 +140,6 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
                 newCuts.forEach(cut => {
                     if (generatingIds.has(cut.id) && cut.image_path) {
                         removeGeneratingId(cut.id);
-                        // Optional: Toast success?
                     }
                     if (generatingIds.has(cut.id) && cut.status === 'failed') {
                         removeGeneratingId(cut.id);
@@ -146,15 +148,11 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
                 });
 
             } else {
-                if (activeIdRef.current !== targetId) return;
-                // If generating, strictly don't clear cuts if we want to show 'old' ones? 
-                // But request was "interference", so likely we want clean slate if truly generating new.
-                // Assuming logic: if generating, we might want to show loading spinner.
-                // But wait, user said "interference". clearing is safer.
+                if (activeIdRef.current !== targetId && !targetIdOverride) return;
                 setCuts([]);
             }
         } catch (err) {
-            console.error(err);
+            console.error("Fetch Cuts Error:", err);
         }
     };
 
@@ -167,7 +165,7 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
         setLoading(true);
 
         if (activeEpisodeId) {
-            fetchCuts().finally(() => setLoading(false));
+            fetchCuts(activeEpisodeId).finally(() => setLoading(false));
         } else {
             setLoading(false);
         }
@@ -349,13 +347,8 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
     };
 
 
-    useEffect(() => {
-        if (activeEpisodeId) {
-            fetchCuts();
-        } else {
-            setCuts([]);
-        }
-    }, [activeEpisodeId]);
+    // Unified initial fetch is handled by the effect at line 162.
+    // This redundant block is removed to prevent double-fetches and race conditions.
 
     if (!activeEpisodeId) {
         return (

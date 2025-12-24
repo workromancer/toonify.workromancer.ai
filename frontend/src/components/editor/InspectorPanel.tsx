@@ -178,8 +178,18 @@ const EpisodeContextEditor = ({ episodeId, projectId, characters, disabled, t }:
 };
 
 
-export default function InspectorPanel() {
-    const { activeCutId, activeEpisodeId, updateCut, generatingIdsSet, addGeneratingId, removeGeneratingId, activeEpisodeStatus } = useCanvasStore();
+export default function InspectorPanel({ episodeId: propEpisodeId }: { episodeId?: string }) {
+    const { 
+        activeCutId, 
+        activeEpisodeId: storeEpisodeId, 
+        updateCut, 
+        generatingIdsSet, 
+        addGeneratingId, 
+        removeGeneratingId, 
+        activeEpisodeStatus 
+    } = useCanvasStore();
+    
+    const activeEpisodeId = propEpisodeId || storeEpisodeId;
     // const selectedElement = elements.find(el => el.id === selectedId); // Removed
     const params = useParams();
     const projectId = params?.projectId as string;

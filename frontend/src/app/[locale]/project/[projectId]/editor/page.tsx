@@ -32,13 +32,24 @@ export default function EditorPage() {
     // Mobile view toggle
     const [mobileActiveView, setMobileActiveView] = useState<'storyboard' | 'inspector'>('storyboard');
 
-    // Load episode from query param if present
+    // URL-derived Episode ID (Primary Source of Truth)
+    const epIdFromUrl = searchParams?.get('episode_id');
+
+    // Load episode from query param if present, or clear if missing
     useEffect(() => {
-        const epId = searchParams?.get('episode_id');
-        if (epId) {
-            setActiveEpisode(epId);
+        if (epIdFromUrl) {
+            setActiveEpisode(epIdFromUrl);
+        } else {
+            setActiveEpisode(null);
         }
-    }, [searchParams, setActiveEpisode]);
+    }, [epIdFromUrl, setActiveEpisode]);
+
+    // Clear active episode on unmount
+    useEffect(() => {
+        return () => {
+            setActiveEpisode(null);
+        };
+    }, [setActiveEpisode]);
 
     // Fetch Project Details
     useEffect(() => {
@@ -189,6 +200,7 @@ export default function EditorPage() {
                                 <div className="flex-1 overflow-hidden relative">
                                     <StoryboardView
                                         projectId={projectId?.toString() || ''}
+                                        episodeId={epIdFromUrl || activeEpisodeId || ''}
                                     />
                                 </div>
                             </div>
@@ -198,7 +210,7 @@ export default function EditorPage() {
 
                         {/* Right Sidebar: Inspector */}
                         <Panel defaultSize={25} minSize={15} maxSize={30} className="bg-[#0f0f16] border-l border-slate-800">
-                            <InspectorPanel />
+                            <InspectorPanel episodeId={epIdFromUrl || activeEpisodeId || ''} />
                         </Panel>
                     </PanelGroup>
                 </div>
@@ -206,10 +218,13 @@ export default function EditorPage() {
                 {/* Mobile: Tab-based Layout */}
                 <div className="md:hidden flex-1 overflow-hidden">
                     {mobileActiveView === 'storyboard' ? (
-                        <StoryboardView projectId={projectId?.toString() || ''} />
+                        <StoryboardView 
+                            projectId={projectId?.toString() || ''} 
+                            episodeId={epIdFromUrl || activeEpisodeId || ''} 
+                        />
                     ) : (
                         <div className="h-full overflow-y-auto">
-                            <InspectorPanel />
+                            <InspectorPanel episodeId={epIdFromUrl || activeEpisodeId || ''} />
                         </div>
                     )}
                 </div>

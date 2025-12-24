@@ -27,7 +27,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     activeEpisodeStatus: 'ready',
     activeCutId: null,
     setActiveCharacter: (char) => set({ activeCharacter: char }),
-    setActiveEpisode: (id) => set({ activeEpisodeId: id }),
+    setActiveEpisode: (id) => set({ activeEpisodeId: id, activeCutId: null }),
     setActiveEpisodeStatus: (status) => set({ activeEpisodeStatus: status }),
     setActiveCut: (id) => set({ activeCutId: id }),
     isReviewMode: false,
