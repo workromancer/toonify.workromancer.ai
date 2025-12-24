@@ -16,7 +16,7 @@ export default function SignupPage() {
 
     const authMode = process.env.NEXT_PUBLIC_AUTH_MODE || 'hybrid';
     const showClerk = authMode === 'clerk_only' || authMode === 'hybrid';
-    const showLegacy = authMode === 'legacy' || authMode === 'hybrid' || !authMode;
+    const showLegacy = authMode === 'legacy' || authMode === 'hybrid';
 
     const onSubmit = async (data: any) => {
         // ... existing onSubmit ...
