@@ -29,3 +29,4 @@ build/
 **/*.log
 
 infra
+**/.infra_output
