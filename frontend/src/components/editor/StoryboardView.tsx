@@ -287,7 +287,7 @@ export default function StoryboardView({ projectId, episodeId: propEpisodeId }: 
             let filename = `episode_export.${format === 'zip' ? 'zip' : 'png'}`;
             if (contentDisposition) {
                 // Check for standard filename
-                let fileNameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+                const fileNameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
                 if (fileNameMatch && fileNameMatch.length === 2) {
                     filename = fileNameMatch[1];
                 }

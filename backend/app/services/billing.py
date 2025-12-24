@@ -3,6 +3,7 @@ from uuid import UUID
 from sqlmodel import Session, select
 from fastapi import HTTPException
 from app.models.models import Workspace, CreditTransaction
+from app.core.errors import AppException, ErrorCode
 
 class BillingService:
     # Pricing Matrix (Cost per action)
@@ -40,11 +41,11 @@ class BillingService:
     def check_credits(self, session: Session, workspace_id: UUID, action_type: str) -> int:
         """
         Calculates cost and checks if workspace has enough credits.
-        Returns the cost if sufficient, raises HTTPException if not.
+        Returns the cost if sufficient, raises AppException if not.
         """
         workspace = session.get(Workspace, workspace_id)
         if not workspace:
-            raise HTTPException(status_code=404, detail="Workspace not found")
+            raise AppException(error_code=ErrorCode.NOT_FOUND_WORKSPACE)
 
         tier = workspace.tier if workspace.tier else "free"
         
@@ -55,9 +56,10 @@ class BillingService:
             cost = 5 
             
         if cost > workspace.credits:
-             raise HTTPException(
-                status_code=402, 
-                detail=f"Insufficient credits. Required: {cost}, Available: {workspace.credits}"
+             raise AppException(
+                error_code=ErrorCode.PAYMENT_INSUFFICIENT_CREDITS,
+                detail=f"Insufficient credits. Required: {cost}, Available: {workspace.credits}",
+                extra={"required": cost, "available": workspace.credits}
             )
             
         return cost

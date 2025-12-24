@@ -1,8 +1,10 @@
 # Reload trigger
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.core.config import settings
+from app.core.errors import AppException
 from app.api.v1.api import api_router
 
 from contextlib import asynccontextmanager
@@ -63,6 +65,21 @@ app = FastAPI(
 )
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+
+# Custom exception handler for AppException to include error code
+@app.exception_handler(AppException)
+async def app_exception_handler(request: Request, exc: AppException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "code": exc.error_code.value,
+            "detail": exc.detail,
+            "extra": exc.extra,
+        },
+        headers={"WWW-Authenticate": "Bearer"} if exc.status_code == 401 else None,
+    )
+
 
 # Set all CORS enabled origins
 # Set all CORS enabled origins

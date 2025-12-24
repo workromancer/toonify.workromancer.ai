@@ -5,6 +5,7 @@ from uuid import UUID
 
 from app.api import deps
 from app.core import security
+from app.core.errors import AppException, ErrorCode
 from app.models import Project, Workspace, WorkspaceMember, User, Character, Genre, Asset
 from app.services.ai import ai_service
 from app.services.billing import billing_service
@@ -251,7 +252,7 @@ def create_project(
         member = session.exec(ws_statement).first()
         
         if not member:
-             raise HTTPException(status_code=404, detail="No workspace found for user.")
+             raise AppException(error_code=ErrorCode.NOT_FOUND_WORKSPACE)
         
         workspace_id = member.workspace_id
 
@@ -376,11 +377,11 @@ def get_project(
     try:
         project_uuid = UUID(project_id)
     except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid UUID")
+        raise AppException(error_code=ErrorCode.VALIDATION_INVALID_UUID)
 
     project = session.get(Project, project_uuid)
     if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
+        raise AppException(error_code=ErrorCode.NOT_FOUND_PROJECT)
     
     p_dict = project.dict()
     g_names = [g.name for g in project.genres] if project.genres else []
@@ -424,11 +425,11 @@ def update_project(
     try:
         project_uuid = UUID(project_id)
     except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid UUID")
+        raise AppException(error_code=ErrorCode.VALIDATION_INVALID_UUID)
 
     project = session.get(Project, project_uuid)
     if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
+        raise AppException(error_code=ErrorCode.NOT_FOUND_PROJECT)
 
     project_data = project_in.dict(exclude_unset=True)
     
@@ -485,11 +486,11 @@ def generate_cover(
     try:
         project_uuid = UUID(project_id)
     except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid UUID")
+        raise AppException(error_code=ErrorCode.VALIDATION_INVALID_UUID)
 
     project = session.get(Project, project_uuid)
     if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
+        raise AppException(error_code=ErrorCode.NOT_FOUND_PROJECT)
 
     # Deduct Credits (Cost: 15)
     billing_service.deduct_credits(session, project.workspace_id, UUID(current_user_id), "generate_project_cover_image")
@@ -579,16 +580,16 @@ def delete_project(
     try:
         project_uuid = UUID(project_id)
     except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid UUID")
+        raise AppException(error_code=ErrorCode.VALIDATION_INVALID_UUID)
 
     project = session.get(Project, project_uuid)
     if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
+        raise AppException(error_code=ErrorCode.NOT_FOUND_PROJECT)
 
     # Verify Workspace Membership
     ws_member = session.get(WorkspaceMember, (project.workspace_id, UUID(current_user_id)))
     if not ws_member:
-        raise HTTPException(status_code=403, detail="Not a member of the project's workspace")
+        raise AppException(error_code=ErrorCode.FORBIDDEN_WORKSPACE)
 
     # Soft Delete
     project.deleted_at = datetime.utcnow()

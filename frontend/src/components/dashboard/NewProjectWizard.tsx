@@ -199,7 +199,7 @@ export default function NewProjectWizard() {
     const dataTitle = overrideData?.title || title;
     const dataSubtitle = overrideData?.subtitle || subtitle;
     const dataGenre = overrideData?.genre || selectedGenres;
-    let dataWorldview = overrideData?.worldview || worldDesc;
+    const dataWorldview = overrideData?.worldview || worldDesc;
 
     try {
       let finalWorldview: any = dataWorldview;

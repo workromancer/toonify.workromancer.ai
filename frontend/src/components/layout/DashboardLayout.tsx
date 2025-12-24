@@ -60,10 +60,24 @@ export default function DashboardLayout({ children, accessToken }: DashboardLayo
     // Listen for API Errors
     useEffect(() => {
         const handleApiError = (event: CustomEvent) => {
-            const { type, message } = event.detail;
+            const { type, code, message } = event.detail;
             let titleKey = 'defaultTitle';
             let descKey = 'defaultMessage';
-            const customDesc = message;
+            let customDesc = message;
+
+            // If we have an error code from the server, try to use it for i18n
+            if (code) {
+                // Try to get the localized message for the error code
+                try {
+                    const codeMessage = tErrors(`codes.${code}`);
+                    // If translation exists and is not the key itself, use it
+                    if (codeMessage && !codeMessage.startsWith('codes.')) {
+                        customDesc = codeMessage;
+                    }
+                } catch {
+                    // Translation not found, fall back to type-based messages
+                }
+            }
 
             switch (type) {
                 case 'sessionExpired':
@@ -84,7 +98,7 @@ export default function DashboardLayout({ children, accessToken }: DashboardLayo
                     break;
                 case 'validationError':
                     titleKey = 'validationError';
-                    descKey = 'invalidInput'; // Default fallback
+                    descKey = 'invalidInput';
                     break;
                 case 'serverError':
                     titleKey = 'serverError';
@@ -93,6 +107,10 @@ export default function DashboardLayout({ children, accessToken }: DashboardLayo
                 case 'networkError':
                     titleKey = 'networkError';
                     descKey = 'networkErrorDesc';
+                    break;
+                case 'apiError':
+                    // Generic API error with code
+                    titleKey = 'defaultTitle';
                     break;
                 default:
                     break;
@@ -107,7 +125,7 @@ export default function DashboardLayout({ children, accessToken }: DashboardLayo
 
         window.addEventListener('api-error', handleApiError as EventListener);
         return () => window.removeEventListener('api-error', handleApiError as EventListener);
-    }, []);
+    }, [tErrors, toast]);
 
     // Auth Guard Logic
     const { userId, isLoaded: isClerkLoaded } = useAuth();

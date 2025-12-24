@@ -1,6 +1,12 @@
 import axios from 'axios';
 import { useAuthStore } from '@/store/useAuthStore';
-import { toast } from '@/components/ui/toaster';
+import { 
+    parseApiError, 
+    isAuthError, 
+    dispatchErrorEvent, 
+    type ErrorEventDetail,
+    type ErrorCode,
+} from '@/lib/errorUtils';
 
 // Environment variable for API URL or default to localhost
 import { config } from '@/lib/config';
@@ -40,7 +46,7 @@ api.interceptors.request.use(
     (error) => Promise.reject(error)
 );
 
-// Add response interceptor for global error handling
+// Add response interceptor for global error handling with error code support
 api.interceptors.response.use(
     (response) => {
         return response;
@@ -49,8 +55,11 @@ api.interceptors.response.use(
         if (error.response) {
             const status = error.response.status;
             const data = error.response.data;
+            const parsedError = parseApiError(data);
+            const errorCode = parsedError.code as ErrorCode | undefined;
 
             if (status === 401) {
+                // 401 Unauthorized - Always logout
                 // Check if the token has changed since the request was made (Race Condition protection)
                 const currentToken = useAuthStore.getState().token;
                 const requestToken = error.config?.headers?.Authorization?.replace('Bearer ', '');
@@ -64,55 +73,90 @@ api.interceptors.response.use(
 
                 const authProvider = useAuthStore.getState().authProvider;
 
-                if (authProvider === 'clerk') {
-                    // For Clerk users, just clear the backend token (and user) to trigger re-sync in AuthProvider
-                    useAuthStore.setState({ token: null, user: null });
-                    // Do NOT dispatch sessionExpired toast, as it will likely recover silently
-                } else {
-                    useAuthStore.getState().logout();
-                    // Let the UI/Store handle the redirect via state change
+                // ALWAYS logout on 401, regardless of auth provider
+                console.log("401 received, logging out user...");
+                
+                // Clear auth state immediately
+                useAuthStore.getState().logout();
 
-                    if (typeof window !== 'undefined') {
-                        window.dispatchEvent(new CustomEvent('api-error', { detail: { type: 'sessionExpired' } }));
-                    }
+                // Dispatch error event with error code for i18n
+                if (typeof window !== 'undefined') {
+                    dispatchErrorEvent({
+                        type: 'sessionExpired',
+                        code: errorCode,
+                        shouldLogout: true,
+                    });
+                    
+                    // Redirect to login page
+                    window.location.href = '/login';
                 }
             } else if (status === 403) {
                 if (typeof window !== 'undefined') {
+                    dispatchErrorEvent({
+                        type: 'accessDenied',
+                        code: errorCode,
+                    });
                     window.location.href = '/dashboard';
-                    window.dispatchEvent(new CustomEvent('api-error', { detail: { type: 'accessDenied' } }));
                 }
             } else if (status === 404) {
                 if (typeof window !== 'undefined') {
-                    window.dispatchEvent(new CustomEvent('api-error', { detail: { type: 'notFound' } }));
+                    dispatchErrorEvent({
+                        type: 'notFound',
+                        code: errorCode,
+                    });
                 }
             } else if (status === 402) {
                 if (typeof window !== 'undefined') {
                     window.dispatchEvent(new CustomEvent('open-recharge-modal'));
-                    window.dispatchEvent(new CustomEvent('api-error', { detail: { type: 'insufficientCredits' } }));
+                    dispatchErrorEvent({
+                        type: 'insufficientCredits',
+                        code: errorCode,
+                    });
                 }
-            } else if (status === 422) {
-                let detailMsg = "Invalid input data.";
+            } else if (status === 422 || status === 400) {
+                let detailMsg = parsedError.detail || "Invalid input data.";
                 if (data.detail && Array.isArray(data.detail)) {
-                    detailMsg = data.detail.map((err: any) => `${err.loc.slice(1).join('.')} ${err.msg}`).join('\n');
-                } else if (typeof data.detail === 'string') {
-                    detailMsg = data.detail;
+                    detailMsg = data.detail.map((err: { loc: string[]; msg: string }) => 
+                        `${err.loc.slice(1).join('.')} ${err.msg}`
+                    ).join('\n');
                 }
                 if (typeof window !== 'undefined') {
-                    window.dispatchEvent(new CustomEvent('api-error', { detail: { type: 'validationError', message: detailMsg } }));
+                    dispatchErrorEvent({
+                        type: 'validationError',
+                        code: errorCode,
+                        message: detailMsg,
+                    });
+                }
+            } else if (status === 429) {
+                if (typeof window !== 'undefined') {
+                    dispatchErrorEvent({
+                        type: 'apiError',
+                        code: errorCode || 'RATE_LIMIT_EXCEEDED',
+                    });
                 }
             } else if (status >= 500) {
                 if (typeof window !== 'undefined') {
-                    window.dispatchEvent(new CustomEvent('api-error', { detail: { type: 'serverError' } }));
+                    dispatchErrorEvent({
+                        type: 'serverError',
+                        code: errorCode,
+                    });
                 }
             } else {
-                const msg = data.detail ? (typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail)) : undefined;
+                const msg = parsedError.detail || 
+                    (data.detail ? (typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail)) : undefined);
                 if (typeof window !== 'undefined') {
-                    window.dispatchEvent(new CustomEvent('api-error', { detail: { type: 'default', message: msg } }));
+                    dispatchErrorEvent({
+                        type: 'default',
+                        code: errorCode,
+                        message: msg,
+                    });
                 }
             }
         } else if (error.request) {
             if (typeof window !== 'undefined') {
-                window.dispatchEvent(new CustomEvent('api-error', { detail: { type: 'networkError' } }));
+                dispatchErrorEvent({
+                    type: 'networkError',
+                });
             }
         }
 

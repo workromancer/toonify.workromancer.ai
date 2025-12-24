@@ -6,6 +6,7 @@ from pydantic import ValidationError
 from sqlmodel import Session
 from app.core.config import settings
 from app.core import security
+from app.core.errors import AppException, ErrorCode
 from app.models import User
 
 reusable_oauth2 = OAuth2PasswordBearer(
@@ -29,16 +30,11 @@ def get_current_user_id(
     except (JWTError, ValidationError) as e:
         if settings.DEBUG:
             print(f"JWT Validation Error: {e}")
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=f"Could not validate credentials: {e}",
-                headers={"WWW-Authenticate": "Bearer"},
+            raise AppException(
+                error_code=ErrorCode.AUTH_TOKEN_INVALID,
+                detail=f"Could not validate credentials: {e}"
             )
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        raise AppException(error_code=ErrorCode.AUTH_TOKEN_INVALID)
     return token_data
 
 def get_current_active_user(
@@ -48,7 +44,6 @@ def get_current_active_user(
     from app.models import User
     user = session.get(User, user_id)
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise AppException(error_code=ErrorCode.AUTH_USER_NOT_FOUND)
     # For now, we don't have is_active field, assuming all users are active
     return user
-
