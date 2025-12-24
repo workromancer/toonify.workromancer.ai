@@ -152,6 +152,8 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
         }
     };
 
+    const ct = useTranslations('Common.relativeTime');
+
     // Format relative time
     const formatRelativeTime = (dateStr?: string) => {
         if (!dateStr) return '';
@@ -162,10 +164,10 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
         const diffHours = Math.floor(diffMins / 60);
         const diffDays = Math.floor(diffHours / 24);
 
-        if (diffMins < 1) return '방금 전';
-        if (diffMins < 60) return `${diffMins}분 전`;
-        if (diffHours < 24) return `${diffHours}시간 전`;
-        return `${diffDays}일 전`;
+        if (diffMins < 1) return ct('justNow');
+        if (diffMins < 60) return ct('minutesAgo', { count: diffMins });
+        if (diffHours < 24) return ct('hoursAgo', { count: diffHours });
+        return ct('daysAgo', { count: diffDays });
     };
 
     return (
@@ -187,7 +189,7 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
                     <button
                         onClick={() => setIsPanelOpen(!isPanelOpen)}
                         className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
-                        title={isPanelOpen ? "Hide suggestions" : "Show suggestions"}
+                        title={isPanelOpen ? t('hideSuggestions') : t('showSuggestions')}
                     >
                         {isPanelOpen ? <PanelRightClose size={20} /> : <PanelRightOpen size={20} />}
                     </button>
@@ -209,7 +211,7 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
                                     {loadingIdeas ? t('thinking') : t('thinking')}
                                 </h3>
                                 <p className="text-slate-400 text-sm animate-pulse">
-                                    {loadingIdeas ? t('inspirationDesc') : (t('steps.analyzing') || "Processing...")}
+                                    {loadingIdeas ? t('inspirationDesc') : (t('steps.analyzing') || t('processing'))}
                                 </p>
                             </div>
                         )}
@@ -294,7 +296,7 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
                                             <label className="text-xs font-mono text-slate-500 mb-1.5 block ml-1 uppercase">{t('episodeTitleLabel')}</label>
                                             <input
                                                 type="text"
-                                                placeholder="e.g. The Beginning of the End"
+                                                placeholder={t('titlePlaceholder')}
                                                 className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-all placeholder-slate-600"
                                                 value={formData.title}
                                                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
@@ -327,7 +329,7 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
                             {ideas.length === 0 ? (
                                 <div className="text-center py-8 text-slate-600">
                                     <Wand2 size={32} className="mx-auto mb-2 opacity-50" />
-                                    <p className="text-xs">아이디어를 제안받으면 여기에 저장됩니다</p>
+                                    <p className="text-xs">{t('noSuggestionsDesc')}</p>
                                 </div>
                             ) : (
                                 <div className="space-y-2">
@@ -345,7 +347,7 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
                                                 <Clock size={10} className="text-slate-500" />
                                                 <span className="text-[10px] text-slate-500">{formatRelativeTime(idea.created_at)}</span>
                                                 {formData.title === idea.title && (
-                                                    <span className="text-[10px] bg-purple-500 text-white px-1.5 py-0.5 rounded font-bold ml-auto">SELECTED</span>
+                                                    <span className="text-[10px] bg-purple-500 text-white px-1.5 py-0.5 rounded font-bold ml-auto">{t('selected')}</span>
                                                 )}
                                             </div>
 
@@ -357,7 +359,7 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
                                                 <button
                                                     onClick={(e) => handleDeleteSuggestion(e, idea.id!)}
                                                     className="absolute top-2 right-2 p-1 rounded hover:bg-red-500/20 text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
-                                                    title="Delete"
+                                                    title={t('delete')}
                                                 >
                                                     <Trash2 size={12} />
                                                 </button>

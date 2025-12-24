@@ -16,6 +16,7 @@ export default function SettingsPage() {
     const { currentWorkspace } = useWorkspaceStore();
     const t = useTranslations('Settings');
     const tCommon = useTranslations('Common');
+    const ct = useTranslations('Common.languages');
     const locale = useLocale();
     const router = useRouter();
     const pathname = usePathname();
@@ -103,7 +104,7 @@ export default function SettingsPage() {
                                         className={`w-24 ${locale !== 'en' ? 'bg-[#0A0A0B] border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white' : ''}`}
                                     >
                                         {isPending && locale !== 'en' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                        English
+                                        {ct('en')}
                                     </Button>
                                     <Button
                                         variant={locale === 'ko' ? 'default' : 'outline'}
@@ -112,7 +113,7 @@ export default function SettingsPage() {
                                         className={`w-24 ${locale !== 'ko' ? 'bg-[#0A0A0B] border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white' : ''}`}
                                     >
                                         {isPending && locale !== 'ko' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                        한국어
+                                        {ct('ko')}
                                     </Button>
                                 </div>
                             </div>

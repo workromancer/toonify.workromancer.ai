@@ -17,6 +17,8 @@ export default function LanguageSwitcher() {
     const pathname = usePathname();
     const t = useTranslations('Settings'); // Reusing Settings namespace or Common
 
+    const ct = useTranslations('Common.languages');
+
     const handleLocaleChange = (newLocale: string) => {
         router.replace(pathname, { locale: newLocale });
     };
@@ -33,13 +35,13 @@ export default function LanguageSwitcher() {
                     className={`cursor-pointer ${locale === 'en' ? 'text-purple-400 font-bold' : 'text-gray-300'}`}
                     onClick={() => handleLocaleChange('en')}
                 >
-                    English
+                    {ct('en')}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                     className={`cursor-pointer ${locale === 'ko' ? 'text-purple-400 font-bold' : 'text-gray-300'}`}
                     onClick={() => handleLocaleChange('ko')}
                 >
-                    한국어 (Korean)
+                    {ct('ko')}
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>

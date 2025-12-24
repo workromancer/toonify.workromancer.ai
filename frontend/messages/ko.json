@@ -22,7 +22,17 @@
     "delete": "삭제",
     "confirm": "확인",
     "deleteConfirm": "정말 삭제하시겠습니까?",
-    "deleteConfirmDesc": "이 작업은 되돌릴 수 없으며 관련 데이터가 영구적으로 삭제됩니다."
+    "deleteConfirmDesc": "이 작업은 되돌릴 수 없으며 관련 데이터가 영구적으로 삭제됩니다.",
+    "languages": {
+      "en": "영어 (English)",
+      "ko": "한국어"
+    },
+    "relativeTime": {
+      "justNow": "방금 전",
+      "minutesAgo": "{count}분 전",
+      "hoursAgo": "{count}시간 전",
+      "daysAgo": "{count}일 전"
+    }
   },
   "Auth": {
     "loginTitle": "감독 로그인",
@@ -99,9 +109,15 @@
       "bestValue": "가성비 최고",
       "credits": "크레딧",
       "plans": {
-        "plus": { "name": "플러스" },
-        "pro": { "name": "프로" },
-        "studio": { "name": "스튜디오" }
+        "plus": {
+          "name": "플러스"
+        },
+        "pro": {
+          "name": "프로"
+        },
+        "studio": {
+          "name": "스튜디오"
+        }
       },
       "features": {
         "textPromptOnly": "텍스트 프롬프트 생성만 가능",
@@ -347,7 +363,26 @@
       "creditNotice": "1 크레딧",
       "noCharactersDesc": "아직 등록된 캐릭터가 없습니다. 새 캐릭터를 추가해보세요.",
       "aiRecommend": "AI 추천",
-      "aiRecommending": "생성 중..."
+      "aiRecommending": "생성 중...",
+      "NewProject": {
+        "title": "새 프로젝트 생성",
+        "desc": "새 웹툰의 제목과 장르를 정해주세요.",
+        "titleLabel": "제목",
+        "genreLabel": "장르",
+        "selectGenre": "장르 선택...",
+        "create": "프로젝트 생성",
+        "creating": "생성 중...",
+        "error": "프로젝트 생성에 실패했습니다. 다시 시도해주세요.",
+        "placeholder": "나의 멋진 웹툰"
+      },
+      "AddCharacter": {
+        "addCharacter": "캐릭터 추가",
+        "characterStatus": {
+          "processing": "처리 중",
+          "ready": "준비됨",
+          "failed": "실패"
+        }
+      }
     },
     "Characters": {
       "title": "등장인물",
@@ -753,7 +788,11 @@
       "saving": "저장 중...",
       "cancel": "취소",
       "languageLabel": "생성 언어",
-      "selectGenrePlaceholder": "장르 선택"
+      "selectGenrePlaceholder": "장르 선택",
+      "outputLanguage": "출력 언어",
+      "selectLanguage": "언어 선택",
+      "addGenre": "장르 추가",
+      "worldDescPlaceholder": "배경을 설명하세요..."
     },
     "ViewStyle": {
       "title": "스타일 상세",
@@ -805,7 +844,14 @@
       "success": "에피소드 생성됨",
       "successDesc": "\"{title}\" 에피소드 편집 준비가 되었습니다.",
       "genFailed": "생성 실패",
-      "genFailedDesc": "에피소드를 생성하는 도중 문제가 발생했습니다."
+      "genFailedDesc": "에피소드를 생성하는 도중 문제가 발생했습니다.",
+      "hideSuggestions": "추천 숨기기",
+      "showSuggestions": "추천 보기",
+      "processing": "처리 중...",
+      "titlePlaceholder": "예: 끝의 시작",
+      "noSuggestionsDesc": "아이디어를 제안받으면 여기에 저장됩니다",
+      "selected": "선택됨",
+      "delete": "삭제"
     },
     "DirectorCut": {
       "title": "감독의 수정 (Director's Cut)",
@@ -827,7 +873,8 @@
       "noImage": "수정할 이미지가 없습니다",
       "success": "장면 수정됨",
       "successDesc": "Director's Cut이 성공적으로 적용되었습니다!"
-    }
+    },
+    "ready": "준비됨"
   },
   "Styles": {
     "searchPlaceholder": "그림체 검색...",

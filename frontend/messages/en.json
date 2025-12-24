@@ -22,7 +22,17 @@
     "delete": "Delete",
     "confirm": "Confirm",
     "deleteConfirm": "Are you sure you want to delete this?",
-    "deleteConfirmDesc": "This action cannot be undone and related data will be permanently removed."
+    "deleteConfirmDesc": "This action cannot be undone and related data will be permanently removed.",
+    "languages": {
+      "en": "English",
+      "ko": "Korean (한국어)"
+    },
+    "relativeTime": {
+      "justNow": "Just now",
+      "minutesAgo": "{count}m ago",
+      "hoursAgo": "{count}h ago",
+      "daysAgo": "{count}d ago"
+    }
   },
   "Auth": {
     "loginTitle": "Director Login",
@@ -99,9 +109,15 @@
       "bestValue": "Best Value",
       "credits": "Credits",
       "plans": {
-        "plus": { "name": "Plus" },
-        "pro": { "name": "Pro" },
-        "studio": { "name": "Studio" }
+        "plus": {
+          "name": "Plus"
+        },
+        "pro": {
+          "name": "Pro"
+        },
+        "studio": {
+          "name": "Studio"
+        }
       },
       "features": {
         "textPromptOnly": "Text prompt generation only",
@@ -128,7 +144,8 @@
       "assets": "Assets",
       "settings": "Settings",
       "help": "Help",
-      "home": "Home"
+      "home": "Home",
+      "templatesDesc": "미리 설정된 구성으로 시작하세요."
     },
     "workspace": {
       "switch": "Switch Workspace",
@@ -186,7 +203,11 @@
     "listView": "List View",
     "gridView": "Grid View",
     "getStarted": "Create a new project to get started.",
-    "logout": "Logout"
+    "logout": "Logout",
+    "CreateStyle": {
+      "title": "Create New Style",
+      "desc": "Create your own art style"
+    }
   },
   "CreateWorkspace": {
     "title": "Create Workspace",
@@ -341,7 +362,27 @@
       "suggestionsReady": "Character Concepts Ready",
       "suggestionsReadyDesc": "AI has analyzed your world and generated character candidates. Check them in the Casting Wizard.",
       "aiRecommend": "AI Recommend",
-      "aiRecommending": "Generating..."
+      "aiRecommending": "Generating...",
+      "status": "상태",
+      "characters": "캐릭터",
+      "heroAction": "시리즈 미리보기",
+      "editProject": "프로젝트 수정",
+      "generatingCover": "새 커버 생성 중...",
+      "menu": {
+        "overview": "개요",
+        "episodes": "에피소드",
+        "characters": "캐릭터",
+        "settings": "설정"
+      },
+      "addCharacter": "캐릭터 추가",
+      "characterStatus": {
+        "processing": "처리 중",
+        "ready": "준비됨",
+        "failed": "실패"
+      },
+      "aiAdd": "AI 추천 캐릭터 추가",
+      "brainstormingBanner": "AI가 캐릭터 컨셉을 브레인스토밍 중입니다... 잠시만 기다려주세요.",
+      "creditNotice": "1 크레딧"
     },
     "Characters": {
       "title": "Characters",
@@ -451,7 +492,8 @@
         "noDialogues": "No dialogues",
         "speakerPlaceholder": "Speaker Name",
         "dialoguePlaceholder": "Dialogue text...",
-        "episodeSettings": "Episode Settings"
+        "episodeSettings": "Episode Settings",
+        "process": "생성 중..."
       },
       "toasts": {
         "noCuts": "No cuts to generate",
@@ -509,6 +551,23 @@
       "episodePreview": "Episode Preview",
       "deviceLabel": "Device",
       "originalLabel": "Original Webtoon"
+    },
+    "EditModal": {
+      "title": "작품 정보 수정",
+      "basicInfo": "기본 정보",
+      "titleLabel": "제목",
+      "subtitleLabel": "부제",
+      "genreLabel": "장르",
+      "languageLabel": "생성 언어",
+      "worldviewSection": "세계관 및 설정",
+      "worldviewLabel": "세계관 설명",
+      "worldviewPlaceholder": "세계관 내용을 입력하세요...",
+      "tonesLabel": "톤",
+      "noTones": "추출된 톤 없음",
+      "featuresLabel": "핵심 특징",
+      "save": "저장",
+      "cancel": "취소",
+      "descriptionLabel": "설명"
     }
   },
   "CharacterWizard": {
@@ -544,7 +603,8 @@
       "next": "Next",
       "back": "Back",
       "create": "Create Character",
-      "backToProject": "Back to Project"
+      "backToProject": "Back to Project",
+      "openBatchSuggestions": "AI 추천 목록 열기"
     },
     "suggestions": {
       "title": "AI Suggestions",
@@ -608,6 +668,16 @@
           "Loyal"
         ]
       }
+    },
+    "personalities": {
+      "Cheerful": "Cheerful",
+      "Serious": "Serious",
+      "Cold": "Cold",
+      "Tsundere": "Tsundere",
+      "Mysterious": "Mysterious",
+      "Melancholic": "Melancholic",
+      "Pure": "Pure",
+      "Madness": "Madness"
     }
   },
   "Modals": {
@@ -719,7 +789,11 @@
       "saving": "Saving...",
       "cancel": "Cancel",
       "languageLabel": "Creation Language",
-      "selectGenrePlaceholder": "Select Genre"
+      "selectGenrePlaceholder": "Select Genre",
+      "outputLanguage": "Output Language",
+      "selectLanguage": "Select Language",
+      "addGenre": "Add Genre",
+      "worldDescPlaceholder": "Describe the setting..."
     },
     "ViewStyle": {
       "title": "Style Details",
@@ -771,7 +845,14 @@
       "success": "Episode Created",
       "successDesc": "\"{title}\" is ready for editing.",
       "genFailed": "Generation Failed",
-      "genFailedDesc": "Something went wrong while creating the episode."
+      "genFailedDesc": "Something went wrong while creating the episode.",
+      "hideSuggestions": "Hide suggestions",
+      "showSuggestions": "Show suggestions",
+      "processing": "Processing...",
+      "titlePlaceholder": "e.g. The Beginning of the End",
+      "noSuggestionsDesc": "Saved ideas will appear here",
+      "selected": "SELECTED",
+      "delete": "Delete"
     },
     "DirectorCut": {
       "title": "Director's Cut",
@@ -789,7 +870,10 @@
       "successDesc": "Director's Cut applied successfully!",
       "failed": "Modification Failed",
       "failedDesc": "Failed to modify scene. Please try again.",
-      "noImage": "No image to modify"
+      "noImage": "No image to modify",
+      "startGenerating": "Start Generating",
+      "returnToSetup": "Return to Project Setup",
+      "creatingFor": "Creating style for project: "
     }
   },
   "Styles": {

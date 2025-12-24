@@ -232,7 +232,7 @@ export default function EpisodeGenerationModal({ isOpen, onClose, projectId, onE
                                 value={customTitle}
                                 onChange={(e) => setCustomTitle(e.target.value)}
                                 className="bg-gray-800 border-gray-700"
-                                placeholder="E.g. The Beginning of the End"
+                                placeholder={t('titlePlaceholder')}
                             />
                         </div>
 

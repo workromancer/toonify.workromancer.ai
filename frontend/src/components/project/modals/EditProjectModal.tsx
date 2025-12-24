@@ -106,6 +106,8 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate }:
         }
     }, [isOpen, genres.length]);
 
+    const ct = useTranslations('Common.languages');
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -176,17 +178,17 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate }:
                                 />
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="language" className="text-right text-gray-300">{t('languageLabel') || "Output Language"}</Label>
+                                <Label htmlFor="language" className="text-right text-gray-300">{t('languageLabel')}</Label>
                                 <Select
                                     value={formData.language}
                                     onValueChange={(val) => setFormData({ ...formData, language: val })}
                                 >
                                     <SelectTrigger id="language" className="col-span-3 bg-black/20 border-white/10 text-white">
-                                        <SelectValue placeholder="Select Language" />
+                                        <SelectValue placeholder={t('selectLanguage')} />
                                     </SelectTrigger>
                                     <SelectContent className="bg-[#2c2c44] border-white/10 text-white">
-                                        <SelectItem value="en">English</SelectItem>
-                                        <SelectItem value="ko">Korean (한국어)</SelectItem>
+                                        <SelectItem value="en">{ct('en')}</SelectItem>
+                                        <SelectItem value="ko">{ct('ko')}</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -223,7 +225,7 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate }:
                                         }}
                                     >
                                         <SelectTrigger className="bg-black/20 border-white/10 text-white w-full">
-                                            <SelectValue placeholder={t('selectGenrePlaceholder') || "Add Genre"} />
+                                            <SelectValue placeholder={t('selectGenrePlaceholder') || t('addGenre')} />
                                         </SelectTrigger>
                                         <SelectContent className="bg-[#2c2c44] border-white/10 text-white">
                                             {genres.filter(g => !formData.genre_ids.includes(g.id)).map(g => (
@@ -248,7 +250,7 @@ export default function EditProjectModal({ isOpen, onClose, project, onUpdate }:
                             <Textarea
                                 value={formData.worldview_content}
                                 onChange={(e) => setFormData({ ...formData, worldview_content: e.target.value })}
-                                placeholder="Describe the setting..."
+                                placeholder={t('worldDescPlaceholder')}
                             />
                         </div>
 

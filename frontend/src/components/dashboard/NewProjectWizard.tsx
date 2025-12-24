@@ -281,6 +281,7 @@ export default function NewProjectWizard() {
 
   // UI Locking State
   const isLocked = isProcessing || aiLoading || showAiResults;
+  const ct = useTranslations('Common.languages');
 
 
   return (
@@ -382,7 +383,7 @@ export default function NewProjectWizard() {
                             : 'bg-slate-900/30 border-slate-700 text-slate-500 hover:border-slate-600'
                             }`}
                         >
-                          {lang === 'en' ? 'English' : '한국어 (Korean)'}
+                          {lang === 'en' ? ct('en') : ct('ko')}
                           {language === lang && <Check size={16} className="text-purple-400" />}
                         </button>
                       ))}
