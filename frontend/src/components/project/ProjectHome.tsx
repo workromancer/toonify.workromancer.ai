@@ -99,6 +99,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
     const [isSuggestionDetailOpen, setIsSuggestionDetailOpen] = useState(false);
     const [suggestionToPromote, setSuggestionToPromote] = useState<Suggestion | null>(null);
     const [isPromoteConfirmOpen, setIsPromoteConfirmOpen] = useState(false);
+    const [promotingSuggestionId, setPromotingSuggestionId] = useState<string | null>(null);
 
     const { toast } = useToast();
     const router = useRouter();
@@ -114,6 +115,22 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
     // Suggestion State
     const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
     const [isSuggestionsLoading, setIsSuggestionsLoading] = useState(false);
+    const [isAiRecommending, setIsAiRecommending] = useState(false);
+
+    const handleAiRecommend = async () => {
+        setIsAiRecommending(true);
+        try {
+            await api.post('/characters/suggestions/batch', { project_id: project.id });
+            toast({ title: t('recommendations'), description: t('preparingSuggestionsDesc') });
+            // Polling will automatically update suggestions
+            setIsSuggestionsLoading(true);
+        } catch (e) {
+            console.error(e);
+            toast({ title: 'Error', description: 'Failed to generate AI recommendations', variant: 'destructive' });
+        } finally {
+            setIsAiRecommending(false);
+        }
+    };
 
     useEffect(() => {
         let interval: NodeJS.Timeout;
@@ -288,7 +305,8 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
     };
 
     const handlePromoteConfirm = async () => {
-        if (!suggestionToPromote) return;
+        if (!suggestionToPromote || promotingSuggestionId) return;
+        setPromotingSuggestionId(suggestionToPromote.id);
         try {
             await api.post(`/characters/suggestions/${suggestionToPromote.id}/promote`);
 
@@ -306,6 +324,8 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                 description: t('castFailed'),
                 variant: 'destructive',
             });
+        } finally {
+            setPromotingSuggestionId(null);
         }
         setIsPromoteConfirmOpen(false);
         setSuggestionToPromote(null);
@@ -657,6 +677,18 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
+                                        <Button
+                                            size="sm"
+                                            onClick={handleAiRecommend}
+                                            disabled={isAiRecommending || project.suggestions_status === 'processing'}
+                                            className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-full px-4 h-8 text-xs font-bold shadow-lg disabled:opacity-50"
+                                        >
+                                            {(isAiRecommending || project.suggestions_status === 'processing') ? (
+                                                <><Loader2 size={14} className="mr-1.5 animate-spin" />{t('aiRecommending')}</>
+                                            ) : (
+                                                <><Sparkles size={14} className="mr-1.5" />{t('aiRecommend')}</>
+                                            )}
+                                        </Button>
                                     </div>
                                     <Link href={`/project/${project.id}/characters`}>
                                         <Button variant="ghost" size="sm" className="text-sm text-gray-400 hover:text-white">{t('viewAll')} <ArrowRight size={14} className="ml-1" /></Button>
@@ -764,10 +796,14 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                             {/* Hover HUD */}
                                             <div className="absolute inset-0 bg-purple-600/0 group-hover:bg-purple-600/10 transition-colors flex items-center justify-center pointer-events-none">
                                                 <div
-                                                    onClick={(e) => handleCastNowClick(e, suggestion)}
-                                                    className="bg-purple-600 text-white text-[9px] font-bold px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0 duration-300 pointer-events-auto hover:bg-purple-500 shadow-xl shadow-purple-900/40"
+                                                    onClick={(e) => !promotingSuggestionId && handleCastNowClick(e, suggestion)}
+                                                    className={cn(
+                                                        "bg-purple-600 text-white text-[9px] font-bold px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0 duration-300 pointer-events-auto shadow-xl shadow-purple-900/40",
+                                                        promotingSuggestionId === suggestion.id ? "opacity-50 cursor-not-allowed" : "hover:bg-purple-500"
+                                                    )}
                                                 >
-                                                    CAST NOW
+                                                    {promotingSuggestionId === suggestion.id ? <Loader2 size={12} className="inline mr-1 animate-spin" /> : null}
+                                                    {promotingSuggestionId === suggestion.id ? 'CASTING...' : 'CAST NOW'}
                                                 </div>
                                             </div>
                                         </div>

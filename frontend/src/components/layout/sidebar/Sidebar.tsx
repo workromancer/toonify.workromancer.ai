@@ -105,7 +105,7 @@ export function SidebarContent({ children, className }: { children: React.ReactN
 export function SidebarFooter({ children, className }: { children: React.ReactNode; className?: string }) {
     const { isCollapsed } = useSidebar();
     return (
-        <div className={cn("p-3 border-t border-gray-800 mt-auto", className)}>
+        <div className={cn("p-3 border-t border-gray-800 mt-auto overflow-hidden", className)}>
             {children}
         </div>
     );

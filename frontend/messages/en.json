@@ -339,7 +339,9 @@
       "preparingSuggestionsDesc": "Analyzing story to suggest characters. Please wait.",
       "recommendations": "AI Recommendations",
       "suggestionsReady": "Character Concepts Ready",
-      "suggestionsReadyDesc": "AI has analyzed your world and generated character candidates. Check them in the Casting Wizard."
+      "suggestionsReadyDesc": "AI has analyzed your world and generated character candidates. Check them in the Casting Wizard.",
+      "aiRecommend": "AI Recommend",
+      "aiRecommending": "Generating..."
     },
     "Characters": {
       "title": "Characters",
@@ -353,7 +355,9 @@
       "rejectSuccess": "Suggestion rejected.",
       "castSuccess": "Casting confirmed. Character is being generated.",
       "castConfirm": "Confirm Casting",
-      "castConfirmDesc": "Do you want to create a character from this suggestion? Image generation will start immediately."
+      "castConfirmDesc": "Do you want to create a character from this suggestion? Image generation will start immediately.",
+      "aiRecommend": "AI Recommend",
+      "aiRecommending": "Generating..."
     },
     "Episodes": {
       "title": "Episodes",

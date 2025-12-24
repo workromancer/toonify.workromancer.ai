@@ -10,7 +10,7 @@ import ProjectLayout from '@/components/layout/ProjectLayout';
 import CharacterDetailModal from '@/components/project/modals/CharacterDetailModal';
 import SuggestionDetailModal from '@/components/project/modals/SuggestionDetailModal';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
-import { Plus, AlertCircle, Sparkles, Users, X } from 'lucide-react';
+import { Plus, AlertCircle, Sparkles, Users, X, Loader2 } from 'lucide-react';
 import { SectionLabel } from '@/components/ui/section-label';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -74,6 +74,23 @@ export default function CharacterListPage() {
     const [suggestionToPromote, setSuggestionToPromote] = useState<Suggestion | null>(null);
     const [isPromoteConfirmOpen, setIsPromoteConfirmOpen] = useState(false);
     const [promoteSource, setPromoteSource] = useState<'list' | 'modal'>('list');
+    const [isAiRecommending, setIsAiRecommending] = useState(false);
+    const [promotingSuggestionId, setPromotingSuggestionId] = useState<string | null>(null);
+
+    const handleAiRecommend = async () => {
+        if (!project) return;
+        setIsAiRecommending(true);
+        try {
+            await api.post('/characters/suggestions/batch', { project_id: project.id });
+            toast({ title: tc('suggestionList'), description: t('preparingSuggestionsDesc') });
+            setIsSuggestionsLoading(true);
+        } catch (e) {
+            console.error(e);
+            toast({ title: 'Error', description: 'Failed to generate AI recommendations', variant: 'destructive' });
+        } finally {
+            setIsAiRecommending(false);
+        }
+    };
 
     const fetchCharacters = async () => {
         if (!projectId) return;
@@ -249,7 +266,8 @@ export default function CharacterListPage() {
     };
 
     const handlePromoteConfirm = async () => {
-        if (!suggestionToPromote) return;
+        if (!suggestionToPromote || promotingSuggestionId) return;
+        setPromotingSuggestionId(suggestionToPromote.id);
         try {
             await api.post(`/characters/suggestions/${suggestionToPromote.id}/promote`);
 
@@ -269,6 +287,8 @@ export default function CharacterListPage() {
                 description: "Failed to cast suggestion",
                 variant: 'destructive',
             });
+        } finally {
+            setPromotingSuggestionId(null);
         }
         setIsPromoteConfirmOpen(false);
         setSuggestionToPromote(null);
@@ -302,6 +322,17 @@ export default function CharacterListPage() {
                             >
                                 <span className="mr-2"><Plus size={16} /></span>
                                 <span>{tc('newCharacter')}</span>
+                            </button>
+                            <button
+                                onClick={handleAiRecommend}
+                                disabled={isAiRecommending || project.suggestions_status === 'processing'}
+                                className="flex h-10 min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 px-6 text-sm font-bold leading-normal text-white shadow-lg shadow-purple-900/20 transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {(isAiRecommending || project.suggestions_status === 'processing') ? (
+                                    <><Loader2 size={16} className="mr-2 animate-spin" />{tc('aiRecommending')}</>
+                                ) : (
+                                    <><Sparkles size={16} className="mr-2" />{tc('aiRecommend')}</>
+                                )}
                             </button>
                         </div>
 
@@ -425,10 +456,14 @@ export default function CharacterListPage() {
                                                 {/* Hover HUD */}
                                                 <div className="absolute inset-0 bg-purple-600/0 group-hover:bg-purple-600/10 transition-colors flex items-center justify-center pointer-events-none">
                                                     <div
-                                                        onClick={(e) => handleCastNowClick(e as any, suggestion)}
-                                                        className="bg-purple-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0 duration-300 pointer-events-auto hover:bg-purple-500 shadow-xl shadow-purple-900/40"
+                                                        onClick={(e) => !promotingSuggestionId && handleCastNowClick(e as any, suggestion)}
+                                                        className={cn(
+                                                            "bg-purple-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0 duration-300 pointer-events-auto shadow-xl shadow-purple-900/40",
+                                                            promotingSuggestionId === suggestion.id ? "opacity-50 cursor-not-allowed" : "hover:bg-purple-500"
+                                                        )}
                                                     >
-                                                        CAST NOW
+                                                        {promotingSuggestionId === suggestion.id ? <Loader2 size={12} className="inline mr-1 animate-spin" /> : null}
+                                                        {promotingSuggestionId === suggestion.id ? 'CASTING...' : 'CAST NOW'}
                                                     </div>
                                                 </div>
                                             </div>
