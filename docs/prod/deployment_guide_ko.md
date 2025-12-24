@@ -29,7 +29,7 @@
 ```
 
 - Docker 이미지 빌드 → Artifact Registry 푸시 → Cloud Run 배포
-- `ingress=internal`로 설정 (외부 직접 접근 불가)
+- `ingress=internal`로 설정 (VPC 내부에서만 접근 가능, 외부 차단)
 
 ### Frontend 배포
 
@@ -38,7 +38,8 @@
 ```
 
 - 백엔드 URL 자동 감지
-- `ingress=all`로 설정 (Public 접근 가능)
+- `ingress=all` (Public Access), `vpc-egress=all-traffic` (VPC 경유) 설정
+- 외부 인터넷 접속을 위해 Cloud NAT 사용
 
 ---
 

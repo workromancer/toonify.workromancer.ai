@@ -10,35 +10,38 @@ Toonify 프로덕션 환경은 **Google Cloud Platform (GCP)** 에서 호스팅�
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                        Internet                                  │
-└───────────────────────────┬─────────────────────────────────────┘
-                            │
-                            ▼
-            ┌───────────────────────────────┐
-            │    Global Load Balancer       │
-            │    (34.160.25.49)             │
-            │    toonify.workromancer.ai    │
-            └───────────────┬───────────────┘
-                            │
-                            ▼
-            ┌───────────────────────────────┐
-            │    Cloud Run (Frontend)       │
-            │    toonify-frontend           │
-            │    asia-northeast3            │
-            └───────────────┬───────────────┘
-                            │ VPC Connector
-                            ▼
-            ┌───────────────────────────────┐
-            │    Cloud Run (Backend)        │
-            │    toonify-backend            │
-            │    Internal Only              │
-            └───────────────┬───────────────┘
-                            │ Private IP
-                            ▼
-            ┌───────────────────────────────┐
-            │    Cloud SQL (PostgreSQL)     │
-            │    toonify-postgres           │
-            │    10.223.0.3 (Private IP)    │
-            └───────────────────────────────┘
+└───────────┬───────────────────────────────────────────▲─────────┘
+            │                                           │
+            │ Requests                                  │ Outbound (via NAT)
+            ▼                                           │
+┌───────────────────────────────┐           ┌───────────┴───────────┐
+│    Global Load Balancer       │           │    Cloud NAT          │
+│    (34.160.25.49)             │           │    toonify-nat        │
+│    toonify.workromancer.ai    │           └───────────▲───────────┘
+└───────────────┬───────────────┘                       │
+                │                                       │
+                ▼                                       │
+┌───────────────────────────────┐           ┌───────────┴───────────┐
+│    Cloud Run (Frontend)       │           │    Cloud Router       │
+│    toonify-frontend           │           │    toonify-router     │
+│    asia-northeast3            ├──────────►│    main-vpc           │
+│    (VPC Egress: All Traffic)  │           └───────────────────────┘
+└───────────────┬───────────────┘
+                │ VPC Internal
+                ▼
+┌───────────────────────────────┐
+│    Cloud Run (Backend)        │
+│    toonify-backend            │
+│    asia-northeast3            │
+│    (Ingress: Internal Only)   │
+└───────────────┬───────────────┘
+                │ Private IP
+                ▼
+┌───────────────────────────────┐
+│    Cloud SQL (PostgreSQL)     │
+│    toonify-postgres           │
+│    10.223.0.3 (Private IP)    │
+└───────────────────────────────┘
 ```
 
 ---
@@ -62,6 +65,7 @@ Toonify 프로덕션 환경은 **Google Cloud Platform (GCP)** 에서 호스팅�
 | Service Name    | `toonify-frontend`                                         |
 | Region          | `asia-northeast3`                                          |
 | Ingress         | Allow all traffic (Public)                                 |
+| VPC Egress      | **All Traffic** (via `vpc-connector`)                      |
 | Service Account | `toonify-frontend-sa@toonify-prod.iam.gserviceaccount.com` |
 | Service URL     | `https://toonify-frontend-biixcm5k6q-du.a.run.app`         |
 
@@ -80,7 +84,8 @@ CLERK_SECRET_KEY=sk_live_...
 | ---------------------- | --------------------------------------------------------- |
 | Service Name           | `toonify-backend`                                         |
 | Region                 | `asia-northeast3`                                         |
-| Ingress                | Internal only                                             |
+| Ingress                | **Internal only**                                         |
+| VPC Egress             | Private ranges only (via `vpc-connector`)                 |
 | Service Account        | `toonify-backend-sa@toonify-prod.iam.gserviceaccount.com` |
 | VPC Connector          | `vpc-connector`                                           |
 | Service URL (Internal) | `https://toonify-backend-biixcm5k6q-du.a.run.app`         |
@@ -97,7 +102,22 @@ GOOGLE_CLOUD_LOCATION=asia-northeast1
 
 ---
 
-## 2. Cloud SQL (PostgreSQL)
+## 2. Networking (Cloud NAT)
+
+프론트엔드가 VPC를 통해 모든 트래픽을 내보내면서도(`vpc-egress=all-traffic`), 외부 인터넷(Clerk, Gemini, 결제 등)에 안전하게 접속하기 위해 Cloud NAT가 구성되었습니다.
+
+| Resource     | Name             | Region            | Network    |
+| ------------ | ---------------- | ----------------- | ---------- |
+| Cloud Router | `toonify-router` | `asia-northeast3` | `main-vpc` |
+| Cloud NAT    | `toonify-nat`    | `asia-northeast3` | `main-vpc` |
+
+- **Frontend Connectivity**:
+  - **Internal**: VPC Connector를 통해 Backend 및 Cloud SQL에 접근.
+  - **External**: VPC Connector → Cloud Router → Cloud NAT를 통해 인터넷 접근.
+
+---
+
+## 3. Cloud SQL (PostgreSQL)
 
 | Property         | Value                       |
 | ---------------- | --------------------------- |
@@ -117,7 +137,7 @@ DATABASE_URL = "postgresql://toonify:PASSWORD@10.223.0.3:5432/toonify_db"
 
 ---
 
-## 3. Global HTTPS Load Balancer
+## 4. Global HTTPS Load Balancer
 
 커스텀 도메인 `toonify.workromancer.ai`를 위한 Load Balancer 구성
 
@@ -153,7 +173,7 @@ gcloud compute ssl-certificates describe toonify-ssl-cert --global --project=too
 
 ---
 
-## 4. Google Cloud Storage
+## 5. Google Cloud Storage
 
 | Property    | Value                       |
 | ----------- | --------------------------- |
@@ -170,7 +190,7 @@ gcloud compute ssl-certificates describe toonify-ssl-cert --global --project=too
 
 ---
 
-## 5. Vertex AI (Gemini)
+## 6. Vertex AI (Gemini)
 
 | Property | Value                                                  |
 | -------- | ------------------------------------------------------ |
@@ -182,7 +202,7 @@ gcloud compute ssl-certificates describe toonify-ssl-cert --global --project=too
 
 ---
 
-## 6. IAM Service Accounts
+## 7. IAM Service Accounts
 
 ### Frontend SA
 
@@ -199,7 +219,7 @@ gcloud compute ssl-certificates describe toonify-ssl-cert --global --project=too
 
 ---
 
-## 7. Deployment Commands
+## 8. Deployment Commands
 
 ### Backend 배포
 
@@ -266,7 +286,7 @@ gcloud compute forwarding-rules create toonify-https-rule \
 
 ---
 
-## 8. Troubleshooting
+## 9. Troubleshooting
 
 ### Cloud Run 로그 확인
 
@@ -294,7 +314,7 @@ gcloud run services describe toonify-backend --region=asia-northeast3 --project=
 
 ---
 
-## 9. Cost Optimization
+## 10. Cost Optimization
 
 | Service       | Optimization              |
 | ------------- | ------------------------- |
