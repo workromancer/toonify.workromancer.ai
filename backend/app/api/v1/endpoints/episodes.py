@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlmodel import Session, select
 
 from app.api import deps
-from app.models import Episode, Project, WorkspaceMember, StoryCut, Character
+from app.models import Episode, Project, WorkspaceMember, StoryCut, Character, EpisodeSuggestion
 from pydantic import BaseModel
 from datetime import datetime
 from uuid import UUID
@@ -165,6 +165,55 @@ def delete_episode(
     from fastapi import Response
     return Response(status_code=204)
 
+# Episode Suggestions CRUD
+class EpisodeSuggestionOut(BaseModel):
+    id: UUID
+    title: str
+    summary: str
+    reason: Optional[str] = None
+    user_instruction: Optional[str] = None
+    is_used: bool
+    created_at: datetime
+
+@router.get("/suggestions/{project_id}", response_model=List[EpisodeSuggestionOut])
+def list_episode_suggestions(
+    *,
+    project_id: UUID,
+    session: Session = Depends(deps.get_session),
+    current_user_id: str = Depends(deps.get_current_user_id),
+):
+    """List all episode suggestions for a project."""
+    project = session.get(Project, project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    statement = select(EpisodeSuggestion).where(
+        EpisodeSuggestion.project_id == project_id
+    ).where(
+        EpisodeSuggestion.deleted_at == None
+    ).order_by(EpisodeSuggestion.created_at.desc())
+    
+    return session.exec(statement).all()
+
+@router.delete("/suggestions/{suggestion_id}")
+def delete_episode_suggestion(
+    *,
+    suggestion_id: UUID,
+    session: Session = Depends(deps.get_session),
+    current_user_id: str = Depends(deps.get_current_user_id),
+):
+    """Soft delete an episode suggestion."""
+    suggestion = session.get(EpisodeSuggestion, suggestion_id)
+    if not suggestion or suggestion.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Suggestion not found")
+    
+    suggestion.deleted_at = datetime.utcnow()
+    session.add(suggestion)
+    session.commit()
+    
+    from fastapi import Response
+    return Response(status_code=204)
+
 @router.post("/generate-options")
 def generate_episode_options(
     *,
@@ -175,7 +224,7 @@ def generate_episode_options(
     accept_language: str = Header("en", alias="Accept-Language")
 ):
     """
-    Generate 3 episode ideas based on project context.
+    Generate 3 episode ideas based on project context and save to DB.
     """
     project = session.get(Project, project_id)
     if not project:
@@ -184,7 +233,6 @@ def generate_episode_options(
     # Fetch recent episodes for context
     statement = select(Episode).where(Episode.project_id == project_id).where(Episode.deleted_at == None).order_by(Episode.episode_order.desc()).limit(3)
     episodes = session.exec(statement).all()
-    # Reverse to chronological
     episodes.reverse()
     recent_summaries = "\n".join([f"Ep {ep.episode_order} - {ep.title}: {ep.story_summary}" for ep in episodes])
 
@@ -197,6 +245,38 @@ def generate_episode_options(
         language=project.language or accept_language.split(',')[0].strip()[:2],
         user_instruction=user_instruction
     )
+    
+    # Save generated ideas to DB
+    saved_suggestions = []
+    if result and "options" in result:
+        for opt in result["options"]:
+            suggestion = EpisodeSuggestion(
+                project_id=project_id,
+                title=opt.get("title", ""),
+                summary=opt.get("summary", ""),
+                reason=opt.get("reason"),
+                user_instruction=user_instruction
+            )
+            session.add(suggestion)
+            saved_suggestions.append(suggestion)
+        session.commit()
+        
+        # Refresh to get IDs and created_at
+        for s in saved_suggestions:
+            session.refresh(s)
+        
+        # Return with IDs
+        result["options"] = [
+            {
+                "id": str(s.id),
+                "title": s.title,
+                "summary": s.summary,
+                "reason": s.reason,
+                "created_at": s.created_at.isoformat()
+            }
+            for s in saved_suggestions
+        ]
+    
     return result
 
 @router.post("/generate-cuts")

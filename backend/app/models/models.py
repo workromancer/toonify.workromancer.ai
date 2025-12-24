@@ -133,6 +133,7 @@ class Project(SQLModel, table=True):
     episodes: List["Episode"] = Relationship(back_populates="project")
     clues: List["Clue"] = Relationship(back_populates="project")
     suggestions: List["CharacterSuggestion"] = Relationship(back_populates="project")
+    episode_suggestions: List["EpisodeSuggestion"] = Relationship(back_populates="project")
 
 class Character(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
@@ -295,3 +296,19 @@ class CharacterSuggestion(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     project: Project = Relationship(back_populates="suggestions")
+
+
+class EpisodeSuggestion(SQLModel, table=True):
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    project_id: UUID = Field(foreign_key="project.id")
+    
+    title: str
+    summary: str = Field(sa_column=Column(Text))
+    reason: Optional[str] = Field(default=None, sa_column=Column(Text))
+    user_instruction: Optional[str] = None
+    
+    is_used: bool = False
+    deleted_at: Optional[datetime] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    project: Project = Relationship(back_populates="episode_suggestions")
