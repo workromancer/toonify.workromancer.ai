@@ -56,13 +56,18 @@ export default function SettingsPage() {
 
     return (
         <>
-            <div className="max-w-4xl mx-auto p-8">
-                <header className="mb-8">
-                    <h1 className="text-3xl font-bold text-white mb-2">{t('title')}</h1>
-                    <p className="text-gray-400">{t('description')}</p>
+            <div className="flex-1 min-h-screen bg-[#05050a] text-slate-200 font-sans relative selection:bg-purple-500/30 overflow-x-hidden">
+                {/* Header */}
+                <header className="py-4 md:py-6 pl-16 md:pl-6 lg:pl-10 pr-4 md:pr-6 lg:pr-10 sticky top-0 bg-[#05050a]/80 backdrop-blur-md z-30 border-b border-slate-800/30">
+                    <div className="max-w-4xl mx-auto">
+                        <h1 className="text-xl md:text-3xl font-bold text-white mb-1">{t('title')}</h1>
+                        <p className="text-slate-400 text-sm">{t('description')}</p>
+                    </div>
                 </header>
 
-                <div className="space-y-6">
+                {/* Content */}
+                <div className="p-4 md:p-6 lg:p-10 max-w-4xl mx-auto">
+                    <div className="space-y-6">
                     {/* Profile Section */}
                     <div className="bg-[#15151A] border border-gray-800 rounded-xl p-6">
                         <div className="flex items-center gap-4 mb-6">
@@ -156,6 +161,7 @@ export default function SettingsPage() {
                             </div>
                         </div>
                     )}
+                    </div>
                 </div>
             </div>
         </>

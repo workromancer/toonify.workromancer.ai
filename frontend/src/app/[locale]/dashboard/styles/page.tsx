@@ -203,48 +203,52 @@ function ArtStylesContent() {
 
     return (
         <>
-            <div className="relative min-h-full bg-[#05050a] text-slate-200 font-sans selection:bg-purple-500/30 p-8">
+            <div className="flex-1 min-h-screen bg-[#05050a] text-slate-200 font-sans relative selection:bg-purple-500/30 overflow-x-hidden">
                 {/* Background Ambience */}
                 <div className="fixed top-[-20%] left-[-10%] w-[1000px] h-[1000px] bg-purple-900/5 rounded-full blur-[150px] pointer-events-none" />
                 <div className="fixed bottom-[-20%] right-[-10%] w-[800px] h-[800px] bg-indigo-900/5 rounded-full blur-[150px] pointer-events-none" />
 
                 {/* Header */}
-                <div className="flex justify-between items-end mb-10 relative z-10">
-                    <div>
-                        <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">{t('myStyles')}</h1>
-                        <p className="text-slate-500 text-sm font-medium">{t('subtitle')}</p>
-                        {fromProjectSetup && (
-                            <div className="mt-4 p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg inline-flex items-center gap-2 text-sm text-purple-300">
-                                <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
-                                {t('creatingFor')} <span className="font-bold text-white">{projectTitle || "Unknown Project"}</span>
+                <header className="py-4 md:py-6 pl-16 md:pl-6 lg:pl-10 pr-4 md:pr-6 lg:pr-10 sticky top-0 bg-[#05050a]/80 backdrop-blur-md z-30 border-b border-slate-800/30">
+                    <div className="max-w-[1600px] mx-auto">
+                        <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4">
+                            <div>
+                                <h1 className="text-xl md:text-3xl font-bold text-white mb-1 tracking-tight">{t('myStyles')}</h1>
+                                <p className="text-slate-400 text-sm">{t('subtitle')}</p>
+                                {fromProjectSetup && (
+                                    <div className="mt-4 p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg inline-flex items-center gap-2 text-sm text-purple-300">
+                                        <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
+                                        {t('creatingFor')} <span className="font-bold text-white">{projectTitle || "Unknown Project"}</span>
+                                    </div>
+                                )}
                             </div>
-                        )}
-                    </div>
 
-                    {/* View Toggle / Search */}
-                    <div className="flex items-center gap-4">
-                        {styles.length > 0 && (
-                            <div className="relative group">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-purple-400 transition-colors" size={16} />
-                                <input
-                                    type="text"
-                                    placeholder={t('searchPlaceholder')}
-                                    className="bg-slate-900 border border-slate-700/50 rounded-full pl-10 pr-4 py-2.5 text-sm text-white focus:border-purple-500 outline-none w-64 transition-all placeholder:text-slate-600"
-                                />
+                            {/* View Toggle / Search */}
+                            <div className="flex items-center gap-4">
+                                {styles.length > 0 && (
+                                    <div className="relative group">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-purple-400 transition-colors" size={16} />
+                                        <input
+                                            type="text"
+                                            placeholder={t('searchPlaceholder')}
+                                            className="bg-slate-900 border border-slate-700/50 rounded-full pl-10 pr-4 py-2.5 text-sm text-white focus:border-purple-500 outline-none w-40 md:w-64 transition-all placeholder:text-slate-600"
+                                        />
+                                    </div>
+                                )}
                             </div>
-                        )}
+                        </div>
                     </div>
-                </div>
+                </header>
 
                 {/* Content Area */}
-                <div className="w-full relative z-10 pb-20">
+                <div className="p-4 md:p-6 lg:p-10 max-w-[1600px] mx-auto pb-20 relative z-10">
                     {loading ? (
                         <div className="flex items-center justify-center min-h-[300px]">
                             <CustomLoader size={32} />
                         </div>
                     ) : styles.length > 0 ? (
                         // POPULATED STATE (Grid)
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-fade-in-up">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 animate-fade-in-up">
                             {/* Create New Trigger Card */}
                             <button
                                 onClick={handleCreateClick}

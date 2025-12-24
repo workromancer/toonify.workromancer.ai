@@ -6,23 +6,23 @@ import { Hammer } from 'lucide-react';
 export default function TemplatesPage() {
     return (
         <DashboardLayout>
-            <div className="flex-1 min-h-screen bg-[#05050a] text-slate-200 font-sans relative selection:bg-purple-500/30">
+            <div className="flex-1 min-h-screen bg-[#05050a] text-slate-200 font-sans relative selection:bg-purple-500/30 overflow-x-hidden">
                 {/* Background Ambience */}
                 <div className="fixed top-[-20%] right-[-10%] w-[1000px] h-[1000px] bg-purple-900/5 rounded-full blur-[150px] pointer-events-none" />
                 <div className="fixed bottom-[-20%] left-[-10%] w-[800px] h-[800px] bg-indigo-900/5 rounded-full blur-[150px] pointer-events-none" />
 
                 {/* Header Section */}
-                <header className="h-20 flex items-center justify-between px-10 sticky top-0 bg-[#05050a]/80 backdrop-blur-md z-30 border-b border-slate-800/30">
-                    <div>
-                        <h1 className="text-2xl font-bold text-white leading-tight flex items-center gap-2">
+                <header className="py-4 md:py-6 pl-16 md:pl-6 lg:pl-10 pr-4 md:pr-6 lg:pr-10 sticky top-0 bg-[#05050a]/80 backdrop-blur-md z-30 border-b border-slate-800/30">
+                    <div className="max-w-[1600px] mx-auto">
+                        <h1 className="text-xl md:text-3xl font-bold text-white tracking-tight mb-1">
                             Templates
                         </h1>
-                        <p className="text-sm text-slate-500 mt-0.5 font-medium">Choose a template to start your next masterpiece.</p>
+                        <p className="text-sm text-slate-400">Choose a template to start your next masterpiece.</p>
                     </div>
                 </header>
 
                 {/* Main Content */}
-                <div className="flex-1 flex flex-col items-center justify-center text-center p-8 h-[calc(100vh-80px)] relative z-10 animate-fade-in-up">
+                <div className="p-4 md:p-6 lg:p-10 flex-1 flex flex-col items-center justify-center text-center h-[calc(100vh-100px)] relative z-10 animate-fade-in-up">
                     <div className="w-24 h-24 bg-[#15151A] rounded-full flex items-center justify-center mb-6 border border-gray-800 shadow-2xl shadow-purple-900/20">
                         <Hammer className="w-10 h-10 text-purple-500" />
                     </div>

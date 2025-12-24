@@ -212,38 +212,38 @@ export default function DashboardPage() {
                 <div className="fixed bottom-[-20%] left-[-10%] w-[800px] h-[800px] bg-indigo-900/5 rounded-full blur-[150px] pointer-events-none" />
 
                 {/* Top Header */}
-                <header className="h-20 flex items-center justify-between pl-16 md:pl-10 pr-4 md:pr-10 sticky top-0 bg-[#05050a]/80 backdrop-blur-md z-30 border-b border-slate-800/30">
-                    <div className="flex items-center gap-3">
+                <header className="py-4 md:py-6 pl-16 md:pl-6 lg:pl-10 pr-4 md:pr-6 lg:pr-10 sticky top-0 bg-[#05050a]/80 backdrop-blur-md z-30 border-b border-slate-800/30">
+                    <div className="max-w-[1600px] mx-auto flex items-center justify-between">
                         <div>
-                            <h1 className="text-lg md:text-2xl font-bold text-white leading-tight flex items-center gap-2">
+                            <h1 className="text-lg md:text-xl lg:text-3xl font-bold text-white leading-tight flex items-center gap-2">
                                 <span className="hidden md:inline">{t('welcome')}</span>
-                                <span className="md:hidden">{t('welcomeBack')}</span>
+                                <span className="md:hidden text-base">{t('welcomeBack')}</span>
                                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400">{user?.email?.split('@')[0] || t('defaultUser')}!</span>
-                                <span className="animate-pulse text-xl">👋</span>
+                                <span className="animate-pulse text-lg md:text-xl">👋</span>
                             </h1>
-                            <p className="text-xs md:text-sm text-slate-500 mt-0.5 font-medium hidden md:block">{t('welcomeMessage')}</p>
+                            <p className="text-xs md:text-sm text-slate-400 mt-0.5 hidden md:block">{t('welcomeMessage')}</p>
                         </div>
-                    </div>
 
-                    <div className="flex items-center gap-4">
-                        <div className="h-6 w-px bg-slate-800 hidden md:block" />
+                        <div className="flex items-center gap-4">
+                            <div className="h-6 w-px bg-slate-800 hidden md:block" />
 
-                        {/* Search */}
-                        <div className="relative group">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-purple-400 transition-colors" size={16} />
-                            <input
-                                type="text"
-                                placeholder={t('searchPlaceholder')}
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="bg-slate-900 border border-slate-700/50 rounded-full pl-10 pr-4 py-2.5 text-sm text-white focus:border-purple-500 outline-none w-40 md:w-64 transition-all placeholder:text-slate-600 focus:w-48 md:focus:w-80 focus:bg-slate-900/80"
-                            />
+                            {/* Search */}
+                            <div className="relative group">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-purple-400 transition-colors" size={16} />
+                                <input
+                                    type="text"
+                                    placeholder={t('searchPlaceholder')}
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="bg-slate-900 border border-slate-700/50 rounded-full pl-10 pr-4 py-2.5 text-sm text-white focus:border-purple-500 outline-none w-40 md:w-64 transition-all placeholder:text-slate-600 focus:w-48 md:focus:w-80 focus:bg-slate-900/80"
+                                />
+                            </div>
                         </div>
                     </div>
                 </header>
 
                 {/* Dashboard Content */}
-                <div className="p-10 max-w-[1600px] mx-auto space-y-14 pb-20 relative z-10">
+                <div className="p-4 md:p-6 lg:p-10 max-w-[1600px] mx-auto space-y-8 md:space-y-14 pb-20 relative z-10 overflow-x-hidden">
 
                     {/* Section: Recent Projects */}
                     <section className="animate-fade-in-up">

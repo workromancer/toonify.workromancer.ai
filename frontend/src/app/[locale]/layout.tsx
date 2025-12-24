@@ -1,23 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Spline_Sans } from "next/font/google";
 import "../globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/providers/AuthProvider";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-const splineSans = Spline_Sans({
-  variable: "--font-spline-sans",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Toonify - AI Webtoon Studio",
@@ -47,9 +32,18 @@ export default async function RootLayout({
   return (
     <ClerkProvider>
       <html lang={locale} suppressHydrationWarning>
+        <head>
+          {/* Pretendard Variable Font - CDN */}
+          <link
+            rel="stylesheet"
+            as="style"
+            crossOrigin="anonymous"
+            href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"
+          />
+        </head>
         <body
           suppressHydrationWarning
-          className={`${splineSans.variable} ${geistSans.variable} ${geistMono.variable} antialiased font-display bg-background-light dark:bg-background-dark`}
+          className="antialiased bg-background-light dark:bg-background-dark"
         >
           <NextIntlClientProvider messages={messages}>
             <AuthProvider>
