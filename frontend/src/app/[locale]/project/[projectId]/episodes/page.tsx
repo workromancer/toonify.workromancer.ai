@@ -18,6 +18,7 @@ import {
     AlertCircle,
     Trash2
 } from 'lucide-react';
+import { CustomLoader } from '@/components/ui/custom-loader';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -134,7 +135,7 @@ export default function EpisodesPage() {
         return (
             <ProjectLayout projectId={projectId} projectTitle="Loading...">
                 <div className="flex h-full items-center justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                    <CustomLoader size={32} />
                 </div>
             </ProjectLayout>
         );

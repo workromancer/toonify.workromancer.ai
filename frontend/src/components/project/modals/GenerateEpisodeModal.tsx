@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Sparkles, Zap, RotateCw, Wand2, Sliders, PenLine } from 'lucide-react';
+import { CustomLoader } from '@/components/ui/custom-loader';
 import api from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslations } from 'next-intl';
@@ -161,12 +162,8 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
                     {/* MODE: GENERATING */}
                     {mode === 'generating' ? (
                         <div className="h-full flex flex-col items-center justify-center py-10 min-h-[300px]">
-                            <div className="w-20 h-20 relative mb-8">
-                                <div className="absolute inset-0 rounded-full border-4 border-slate-800"></div>
-                                <div className="absolute inset-0 rounded-full border-4 border-t-purple-500 border-r-transparent border-b-transparent border-l-transparent animate-spin"></div>
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                    <Zap size={24} className="text-white animate-pulse" fill="currentColor" />
-                                </div>
+                            <div className="mb-8">
+                                <CustomLoader size={80} />
                             </div>
 
                             <h3 className="text-2xl font-bold text-white mb-2 text-center">{t('thinking')}</h3>

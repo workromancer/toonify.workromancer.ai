@@ -11,6 +11,7 @@ import CharacterDetailModal from '@/components/project/modals/CharacterDetailMod
 import SuggestionDetailModal from '@/components/project/modals/SuggestionDetailModal';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { Plus, AlertCircle, Sparkles, Users, X, Loader2 } from 'lucide-react';
+import { CustomLoader } from '@/components/ui/custom-loader';
 import { SectionLabel } from '@/components/ui/section-label';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -378,7 +379,7 @@ export default function CharacterListPage() {
                                                         <div className="w-full h-full bg-slate-800 flex flex-col items-center justify-center text-gray-600 gap-2">
                                                             {isGenerating ? (
                                                                 <>
-                                                                    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                                                                    <CustomLoader size={32} />
                                                                     <span className="text-[10px] text-primary font-mono animate-pulse uppercase">{t('generating')}</span>
                                                                 </>
                                                             ) : isFailed ? (
@@ -417,7 +418,7 @@ export default function CharacterListPage() {
                                         {/* Loading Card */}
                                         {(project.suggestions_status === 'processing' || isSuggestionsLoading) && (
                                             <div className="aspect-[3/4] rounded-xl border border-purple-500/30 bg-purple-500/5 flex flex-col items-center justify-center gap-3 p-4 text-center animate-pulse">
-                                                <div className="w-10 h-10 rounded-full border-2 border-t-purple-500 border-r-purple-500/30 border-b-transparent border-l-transparent animate-spin" />
+                                                <CustomLoader size={40} />
                                                 <div className="space-y-1">
                                                     <p className="text-[10px] font-bold text-purple-400 uppercase tracking-widest">{t('preparingSuggestions')}</p>
                                                     <p className="text-[9px] text-gray-500 leading-tight">{t('preparingSuggestionsDesc')}</p>

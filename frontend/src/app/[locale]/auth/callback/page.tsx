@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from '@/navigation'; // Use localized router
 import { useUser } from '@clerk/nextjs';
 import axios from 'axios';
+import { CustomLoader } from '@/components/ui/custom-loader';
 import { useAuthStore } from '@/store/useAuthStore';
 
 export default function AuthCallbackPage() {
@@ -45,7 +46,7 @@ export default function AuthCallbackPage() {
         <div className="flex min-h-screen items-center justify-center bg-gray-900 text-white">
             <div className="text-center">
                 <h2 className="text-xl mb-4">Setting up your workspace...</h2>
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto"></div>
+                <CustomLoader size={32} className="mx-auto" />
             </div>
         </div>
     );

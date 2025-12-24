@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { X, Sparkles, User, Tag, FileText, Activity, Trash2 } from 'lucide-react';
+import { CustomLoader } from '@/components/ui/custom-loader';
 import { RadarChart } from '@/components/ui/radar-chart'; // New Import
 import { cn } from '@/lib/utils';
 import api from '@/lib/api';
@@ -90,7 +91,7 @@ export default function CharacterDetailModal({ isOpen, onClose, character, onRet
                             <div className="flex flex-col items-center gap-4 p-8 text-center relative z-10 w-full min-h-[400px] justify-center">
                                 {isGenerating ? (
                                     <>
-                                        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin shadow-xl shadow-primary/20" />
+                                        <CustomLoader size={64} />
                                         <div className="flex flex-col gap-1">
                                             <h3 className="text-xl font-bold text-white animate-pulse">{t('designing', { name: character.name })}</h3>
                                             <p className="text-sm text-gray-400">{t('designingDesc')}</p>

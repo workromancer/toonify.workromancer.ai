@@ -6,6 +6,7 @@ import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
 
 import { Plus, Image as ImageIcon, Trash2, Clapperboard, Loader2, Wand2, Sparkles, RefreshCw, Download } from 'lucide-react';
+import { CustomLoader } from '@/components/ui/custom-loader';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
@@ -414,17 +415,13 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
 
                     {loading ? (
                         <div className="text-slate-500 text-center py-10 flex flex-col items-center">
-                            <Loader2 className="animate-spin mb-2 text-slate-600" />
+                            <CustomLoader size={24} className="mb-2" />
                             <span className="text-xs">{t('loadingScenes')}</span>
                         </div>
                     ) : episodeStatus === 'generating' && cuts.length === 0 ? (
                         <div className="h-full flex flex-col items-center justify-center py-20 min-h-[300px] text-center">
-                            <div className="w-16 h-16 relative mb-6">
-                                <div className="absolute inset-0 rounded-full border-4 border-slate-800"></div>
-                                <div className="absolute inset-0 rounded-full border-4 border-t-purple-500 border-r-transparent border-b-transparent border-l-transparent animate-spin"></div>
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                    <Sparkles size={20} className="text-white animate-pulse" fill="currentColor" />
-                                </div>
+                            <div className="mb-6">
+                                <CustomLoader size={64} />
                             </div>
                             <h3 className="text-xl font-bold text-white mb-2">{t('generatingEpisode')}</h3>
                             <p className="text-slate-400 text-sm max-w-xs mx-auto mb-8 leading-relaxed">
@@ -504,7 +501,7 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
                                                 {/* Loading Overlay */}
                                                 {(generatingIds.has(cut.id) || cut.status === 'generating') && (
                                                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/20 backdrop-blur-[2px]">
-                                                        <RefreshCw className="animate-spin text-purple-500 mb-2" size={24} />
+                                                        <CustomLoader size={24} className="mb-2" />
                                                         <span className="text-[10px] text-purple-200 font-bold bg-black/50 px-2 py-0.5 rounded-full">{t('rendering')}</span>
                                                     </div>
                                                 )}
@@ -527,7 +524,7 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
                                             <div className="text-slate-600 flex flex-col items-center gap-2">
                                                 {generatingIds.has(cut.id) || cut.status === 'generating' ? (
                                                     <>
-                                                        <RefreshCw className="animate-spin text-purple-500" size={24} />
+                                                        <CustomLoader size={24} />
                                                         <span className="text-[10px] text-purple-400">{t('rendering')}</span>
                                                     </>
                                                 ) : (

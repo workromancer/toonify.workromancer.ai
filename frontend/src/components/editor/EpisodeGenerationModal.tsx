@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Loader2, Sparkles, Film, ArrowRight, PenLine } from 'lucide-react';
+import { CustomLoader } from '@/components/ui/custom-loader';
 import api from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
@@ -186,7 +187,7 @@ export default function EpisodeGenerationModal({ isOpen, onClose, projectId, onE
 
                             {loading && (
                                 <div className="flex flex-col items-center justify-center py-8 space-y-4">
-                                    <Loader2 className="h-8 w-8 text-purple-500 animate-spin" />
+                                    <CustomLoader size={32} />
                                     <p className="text-gray-400 animate-pulse">{t('consulting')}</p>
                                 </div>
                             )}

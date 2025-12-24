@@ -7,6 +7,7 @@ import {
     HelpCircle, ChevronDown, Sparkles, Wand2,
     Zap, Command, Layers, Trash2, Edit3, Copy, Check, Loader2, Image as ImageIcon, ArrowRight
 } from 'lucide-react';
+import { CustomLoader } from '@/components/ui/custom-loader';
 import { useRouter } from '@/navigation';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -82,7 +83,7 @@ const StyleCard = ({ style, onClick }: { style: ArtStyle, onClick: () => void })
                     <>
                         <div className="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center gap-3">
                             <div className="relative">
-                                <div className="w-12 h-12 rounded-full border-2 border-purple-500/30 border-t-purple-500 animate-spin" />
+                                <CustomLoader size={48} />
                                 <div className="absolute inset-0 flex items-center justify-center">
                                     <Sparkles size={16} className="text-purple-400 animate-pulse" />
                                 </div>
@@ -239,7 +240,7 @@ function ArtStylesContent() {
                 <div className="w-full relative z-10 pb-20">
                     {loading ? (
                         <div className="flex items-center justify-center min-h-[300px]">
-                            <Loader2 className="animate-spin text-purple-500" size={32} />
+                            <CustomLoader size={32} />
                         </div>
                     ) : styles.length > 0 ? (
                         // POPULATED STATE (Grid)
@@ -389,7 +390,7 @@ export default function ArtStylesPage() {
     return (
         <Suspense fallback={
             <div className="flex items-center justify-center min-h-[300px] h-full">
-                <Loader2 className="animate-spin text-purple-500" size={32} />
+                <CustomLoader size={32} />
             </div>
         }>
             <ArtStylesContent />

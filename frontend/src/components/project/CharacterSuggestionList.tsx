@@ -100,7 +100,7 @@ export function CharacterSuggestionList({ projectId, onSelect }: CharacterSugges
             <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
                 {loading && (
                     <div className="text-center py-8 text-gray-500">
-                        <Loader2 className="animate-spin w-6 h-6 mx-auto mb-2" />
+                        <CustomLoader size={24} className="mx-auto mb-2" />
                         {t('suggestions.loading')}
                     </div>
                 )}
