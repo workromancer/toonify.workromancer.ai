@@ -37,11 +37,11 @@ class Settings(BaseSettings):
             f"{values.get('POSTGRES_SERVER')}/{values.get('POSTGRES_DB')}"
         )
 
-    # MinIO
-    MINIO_ENDPOINT: str
-    MINIO_ACCESS_KEY: str
-    MINIO_SECRET_KEY: str
-    MINIO_BUCKET: str
+    # MinIO (optional for GCS)
+    MINIO_ENDPOINT: str | None = None
+    MINIO_ACCESS_KEY: str | None = None
+    MINIO_SECRET_KEY: str | None = None
+    MINIO_BUCKET: str = "toonify-prod-assets"
     MINIO_SECURE: bool = False
     
     # Storage Host (Global)
@@ -69,11 +69,8 @@ class Settings(BaseSettings):
     class Config:
         case_sensitive = True
         env_file = ".env.local"
-
-# Enforce .env.local existence
-if not os.path.exists(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ".env.local")):
-    print("CRITICAL ERROR: .env.local file is missing in backend directory.")
-    print("Please create .env.local (you can copy .env.example) and set the required variables.")
-    sys.exit(1)
+        # Allow missing .env.local for Cloud Run deployment (uses env vars)
+        env_file_encoding = 'utf-8'
+        extra = 'ignore'
 
 settings = Settings()

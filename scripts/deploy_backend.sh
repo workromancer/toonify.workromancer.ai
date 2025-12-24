@@ -33,6 +33,7 @@ set +a
 # 백엔드 환경변수 추출 함수
 get_backend_env_vars() {
     local vars=(
+        "PROJECT_NAME=${PROJECT_NAME:-Toonify}"
         "POSTGRES_SERVER=$POSTGRES_SERVER"
         "POSTGRES_USER=$POSTGRES_USER"
         "POSTGRES_PASSWORD=$POSTGRES_PASSWORD"
@@ -45,8 +46,8 @@ get_backend_env_vars() {
         "GOOGLE_CLOUD_PROJECT=$PROJECT_ID"
         "GEMINI_API_KEY=$GEMINI_API_KEY"
         "GOOGLE_CLOUD_LOCATION=$GOOGLE_CLOUD_LOCATION"
-        "DEBUG=$DEBUG"
-        "API_V1_STR=$API_V1_STR"
+        "DEBUG=${DEBUG:-False}"
+        "API_V1_STR=${API_V1_STR:-/api/v1}"
     )
     echo "$(IFS=,; echo "${vars[*]}")"
 }
