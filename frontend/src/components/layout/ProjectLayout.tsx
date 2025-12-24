@@ -38,22 +38,15 @@ export default function ProjectLayout({ children, projectId, projectTitle }: Pro
 
     return (
         <div className="flex h-full min-h-screen bg-[#0A0A0B]">
-            {/* Mobile Header */}
-            <header className="fixed top-0 left-0 right-0 h-14 bg-[#0F0F12] border-b border-gray-800 flex items-center justify-between px-4 z-30 md:hidden">
-                <button
-                    onClick={() => setMobileSidebarOpen(true)}
-                    className="p-2 -ml-2 text-gray-400 hover:text-white transition-colors"
-                    aria-label="Open menu"
-                >
-                    <Menu size={24} />
-                </button>
-                <div className="flex items-center gap-2">
-                    <span className="text-white font-medium text-sm truncate max-w-[200px]">{projectTitle || 'Project'}</span>
-                </div>
-                <Link href="/dashboard" className="p-2 -mr-2 text-gray-400 hover:text-white transition-colors">
-                    <ArrowLeft size={20} />
-                </Link>
-            </header>
+            {/* Mobile Menu Button Only */}
+            <button
+                onClick={() => setMobileSidebarOpen(true)}
+                className="fixed top-4 left-4 z-30 p-2 bg-[#1A1A1F]/80 backdrop-blur-sm rounded-lg text-gray-400 hover:text-white transition-colors md:hidden"
+                aria-label="Open menu"
+            >
+                <Menu size={24} />
+            </button>
+
 
             {/* Project Sidebar */}
             <Sidebar>
@@ -109,7 +102,7 @@ export default function ProjectLayout({ children, projectId, projectTitle }: Pro
 
             {/* Main Content - add left margin to account for fixed sidebar */}
             <main className={cn(
-                "flex-1 min-w-0 bg-[#0A0A0B] relative pt-14 md:pt-0",
+                "flex-1 min-w-0 bg-[#0A0A0B] relative",
                 // Add left margin for fixed sidebar on desktop
                 isSidebarCollapsed ? "md:ml-20" : "md:ml-64"
             )}>

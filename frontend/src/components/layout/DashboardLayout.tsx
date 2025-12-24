@@ -26,7 +26,7 @@ export default function DashboardLayout({ children, accessToken }: DashboardLayo
     const router = useRouter();
     const pathname = usePathname() || '';
     const { token, hasHydrated, setToken } = useAuthStore();
-    const { isSidebarCollapsed } = useUIStore();
+    const { isSidebarCollapsed, setMobileSidebarOpen } = useUIStore();
     const t = useTranslations('Dashboard');
     const tErrors = useTranslations('Errors');
     const { toast } = useToast();
@@ -152,8 +152,14 @@ export default function DashboardLayout({ children, accessToken }: DashboardLayo
 
     return (
         <div className="flex h-screen w-full bg-[#0A0A0B] font-display text-gray-900 dark:text-white">
-            {/* Mobile Header */}
-            <MobileHeader />
+            {/* Mobile Menu Button Only */}
+            <button
+                onClick={() => setMobileSidebarOpen(true)}
+                className="fixed top-4 left-4 z-30 p-2 bg-[#1A1A1F]/80 backdrop-blur-sm rounded-lg text-gray-400 hover:text-white transition-colors md:hidden"
+                aria-label="Open menu"
+            >
+                <Menu size={24} />
+            </button>
 
             <Sidebar>
                 <SidebarHeader>
@@ -225,7 +231,7 @@ export default function DashboardLayout({ children, accessToken }: DashboardLayo
 
             {/* Main Content - add left margin to account for fixed sidebar */}
             <main className={cn(
-                "flex-1 overflow-auto bg-[#0A0A0B] pt-14 md:pt-0",
+                "flex-1 overflow-auto bg-[#0A0A0B]",
                 isSidebarCollapsed ? "md:ml-20" : "md:ml-64"
             )}>
                 {children}
@@ -234,24 +240,4 @@ export default function DashboardLayout({ children, accessToken }: DashboardLayo
     );
 }
 
-// Mobile Header Component
-function MobileHeader() {
-    const { setMobileSidebarOpen } = useUIStore();
-    
-    return (
-        <header className="fixed top-0 left-0 right-0 h-14 bg-[#0F0F12] border-b border-gray-800 flex items-center justify-between px-4 z-30 md:hidden">
-            <button
-                onClick={() => setMobileSidebarOpen(true)}
-                className="p-2 -ml-2 text-gray-400 hover:text-white transition-colors"
-                aria-label="Open menu"
-            >
-                <Menu size={24} />
-            </button>
-            <div className="flex items-center gap-2">
-                <div className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-8" style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuBN5z1oDmeTFxQPTUuZqFXRVrFpjy9QgdgN7rv824MDXj0NTjJf2cUSjH7YeclTy1qA7RfMULzL6lGPB0I4bZHNNHrSkeRlsh8ShZdCrhnIOWQrexQX3xL1OC7CAWTqbG9zjPeN6nxXKNfnX7EL9jlzWM3lPPERGqxmt9W6cV5zdFUyxhV086nH2nspTA8NdBpwgv32ZZe6ILXWL6fWCGG7q9dHiEZH9OCuBdZ3TVK_QRzEx4ItSKvZ0B4FeqhlaveTmuZFH9g2Gls")' }}></div>
-                <span className="text-white font-medium text-sm">Toonify</span>
-            </div>
-            <div className="w-10" /> {/* Spacer for centering */}
-        </header>
-    );
-}
+
