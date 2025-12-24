@@ -17,7 +17,7 @@ export async function POST() {
 
     // Call Backend
     // Ensure we use the internal Docker URL if running in Docker, or localhost if defined
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    const backendUrl = process.env.INTERNAL_BACKEND_URL || 'http://localhost:8000';
 
     try {
         const res = await axios.post(`${backendUrl}/api/v1/auth/sync-clerk`, {
