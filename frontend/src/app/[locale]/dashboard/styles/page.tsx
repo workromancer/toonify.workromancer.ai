@@ -299,9 +299,9 @@ function ArtStylesContent() {
                                         <ImageIcon size={40} className="text-purple-400 drop-shadow-[0_0_15px_rgba(168,85,247,0.5)]" />
                                     </div>
 
-                                    <h2 className="text-3xl font-bold text-white mb-4 tracking-tight">Generate Your First Style</h2>
+                                    <h2 className="text-3xl font-bold text-white mb-4 tracking-tight">{t('generateFirstStyleTitle')}</h2>
                                     <p className="text-slate-400 text-base mb-10 max-w-md leading-relaxed">
-                                        Simply enter a prompt to generate unique style references. No complex training required.
+                                        {t('generateFirstStyleDesc')}
                                     </p>
 
                                     <button
@@ -309,13 +309,12 @@ function ArtStylesContent() {
                                         className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white px-10 py-4 rounded-xl font-bold text-lg shadow-xl shadow-purple-900/30 hover:shadow-purple-900/50 hover:translate-y-[-2px] transition-all flex items-center gap-2 group/btn active:scale-95"
                                     >
                                         <Zap size={20} fill="currentColor" className="group-hover/btn:animate-pulse" />
-                                        Start Generating
+                                        {t('startGenerating')}
                                     </button>
 
                                     <div className="mt-10 flex gap-8 text-xs text-slate-600 font-mono border-t border-slate-800/50 pt-6">
-                                        <span className="flex items-center gap-1.5"><Command size={12} /> Prompt to Style</span>
-                                        <span className="flex items-center gap-1.5"><Layers size={12} /> Instant Preview</span>
-                                        <span className="flex items-center gap-1.5"><Sparkles size={12} /> 50 Free Credits</span>
+                                        <span className="flex items-center gap-1.5"><Command size={12} /> {t('promptToStyle')}</span>
+                                        <span className="flex items-center gap-1.5"><Layers size={12} /> {t('instantPreview')}</span>
                                     </div>
                                 </div>
                             </div>

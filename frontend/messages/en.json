@@ -709,7 +709,11 @@
     "generateNew": "Generate New",
     "startGenerating": "Start Generating",
     "returnToSetup": "Return to Project Setup",
-    "creatingFor": "Creating style for project:"
+    "creatingFor": "Creating style for project:",
+    "generateFirstStyleTitle": "Generate Your First Style",
+    "generateFirstStyleDesc": "Simply enter a prompt to generate unique style references. No complex training required.",
+    "promptToStyle": "Prompt to Style",
+    "instantPreview": "Instant Preview"
   },
   "Help": {
     "title": "How can we help?",
