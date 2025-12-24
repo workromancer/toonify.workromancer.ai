@@ -21,12 +21,14 @@ class AIService:
             print(f"AI Service: Initializing for project '{project}' in '{location}'")
             
             # Determine if we should use Vertex AI or direct API Key mode
-            # In Cloud Run, use Vertex AI with service account (no API key needed)
-            use_vertexai = os.environ.get("STORAGE_TYPE") == "gcs"  # If in GCS mode, assume Cloud Run
+            # Use Vertex AI with ADC if:
+            # 1. In Cloud Run (STORAGE_TYPE == "gcs"), OR
+            # 2. API key is not set (fallback to gcloud credentials)
+            use_vertexai = os.environ.get("STORAGE_TYPE") == "gcs" or not api_key
             
             if use_vertexai:
                 # Vertex AI mode - use ADC (Application Default Credentials)
-                print(f"AI Service: Using Vertex AI with ADC for project '{project}'")
+                print(f"AI Service: Using Vertex AI with ADC for project '{project}' in '{location}'")
                 self.client = genai.Client(
                     vertexai=True,
                     project=project,
@@ -34,7 +36,7 @@ class AIService:
                     # Do NOT pass api_key when using Vertex AI with ADC
                 )
             else:
-                # Direct API Key mode (local development)
+                # Direct API Key mode (local development with explicit key)
                 print(f"AI Service: Using API Key mode")
                 self.client = genai.Client(api_key=api_key)
             
