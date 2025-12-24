@@ -173,10 +173,10 @@ export default function DashboardLayout({ children, accessToken }: DashboardLayo
             {/* Mobile Menu Button Only */}
             <button
                 onClick={() => setMobileSidebarOpen(true)}
-                className="fixed top-4 left-4 z-30 p-2 bg-[#1A1A1F]/80 backdrop-blur-sm rounded-lg text-gray-400 hover:text-white transition-colors md:hidden"
+                className="fixed top-4 left-4 z-40 w-11 h-11 flex items-center justify-center bg-[#1A1A1F] border border-gray-700/50 rounded-xl shadow-lg shadow-black/30 text-gray-300 hover:text-white hover:bg-[#252530] transition-all md:hidden"
                 aria-label="Open menu"
             >
-                <Menu size={24} />
+                <Menu size={22} />
             </button>
 
             <Sidebar>
