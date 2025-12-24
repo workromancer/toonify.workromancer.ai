@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Spline_Sans } from "next/font/google";
 import "../globals.css";
 import { Toaster } from "@/components/ui/toaster";
@@ -22,6 +22,14 @@ const splineSans = Spline_Sans({
 export const metadata: Metadata = {
   title: "Toonify - AI Webtoon Studio",
   description: "Create your own webtoon with AI Director",
+};
+
+/* Mobile viewport configuration: disable pinch zoom */
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 import { NextIntlClientProvider } from 'next-intl';
