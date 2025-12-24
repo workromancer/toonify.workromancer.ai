@@ -4,7 +4,7 @@ import { Link, usePathname, useRouter } from '@/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useWorkspaceStore } from '@/store/useWorkspaceStore';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, LayoutTemplate, Settings, Plus, Palette, Home, FolderOpen } from 'lucide-react';
+import { LayoutDashboard, LayoutTemplate, Settings, Plus, Palette, Home, FolderOpen, Menu } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import CreateWorkspaceModal from '@/components/dashboard/CreateWorkspaceModal';
@@ -152,13 +152,23 @@ export default function DashboardLayout({ children, accessToken }: DashboardLayo
 
     return (
         <div className="flex h-screen w-full bg-[#0A0A0B] font-display text-gray-900 dark:text-white">
+            {/* Mobile Header */}
+            <MobileHeader />
+
             <Sidebar>
                 <SidebarHeader>
                     {/* Logo Area */}
-                    <Link href="/dashboard" className={cn("flex items-center gap-3 px-2 hover:opacity-80 transition-opacity", isSidebarCollapsed && "justify-center")}>
+                    <Link href="/dashboard" className={cn("flex items-center gap-3 px-2 hover:opacity-80 transition-opacity mt-8 md:mt-0", isSidebarCollapsed && "md:justify-center")}>
                         <div className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 shadow-sm shrink-0" style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuBN5z1oDmeTFxQPTUuZqFXRVrFpjy9QgdgN7rv824MDXj0NTjJf2cUSjH7YeclTy1qA7RfMULzL6lGPB0I4bZHNNHrSkeRlsh8ShZdCrhnIOWQrexQX3xL1OC7CAWTqbG9zjPeN6nxXKNfnX7EL9jlzWM3lPPERGqxmt9W6cV5zdFUyxhV086nH2nspTA8NdBpwgv32ZZe6ILXWL6fWCGG7q9dHiEZH9OCuBdZ3TVK_QRzEx4ItSKvZ0B4FeqhlaveTmuZFH9g2Gls")' }}></div>
                         {!isSidebarCollapsed && (
                             <div className="flex flex-col animate-in fade-in duration-300">
+                                <h1 className="text-white text-base font-medium leading-normal">Toonify</h1>
+                                <p className="text-gray-400 text-sm font-normal leading-normal">{t('subtitle')}</p>
+                            </div>
+                        )}
+                        {/* Show on mobile regardless of collapsed state */}
+                        {isSidebarCollapsed && (
+                            <div className="flex flex-col animate-in fade-in duration-300 md:hidden">
                                 <h1 className="text-white text-base font-medium leading-normal">Toonify</h1>
                                 <p className="text-gray-400 text-sm font-normal leading-normal">{t('subtitle')}</p>
                             </div>
@@ -177,10 +187,10 @@ export default function DashboardLayout({ children, accessToken }: DashboardLayo
                         <Link href="/new-project">
                             <div className={cn(
                                 "w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl font-bold text-sm flex items-center justify-center shadow-lg shadow-purple-900/20 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer",
-                                isSidebarCollapsed ? "h-10 w-10 p-0 mx-auto aspect-square" : "p-3 gap-2"
+                                isSidebarCollapsed ? "md:h-10 md:w-10 p-3 md:p-0 md:mx-auto md:aspect-square gap-2 md:gap-0" : "p-3 gap-2"
                             )} title={isSidebarCollapsed ? t('newProject') : undefined}>
-                                <Plus size={isSidebarCollapsed ? 20 : 16} strokeWidth={3} />
-                                {!isSidebarCollapsed && <span className="pt-[1px]">{t('newProject')}</span>}
+                                <Plus size={isSidebarCollapsed ? 20 : 16} strokeWidth={3} className="md:block" />
+                                <span className={cn("pt-[1px]", isSidebarCollapsed && "md:hidden")}>{t('newProject')}</span>
                             </div>
                         </Link>
                     </div>
@@ -214,9 +224,31 @@ export default function DashboardLayout({ children, accessToken }: DashboardLayo
             </Sidebar>
 
             {/* Main Content */}
-            <main className="flex-1 overflow-auto bg-[#0A0A0B]">
+            <main className="flex-1 overflow-auto bg-[#0A0A0B] pt-14 md:pt-0">
                 {children}
             </main>
         </div>
+    );
+}
+
+// Mobile Header Component
+function MobileHeader() {
+    const { setMobileSidebarOpen } = useUIStore();
+    
+    return (
+        <header className="fixed top-0 left-0 right-0 h-14 bg-[#0F0F12] border-b border-gray-800 flex items-center justify-between px-4 z-30 md:hidden">
+            <button
+                onClick={() => setMobileSidebarOpen(true)}
+                className="p-2 -ml-2 text-gray-400 hover:text-white transition-colors"
+                aria-label="Open menu"
+            >
+                <Menu size={24} />
+            </button>
+            <div className="flex items-center gap-2">
+                <div className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-8" style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuBN5z1oDmeTFxQPTUuZqFXRVrFpjy9QgdgN7rv824MDXj0NTjJf2cUSjH7YeclTy1qA7RfMULzL6lGPB0I4bZHNNHrSkeRlsh8ShZdCrhnIOWQrexQX3xL1OC7CAWTqbG9zjPeN6nxXKNfnX7EL9jlzWM3lPPERGqxmt9W6cV5zdFUyxhV086nH2nspTA8NdBpwgv32ZZe6ILXWL6fWCGG7q9dHiEZH9OCuBdZ3TVK_QRzEx4ItSKvZ0B4FeqhlaveTmuZFH9g2Gls")' }}></div>
+                <span className="text-white font-medium text-sm">Toonify</span>
+            </div>
+            <div className="w-10" /> {/* Spacer for centering */}
+        </header>
     );
 }

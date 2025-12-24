@@ -63,40 +63,40 @@ export default function ProjectsPage() {
     );
 
     return (
-        <div className="flex-1 min-h-screen bg-[#05050a] text-slate-200 font-sans relative selection:bg-purple-500/30 p-10 max-w-[1600px] mx-auto space-y-8">
+        <div className="flex-1 min-h-screen bg-[#05050a] text-slate-200 font-sans relative selection:bg-purple-500/30 p-4 sm:p-6 lg:p-10 max-w-[1600px] mx-auto space-y-6 sm:space-y-8">
 
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 animate-fade-in-up">
+            <div className="flex flex-col gap-4 sm:gap-6 animate-fade-in-up">
                 <div>
-                    <h1 className="text-3xl font-bold text-white tracking-tight mb-2">{t('nav.projects')}</h1>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight mb-1 sm:mb-2">{t('nav.projects')}</h1>
                     <p className="text-slate-400 text-sm">{t('projectsDesc')}</p>
                 </div>
 
-                <div className="flex items-center gap-4">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
                     {/* Search */}
-                    <div className="relative group">
+                    <div className="relative group flex-1 sm:flex-none">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-purple-400 transition-colors" size={16} />
                         <input
                             type="text"
                             placeholder={t('searchPlaceholder')}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="bg-slate-900 border border-slate-700/50 rounded-full pl-10 pr-4 py-2 text-sm text-white focus:border-purple-500 outline-none w-64 transition-all placeholder:text-slate-600 focus:w-80 focus:bg-slate-900/80"
+                            className="w-full sm:w-64 bg-slate-900 border border-slate-700/50 rounded-full pl-10 pr-4 py-2.5 sm:py-2 text-sm text-white focus:border-purple-500 outline-none transition-all placeholder:text-slate-600 sm:focus:w-80 focus:bg-slate-900/80"
                         />
                     </div>
 
                     {/* View Toggle */}
-                    <div className="flex bg-slate-900 p-1 rounded-lg border border-slate-800">
+                    <div className="flex bg-slate-900 p-1 rounded-lg border border-slate-800 self-end sm:self-auto">
                         <button
                             onClick={() => setViewMode('list')}
-                            className={`p-2 rounded-md transition-colors ${viewMode === 'list' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
+                            className={`p-2.5 sm:p-2 rounded-md transition-colors ${viewMode === 'list' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
                             title={t('listView')}
                         >
                             <List size={18} />
                         </button>
                         <button
                             onClick={() => setViewMode('grid')}
-                            className={`p-2 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
+                            className={`p-2.5 sm:p-2 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
                             title={t('gridView')}
                         >
                             <LayoutGrid size={18} />
@@ -113,7 +113,7 @@ export default function ProjectsPage() {
                     </div>
                 ) : filteredProjects.length > 0 ? (
                     viewMode === 'grid' ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                             {filteredProjects.map(project => (
                                 <ProjectCard
                                     key={project.id}
@@ -126,7 +126,7 @@ export default function ProjectsPage() {
                             ))}
                         </div>
                     ) : (
-                        <div className="flex flex-col gap-3">
+                        <div className="flex flex-col gap-2 sm:gap-3">
                             {filteredProjects.map(project => (
                                 <ProjectRow
                                     key={project.id}
@@ -140,9 +140,9 @@ export default function ProjectsPage() {
                         </div>
                     )
                 ) : (
-                    <div className="w-full h-60 border border-dashed border-slate-800 rounded-2xl flex flex-col items-center justify-center text-slate-600 bg-slate-900/20">
-                        <FolderOpen size={48} className="mb-4 opacity-50" />
-                        <p className="text-lg font-medium text-slate-400">{t('noProjects')}</p>
+                    <div className="w-full h-48 sm:h-60 border border-dashed border-slate-800 rounded-2xl flex flex-col items-center justify-center text-slate-600 bg-slate-900/20">
+                        <FolderOpen size={40} className="mb-4 opacity-50 sm:w-12 sm:h-12" />
+                        <p className="text-base sm:text-lg font-medium text-slate-400">{t('noProjects')}</p>
                         <p className="text-sm mt-1">{t('getStarted')}</p>
                     </div>
                 )}

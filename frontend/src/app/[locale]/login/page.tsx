@@ -65,14 +65,14 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-gray-900 text-white">
-            <div className="w-full max-w-md p-8 bg-gray-800 rounded-lg shadow-lg flex flex-col gap-6">
-                <h2 className="mb-2 text-3xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
+        <div className="flex min-h-screen items-center justify-center bg-gray-900 text-white px-4 sm:px-6">
+            <div className="w-full max-w-md p-6 sm:p-8 bg-gray-800 rounded-lg shadow-lg flex flex-col gap-5 sm:gap-6">
+                <h2 className="mb-1 sm:mb-2 text-2xl sm:text-3xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
                     {t('loginTitle')}
                 </h2>
 
                 {showClerk && (
-                    <div className="flex justify-center w-full">
+                    <div className="flex justify-center w-full overflow-hidden">
                         {/* Using SignIn with no specific path config to allow it to function as a standalone unit 
                              Using forceRedirectUrl to ensure we go to dashboard after sign in
                          */}
@@ -91,7 +91,7 @@ export default function LoginPage() {
 
                 {showLegacy && (
                     <>
-                        {error && <p className="mb-4 text-red-500 text-center">{error}</p>}
+                        {error && <p className="mb-3 sm:mb-4 text-red-500 text-center text-sm">{error}</p>}
 
                         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                             <div>
@@ -100,7 +100,7 @@ export default function LoginPage() {
                                     {...register('email')}
                                     data-testid="login-email"
                                     type="email"
-                                    className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-purple-500"
+                                    className="w-full px-4 py-2.5 sm:py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-purple-500 text-base sm:text-sm"
                                     required
                                 />
                             </div>
@@ -110,16 +110,16 @@ export default function LoginPage() {
                                     {...register('password')}
                                     data-testid="login-password"
                                     type="password"
-                                    className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-purple-500"
+                                    className="w-full px-4 py-2.5 sm:py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-purple-500 text-base sm:text-sm"
                                     required
                                 />
                             </div>
-                            <Button type="submit" data-testid="login-submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                            <Button type="submit" data-testid="login-submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 sm:py-2 px-4 rounded">
                                 {t('submitLogin')}
                             </Button>
                         </form>
 
-                        <p className="mt-4 text-center text-sm text-gray-500">
+                        <p className="mt-3 sm:mt-4 text-center text-sm text-gray-500">
                             {t('noAccount')} <Link href="/signup" className="text-purple-400 hover:text-purple-300">{t('createAccount')}</Link>
                         </p>
                     </>

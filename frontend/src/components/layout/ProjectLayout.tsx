@@ -2,7 +2,7 @@
 
 import { Link, usePathname } from '@/navigation';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, Users, Clapperboard, ArrowLeft, Coins, Plus } from 'lucide-react';
+import { LayoutDashboard, Users, Clapperboard, ArrowLeft, Coins, Plus, Menu } from 'lucide-react';
 import { Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarItem, SidebarToggle } from '@/components/layout/sidebar/Sidebar';
 import { useUIStore } from '@/store/useUIStore';
 import { useEffect, useState } from 'react';
@@ -20,7 +20,7 @@ interface ProjectLayoutProps {
 
 export default function ProjectLayout({ children, projectId, projectTitle }: ProjectLayoutProps) {
     const pathname = usePathname();
-    const { isSidebarCollapsed } = useUIStore();
+    const { isSidebarCollapsed, setMobileSidebarOpen } = useUIStore();
     const { fetchWorkspaces, currentWorkspace } = useWorkspaceStore();
     const t = useTranslations('Dashboard');
 
@@ -38,6 +38,23 @@ export default function ProjectLayout({ children, projectId, projectTitle }: Pro
 
     return (
         <div className="flex h-full min-h-screen bg-[#0A0A0B]">
+            {/* Mobile Header */}
+            <header className="fixed top-0 left-0 right-0 h-14 bg-[#0F0F12] border-b border-gray-800 flex items-center justify-between px-4 z-30 md:hidden">
+                <button
+                    onClick={() => setMobileSidebarOpen(true)}
+                    className="p-2 -ml-2 text-gray-400 hover:text-white transition-colors"
+                    aria-label="Open menu"
+                >
+                    <Menu size={24} />
+                </button>
+                <div className="flex items-center gap-2">
+                    <span className="text-white font-medium text-sm truncate max-w-[200px]">{projectTitle || 'Project'}</span>
+                </div>
+                <Link href="/dashboard" className="p-2 -mr-2 text-gray-400 hover:text-white transition-colors">
+                    <ArrowLeft size={20} />
+                </Link>
+            </header>
+
             {/* Project Sidebar */}
             <Sidebar>
                 <SidebarHeader>
@@ -45,13 +62,13 @@ export default function ProjectLayout({ children, projectId, projectTitle }: Pro
                     <Link
                         href="/dashboard"
                         className={cn(
-                            "flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm font-medium px-2 py-2 mb-2 hover:bg-[#15151A] rounded-lg",
-                            isSidebarCollapsed ? "justify-center w-10 h-10 p-0" : ""
+                            "flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm font-medium px-2 py-2 mb-2 hover:bg-[#15151A] rounded-lg mt-8 md:mt-0",
+                            isSidebarCollapsed ? "md:justify-center md:w-10 md:h-10 md:p-0" : ""
                         )}
                         title={t('backToDashboard')}
                     >
                         <ArrowLeft size={isSidebarCollapsed ? 20 : 16} />
-                        {!isSidebarCollapsed && <span>{t('backToDashboard')}</span>}
+                        <span className={cn(isSidebarCollapsed && "md:hidden")}>{t('backToDashboard')}</span>
                     </Link>
 
                     {/* Workspace Info (Read-only) */}
@@ -91,9 +108,10 @@ export default function ProjectLayout({ children, projectId, projectTitle }: Pro
             </Sidebar>
 
             {/* Main Content */}
-            <main className="flex-1 min-w-0 bg-[#0A0A0B] relative">
+            <main className="flex-1 min-w-0 bg-[#0A0A0B] relative pt-14 md:pt-0">
                 {children}
             </main>
         </div>
     );
 }
+

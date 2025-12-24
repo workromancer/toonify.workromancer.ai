@@ -73,28 +73,28 @@ export default function PricingSection() {
     };
 
     return (
-        <section id="pricing" className="relative py-32 bg-black overflow-hidden">
+        <section id="pricing" className="relative py-16 sm:py-32 bg-black overflow-hidden">
             {/* Background gradient */}
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900/20 via-black to-black" />
             
-            <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
+            <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 {/* Section Header */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    className="text-center mb-16"
+                    className="text-center mb-10 sm:mb-16"
                 >
-                    <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                    <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl lg:text-4xl">
                         {t('title')}
                     </h2>
-                    <p className="mt-4 text-lg text-gray-400 max-w-2xl mx-auto">
+                    <p className="mt-3 sm:mt-4 text-base sm:text-lg text-gray-400 max-w-2xl mx-auto">
                         {t('subtitle')}
                     </p>
                 </motion.div>
 
                 {/* Subscription Plans */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 mb-12 sm:mb-20">
                     {plans.map((plan, idx) => {
                         const Icon = plan.icon;
                         return (
@@ -104,7 +104,7 @@ export default function PricingSection() {
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
                                 transition={{ duration: 0.5, delay: idx * 0.1 }}
-                                className={`relative flex flex-col rounded-2xl border p-8 ${
+                                className={`relative flex flex-col rounded-2xl border p-6 sm:p-8 ${
                                     plan.popular
                                         ? 'border-purple-500/50 bg-purple-500/5 ring-2 ring-purple-500/20'
                                         : 'border-white/10 bg-white/5'
@@ -124,21 +124,21 @@ export default function PricingSection() {
                                     }`}>
                                         <Icon className="h-5 w-5" />
                                     </div>
-                                    <h3 className="text-xl font-semibold text-white">{t(`plans.${plan.key}.name`)}</h3>
+                                    <h3 className="text-lg sm:text-xl font-semibold text-white">{t(`plans.${plan.key}.name`)}</h3>
                                 </div>
 
-                                <div className="mb-6">
-                                    <span className="text-4xl font-bold text-white">{plan.price}</span>
+                                <div className="mb-4 sm:mb-6">
+                                    <span className="text-3xl sm:text-4xl font-bold text-white">{plan.price}</span>
                                     <span className="text-gray-400 ml-1">/ {t('perMonth')}</span>
                                 </div>
 
-                                <div className="flex items-center gap-2 mb-6 p-3 rounded-lg bg-white/5">
+                                <div className="flex items-center gap-2 mb-4 sm:mb-6 p-2 sm:p-3 rounded-lg bg-white/5">
                                     <Coins className="h-5 w-5 text-yellow-500" />
                                     <span className="text-white font-medium">{plan.coins}</span>
-                                    <span className="text-gray-400">{t('coinsPerMonth')}</span>
+                                    <span className="text-gray-400 text-sm">{t('coinsPerMonth')}</span>
                                 </div>
 
-                                <ul className="flex-1 space-y-3 mb-8">
+                                <ul className="flex-1 space-y-2 sm:space-y-3 mb-6 sm:mb-8">
                                     {plan.features.map((feature) => (
                                         <li key={feature} className="flex items-start gap-2">
                                             <Check className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
@@ -167,13 +167,13 @@ export default function PricingSection() {
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    className="text-center mb-10"
+                    className="text-center mb-6 sm:mb-10"
                 >
-                    <h3 className="text-2xl font-bold text-white">{t('creditPacksTitle')}</h3>
-                    <p className="mt-2 text-gray-400">{t('creditPacksSubtitle')}</p>
+                    <h3 className="text-xl sm:text-2xl font-bold text-white">{t('creditPacksTitle')}</h3>
+                    <p className="mt-2 text-sm sm:text-base text-gray-400">{t('creditPacksSubtitle')}</p>
                 </motion.div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 max-w-3xl mx-auto">
                     {creditPacks.map((pack, idx) => {
                         const Icon = pack.icon;
                         return (
@@ -183,7 +183,7 @@ export default function PricingSection() {
                                 whileInView={{ opacity: 1, scale: 1 }}
                                 viewport={{ once: true }}
                                 transition={{ duration: 0.4, delay: idx * 0.1 }}
-                                className={`relative flex flex-col items-center rounded-xl border p-6 ${
+                                className={`relative flex flex-col items-center rounded-xl border p-5 sm:p-6 ${
                                     pack.popular
                                         ? 'border-yellow-500/50 bg-yellow-500/5'
                                         : 'border-white/10 bg-white/5'
@@ -197,10 +197,10 @@ export default function PricingSection() {
                                         </span>
                                     </div>
                                 )}
-                                <Icon className={`h-8 w-8 mb-3 ${pack.popular ? 'text-yellow-500' : 'text-gray-400'}`} />
-                                <div className="text-2xl font-bold text-white mb-1">{pack.credits}</div>
-                                <div className="text-sm text-gray-400 mb-3">{t('credits')}</div>
-                                <div className="text-lg font-semibold text-white">{pack.price}</div>
+                                <Icon className={`h-7 w-7 sm:h-8 sm:w-8 mb-2 sm:mb-3 ${pack.popular ? 'text-yellow-500' : 'text-gray-400'}`} />
+                                <div className="text-xl sm:text-2xl font-bold text-white mb-1">{pack.credits}</div>
+                                <div className="text-sm text-gray-400 mb-2 sm:mb-3">{t('credits')}</div>
+                                <div className="text-base sm:text-lg font-semibold text-white">{pack.price}</div>
                             </motion.div>
                         );
                     })}

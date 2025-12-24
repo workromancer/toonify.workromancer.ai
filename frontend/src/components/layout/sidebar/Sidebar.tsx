@@ -1,9 +1,9 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useEffect } from 'react';
 import { useUIStore } from '@/store/useUIStore';
 import { cn } from '@/lib/utils';
-import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link, usePathname } from '@/navigation';
 
@@ -22,17 +22,61 @@ interface SidebarProps {
 }
 
 export function Sidebar({ children, className }: SidebarProps) {
-    const { isSidebarCollapsed, toggleSidebar } = useUIStore();
+    const { isSidebarCollapsed, isMobileSidebarOpen, setMobileSidebarOpen } = useUIStore();
+    const pathname = usePathname();
+
+    // Close mobile sidebar on route change
+    useEffect(() => {
+        setMobileSidebarOpen(false);
+    }, [pathname, setMobileSidebarOpen]);
+
+    // Prevent body scroll when mobile sidebar is open
+    useEffect(() => {
+        if (isMobileSidebarOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [isMobileSidebarOpen]);
 
     return (
         <SidebarContext.Provider value={{ isCollapsed: isSidebarCollapsed }}>
+            {/* Mobile Overlay */}
+            {isMobileSidebarOpen && (
+                <div
+                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
+                    onClick={() => setMobileSidebarOpen(false)}
+                />
+            )}
+
+            {/* Sidebar */}
             <aside
                 className={cn(
-                    "flex flex-col border-r border-gray-800 bg-[#0F0F12] transition-all duration-300 ease-in-out h-screen sticky top-0 shrink-0 z-40",
-                    isSidebarCollapsed ? "w-20" : "w-64",
+                    // Base styles
+                    "flex flex-col border-r border-gray-800 bg-[#0F0F12] transition-all duration-300 ease-in-out h-screen shrink-0 z-50",
+                    // Desktop: sticky sidebar
+                    "md:sticky md:top-0",
+                    // Mobile: fixed drawer
+                    "fixed top-0 left-0 md:relative",
+                    // Mobile visibility
+                    isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
+                    // Width
+                    isSidebarCollapsed ? "md:w-20" : "w-72 md:w-64",
                     className
                 )}
             >
+                {/* Mobile Close Button */}
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setMobileSidebarOpen(false)}
+                    className="absolute top-4 right-4 md:hidden text-gray-400 hover:text-white"
+                >
+                    <X size={20} />
+                </Button>
                 {children}
             </aside>
         </SidebarContext.Provider>
@@ -81,9 +125,6 @@ export function SidebarToggle() {
     );
 }
 
-// Or maybe put toggle inside footer/header? 
-// Absolute positioning on the edge is common pattern.
-
 interface SidebarItemProps {
     href?: string;
     icon: React.ElementType;
@@ -109,7 +150,7 @@ export function SidebarItem({ href, icon: Icon, label, active, onClick, classNam
             isActive
                 ? "bg-purple-500/10 text-purple-400 font-semibold border border-purple-500/20"
                 : "text-gray-400 hover:text-white hover:bg-[#15151A] border border-transparent",
-            isCollapsed && "justify-center px-0",
+            isCollapsed && "md:justify-center md:px-0",
             className
         )}>
             <Icon size={20} className={cn(
@@ -117,15 +158,21 @@ export function SidebarItem({ href, icon: Icon, label, active, onClick, classNam
                 isActive ? "text-purple-400" : "text-gray-500 group-hover:text-gray-300"
             )} />
 
-            {!isCollapsed && (
-                <span className="truncate flex-1 text-sm animate-in fade-in duration-200">
-                    {label}
-                </span>
-            )}
+            {/* Always show label on mobile, hide when collapsed on desktop */}
+            <span className={cn(
+                "truncate flex-1 text-sm animate-in fade-in duration-200",
+                isCollapsed && "md:hidden"
+            )}>
+                {label}
+            </span>
 
             {!isCollapsed && isActive && rightSlot}
             {!isCollapsed && isActive && !rightSlot && (
-                <div className="w-1.5 h-1.5 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.8)]" />
+                <div className="w-1.5 h-1.5 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.8)] hidden md:block" />
+            )}
+            {/* Mobile: always show indicator */}
+            {isActive && (
+                <div className="w-1.5 h-1.5 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.8)] md:hidden" />
             )}
         </div>
     );
@@ -148,7 +195,7 @@ export function SidebarItem({ href, icon: Icon, label, active, onClick, classNam
 // Sidebar Group Label
 export function SidebarLabel({ children }: { children: React.ReactNode }) {
     const { isCollapsed } = useSidebar();
-    if (isCollapsed) return <div className="h-4" />; // Spacer
+    if (isCollapsed) return <div className="h-4 hidden md:block" />; // Spacer only on desktop
     return (
         <div className="px-3 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider animate-in fade-in">
             {children}
