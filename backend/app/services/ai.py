@@ -33,10 +33,10 @@ class AIService:
             self.model_config = {
                 "style": "gemini-3-flash-preview",
                 "worldview": "gemini-3-flash-preview",
-                "director": "gemini-2.5-pro",
+                "director": "gemini-3-flash-preview",
                 "image": "gemini-3-pro-image-preview",
                 "embedding": "gemini-embedding-001",
-                "lite": "gemini-2.5-flash-lite",
+                "lite": "gemini-3-flash-preview",
                 "analysis": "gemini-3-flash-preview"
             } 
         except Exception as e:
