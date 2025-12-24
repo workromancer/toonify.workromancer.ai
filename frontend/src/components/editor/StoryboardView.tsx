@@ -46,7 +46,8 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
         activeEpisodeId, setActiveCut, activeCutId, isReviewMode, setReviewMode,
         generatingIdsSet: generatingIds, // Map to local name for convenience 
         addGeneratingId,
-        removeGeneratingId
+        removeGeneratingId,
+        setActiveEpisodeStatus
     } = useCanvasStore();
     const [cuts, setCuts] = useState<StoryCut[]>([]);
     const [loading, setLoading] = useState(false);
@@ -67,27 +68,38 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
 
     // Reuse existing handlers...
     const handleGenerateAll = async () => {
-        // Sort cuts by order to ensure sequential context
-        const sortedCuts = [...cuts].sort((a, b) => a.cut_order - b.cut_order);
-        const cutsToGenerate = sortedCuts.filter(c => !c.image_path && !generatingIds.has(c.id));
+        if (!activeEpisodeId) return;
 
-        if (cutsToGenerate.length === 0) {
+        // Check if there are cuts to generate? 
+        // Server side handles skipping, so we can just trigger it.
+        // But maybe good to check length > 0.
+        if (cuts.length === 0) {
             toast({ title: t('toasts.noCuts'), description: t('toasts.noCutsDesc') });
             return;
         }
 
         setIsBatchGenerating(true);
-        toast({ title: t('toasts.batchStart'), description: t('toasts.batchStartDesc', { count: cutsToGenerate.length }) });
+        toast({ title: t('toasts.batchStart'), description: t('toasts.batchStartDesc', { count: cuts.length }) });
 
-        for (const cut of cutsToGenerate) {
-            // We await each generation to ensure the next one has the previous one's context (image)
-            const success = await handleGenerateImage(cut.id, true); // true = allow refetching/updating UI intermediate if needed
-            if (!success) {
-                toast({ title: t('toasts.interrupted'), description: t('toasts.interruptedDesc', { order: cut.cut_order }), variant: "destructive" });
-                break;
-            }
+        try {
+            // Trigger server-side sequential generation
+            await api.post(`/episodes/${activeEpisodeId}/generate-images`);
+
+            // Set local status to trigger polling immediately
+            setEpisodeStatus('generating');
+            setActiveEpisodeStatus('generating');
+
+        } catch (err) {
+            console.error("Batch Gen Failed", err);
+            toast({ title: t('toasts.genFailed'), description: t('toasts.genServerFailed'), variant: "destructive" });
+        } finally {
+            // We keep isBatchGenerating true? Or false? 
+            // The polling handles the "Generating..." UI usually based on episodeStatus.
+            // isBatchGenerating might disable the button.
+            // Let's keep it true until status changes back to ready? 
+            // Or just set false and let episodeStatus control the UI state (spinner).
+            setIsBatchGenerating(false);
         }
-        setIsBatchGenerating(false);
     };
 
     const activeIdRef = useRef(activeEpisodeId);
@@ -109,9 +121,11 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
             const epRes = await api.get(`/episodes/${targetId}`);
             if (activeIdRef.current !== targetId) return; // Abort if switched
 
-            setEpisodeStatus(epRes.data.status || 'ready');
+            const status = epRes.data.status || 'ready';
+            setEpisodeStatus(status);
+            setActiveEpisodeStatus(status);
 
-            if (epRes.data.status !== 'generating') {
+            if (status !== 'generating') {
                 const res = await api.get(`/cuts/?episode_id=${targetId}`);
                 if (activeIdRef.current !== targetId) return; // Abort if switched
 
@@ -146,15 +160,9 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
     // Initial Fetch & Reset on Change
     useEffect(() => {
         // Reset immediately to avoid stale data showing
-        // Don't clear generating IDs because they might be persisting from a previous session or view?
-        // Actually, if we switch episode, we probably shouldn't track old episode's generations in this view.
-        // But the store is global. The poller will check IDs.
-        // If we switch episode, fetchCuts will fetch NEW cuts. 
-        // We should clear generating IDs if they don't belong to this episode? 
-        // Ideally ID is unique enough. 
-        // Let's just reset cuts.
         setCuts([]);
-        setEpisodeStatus('ready');
+        setEpisodeStatus('fetching');
+        setActiveEpisodeStatus('fetching'); // crucial to lock UI during load
         setLoading(true);
 
         if (activeEpisodeId) {
@@ -319,22 +327,16 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
         }
     };
 
-    // handleGenerateImage updated to use Store and rely on global poller
-    const handleGenerateImage = async (cutId: string, isBatch = false): Promise<boolean> => {
+    // handleGenerateImage reverted to single-mode, Store-based tracking
+    const handleGenerateImage = async (cutId: string): Promise<boolean> => {
         try {
             addGeneratingId(cutId);
-
-            // 1. Kick off generation
             await api.post(`/episodes/${activeEpisodeId}/cuts/${cutId}/generate-image`, {});
 
-            if (!isBatch) {
-                toast({
-                    title: t('toasts.genStarted'),
-                    description: t('toasts.genStartedDesc'),
-                });
-            }
-
-            // We do NOT wait here anymore. The global poller will handle state update.
+            toast({
+                title: t('toasts.genStarted'),
+                description: t('toasts.genStartedDesc'),
+            });
             return true;
 
         } catch (e) {

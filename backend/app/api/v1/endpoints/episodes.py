@@ -46,6 +46,10 @@ class EpisodeOut(BaseModel):
     story_summary: str = ""
     status: str
     created_at: datetime
+    
+    # Context
+    background_info: Optional[str] = None
+    character_outfits: Optional[dict] = None
 
 @router.get("", response_model=List[EpisodeOut])
 def list_episodes(
@@ -263,12 +267,25 @@ def generate_episode_cuts_task(
         episode = session.get(Episode, episode_id)
         if not episode: return
         
+        # Fetch Project for Worldview/Context
+        project = session.get(Project, project_id)
+        project_context = {}
+        if project:
+            genres = [g.name for g in project.genres] if project.genres else []
+            project_context = {
+                "title": project.title,
+                "genres": genres, 
+                "worldview": project.worldview or {},
+                "art_style": project.art_style or project.style_preset
+            }
+
         # Fetch project characters for AI context
         characters = session.exec(select(Character).where(Character.project_id == project_id).where(Character.deleted_at == None)).all()
         
         char_details = []
         for c in characters:
             personality = c.profile.get("personality") if c.profile else None
+            # ... existing character logic ...
             if not personality and c.default_mood:
                 personality = ", ".join(c.default_mood)
                 
@@ -288,7 +305,8 @@ def generate_episode_cuts_task(
                 style=style,
                 num_cuts=num_cuts,
                 language=language,
-                available_characters=char_details
+                available_characters=char_details,
+                project_context=project_context
             )
             
             # Save Episode Context (Background & Outfits)
@@ -506,8 +524,44 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
             # if len(char_data) < 3: ...
             
             # 2. Prompt Construction
-            prompt = prompt_override
-            if not prompt:
+            
+            # Common Context Components
+            setting_info = []
+            if cut.location: setting_info.append(f"Location: {cut.location}")
+            if cut.time_of_day: setting_info.append(f"Time: {cut.time_of_day}")
+            if episode_bg_info: setting_info.append(f"Episode Context: {episode_bg_info}")
+            setting_str = ", ".join(setting_info)
+            
+            outfit_str = ""
+            if char_outfits:
+                 outfit_list = [f"{name.capitalize()}: {desc}" for name, desc in char_outfits.items()]
+                 outfit_str = f"Character Outfits: {', '.join(outfit_list)}"
+
+            char_visuals_str = ""
+            if char_visuals:
+                # Use narrative descriptions instead of Name: Label to avoid text bleeding
+                # Format: "Character [Name] appearance: [Desc]" 
+                char_visuals_str = "Character Descriptions:\n" + "\n".join([f"- {cv}" for cv in char_visuals])
+                 
+            transition_str = ""
+            if cut.transition_ref:
+                 transition_str = f"Transition Note: {cut.transition_ref}"
+
+            # Worldview Context
+            worldview_context = ""
+            if project.worldview:
+                wv_items = [f"{k}: {v}" for k, v in project.worldview.items()]
+                if wv_items:
+                    worldview_context = "Worldview/Context: " + ", ".join(wv_items)
+
+            # Determine Scene Action (Unified Logic)
+            # If prompt_override is provided (Regenerate with custom text), use it as the main instruction
+            # Otherwise use the cut script and dialogues
+            
+            scene_instruction = ""
+            if prompt_override:
+                scene_instruction = f"User Instruction/Action: {prompt_override}"
+            else:
                 dialogue_parts = []
                 for d in cut.dialogues:
                     speaker = d.get('speaker', 'Unknown')
@@ -527,35 +581,24 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
                         dialogue_parts.append(f"{speaker}: {text}")
                 dialogue_text = " ".join(dialogue_parts)
                 
-                # Construct richer prompt
-                setting_info = []
-                if cut.location: setting_info.append(f"Location: {cut.location}")
-                if cut.time_of_day: setting_info.append(f"Time: {cut.time_of_day}")
-                if episode_bg_info: setting_info.append(f"Episode Context: {episode_bg_info}")
-                setting_str = ", ".join(setting_info)
-                
-                outfit_str = ""
-                if char_outfits:
-                     outfit_list = [f"{name.capitalize()}: {desc}" for name, desc in char_outfits.items()]
-                     outfit_str = f"Character Outfits: {', '.join(outfit_list)}"
-
-                char_visuals_str = ""
-                if char_visuals:
-                    char_visuals_str = "Character Descriptions:\n" + "\n".join([f"- {cv}" for cv in char_visuals])
-                     
-                transition_str = ""
-                if cut.transition_ref:
-                     transition_str = f"Transition Note: {cut.transition_ref}"
-
-                prompt = f"""
-                Style: {project.style_preset} {f'({project.art_style})' if project.art_style else ''}
-                Setting: {setting_str}
+                scene_instruction = f"""
                 Action/Scene: {cut.script}
-                {outfit_str}
-                {char_visuals_str}
                 Dialogues: {dialogue_text}
-                {transition_str}
                 """
+
+            prompt = f"""
+            Style: {project.style_preset} {f'({project.art_style})' if project.art_style else ''}
+            {worldview_context}
+            Setting: {setting_str}
+            
+            {scene_instruction}
+            
+            {outfit_str}
+            {char_visuals_str}
+            {transition_str}
+            
+            IMPORTANT: Do NOT include Name Tags, Character Labels, or Watermarks. Speech bubbles representing dialogue are allowed, but do NOT include specific character names as labels next to characters.
+            """
     
             # 3. Determine Dimensions
             width, height = 1024, 1024
@@ -580,18 +623,84 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
             
             url = storage.upload_image(img_bytes, schema="cuts", identifier=str(cut_id))
             cut.image_path = url
+
+            # Update status to completed
             cut.status = "completed"
             session.add(cut)
             session.commit()
-            print(f"Task Complete: Image saved to {url}")
+            
+            print(f"Task Complete: Generated image for cut {cut_id} -> {url}")
             return url
 
         except Exception as e:
-            print(f"Background Cut Gen Error: {e}")
+            print(f"Cut Gen Failed: {e}")
             cut.status = "failed"
             session.add(cut)
             session.commit()
             return None
+
+def generate_episode_images_sequentially(episode_id: UUID):
+    print(f"Background Task: Starting sequential image generation for episode {episode_id}")
+    try:
+        with Session(engine) as session:
+            # Fetch cuts
+            cuts = session.exec(select(StoryCut).where(StoryCut.episode_id == episode_id).order_by(StoryCut.cut_order)).all()
+            
+            for cut in cuts:
+                 # Check if image already exists
+                if cut.image_path:
+                    print(f"Skipping cut {cut.cut_order} (already exists)")
+                    continue
+
+                print(f"Sequentially generating cut {cut.cut_order}")
+                
+                # Call generation task (synchronously)
+                # This function handles its own DB session for the cut update, 
+                # but we are calling it directly.
+                generate_cut_task(cut.id, prompt_override=None, language="en", use_previous_context=True)
+
+            # After loop finishes, update episode status to 'ready'
+            print(f"Sequential generation finished for episode {episode_id}")
+            episode = session.get(Episode, episode_id)
+            if episode:
+                episode.status = "ready"
+                session.add(episode)
+                session.commit()
+                
+    except Exception as e:
+        print(f"Sequential Generation Error: {e}")
+        # Ensure status is reset even on error
+        with Session(engine) as session:
+             episode = session.get(Episode, episode_id)
+             if episode:
+                 episode.status = "ready" # Or 'failed'
+                 session.add(episode)
+                 session.commit()
+
+
+@router.post("/{episode_id}/generate-images")
+def generate_episode_images(
+    *,
+    session: Session = Depends(deps.get_session),
+    episode_id: UUID,
+    background_tasks: BackgroundTasks,
+    current_user_id: str = Depends(deps.get_current_user_id),
+) -> Any:
+    """
+    Trigger sequential image generation for all cuts in the episode (Skip existing).
+    """
+    episode = session.get(Episode, episode_id)
+    if not episode:
+        raise HTTPException(status_code=404, detail="Episode not found")
+        
+    # Set status to generating?
+    episode.status = "generating"
+    session.add(episode)
+    session.commit()
+    
+    background_tasks.add_task(generate_episode_images_sequentially, episode_id)
+    
+    return {"message": "Sequential generation started"}
 
 
 @router.post("/{episode_id}/export")

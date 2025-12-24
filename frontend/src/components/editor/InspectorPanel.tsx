@@ -51,7 +51,7 @@ const AspectRatioSelector = ({ current, onChange }: { current: string, onChange:
     </div>
 );
 
-const EpisodeContextEditor = ({ episodeId, projectId, characters }: { episodeId: string | null, projectId: string, characters: Character[] }) => {
+const EpisodeContextEditor = ({ episodeId, projectId, characters, disabled }: { episodeId: string | null, projectId: string, characters: Character[], disabled?: boolean }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [bgInfo, setBgInfo] = useState('');
     const [outfits, setOutfits] = useState<Record<string, string>>({});
@@ -95,6 +95,8 @@ const EpisodeContextEditor = ({ episodeId, projectId, characters }: { episodeId:
         }
     };
 
+
+
     const updateOutfit = (name: string, desc: string) => {
         setOutfits(prev => ({
             ...prev,
@@ -119,6 +121,13 @@ const EpisodeContextEditor = ({ episodeId, projectId, characters }: { episodeId:
 
             {isOpen && (
                 <div className="p-4 space-y-4 animate-in slide-in-from-top-2 duration-200">
+                    {disabled && (
+                        <div className="text-[10px] text-amber-500 bg-amber-900/20 p-2 rounded border border-amber-900/50 flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                            Generation in progress. Settings are locked.
+                        </div>
+                    )}
+
                     {loading ? (
                         <div className="text-center text-xs text-slate-500 py-2">Loading...</div>
                     ) : (
@@ -129,7 +138,8 @@ const EpisodeContextEditor = ({ episodeId, projectId, characters }: { episodeId:
                                     value={bgInfo}
                                     onChange={(e) => setBgInfo(e.target.value)}
                                     placeholder="e.g. Inside a futuristic office, night time, raining outside..."
-                                    className="w-full h-20 bg-[#0f0f16] border border-slate-700 rounded p-2 text-xs text-slate-300 focus:border-purple-500 outline-none resize-none"
+                                    disabled={loading || saving || disabled}
+                                    className="w-full h-20 bg-[#0f0f16] border border-slate-700 rounded p-2 text-xs text-slate-300 focus:border-purple-500 outline-none resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                             </div>
 
@@ -143,7 +153,8 @@ const EpisodeContextEditor = ({ episodeId, projectId, characters }: { episodeId:
                                                 value={outfits[char.name.toLowerCase()] || ''}
                                                 onChange={(e) => updateOutfit(char.name, e.target.value)}
                                                 placeholder={`Outfit for ${char.name}...`}
-                                                className="w-full bg-[#0f0f16] border border-slate-700 rounded px-2 py-1 text-xs text-slate-300 focus:border-purple-500 outline-none"
+                                                disabled={loading || saving || disabled}
+                                                className="w-full bg-[#0f0f16] border border-slate-700 rounded px-2 py-1 text-xs text-slate-300 focus:border-purple-500 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                                             />
                                         </div>
                                     ))}
@@ -153,8 +164,8 @@ const EpisodeContextEditor = ({ episodeId, projectId, characters }: { episodeId:
 
                             <button
                                 onClick={handleSave}
-                                disabled={saving}
-                                className="w-full py-2 bg-purple-600 hover:bg-purple-500 text-white rounded text-xs font-bold flex items-center justify-center gap-2"
+                                disabled={loading || saving || disabled}
+                                className="w-full py-2 bg-purple-600 hover:bg-purple-500 text-white rounded text-xs font-bold flex items-center justify-center gap-2 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed"
                             >
                                 {saving ? 'Saving...' : <><Save size={12} /> Save Changes</>}
                             </button>
@@ -168,7 +179,7 @@ const EpisodeContextEditor = ({ episodeId, projectId, characters }: { episodeId:
 
 
 export default function InspectorPanel() {
-    const { activeCutId, activeEpisodeId, updateCut, generatingIdsSet, addGeneratingId, removeGeneratingId } = useCanvasStore();
+    const { activeCutId, activeEpisodeId, updateCut, generatingIdsSet, addGeneratingId, removeGeneratingId, activeEpisodeStatus } = useCanvasStore();
     // const selectedElement = elements.find(el => el.id === selectedId); // Removed
     const params = useParams();
     const projectId = params?.projectId as string;
@@ -329,6 +340,7 @@ export default function InspectorPanel() {
                 episodeId={activeEpisodeId}
                 projectId={projectId}
                 characters={characters}
+                disabled={activeEpisodeStatus === 'generating' || activeEpisodeStatus === 'fetching'}
             />
 
             {activeCutId ? (

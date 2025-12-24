@@ -6,9 +6,11 @@ import { v4 as uuidv4 } from 'uuid';
 interface CanvasState {
     activeCharacter: { name: string; tags: string[]; profile_image_url?: string } | null;
     activeEpisodeId: string | null;
+    activeEpisodeStatus: string; // 'ready' | 'generating' | 'failed'
     activeCutId: string | null;
     setActiveCharacter: (char: { name: string; tags: string[]; profile_image_url?: string } | null) => void;
     setActiveEpisode: (id: string | null) => void;
+    setActiveEpisodeStatus: (status: string) => void;
     setActiveCut: (id: string | null) => void;
     // Renamed for clarity since we don't have elements anymore, but keeping api for now
     updateCut: (updates: any) => Promise<void>;
@@ -22,9 +24,11 @@ interface CanvasState {
 export const useCanvasStore = create<CanvasState>((set, get) => ({
     activeCharacter: null,
     activeEpisodeId: null,
+    activeEpisodeStatus: 'ready',
     activeCutId: null,
     setActiveCharacter: (char) => set({ activeCharacter: char }),
     setActiveEpisode: (id) => set({ activeEpisodeId: id }),
+    setActiveEpisodeStatus: (status) => set({ activeEpisodeStatus: status }),
     setActiveCut: (id) => set({ activeCutId: id }),
     isReviewMode: false,
     setReviewMode: (isOpen) => set({ isReviewMode: isOpen }),

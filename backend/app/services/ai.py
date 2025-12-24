@@ -774,7 +774,16 @@ class AIService:
             print(f"Episode Idea Gen Failed: {e}")
             raise e
 
-    def generate_initial_cuts(self, episode_title: str, summary: str, style: str, num_cuts: int = 6, language: str = "en", available_characters: List[dict] = None) -> dict:
+    def generate_initial_cuts(
+        self, 
+        episode_title: str, 
+        summary: str, 
+        style: str, 
+        num_cuts: int = 6, 
+        language: str = "en",
+        available_characters: List[dict] = [],
+        project_context: dict = None
+    ) -> dict:
         if not self.client:
              raise Exception("AI Service not initialized")
 
@@ -798,8 +807,25 @@ class AIService:
                 chars_list.append(c_info)
             chars_str = "\n".join(chars_list)
 
+        project_info_str = ""
+        if project_context:
+            worldview = project_context.get("worldview", {})
+            worldview_str = "\n".join([f"- {k}: {v}" for k, v in worldview.items()]) if worldview else "None"
+            project_info_str = f"""
+        Project Context:
+        Title: {project_context.get("title")}
+        Genres: {', '.join(project_context.get("genres", []))}
+        Art Style: {project_context.get("art_style")}
+        Worldview/Setting:
+        {worldview_str}
+            """
+
         prompt = f"""
         Plan a {num_cuts}-cut webtoon episode.
+        
+        {project_info_str}
+        
+        Episode Details:
         Title: {episode_title}
         Summary: {summary}
         Style: {style}
