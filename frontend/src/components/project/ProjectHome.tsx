@@ -306,7 +306,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
             console.error(error);
             toast({
                 title: "Error",
-                description: "Failed to cast suggestion",
+                description: t('castFailed'),
                 variant: 'destructive',
             });
         }
@@ -467,9 +467,9 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                             className="text-sm text-purple-400 hover:text-white mt-1 font-bold flex items-center gap-1"
                                         >
                                             {isDescriptionExpanded ? (
-                                                <><ChevronDown className="rotate-180 w-3 h-3" /> Show Less</>
+                                                <><ChevronDown className="rotate-180 w-3 h-3" />{t('showLess')}</>
                                             ) : (
-                                                <><ChevronDown className="w-3 h-3" /> Show More</>
+                                                <><ChevronDown className="w-3 h-3" />{t('showMore')}</>
                                             )}
                                         </button>
                                     )}

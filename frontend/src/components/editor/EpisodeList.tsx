@@ -23,7 +23,7 @@ interface Episode {
 
 export default function EpisodeList() {
     const t = useTranslations('Common');
-    const te = useTranslations('Editor.EpisodeList');
+    const te = useTranslations('Project.Editor.EpisodeList');
     const params = useParams();
     const projectId = params?.projectId as string;
     const [episodes, setEpisodes] = useState<Episode[]>([]);
@@ -133,23 +133,23 @@ export default function EpisodeList() {
     return (
         <div className="flex flex-col h-full bg-[#0f0f16]">
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
-                <h3 className="font-bold text-slate-300 text-sm uppercase tracking-wider">Episodes</h3>
+                <h3 className="font-bold text-slate-300 text-sm uppercase tracking-wider">{te('title')}</h3>
                 <span className="text-xs text-slate-500 font-mono">{episodes.length}</span>
             </div>
 
             <div className="flex-1 overflow-y-auto px-2 py-2 space-y-2 custom-scrollbar">
                 {loading ? (
-                    <div className="text-slate-500 text-xs text-center py-4">Loading...</div>
+                    <div className="text-slate-500 text-xs text-center py-4">{t('loading')}</div>
                 ) : episodes.length === 0 ? (
                     <div className="text-center py-8 px-4 border border-dashed border-slate-800 rounded-xl m-2">
-                        <div className="text-slate-500 text-xs italic mb-4">No episodes yet.</div>
+                        <div className="text-slate-500 text-xs italic mb-4">{te('empty')}</div>
                         <Button
                             variant="outline"
                             size="sm"
                             className="bg-slate-800 border-slate-700 text-purple-400 hover:text-purple-300 hover:bg-slate-700 hover:border-purple-500 w-full"
                             onClick={() => setGenModalOpen(true)}
                         >
-                            <Sparkles size={14} className="mr-2" /> Auto-Generate
+                            <Sparkles size={14} className="mr-2" />{te('autoGenerate')}
                         </Button>
                     </div>
                 ) : (
@@ -177,7 +177,7 @@ export default function EpisodeList() {
 
                             {ep.status === 'generating' && (
                                 <div className="mt-2 text-[10px] text-purple-400 flex items-center gap-1 animate-pulse">
-                                    <Sparkles size={10} className="animate-spin" /> Generating...
+                                    <Sparkles size={10} className="animate-spin" /> {te('generating') || 'Generating...'}
                                 </div>
                             )}
 
@@ -218,7 +218,7 @@ export default function EpisodeList() {
                     className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg shadow-purple-900/20 border-0 h-9 font-bold text-xs"
                     onClick={() => setGenModalOpen(true)}
                 >
-                    <Sparkles size={14} className="mr-2" /> CREATE NEW
+                    <Sparkles size={14} className="mr-2" />{te('createNew')}
                 </Button>
             </div>
 

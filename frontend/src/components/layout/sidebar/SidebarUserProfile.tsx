@@ -56,7 +56,7 @@ export default function SidebarUserProfile() {
         <div className={cn("flex items-center gap-3 mt-2", isSidebarCollapsed ? "justify-center flex-col" : "justify-between px-1")}>
             <Link
                 href="/dashboard/settings"
-                title="Profile Settings"
+                title={t('profileSettings')}
                 className={cn(
                     "flex items-center gap-3 min-w-0 hover:opacity-80 transition-opacity",
                     isSidebarCollapsed && "w-full justify-center"

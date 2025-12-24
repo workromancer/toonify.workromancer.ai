@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import api from '@/lib/api';
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface StoryCut {
     id: string;
@@ -91,6 +92,7 @@ export default function MobileEpisodeViewer({ isOpen, onClose, title, episodeId,
     const [generatingCuts, setGeneratingCuts] = useState<Record<string, boolean>>({});
     const [reviewStatus, setReviewStatus] = useState<Record<string, 'approved' | 'rejected' | null>>({});
     const [activeDevice, setActiveDevice] = useState<DeviceType>('iphone');
+    const t = useTranslations('Project.Editor');
 
     const config = deviceConfig[activeDevice];
 
@@ -120,7 +122,7 @@ export default function MobileEpisodeViewer({ isOpen, onClose, title, episodeId,
 
             {/* Device Selector Sidebar */}
             <div className="absolute right-8 top-1/2 -translate-y-1/2 flex flex-col gap-4 bg-gray-900/50 p-4 rounded-2xl backdrop-blur border border-white/10 z-50">
-                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider text-center mb-2">Device</span>
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider text-center mb-2">{t('deviceLabel')}</span>
                 {(Object.keys(deviceConfig) as DeviceType[]).map((type) => (
                     <button
                         key={type}
@@ -207,7 +209,7 @@ export default function MobileEpisodeViewer({ isOpen, onClose, title, episodeId,
                             <div>
                                 <h1 className="text-2xl font-black text-gray-900 mb-2 leading-tight">{title}</h1>
                                 <div className="h-1 w-12 bg-black mx-auto mb-3"></div>
-                                <p className="text-xs text-gray-400 font-bold tracking-widest uppercase">Original Webtoon</p>
+                                <p className="text-xs text-gray-400 font-bold tracking-widest uppercase">{t('originalLabel')}</p>
                             </div>
                         </div>
 

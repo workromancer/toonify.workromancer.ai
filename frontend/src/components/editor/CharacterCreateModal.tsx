@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Plus, X } from 'lucide-react';
 import { useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 interface CharacterCreateModalProps {
     onCharacterCreated: () => void;
@@ -29,6 +30,7 @@ export default function CharacterCreateModal({ onCharacterCreated }: CharacterCr
     const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm();
     const [tags, setTags] = useState<string[]>([]);
     const [tagInput, setTagInput] = useState('');
+    const t = useTranslations('Project.Editor.CharacterCreateModal');
 
     const addTag = () => {
         if (tagInput.trim() && !tags.includes(tagInput.trim())) {
@@ -63,24 +65,24 @@ export default function CharacterCreateModal({ onCharacterCreated }: CharacterCr
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 <Button variant="ghost" size="sm" className="w-full mt-2 text-gray-500 border border-dashed border-gray-600 hover:text-white hover:border-gray-500 hover:bg-gray-700">
-                    <Plus size={16} className="mr-2" /> Add Character
+                    <Plus size={16} className="mr-2" />{t('addCharacter')}
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px] bg-gray-900 border-gray-700 text-white">
                 <DialogHeader>
-                    <DialogTitle>Create New Character</DialogTitle>
+                    <DialogTitle>{t('title')}</DialogTitle>
                     <DialogDescription className="text-gray-400">
-                        Define your character's name and key appearance traits.
+                        {t('description')}
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
                     <div className="grid w-full items-center gap-1.5">
-                        <Label htmlFor="name">Name</Label>
-                        <Input id="name" {...register('name', { required: true })} placeholder="e.g. Jin-woo" className="bg-gray-800 border-gray-600" />
+                        <Label htmlFor="name">{t('nameLabel')}</Label>
+                        <Input id="name" {...register('name', { required: true })} placeholder={t('namePlaceholder')} className="bg-gray-800 border-gray-600" />
                     </div>
 
                     <div className="space-y-2">
-                        <Label>Appearance Tags</Label>
+                        <Label>{t('tagsLabel')}</Label>
                         <div className="flex gap-2">
                             <Input
                                 value={tagInput}
@@ -91,10 +93,10 @@ export default function CharacterCreateModal({ onCharacterCreated }: CharacterCr
                                         addTag();
                                     }
                                 }}
-                                placeholder="Add a tag (e.g. black hoodie)"
+                                placeholder={t('tagsPlaceholder')}
                                 className="bg-gray-800 border-gray-600"
                             />
-                            <Button type="button" onClick={addTag} variant="secondary">Add</Button>
+                            <Button type="button" onClick={addTag} variant="secondary">{t('addTag')}</Button>
                         </div>
                         <div className="flex flex-wrap gap-2 mt-2">
                             {tags.map(tag => (
@@ -110,7 +112,7 @@ export default function CharacterCreateModal({ onCharacterCreated }: CharacterCr
 
                     <DialogFooter>
                         <Button type="submit" disabled={isSubmitting} className="bg-purple-600 hover:bg-purple-700">
-                            {isSubmitting ? 'Creating...' : 'Create Character'}
+                            {isSubmitting ? t('creating') : t('create')}
                         </Button>
                     </DialogFooter>
                 </form>

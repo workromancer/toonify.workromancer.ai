@@ -48,10 +48,10 @@ export default function ProjectLayout({ children, projectId, projectTitle }: Pro
                             "flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm font-medium px-2 py-2 mb-2 hover:bg-[#15151A] rounded-lg",
                             isSidebarCollapsed ? "justify-center w-10 h-10 p-0" : ""
                         )}
-                        title="Back to Dashboard"
+                        title={t('backToDashboard')}
                     >
                         <ArrowLeft size={isSidebarCollapsed ? 20 : 16} />
-                        {!isSidebarCollapsed && <span>Back to Dashboard</span>}
+                        {!isSidebarCollapsed && <span>{t('backToDashboard')}</span>}
                     </Link>
 
                     {/* Workspace Info (Read-only) */}

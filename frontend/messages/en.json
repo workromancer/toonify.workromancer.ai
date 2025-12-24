@@ -180,6 +180,12 @@
     "styles": {
       "myStyles": "My Style"
     },
+    "backToDashboard": "Back to Dashboard",
+    "profileSettings": "Profile Settings",
+    "projectsDesc": "Manage and organize your webtoon projects.",
+    "listView": "List View",
+    "gridView": "Grid View",
+    "getStarted": "Create a new project to get started.",
     "logout": "Logout"
   },
   "CreateWorkspace": {
@@ -284,6 +290,9 @@
       "keyFeatures": "Key Features",
       "cast": "Main Cast",
       "viewAll": "View All",
+      "showMore": "Show More",
+      "showLess": "Show Less",
+      "castFailed": "Failed to cast suggestion",
       "creating": "CREATING...",
       "failed": "FAILED",
       "newEpisode": "New Episode",
@@ -423,7 +432,21 @@
         "processing": "Processing...",
         "cost": "Cost: 1 Credit • Est. Time: ~5s",
         "referencePreviousCut": "Reference Previous Cut",
-        "dialogues": "Dialogues"
+        "dialogues": "Dialogues",
+        "episodeContextSettings": "Episode Context Settings",
+        "generationLocked": "Generation in progress. Settings are locked.",
+        "loading": "Loading...",
+        "globalBackgroundInfo": "Global Background / Scene Info",
+        "backgroundPlaceholder": "e.g. Inside a futuristic office, night time, raining outside...",
+        "characterOutfits": "Character Outfits (Override Defaults)",
+        "outfitPlaceholder": "Outfit for {name}...",
+        "noCharactersAvailable": "No characters available",
+        "saving": "Saving...",
+        "saveChanges": "Save Changes",
+        "noDialogues": "No dialogues",
+        "speakerPlaceholder": "Speaker Name",
+        "dialoguePlaceholder": "Dialogue text...",
+        "episodeSettings": "Episode Settings"
       },
       "toasts": {
         "noCuts": "No cuts to generate",
@@ -452,7 +475,35 @@
         "genTimeoutDesc": "Image generation took too long.",
         "genServerFailed": "Generation failed on server"
       },
-      "selectEpisode": "Select an episode to view storyboard."
+      "CharacterList": {
+        "title": "Casting",
+        "empty": "No characters casted yet.",
+        "generateImage": "Generate Profile Image",
+        "deleteCharacter": "Delete Character"
+      },
+      "EpisodeList": {
+        "title": "Episodes",
+        "empty": "No episodes available.",
+        "autoGenerate": "Auto Generate",
+        "createNew": "Create New"
+      },
+      "CharacterCreateModal": {
+        "addCharacter": "Add Character",
+        "title": "Create New Character",
+        "description": "Define your character's name and key appearance traits.",
+        "nameLabel": "Name",
+        "namePlaceholder": "e.g. Jin-woo",
+        "tagsLabel": "Appearance Tags",
+        "tagsPlaceholder": "Add a tag (e.g. black hoodie)",
+        "addTag": "Add",
+        "creating": "Creating...",
+        "create": "Create Character"
+      },
+      "selectEpisode": "Select an episode to view storyboard.",
+      "refineWithAi": "Refine with AI",
+      "episodePreview": "Episode Preview",
+      "deviceLabel": "Device",
+      "originalLabel": "Original Webtoon"
     }
   },
   "CharacterWizard": {

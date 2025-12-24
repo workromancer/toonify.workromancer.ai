@@ -69,7 +69,7 @@ export default function ProjectsPage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 animate-fade-in-up">
                 <div>
                     <h1 className="text-3xl font-bold text-white tracking-tight mb-2">{t('nav.projects')}</h1>
-                    <p className="text-slate-400 text-sm">Manage and organize your webtoon projects.</p>
+                    <p className="text-slate-400 text-sm">{t('projectsDesc')}</p>
                 </div>
 
                 <div className="flex items-center gap-4">
@@ -90,14 +90,14 @@ export default function ProjectsPage() {
                         <button
                             onClick={() => setViewMode('list')}
                             className={`p-2 rounded-md transition-colors ${viewMode === 'list' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
-                            title="List View"
+                            title={t('listView')}
                         >
                             <List size={18} />
                         </button>
                         <button
                             onClick={() => setViewMode('grid')}
                             className={`p-2 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
-                            title="Grid View"
+                            title={t('gridView')}
                         >
                             <LayoutGrid size={18} />
                         </button>
@@ -143,7 +143,7 @@ export default function ProjectsPage() {
                     <div className="w-full h-60 border border-dashed border-slate-800 rounded-2xl flex flex-col items-center justify-center text-slate-600 bg-slate-900/20">
                         <FolderOpen size={48} className="mb-4 opacity-50" />
                         <p className="text-lg font-medium text-slate-400">{t('noProjects')}</p>
-                        <p className="text-sm mt-1">Create a new project to get started.</p>
+                        <p className="text-sm mt-1">{t('getStarted')}</p>
                     </div>
                 )}
             </div>

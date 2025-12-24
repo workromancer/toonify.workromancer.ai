@@ -185,6 +185,12 @@
     "styles": {
       "myStyles": "나만의 그림체"
     },
+    "backToDashboard": "대시보드로 돌아가기",
+    "profileSettings": "프로필 설정",
+    "projectsDesc": "웹툰 프로젝트를 관리하고 정리하세요.",
+    "listView": "목록 보기",
+    "gridView": "그리드 보기",
+    "getStarted": "새 프로젝트를 만들어 시작하세요.",
     "logout": "로그아웃"
   },
   "CreateWorkspace": {
@@ -289,6 +295,9 @@
       "keyFeatures": "핵심 특징",
       "cast": "등장인물",
       "viewAll": "모두 보기",
+      "showMore": "더 보기",
+      "showLess": "접기",
+      "castFailed": "캐스팅에 실패했습니다",
       "creating": "생성 중...",
       "failed": "실패",
       "episodes": "에피소드",
@@ -431,7 +440,21 @@
         "process": "생성 중...",
         "cost": "비용: 1 크레딧 • 소요시간: 약 5초",
         "referencePreviousCut": "이전 컷 참조",
-        "dialogues": "대사"
+        "dialogues": "대사",
+        "episodeContextSettings": "에피소드 컨텍스트 설정",
+        "generationLocked": "생성이 진행 중입니다. 설정이 잠겨 있습니다.",
+        "loading": "로딩 중...",
+        "globalBackgroundInfo": "전체 배경 / 장면 정보",
+        "backgroundPlaceholder": "예: 미래형 사무실 내부, 밤, 밖에 비가 내리는 중...",
+        "characterOutfits": "캐릭터 의상 (기본값 덮어쓰기)",
+        "outfitPlaceholder": "{name}의 의상...",
+        "noCharactersAvailable": "사용 가능한 캐릭터가 없습니다",
+        "saving": "저장 중...",
+        "saveChanges": "변경사항 저장",
+        "noDialogues": "대사 없음",
+        "speakerPlaceholder": "화자 이름",
+        "dialoguePlaceholder": "대사 텍스트...",
+        "episodeSettings": "에피소드 설정"
       },
       "EpisodeList": {
         "title": "에피소드",
@@ -442,7 +465,20 @@
       "CharacterList": {
         "title": "캐스팅",
         "empty": "아직 캐스팅된 캐릭터가 없습니다.",
-        "generateImage": "프로필 이미지 생성"
+        "generateImage": "프로필 이미지 생성",
+        "deleteCharacter": "캐릭터 삭제"
+      },
+      "CharacterCreateModal": {
+        "addCharacter": "캐릭터 추가",
+        "title": "새 캐릭터 만들기",
+        "description": "캐릭터의 이름과 주요 외형 특성을 정의하세요.",
+        "nameLabel": "이름",
+        "namePlaceholder": "예: 김진우",
+        "tagsLabel": "외형 태그",
+        "tagsPlaceholder": "태그 추가 (예: 검은 후드티)",
+        "addTag": "추가",
+        "creating": "생성 중...",
+        "create": "캐릭터 생성"
       },
       "toasts": {
         "noCuts": "생성할 컷이 없습니다",
@@ -471,7 +507,11 @@
         "genTimeoutDesc": "이미지 생성 시간이 너무 오래 걸립니다.",
         "genServerFailed": "서버에서 생성이 실패했습니다."
       },
-      "selectEpisode": "스토리보드를 보려면 에피소드를 선택하세요."
+      "selectEpisode": "스토리보드를 보려면 에피소드를 선택하세요.",
+      "refineWithAi": "AI로 다듬기",
+      "episodePreview": "에피소드 미리보기",
+      "deviceLabel": "기기",
+      "originalLabel": "원본 웹툰"
     },
     "EditModal": {
       "title": "작품 정보 수정",

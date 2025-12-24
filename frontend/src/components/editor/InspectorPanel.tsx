@@ -51,7 +51,7 @@ const AspectRatioSelector = ({ current, onChange }: { current: string, onChange:
     </div>
 );
 
-const EpisodeContextEditor = ({ episodeId, projectId, characters, disabled }: { episodeId: string | null, projectId: string, characters: Character[], disabled?: boolean }) => {
+const EpisodeContextEditor = ({ episodeId, projectId, characters, disabled, t }: { episodeId: string | null, projectId: string, characters: Character[], disabled?: boolean, t: (key: string, values?: Record<string, string>) => string }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [bgInfo, setBgInfo] = useState('');
     const [outfits, setOutfits] = useState<Record<string, string>>({});
@@ -114,7 +114,7 @@ const EpisodeContextEditor = ({ episodeId, projectId, characters, disabled }: { 
             >
                 <span className="flex items-center gap-2">
                     <Settings size={14} className="text-purple-500" />
-                    Episode Context Settings
+                    {t('episodeContextSettings')}
                 </span>
                 {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
             </button>
@@ -124,27 +124,27 @@ const EpisodeContextEditor = ({ episodeId, projectId, characters, disabled }: { 
                     {disabled && (
                         <div className="text-[10px] text-amber-500 bg-amber-900/20 p-2 rounded border border-amber-900/50 flex items-center gap-2">
                             <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                            Generation in progress. Settings are locked.
+                            {t('generationLocked')}
                         </div>
                     )}
 
                     {loading ? (
-                        <div className="text-center text-xs text-slate-500 py-2">Loading...</div>
+                        <div className="text-center text-xs text-slate-500 py-2">{t('loading')}</div>
                     ) : (
                         <>
                             <div>
-                                <label className="text-xs text-slate-500 mb-1 block">Global Background / Scene Info</label>
+                                <label className="text-xs text-slate-500 mb-1 block">{t('globalBackgroundInfo')}</label>
                                 <textarea
                                     value={bgInfo}
                                     onChange={(e) => setBgInfo(e.target.value)}
-                                    placeholder="e.g. Inside a futuristic office, night time, raining outside..."
+                                    placeholder={t('backgroundPlaceholder')}
                                     disabled={loading || saving || disabled}
                                     className="w-full h-20 bg-[#0f0f16] border border-slate-700 rounded p-2 text-xs text-slate-300 focus:border-purple-500 outline-none resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                             </div>
 
                             <div>
-                                <label className="text-xs text-slate-500 mb-2 block">Character Outfits (Override Defaults)</label>
+                                <label className="text-xs text-slate-500 mb-2 block">{t('characterOutfits')}</label>
                                 <div className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar pr-1">
                                     {characters.map(char => (
                                         <div key={char.id} className="flex flex-col gap-1">
@@ -152,13 +152,13 @@ const EpisodeContextEditor = ({ episodeId, projectId, characters, disabled }: { 
                                             <input
                                                 value={outfits[char.name.toLowerCase()] || ''}
                                                 onChange={(e) => updateOutfit(char.name, e.target.value)}
-                                                placeholder={`Outfit for ${char.name}...`}
+                                                placeholder={t('outfitPlaceholder', { name: char.name })}
                                                 disabled={loading || saving || disabled}
                                                 className="w-full bg-[#0f0f16] border border-slate-700 rounded px-2 py-1 text-xs text-slate-300 focus:border-purple-500 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                                             />
                                         </div>
                                     ))}
-                                    {characters.length === 0 && <div className="text-xs text-slate-600 italic">No characters available</div>}
+                                    {characters.length === 0 && <div className="text-xs text-slate-600 italic">{t('noCharactersAvailable')}</div>}
                                 </div>
                             </div>
 
@@ -167,7 +167,7 @@ const EpisodeContextEditor = ({ episodeId, projectId, characters, disabled }: { 
                                 disabled={loading || saving || disabled}
                                 className="w-full py-2 bg-purple-600 hover:bg-purple-500 text-white rounded text-xs font-bold flex items-center justify-center gap-2 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed"
                             >
-                                {saving ? 'Saving...' : <><Save size={12} /> Save Changes</>}
+                                {saving ? t('saving') : <><Save size={12} /> {t('saveChanges')}</>}
                             </button>
                         </>
                     )}
@@ -331,7 +331,7 @@ export default function InspectorPanel() {
                 <p className="text-xs text-slate-500">
                     {activeCutId
                         ? t('selected', { id: String(activeCutId).slice(0, 8) })
-                        : "Episode Settings"}
+                        : t('episodeSettings')}
                 </p>
             </div>
 
@@ -341,6 +341,7 @@ export default function InspectorPanel() {
                 projectId={projectId}
                 characters={characters}
                 disabled={activeEpisodeStatus === 'generating' || activeEpisodeStatus === 'fetching'}
+                t={t}
             />
 
             {activeCutId ? (
@@ -405,7 +406,7 @@ export default function InspectorPanel() {
                         {/* Dialogues */}
                         <div className="pt-4 border-t border-slate-800">
                             <label className="text-xs font-bold text-slate-400 mb-2 flex justify-between items-center">
-                                <span>Dialogues</span>
+                                <span>{t('dialogues')}</span>
                                 <button onClick={addDialogue} className="text-purple-400 hover:text-purple-300 p-1 hover:bg-slate-800 rounded">
                                     <Plus size={14} />
                                 </button>
@@ -427,14 +428,14 @@ export default function InspectorPanel() {
                                                 value={d.speaker}
                                                 onChange={(e) => updateSingleDialogue(idx, 'speaker', e.target.value)}
                                                 className="w-full bg-transparent text-[11px] font-bold text-slate-400 focus:text-white outline-none placeholder:text-slate-700"
-                                                placeholder="Speaker Name"
+                                                placeholder={t('speakerPlaceholder')}
                                             />
                                             <textarea
                                                 value={d.text}
                                                 onChange={(e) => updateSingleDialogue(idx, 'text', e.target.value)}
                                                 className="w-full bg-transparent text-xs text-slate-300 focus:text-white outline-none resize-none placeholder:text-slate-600"
                                                 rows={2}
-                                                placeholder="Dialogue text..."
+                                                placeholder={t('dialoguePlaceholder')}
                                             />
                                         </div>
                                         <button
@@ -445,7 +446,7 @@ export default function InspectorPanel() {
                                         </button>
                                     </div>
                                 ))}
-                                {dialogues.length === 0 && <div className="text-xs text-slate-600 italic">No dialogues</div>}
+                                {dialogues.length === 0 && <div className="text-xs text-slate-600 italic">{t('noDialogues')}</div>}
                             </div>
                         </div>
 

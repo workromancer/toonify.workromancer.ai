@@ -465,7 +465,7 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
                                         <button
                                             className="p-1 hover:text-purple-400 text-slate-500 transition-colors"
                                             onClick={(e) => { e.stopPropagation(); setModifyingCut(cut); }}
-                                            title="Refine with AI"
+                                            title={t('refineWithAi')}
                                         >
                                             <Sparkles size={12} />
                                         </button>
@@ -650,7 +650,7 @@ export default function StoryboardView({ projectId }: StoryboardViewProps) {
             <MobileEpisodeViewer
                 isOpen={isReviewMode}
                 onClose={() => setReviewMode(false)}
-                title="Episode Preview"
+                title={t('episodePreview')}
                 episodeId={activeEpisodeId || ''}
                 cuts={cuts}
                 onUpdateCut={(cutId, newPath) => {
