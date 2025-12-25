@@ -9,7 +9,8 @@ import { useCanvasStore } from '@/store/useCanvasStore';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import EpisodeGenerationModal from './EpisodeGenerationModal';
 import { Sparkles } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
+import { formatDate } from '@/lib/utils';
 
 
 interface Episode {
@@ -24,6 +25,7 @@ interface Episode {
 export default function EpisodeList() {
     const t = useTranslations('Common');
     const te = useTranslations('Project.Editor.EpisodeList');
+    const locale = useLocale();
     const params = useParams();
     const projectId = params?.projectId as string;
     const [episodes, setEpisodes] = useState<Episode[]>([]);
@@ -171,7 +173,7 @@ export default function EpisodeList() {
                             </div>
 
                             <div className="flex items-center justify-between text-[10px] text-slate-500">
-                                <span className="flex items-center gap-1"><Calendar size={10} /> {ep.created_at ? new Date(ep.created_at).toLocaleDateString() : 'Draft'}</span>
+                                <span className="flex items-center gap-1"><Calendar size={10} /> {formatDate(ep.created_at, locale)}</span>
                                 <span className="flex items-center gap-1"><Film size={10} /> #{ep.episode_order}</span>
                             </div>
 

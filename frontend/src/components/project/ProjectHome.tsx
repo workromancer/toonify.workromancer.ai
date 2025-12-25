@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import ViewStyleModal from './modals/ViewStyleModal';
-import { cn } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import { Link, useRouter, usePathname } from '@/navigation';
 import { useSearchParams, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -18,7 +18,7 @@ import { Plus, Sparkles, Clapperboard, Edit2, Palette, ArrowRight, Settings, Pla
 import { useToast } from '@/hooks/use-toast';
 import { SectionLabel } from '@/components/ui/section-label';
 import ImageGeneratingPlaceholder from '@/components/ui/ImageGeneratingPlaceholder';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { CustomLoader } from '@/components/ui/custom-loader';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import SectionTitle from '@/components/ui/SectionTitle';
@@ -112,6 +112,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
     const params = useParams();
     const t = useTranslations('Project.Home');
     const tGenres = useTranslations('NewProject.genres');
+    const locale = useLocale();
     
     // Use URL params for navigation to avoid undefined issues
     const urlProjectId = params?.projectId as string;
@@ -945,7 +946,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                                     <div className="mt-auto pt-2 flex items-center justify-between text-xs text-gray-500 border-t border-gray-800/50">
                                                         <span className="flex items-center gap-1.5">
                                                             <Calendar size={12} />
-                                                            {ep.created_at ? new Date(ep.created_at).toLocaleDateString() : 'N/A'}
+                                                            {formatDate(ep.created_at, locale)}
                                                         </span>
                                                         <span className="flex items-center gap-1.5">
                                                             <Film size={12} />

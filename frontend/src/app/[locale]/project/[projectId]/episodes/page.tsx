@@ -29,8 +29,8 @@ import {
 import GenerateEpisodeModal from '@/components/project/modals/GenerateEpisodeModal';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
-import { useTranslations } from 'next-intl';
+import { cn, formatDate } from '@/lib/utils';
+import { useTranslations, useLocale } from 'next-intl';
 
 // Types
 interface Episode {
@@ -54,6 +54,7 @@ export default function EpisodesPage() {
     const router = useRouter();
     const projectId = params?.projectId as string;
     const t = useTranslations('Project.Episodes');
+    const locale = useLocale();
 
     // Guard: Redirect if projectId is missing or invalid
     useEffect(() => {
@@ -241,7 +242,7 @@ export default function EpisodesPage() {
                                         <div>
                                             <h4 className="text-white font-bold text-sm mb-1 group-hover:text-purple-400 transition-colors">{ep.title}</h4>
                                             <div className="flex gap-3 text-xs text-slate-500">
-                                                <span className="flex items-center gap-1"><Calendar size={12} /> {ep.created_at ? new Date(ep.created_at).toLocaleDateString() : 'Draft'}</span>
+                                                <span className="flex items-center gap-1"><Calendar size={12} /> {formatDate(ep.created_at, locale)}</span>
                                                 <span className="flex items-center gap-1"><Film size={12} /> Episode {ep.episode_order || 0}</span>
                                             </div>
                                         </div>
