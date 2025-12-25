@@ -705,7 +705,10 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
             {char_visuals_str}
             {transition_str}
             
-            IMPORTANT: Do NOT include Name Tags, Character Labels, or Watermarks. Speech bubbles representing dialogue are allowed, but do NOT include specific character names as labels next to characters.
+            IMPORTANT INSTRUCTIONS:
+            1. STRICTLY follow the specified art style ({project.style_preset}{f' - {project.art_style}' if project.art_style else ''}). Draw consistently in that visual style throughout.
+            2. Panel borders/frames should ONLY be included when dramatically necessary for storytelling effect. Otherwise, draw without borders.
+            3. Do NOT include Name Tags, Character Labels, or Watermarks. Speech bubbles representing dialogue are allowed, but do NOT include specific character names as labels next to characters.
             """
     
             # 3. Determine Dimensions
