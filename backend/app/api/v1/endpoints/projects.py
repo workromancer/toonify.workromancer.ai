@@ -392,7 +392,7 @@ def get_project(
     p_dict['thumbnail_url'] = project.thumbnail_asset.file_url if project.thumbnail_asset else None
     p_dict['cover_image_status'] = project.cover_image_status
     
-    # Robust serialization
+    # Robust serialization - exclude heavy embedding fields
     chars_data = []
     try:
         if project.characters:
@@ -400,7 +400,9 @@ def get_project(
                 if c.deleted_at is not None:
                     continue
                 try:
-                    chars_data.append(c.dict())
+                    # Exclude 'embedding' field to prevent massive JSON response
+                    char_dict = c.dict(exclude={'embedding'})
+                    chars_data.append(char_dict)
                 except Exception as e:
                     print(f"Failed to serialize character {c.id}: {e}")
     except Exception as e:

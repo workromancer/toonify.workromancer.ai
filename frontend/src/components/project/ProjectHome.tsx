@@ -605,7 +605,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                         <div className="max-w-7xl mx-auto flex flex-col gap-12">
 
                             {/* Worldview Key Features */}
-                            {project.worldview?.key_features && Array.isArray(project.worldview.key_features) && (
+                            {project.worldview?.key_features && Array.isArray(project.worldview.key_features) && project.worldview.key_features.length > 0 && (
                                 <section className="mb-4">
                                     <SectionLabel icon={<Sparkles size={12} />} className="mb-3 text-gray-400">{t('keyFeatures')}</SectionLabel>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
