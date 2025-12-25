@@ -21,6 +21,7 @@ import ImageGeneratingPlaceholder from '@/components/ui/ImageGeneratingPlacehold
 import { useTranslations } from 'next-intl';
 import { CustomLoader } from '@/components/ui/custom-loader';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import SectionTitle from '@/components/ui/SectionTitle';
 
 interface Character {
     id?: string;
@@ -665,11 +666,10 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                             )}
 
                             <section id="cast-section">
-                                <div className="flex items-center justify-between mb-6">
-                                    <h3 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
-                                        {t('cast')}
-                                    </h3>
-                                    <div className="flex items-center gap-2">
+                                <SectionTitle
+                                    color="purple"
+                                    action={
+                                        <div className="flex items-center gap-2">
                                         {/* Desktop: Full buttons */}
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
@@ -739,10 +739,15 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                         
                                         {/* View All - Hidden on mobile */}
                                         <Link href={`/project/${safeProjectId}/characters`} className="hidden sm:block">
-                                            <Button variant="ghost" size="sm" className="text-sm text-gray-400 hover:text-white">{t('viewAll')} <ArrowRight size={14} className="ml-1" /></Button>
+                                            <button className="text-xs font-bold text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1">
+                                                {t('viewAll')} <ChevronDown size={12} className="-rotate-90" />
+                                            </button>
                                         </Link>
-                                    </div>
-                                </div>
+                                        </div>
+                                    }
+                                >
+                                    {t('cast')}
+                                </SectionTitle>
                                 {/* Mobile: 3-column grid, Desktop: 4-6 columns */}
                                 <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4">
                                     <DropdownMenu>
@@ -863,17 +868,26 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
 
                             {/* Episodes List */}
                             <section>
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                        {t('episodes')} <span className="text-slate-500 text-sm font-normal ml-1 translate-y-[1px]">{episodes?.length || 0}</span>
-                                    </h3>
-                                    <Button
-                                        className="h-9 px-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold shadow-lg shadow-purple-900/20 text-xs flex items-center gap-2"
-                                        onClick={() => setIsEpisodeModalOpen(true)}
-                                    >
-                                        <Plus size={16} /> {t('newEpisode')}
-                                    </Button>
-                                </div>
+                                <SectionTitle
+                                    color="indigo"
+                                    action={
+                                        <div className="flex items-center gap-2">
+                                            <Button
+                                                className="h-9 px-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold shadow-lg shadow-purple-900/20 text-xs flex items-center gap-2"
+                                                onClick={() => setIsEpisodeModalOpen(true)}
+                                            >
+                                                <Plus size={16} /> {t('newEpisode')}
+                                            </Button>
+                                            <Link href={`/project/${safeProjectId}/episodes`} className="hidden sm:block">
+                                                <button className="text-xs font-bold text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1">
+                                                    {t('viewAll')} <ChevronDown size={12} className="-rotate-90" />
+                                                </button>
+                                            </Link>
+                                        </div>
+                                    }
+                                >
+                                    {t('episodes')} <span className="text-slate-500 text-sm font-normal ml-1 translate-y-[1px]">{episodes?.length || 0}</span>
+                                </SectionTitle>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                                     {episodes && episodes.length > 0 ? (

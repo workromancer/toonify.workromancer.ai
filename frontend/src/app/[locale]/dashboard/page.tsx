@@ -20,6 +20,7 @@ import {
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslations } from 'next-intl';
+import SectionTitle from "@/components/ui/SectionTitle";
 
 // --- Interfaces ---
 
@@ -247,15 +248,16 @@ export default function DashboardPage() {
 
                     {/* Section: Recent Projects */}
                     <section className="animate-fade-in-up">
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="flex items-center gap-3">
-                                <div className="w-1.5 h-6 bg-purple-600 rounded-full shadow-[0_0_12px_rgba(147,51,234,0.6)]" />
-                                <h2 className="text-xl font-bold text-white tracking-wide">{t('recentProjects')}</h2>
-                            </div>
-                            <button className="text-xs font-bold text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1">
-                                {t('viewAll')} <ChevronDown size={12} className="-rotate-90" />
-                            </button>
-                        </div>
+                        <SectionTitle
+                            color="purple"
+                            action={
+                                <button className="text-xs font-bold text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1">
+                                    {t('viewAll')} <ChevronDown size={12} className="-rotate-90" />
+                                </button>
+                            }
+                        >
+                            {t('recentProjects')}
+                        </SectionTitle>
 
                         {loading ? (
                             <div className="w-full h-40 flex items-center justify-center text-slate-600">
@@ -287,10 +289,9 @@ export default function DashboardPage() {
 
                     {/* Section: Start New */}
                     <section className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="w-1.5 h-6 bg-indigo-500 rounded-full shadow-[0_0_12px_rgba(99,102,241,0.6)]" />
-                            <h2 className="text-xl font-bold text-white tracking-wide">{t('startNew')}</h2>
-                        </div>
+                        <SectionTitle color="indigo">
+                            {t('startNew')}
+                        </SectionTitle>
 
                         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
                             {/* Custom Styles Section */}
