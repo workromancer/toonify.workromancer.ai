@@ -480,6 +480,7 @@
         "generateImage": "Generate Image",
         "regenerateImage": "Regenerate Image",
         "processing": "Processing...",
+        "batchInProgress": "Batch generation in progress...",
         "cost": "Cost: 1 Credit • Est. Time: ~5s",
         "referencePreviousCut": "Reference Previous Cut",
         "dialogues": "Dialogues",

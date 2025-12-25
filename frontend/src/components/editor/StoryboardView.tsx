@@ -184,13 +184,20 @@ export default function StoryboardView({ projectId, episodeId: propEpisodeId }: 
             setCuts(newCuts);
 
             // Cleanup finished generations
+            // Only remove from generatingIds when:
+            // 1. Status is not 'generating' AND has image (generation complete)
+            // 2. Status is 'failed' (generation failed)
             newCuts.forEach(cut => {
-                if (generatingIds.has(cut.id) && cut.image_path) {
-                    removeGeneratingId(cut.id);
-                }
-                if (generatingIds.has(cut.id) && cut.status === 'failed') {
-                    removeGeneratingId(cut.id);
-                    toast({ title: t('toasts.genFailed'), variant: "destructive" });
+                if (generatingIds.has(cut.id)) {
+                    // Generation complete: status is no longer 'generating' and has new image
+                    if (cut.status !== 'generating' && cut.image_path) {
+                        removeGeneratingId(cut.id);
+                    }
+                    // Generation failed
+                    if (cut.status === 'failed') {
+                        removeGeneratingId(cut.id);
+                        toast({ title: t('toasts.genFailed'), variant: "destructive" });
+                    }
                 }
             });
 
@@ -605,9 +612,9 @@ export default function StoryboardView({ projectId, episodeId: propEpisodeId }: 
                                                         <Button
                                                             variant="secondary"
                                                             size="sm"
-                                                            disabled={isBatchGenerating}
+                                                            disabled={isBatchGenerating || episodeStatus === 'generating'}
                                                             onClick={(e) => { e.stopPropagation(); handleGenerateImage(cut.id); }}
-                                                            className="h-8 text-xs bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm border border-white/20"
+                                                            className={`h-8 text-xs backdrop-blur-sm border ${isBatchGenerating || episodeStatus === 'generating' ? 'bg-white/5 text-white/50 border-white/10 cursor-not-allowed' : 'bg-white/10 hover:bg-white/20 text-white border-white/20'}`}
                                                         >
                                                             <RefreshCw size={12} className="mr-2" /> {t('regenerate') || "Regenerate"}
                                                         </Button>

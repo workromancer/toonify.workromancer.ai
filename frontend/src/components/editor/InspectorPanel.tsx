@@ -196,8 +196,14 @@ export default function InspectorPanel({ episodeId: propEpisodeId }: { episodeId
     const t = useTranslations('Project.Editor.inspectorPanel');
 
     const [prompt, setPrompt] = useState('');
-    // const [generating, setGenerating] = useState(false); // Removed local state
-    const generating = activeCutId ? generatingIdsSet.has(activeCutId) : false;
+    // Track cut status from server to disable regenerate button when cut is generating
+    const [cutStatus, setCutStatus] = useState<string | null>(null);
+    // Check if this cut is generating (from client-side tracking OR server-side status)
+    const isCutGenerating = (activeCutId ? generatingIdsSet.has(activeCutId) : false) || cutStatus === 'generating';
+    // Disable generation when episode is in batch generation mode
+    const isEpisodeGenerating = activeEpisodeStatus === 'generating';
+    // Combined generating state
+    const generating = isCutGenerating || isEpisodeGenerating;
 
     const [aspectRatio, setAspectRatio] = useState('1:1');
     const [characters, setCharacters] = useState<Character[]>([]);
@@ -218,6 +224,8 @@ export default function InspectorPanel({ episodeId: propEpisodeId }: { episodeId
                 setAspectRatio(cut.aspect_ratio || '1:1');
                 setHasImage(!!(cut.image_path || cut.image_url));
                 setDialogues(cut.dialogues || []);
+                // Track cut status from server
+                setCutStatus(cut.status || null);
 
                 // robust handling for both old (string[]) and new ({id, name}[]) formats
                 const ids = new Set<string>();
@@ -487,8 +495,10 @@ export default function InspectorPanel({ episodeId: propEpisodeId }: { episodeId
                                 }
                  `}
                         >
-                            {generating ? (
+                            {isCutGenerating ? (
                                 <>{t('processing')}</>
+                            ) : isEpisodeGenerating ? (
+                                <>{t('batchInProgress') || '전체 생성 중...'}</>
                             ) : (
                                 <>
                                     <Wand2 size={16} fill="currentColor" /> {hasImage ? t('regenerateImage') : t('generateImage')}
