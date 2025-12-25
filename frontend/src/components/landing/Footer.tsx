@@ -16,7 +16,7 @@ export default function Footer() {
                         mincheol@workromancer.ai
                     </a>
                     <a href="https://threads.com/@workromancer" target="_blank" rel="noopener noreferrer" className="text-sm text-gray-400 hover:text-white transition-colors">
-                        @workrormancer
+                        @workromancer
                     </a>
                 </div>
             </div>

@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import api from '@/lib/api';
 import ProjectLayout from '@/components/layout/ProjectLayout';
 import { Button } from '@/components/ui/button';
+import ActionButton from '@/components/ui/ActionButton';
 import { Input } from '@/components/ui/input';
 import {
     Search,
@@ -159,13 +160,14 @@ export default function EpisodesPage() {
                         <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight mb-2">{t('title')}</h1>
                         <p className="text-sm md:text-base text-gray-400">{t('subtitle')}</p>
                     </div>
-                    <Button
+                    <ActionButton
+                        variant="primary"
+                        size="md"
+                        icon={Plus}
                         onClick={() => setIsGenerateModalOpen(true)}
-                        className="bg-purple-600 hover:bg-purple-500 text-white font-bold shadow-lg shadow-purple-900/20"
                     >
-                        <Plus size={18} className="mr-2" />
                         {t('newEpisode')}
-                    </Button>
+                    </ActionButton>
                 </div>
 
                 {/* Filters & Search */}

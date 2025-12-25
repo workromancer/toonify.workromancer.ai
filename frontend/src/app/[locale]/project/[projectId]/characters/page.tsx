@@ -16,6 +16,7 @@ import { SectionLabel } from '@/components/ui/section-label';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslations } from 'next-intl';
+import ActionButton from '@/components/ui/ActionButton';
 
 interface Character {
     id: string;
@@ -317,24 +318,24 @@ export default function CharacterListPage() {
                                 <h1 className="text-2xl md:text-3xl font-black leading-tight tracking-[-0.033em] text-white sm:text-4xl">{tc('title')}</h1>
                                 <p className="text-sm md:text-base text-gray-400">{tc('subtitle')}</p>
                             </div>
-                            <button
+                            <ActionButton
+                                variant="primary"
+                                size="md"
+                                icon={Plus}
                                 onClick={handleNavigateToCasting}
-                                className="flex h-10 min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-full bg-[#4a4aff] hover:bg-[#3d3dcc] px-6 text-sm font-bold leading-normal text-white shadow-lg shadow-blue-900/20 transition-all hover:scale-105"
                             >
-                                <span className="mr-2"><Plus size={16} /></span>
-                                <span>{tc('newCharacter')}</span>
-                            </button>
-                            <button
+                                {tc('newCharacter')}
+                            </ActionButton>
+                            <ActionButton
+                                variant="gradient"
+                                size="md"
+                                icon={Sparkles}
                                 onClick={handleAiRecommend}
                                 disabled={isAiRecommending || project.suggestions_status === 'processing'}
-                                className="flex h-10 min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 px-6 text-sm font-bold leading-normal text-white shadow-lg shadow-purple-900/20 transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                                isLoading={isAiRecommending || project.suggestions_status === 'processing'}
                             >
-                                {(isAiRecommending || project.suggestions_status === 'processing') ? (
-                                    <><Loader2 size={16} className="mr-2 animate-spin" />{tc('aiRecommending')}</>
-                                ) : (
-                                    <><Sparkles size={16} className="mr-2" />{tc('aiRecommend')}</>
-                                )}
-                            </button>
+                                {(isAiRecommending || project.suggestions_status === 'processing') ? tc('aiRecommending') : tc('aiRecommend')}
+                            </ActionButton>
                         </div>
 
                         {/* Grid Content */}

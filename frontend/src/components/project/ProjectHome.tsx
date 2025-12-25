@@ -22,6 +22,7 @@ import { useTranslations } from 'next-intl';
 import { CustomLoader } from '@/components/ui/custom-loader';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import SectionTitle from '@/components/ui/SectionTitle';
+import ActionButton from '@/components/ui/ActionButton';
 
 interface Character {
     id?: string;
@@ -673,13 +674,14 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                         {/* Desktop: Full buttons */}
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <Button
+                                                <ActionButton
+                                                    variant="primary"
                                                     size="sm"
-                                                    className="hidden sm:flex bg-purple-600 hover:bg-purple-500 text-white rounded-full px-4 h-8 text-xs font-bold shadow-lg shadow-purple-900/20"
+                                                    icon={Plus}
+                                                    className="hidden sm:flex"
                                                 >
-                                                    <Plus size={14} className="mr-1.5" />
                                                     {t('addChar')}
-                                                </Button>
+                                                </ActionButton>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end" className="bg-[#18181B] border-white/10 text-gray-200">
                                                 <DropdownMenuItem
@@ -691,28 +693,27 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
-                                        <Button
+                                        <ActionButton
+                                            variant="gradient"
                                             size="sm"
+                                            icon={Sparkles}
                                             onClick={handleAiRecommend}
                                             disabled={isAiRecommending || project.suggestions_status === 'processing'}
-                                            className="hidden sm:flex bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-full px-4 h-8 text-xs font-bold shadow-lg disabled:opacity-50"
+                                            isLoading={isAiRecommending || project.suggestions_status === 'processing'}
+                                            className="hidden sm:flex"
                                         >
-                                            {(isAiRecommending || project.suggestions_status === 'processing') ? (
-                                                <><Loader2 size={14} className="mr-1.5 animate-spin" />{t('aiRecommending')}</>
-                                            ) : (
-                                                <><Sparkles size={14} className="mr-1.5" />{t('aiRecommend')}</>
-                                            )}
-                                        </Button>
+                                            {(isAiRecommending || project.suggestions_status === 'processing') ? t('aiRecommending') : t('aiRecommend')}
+                                        </ActionButton>
                                         
                                         {/* Mobile: Icon buttons */}
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <Button
+                                                <ActionButton
+                                                    variant="primary"
                                                     size="icon"
-                                                    className="sm:hidden w-10 h-10 bg-purple-600 hover:bg-purple-500 text-white rounded-full shadow-lg shadow-purple-900/20"
-                                                >
-                                                    <Plus size={18} />
-                                                </Button>
+                                                    icon={Plus}
+                                                    className="sm:hidden"
+                                                />
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end" className="bg-[#18181B] border-white/10 text-gray-200">
                                                 <DropdownMenuItem
@@ -724,18 +725,14 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
-                                        <Button
+                                        <ActionButton
+                                            variant="gradient"
                                             size="icon"
+                                            icon={isAiRecommending || project.suggestions_status === 'processing' ? Loader2 : Sparkles}
                                             onClick={handleAiRecommend}
                                             disabled={isAiRecommending || project.suggestions_status === 'processing'}
-                                            className="sm:hidden w-10 h-10 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-full shadow-lg disabled:opacity-50"
-                                        >
-                                            {(isAiRecommending || project.suggestions_status === 'processing') ? (
-                                                <Loader2 size={18} className="animate-spin" />
-                                            ) : (
-                                                <Sparkles size={18} />
-                                            )}
-                                        </Button>
+                                            className="sm:hidden"
+                                        />
                                         
                                         {/* View All - Hidden on mobile */}
                                         <Link href={`/project/${safeProjectId}/characters`} className="hidden sm:block">
@@ -872,12 +869,14 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                     color="indigo"
                                     action={
                                         <div className="flex items-center gap-2">
-                                            <Button
-                                                className="h-9 px-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold shadow-lg shadow-purple-900/20 text-xs flex items-center gap-2"
+                                            <ActionButton
+                                                variant="primary"
+                                                size="sm"
+                                                icon={Plus}
                                                 onClick={() => setIsEpisodeModalOpen(true)}
                                             >
-                                                <Plus size={16} /> {t('newEpisode')}
-                                            </Button>
+                                                {t('newEpisode')}
+                                            </ActionButton>
                                             <Link href={`/project/${safeProjectId}/episodes`} className="hidden sm:block">
                                                 <button className="text-xs font-bold text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1">
                                                     {t('viewAll')} <ChevronDown size={12} className="-rotate-90" />
