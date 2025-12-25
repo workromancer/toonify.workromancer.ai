@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Check, Sparkles, Zap, Crown, Coins, Star, Rocket } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from '@/navigation';
 
 const PAYMENTS_ENABLED = process.env.NEXT_PUBLIC_PAYMENTS_ENABLED === 'true';
 
@@ -28,6 +29,7 @@ type CreditPack = {
 export default function PricingSection() {
     const t = useTranslations('Landing.Pricing');
     const { toast } = useToast();
+    const router = useRouter();
 
     const plans: Plan[] = [
         {
@@ -61,15 +63,8 @@ export default function PricingSection() {
     ];
 
     const handlePurchase = (type: string, name: string) => {
-        if (!PAYMENTS_ENABLED) {
-            toast({
-                title: t('comingSoon'),
-                description: t('comingSoonDesc'),
-            });
-            return;
-        }
-        // Future: redirect to Polar.sh checkout
-        console.log(`Purchase ${type}: ${name}`);
+        // Redirect to signup page for non-logged-in users
+        router.push('/signup');
     };
 
     return (

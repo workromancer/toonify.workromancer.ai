@@ -10,6 +10,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { useRouter, usePathname } from '@/navigation';
 import api from '@/lib/api';
 import { useToast } from "@/hooks/use-toast";
+import PricingModal from '@/components/dashboard/PricingModal';
 
 export default function SettingsPage() {
     const { user, setUser } = useAuthStore();
@@ -22,6 +23,7 @@ export default function SettingsPage() {
     const pathname = usePathname();
     const { toast } = useToast();
     const [isPending, startTransition] = useTransition();
+    const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
 
     const handleLanguageChange = async (newLanguage: string) => {
         if (newLanguage === locale) return;
@@ -145,7 +147,7 @@ export default function SettingsPage() {
                                         <span className="text-sm font-medium text-gray-400">{t('currentPlan')}</span>
                                     </div>
                                     <p className="text-2xl font-bold text-white capitalize">{currentWorkspace.tier}</p>
-                                    <Button variant="link" className="p-0 h-auto text-primary hover:text-primary/80 mt-2">{t('upgradePlan')}</Button>
+                                    <Button variant="link" className="p-0 h-auto text-primary hover:text-primary/80 mt-2" onClick={() => setIsPricingModalOpen(true)}>{t('upgradePlan')}</Button>
                                 </div>
 
                                 <div className="p-4 rounded-xl bg-[#0A0A0B] border border-gray-800 hover:border-gray-700 transition-colors">
@@ -156,7 +158,7 @@ export default function SettingsPage() {
                                         <span className="text-sm font-medium text-gray-400">{t('creditsAvailable')}</span>
                                     </div>
                                     <p className="text-2xl font-bold text-white">{currentWorkspace.credits.toLocaleString()}</p>
-                                    <Button variant="link" className="p-0 h-auto text-primary hover:text-primary/80 mt-2">{t('purchaseCredits')}</Button>
+                                    <Button variant="link" className="p-0 h-auto text-primary hover:text-primary/80 mt-2" onClick={() => setIsPricingModalOpen(true)}>{t('purchaseCredits')}</Button>
                                 </div>
                             </div>
                         </div>
@@ -164,6 +166,7 @@ export default function SettingsPage() {
                     </div>
                 </div>
             </div>
+            <PricingModal open={isPricingModalOpen} onOpenChange={setIsPricingModalOpen} />
         </>
     );
 }
