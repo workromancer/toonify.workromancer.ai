@@ -71,6 +71,7 @@ echo "[2/3] 프론트엔드 이미지 빌드 중..."
 FRONTEND_IMAGE="$REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/frontend:latest"
 
 docker build --platform linux/amd64 \
+    --build-arg NEXT_PUBLIC_APP_URL="$NEXT_PUBLIC_APP_URL" \
     --build-arg NEXT_PUBLIC_API_BASE_URL="$NEXT_PUBLIC_API_BASE_URL" \
     --build-arg NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY" \
     --build-arg NEXT_PUBLIC_AUTH_MODE="$NEXT_PUBLIC_AUTH_MODE" \
