@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useRouter } from '@/navigation';
+import { sendGAEvent } from '@next/third-parties/google';
 import api from '@/lib/api';
 import {
     Dialog,
@@ -65,6 +66,10 @@ export default function NewProjectModal({ onProjectCreated, open, onOpenChange, 
             onOpenChange(false);
             reset();
             onProjectCreated();
+            sendGAEvent('event', 'create_project', {
+                genre_id: data.genre_id,
+                style_preset: initialValues?.style_preset || 'anime_webtoon'
+            });
         } catch (err) {
             console.error(err);
             setError(t('error'));

@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslations } from 'next-intl';
 import ActionButton from '@/components/ui/ActionButton';
+import { sendGAEvent } from '@next/third-parties/google';
 
 interface Character {
     id: string;
@@ -85,6 +86,9 @@ export default function CharacterListPage() {
         setIsAiRecommending(true);
         try {
             await api.post('/characters/suggestions/batch', { project_id: project.id });
+            sendGAEvent('event', 'generate_character_suggestions', {
+                project_id: project.id
+            });
             toast({ title: tc('suggestionList'), description: t('preparingSuggestionsDesc') });
             setIsSuggestionsLoading(true);
         } catch (e) {
@@ -282,6 +286,11 @@ export default function CharacterListPage() {
 
             toast({
                 title: tc('castSuccess'),
+            });
+            sendGAEvent('event', 'create_character', {
+                project_id: projectId,
+                method: 'ai_suggestion',
+                suggestion_id: suggestionToPromote.id
             });
         } catch (error: any) {
             console.error(error);

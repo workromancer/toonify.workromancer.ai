@@ -8,6 +8,7 @@ import api from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
+import { sendGAEvent } from '@next/third-parties/google';
 
 interface GenerateEpisodeModalProps {
     isOpen: boolean;
@@ -82,6 +83,9 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
                 // Refetch all suggestions to get updated list with IDs
                 await fetchSuggestions();
                 setUserInstruction('');
+                sendGAEvent('event', 'generate_episode_ideas', {
+                    project_id: projectId
+                });
             }
         } catch (e) {
             console.error("Failed to get ideas", e);
@@ -139,6 +143,11 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
             toast({
                 title: t('success'),
                 description: t('successDesc', { title: formData.title }),
+            });
+            sendGAEvent('event', 'create_episode', {
+                project_id: projectId,
+                method: 'ai_generation',
+                num_cuts: formData.num_cuts
             });
             handleClose();
         } catch (error) {

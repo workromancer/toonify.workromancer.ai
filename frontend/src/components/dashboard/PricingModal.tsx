@@ -5,6 +5,8 @@ import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { Check, Sparkles, Zap, Crown, Coins, Star, Rocket, Construction } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { sendGAEvent } from '@next/third-parties/google';
+import { useToast } from '@/hooks/use-toast';
 
 type Plan = {
     key: string;
@@ -31,6 +33,32 @@ interface PricingModalProps {
 
 export default function PricingModal({ open, onOpenChange, initialTab = 'plans' }: PricingModalProps) {
     const t = useTranslations('Landing.Pricing');
+    const { toast } = useToast();
+
+    const handlePlanSelect = (plan: Plan) => {
+        sendGAEvent('event', 'select_subscription_plan', {
+            plan_key: plan.key,
+            price: plan.price,
+            value: parseFloat(plan.price.replace('$', ''))
+        });
+        toast({
+            title: t('comingSoon'),
+            description: t('comingSoonDesc'),
+        });
+    };
+
+    const handleCreditSelect = (pack: CreditPack) => {
+        sendGAEvent('event', 'select_credit_pack', {
+            pack_key: pack.key,
+            credits: pack.credits,
+            price: pack.price,
+            value: parseFloat(pack.price.replace('$', ''))
+        });
+        toast({
+            title: t('comingSoon'),
+            description: t('comingSoonDesc'),
+        });
+    };
 
     const plans: Plan[] = [
         {
@@ -141,11 +169,11 @@ export default function PricingModal({ open, onOpenChange, initialTab = 'plans' 
                                     </ul>
 
                                     <Button
-                                        disabled
+                                        onClick={() => handlePlanSelect(plan)}
                                         className={`w-full text-sm ${
                                             plan.popular
-                                                ? 'bg-purple-600/50 text-white/70 cursor-not-allowed'
-                                                : 'bg-white/10 text-white/70 border border-white/20 cursor-not-allowed'
+                                                ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                                                : 'bg-white/10 hover:bg-white/20 text-white border border-white/20'
                                         }`}
                                     >
                                         {t('subscribe')}
@@ -172,11 +200,12 @@ export default function PricingModal({ open, onOpenChange, initialTab = 'plans' 
                                     initial={{ opacity: 0, scale: 0.95 }}
                                     animate={{ opacity: 1, scale: 1 }}
                                     transition={{ duration: 0.3, delay: idx * 0.1 }}
-                                    className={`relative flex flex-col items-center rounded-xl border p-4 ${
+                                    onClick={() => handleCreditSelect(pack)}
+                                    className={`relative flex flex-col items-center rounded-xl border p-4 cursor-pointer transition-all hover:scale-105 ${
                                         pack.popular
-                                            ? 'border-yellow-500/50 bg-yellow-500/5'
-                                            : 'border-white/10 bg-white/5'
-                                    } opacity-60 cursor-not-allowed`}
+                                            ? 'border-yellow-500/50 bg-yellow-500/5 hover:border-yellow-500 hover:bg-yellow-500/10'
+                                            : 'border-white/10 bg-white/5 hover:border-white/30 hover:bg-white/10'
+                                    }`}
                                 >
                                     {pack.popular && (
                                         <div className="absolute -top-2 right-2">

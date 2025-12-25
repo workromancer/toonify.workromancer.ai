@@ -18,6 +18,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { sendGAEvent } from '@next/third-parties/google';
 
 interface StoryCut {
     id: string;
@@ -144,6 +145,10 @@ export default function StoryboardView({ projectId, episodeId: propEpisodeId }: 
             // Set local status to trigger polling immediately
             setEpisodeStatus('generating');
             setActiveEpisodeStatus('generating');
+            sendGAEvent('event', 'batch_generate_cuts', {
+                episode_id: activeEpisodeId,
+                cut_count: pendingCuts.length
+            });
 
         } catch (err) {
             console.error("Batch Gen Failed", err);
@@ -286,6 +291,11 @@ export default function StoryboardView({ projectId, episodeId: propEpisodeId }: 
                 dialogues: []
             });
 
+            sendGAEvent('event', 'director_create_scene', {
+                project_id: projectId,
+                aspect_ratio: option.aspect_ratio
+            });
+
             // 3. Reset and Refresh
             setIsDirectorMode(false);
             setScriptInput('');
@@ -357,6 +367,11 @@ export default function StoryboardView({ projectId, episodeId: propEpisodeId }: 
             document.body.appendChild(link);
             link.click();
             link.remove();
+            
+            sendGAEvent('event', 'export_episode', {
+                episode_id: activeEpisodeId,
+                format: format
+            });
         } catch (err: any) {
             console.error("Export failed", err);
 
@@ -389,6 +404,10 @@ export default function StoryboardView({ projectId, episodeId: propEpisodeId }: 
             toast({
                 title: t('toasts.genStarted'),
                 description: t('toasts.genStartedDesc'),
+            });
+            sendGAEvent('event', 'generate_cut', {
+                episode_id: activeEpisodeId,
+                cut_id: cutId
             });
             return true;
 

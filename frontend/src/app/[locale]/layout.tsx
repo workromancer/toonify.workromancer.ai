@@ -35,6 +35,7 @@ export const viewport: Viewport = {
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
 import { ClerkProvider } from "@clerk/nextjs";
+import { GoogleAnalytics } from '@next/third-parties/google';
 
 export default async function RootLayout({
   children,
@@ -66,6 +67,7 @@ export default async function RootLayout({
               <Toaster />
             </AuthProvider>
           </NextIntlClientProvider>
+        <GoogleAnalytics gaId="G-SH1FLE9YVC" />
         </body>
       </html>
     </ClerkProvider>

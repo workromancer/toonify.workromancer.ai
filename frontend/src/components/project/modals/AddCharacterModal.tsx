@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import api from '@/lib/api';
 import { useTranslations } from 'next-intl';
+import { sendGAEvent } from '@next/third-parties/google';
 
 interface AddCharacterModalProps {
     isOpen: boolean;
@@ -38,6 +39,10 @@ export default function AddCharacterModal({ isOpen, onClose, projectId, onAdd }:
                 project_id: projectId
             });
             onAdd(response.data);
+            sendGAEvent('event', 'create_character', {
+                project_id: projectId,
+                method: 'manual'
+            });
             onClose();
         } catch (error) {
             console.error("Failed to add character", error);
