@@ -1,9 +1,10 @@
 'use client';
 
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Sparkles, User, FileText, Activity, Users, Tag } from 'lucide-react';
 import { RadarChart } from '@/components/ui/radar-chart';
+import { VisuallyHidden } from '@/components/ui/visually-hidden';
 import { useTranslations } from 'next-intl';
 
 interface Suggestion {
@@ -35,6 +36,9 @@ export default function SuggestionDetailModal({ isOpen, onClose, suggestion, onC
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent hideCloseButton className="max-w-4xl p-0 overflow-hidden bg-[#0F0F12] border border-gray-800 text-white sm:rounded-2xl max-h-[90vh] flex flex-col">
+                <VisuallyHidden>
+                    <DialogTitle>{tc('detail')}</DialogTitle>
+                </VisuallyHidden>
                 <div className="flex flex-col md:flex-row h-full overflow-hidden">
 
                     {/* Left: Summary Card */}

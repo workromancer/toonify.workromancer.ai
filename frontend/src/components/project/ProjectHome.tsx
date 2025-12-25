@@ -20,7 +20,6 @@ import { SectionLabel } from '@/components/ui/section-label';
 import ImageGeneratingPlaceholder from '@/components/ui/ImageGeneratingPlaceholder';
 import { useTranslations, useLocale } from 'next-intl';
 import { CustomLoader } from '@/components/ui/custom-loader';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import SectionTitle from '@/components/ui/SectionTitle';
 import ActionButton from '@/components/ui/ActionButton';
 import SuggestionCard from '@/components/project/SuggestionCard';
@@ -709,48 +708,24 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                         />
                                         
                                         {/* Add Character Button - Desktop */}
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <ActionButton
-                                                    variant="primary"
-                                                    size="sm"
-                                                    icon={Plus}
-                                                    className="hidden sm:flex"
-                                                >
-                                                    {t('newChar')}
-                                                </ActionButton>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end" className="bg-[#18181B] border-white/10 text-gray-200">
-                                                <DropdownMenuItem
-                                                    className="focus:bg-white/10 cursor-pointer"
-                                                    onClick={() => router.push(`/project/${safeProjectId}/casting`)}
-                                                >
-                                                    <Plus size={14} className="mr-2" />
-                                                    {t('manualAdd')}
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
+                                        <ActionButton
+                                            variant="primary"
+                                            size="sm"
+                                            icon={Plus}
+                                            onClick={() => router.push(`/project/${safeProjectId}/casting`)}
+                                            className="hidden sm:flex"
+                                        >
+                                            {t('newChar')}
+                                        </ActionButton>
                                         
                                         {/* Add Character Button - Mobile Icon */}
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <ActionButton
-                                                    variant="primary"
-                                                    size="icon"
-                                                    icon={Plus}
-                                                    className="sm:hidden"
-                                                />
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end" className="bg-[#18181B] border-white/10 text-gray-200">
-                                                <DropdownMenuItem
-                                                    className="focus:bg-white/10 cursor-pointer"
-                                                    onClick={() => router.push(`/project/${safeProjectId}/casting`)}
-                                                >
-                                                    <Plus size={14} className="mr-2" />
-                                                    {t('manualAdd')}
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
+                                        <ActionButton
+                                            variant="primary"
+                                            size="icon"
+                                            icon={Plus}
+                                            onClick={() => router.push(`/project/${safeProjectId}/casting`)}
+                                            className="sm:hidden"
+                                        />
                                         
                                         {/* View All - with spacing */}
                                         <Link href={`/project/${safeProjectId}/characters`} className="ml-2">
@@ -773,27 +748,16 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                 </SectionTitle>
                                 {/* Mobile: 3-column grid, Desktop: 4-6 columns */}
                                 <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4">
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <div
-                                                className="aspect-[3/4] cursor-pointer rounded-xl border border-dashed border-gray-800 bg-[#0F0F12] flex flex-col items-center justify-center gap-2 hover:bg-[#15151A] hover:border-gray-700 transition-all group"
-                                            >
-                                                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-gray-400 group-hover:text-white transition-colors">
-                                                    <Plus size={16} />
-                                                </div>
-                                                <span className="text-xs font-medium text-gray-500 group-hover:text-gray-300">{t('addChar')}</span>
-                                            </div>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="start" className="bg-[#18181B] border-white/10 text-gray-200">
-                                            <DropdownMenuItem
-                                                className="focus:bg-white/10 cursor-pointer"
-                                                onClick={() => router.push(`/project/${safeProjectId}/casting`)}
-                                            >
-                                                <Plus size={14} className="mr-2" />
-                                                {t('manualAdd')}
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
+                                    <div
+                                        onClick={() => router.push(`/project/${safeProjectId}/casting`)}
+                                        className="aspect-[3/4] cursor-pointer rounded-xl border border-dashed border-gray-800 bg-[#0F0F12] flex flex-col items-center justify-center gap-2 hover:bg-[#15151A] hover:border-gray-700 transition-all group"
+                                    >
+                                        <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-gray-400 group-hover:text-white transition-colors">
+                                            <Plus size={16} />
+                                        </div>
+                                        <span className="text-xs font-medium text-gray-500 group-hover:text-gray-300">{t('addChar')}</span>
+                                    </div>
+
 
 
                                     {[...characters].reverse().slice(0, 5).map(char => {
@@ -856,7 +820,10 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                         <SuggestionCard
                                             key={suggestion.id}
                                             suggestion={suggestion}
-                                            onClick={() => handleSuggestionClick(null as any, suggestion)}
+                                            onClick={() => {
+                                                setSelectedSuggestion(suggestion);
+                                                setIsSuggestionDetailOpen(true);
+                                            }}
                                         />
                                     ))}
                                 </div>

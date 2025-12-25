@@ -382,15 +382,17 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                 />
             </div>
 
-            <div className="space-y-3">
-                <SectionLabel className="text-[#d8b4fe]">{t('inputs.ageLabel')}</SectionLabel>
-                <Input
-                    value={age}
-                    onChange={(e) => setAge(e.target.value)}
-                    placeholder={t('inputs.agePlaceholder')}
-                    size="xl"
-                    className="text-center"
-                />
+            <div className="space-y-6 max-w-md mx-auto w-full">
+                <div className="space-y-3">
+                    <SectionLabel className="text-[#d8b4fe]">{t('inputs.ageLabel')}</SectionLabel>
+                    <Input
+                        value={age}
+                        onChange={(e) => setAge(e.target.value)}
+                        placeholder={t('inputs.agePlaceholder')}
+                        size="xl"
+                        className="text-center"
+                    />
+                </div>
             </div>
         </motion.div>
     );
@@ -658,8 +660,6 @@ export default function CharacterCastingWizard({ projectId, projectTitle, projec
                         </div>
                     )}
                 </div>
-
-                <div className="text-xs font-mono text-gray-600">v.2.2.1</div>
             </header>
 
 

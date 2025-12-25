@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { X, Sparkles, User, Tag, FileText, Activity, Trash2 } from 'lucide-react';
 import { CustomLoader } from '@/components/ui/custom-loader';
@@ -9,6 +9,7 @@ import { RadarChart } from '@/components/ui/radar-chart'; // New Import
 import { cn } from '@/lib/utils';
 import api from '@/lib/api';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import { VisuallyHidden } from '@/components/ui/visually-hidden';
 
 // Redefine interface locally to match ProjectHome structure
 interface Character {
@@ -77,6 +78,9 @@ export default function CharacterDetailModal({ isOpen, onClose, character, onRet
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent hideCloseButton className="max-w-5xl p-0 overflow-hidden bg-[#0F0F12] border border-gray-800 text-white sm:rounded-2xl max-h-[90vh] flex flex-col">
+                <VisuallyHidden>
+                    <DialogTitle>{character.name}</DialogTitle>
+                </VisuallyHidden>
                 <div className="flex flex-col md:flex-row h-full overflow-hidden">
 
                     {/* Left: Image / Status Area */}

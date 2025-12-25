@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Sparkles, Zap, RotateCw, Wand2, Sliders, PenLine, ChevronDown, ChevronUp, PanelRightClose, PanelRightOpen, Clock, Trash2 } from 'lucide-react';
 import { CustomLoader } from '@/components/ui/custom-loader';
 import api from '@/lib/api';
@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { sendGAEvent } from '@next/third-parties/google';
+import { VisuallyHidden } from '@/components/ui/visually-hidden';
 
 interface GenerateEpisodeModalProps {
     isOpen: boolean;
@@ -182,6 +183,9 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
             <DialogContent className="bg-[#0f0f16] border border-slate-700/50 p-0 overflow-hidden sm:max-w-[900px] gap-0 text-slate-200">
+                <VisuallyHidden>
+                    <DialogTitle>{mode === 'generating' ? t('titleGenerating') : t('title')}</DialogTitle>
+                </VisuallyHidden>
 
                 {/* Modal Header */}
                 <div className="flex items-center justify-between px-6 py-5 border-b border-slate-800 bg-[#0f0f16] z-10">
