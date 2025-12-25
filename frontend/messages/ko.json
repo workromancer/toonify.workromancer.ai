@@ -295,6 +295,7 @@
       "selectStyle": "그림체 선택",
       "selectStyleDesc": "프로젝트의 그림체를 선택하세요",
       "addChar": "캐릭터 추가",
+      "newChar": "새 캐릭터",
       "manualAdd": "직접 추가",
       "addCharDesc": "첫 번째 캐릭터를 생성하세요",
       "generating": "생성 중...",

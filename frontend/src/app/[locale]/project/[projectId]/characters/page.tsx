@@ -318,24 +318,26 @@ export default function CharacterListPage() {
                                 <h1 className="text-2xl md:text-3xl font-black leading-tight tracking-[-0.033em] text-white sm:text-4xl">{tc('title')}</h1>
                                 <p className="text-sm md:text-base text-gray-400">{tc('subtitle')}</p>
                             </div>
-                            <ActionButton
-                                variant="primary"
-                                size="md"
-                                icon={Plus}
-                                onClick={handleNavigateToCasting}
-                            >
-                                {tc('newCharacter')}
-                            </ActionButton>
-                            <ActionButton
-                                variant="gradient"
-                                size="md"
-                                icon={Sparkles}
-                                onClick={handleAiRecommend}
-                                disabled={isAiRecommending || project.suggestions_status === 'processing'}
-                                isLoading={isAiRecommending || project.suggestions_status === 'processing'}
-                            >
-                                {(isAiRecommending || project.suggestions_status === 'processing') ? tc('aiRecommending') : tc('aiRecommend')}
-                            </ActionButton>
+                            <div className="flex items-center gap-2 ml-auto">
+                                <ActionButton
+                                    variant="gradient"
+                                    size="md"
+                                    icon={Sparkles}
+                                    onClick={handleAiRecommend}
+                                    disabled={isAiRecommending || project.suggestions_status === 'processing'}
+                                    isLoading={isAiRecommending || project.suggestions_status === 'processing'}
+                                >
+                                    {(isAiRecommending || project.suggestions_status === 'processing') ? tc('aiRecommending') : tc('aiRecommend')}
+                                </ActionButton>
+                                <ActionButton
+                                    variant="primary"
+                                    size="md"
+                                    icon={Plus}
+                                    onClick={handleNavigateToCasting}
+                                >
+                                    {tc('newCharacter')}
+                                </ActionButton>
+                            </div>
                         </div>
 
                         {/* Grid Content */}
@@ -396,11 +398,13 @@ export default function CharacterListPage() {
                                                         </div>
                                                     )}
                                                 </div>
-                                                <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/90 to-transparent">
-                                                    <h4 className="text-white text-sm font-bold truncate">{char.name}</h4>
-                                                    <p className="text-xs text-gray-400 truncate">
-                                                        {Array.isArray(char.default_mood) ? char.default_mood.join(', ') : (char.default_mood || 'Neutral')}
-                                                    </p>
+                                                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black via-black/80 to-transparent">
+                                                    <div className="absolute inset-x-0 bottom-0 p-3">
+                                                        <h4 className="text-white text-sm font-bold truncate drop-shadow-lg">{char.name}</h4>
+                                                        <p className="text-xs text-gray-300 truncate drop-shadow-md">
+                                                            {Array.isArray(char.default_mood) ? char.default_mood.join(', ') : (char.default_mood || 'Neutral')}
+                                                        </p>
+                                                    </div>
                                                 </div>
                                             </div>
                                         );

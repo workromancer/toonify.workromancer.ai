@@ -75,7 +75,7 @@ export default function NewProjectWizard() {
   const [subtitle, setSubtitle] = useState('');
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [worldDesc, setWorldDesc] = useState<string | any>('');
-  const [language, setLanguage] = useState(locale || 'en');
+  // Language follows user's locale setting automatically
 
   // AI State
   const [showAiResults, setShowAiResults] = useState(false);
@@ -95,7 +95,7 @@ export default function NewProjectWizard() {
         if (parsed.subtitle) setSubtitle(parsed.subtitle);
         if (parsed.selectedGenres) setSelectedGenres(parsed.selectedGenres);
         if (parsed.worldDesc) setWorldDesc(parsed.worldDesc);
-        if (parsed.language) setLanguage(parsed.language);
+        // Language now follows user locale, no need to restore
         if (typeof parsed.step === 'number') setStep(parsed.step);
       } catch (e) {
         console.error("Failed to parse draft", e);
@@ -170,7 +170,7 @@ export default function NewProjectWizard() {
         title: title,
         subtitle: subtitle,
         genres: selectedGenres,
-        language: language || locale
+        language: locale
       });
 
       if (response.data.options && response.data.options.length > 0) {
@@ -221,7 +221,7 @@ export default function NewProjectWizard() {
         genre: dataGenre,
         worldview: finalWorldview,
         style_preset: searchParams.get('style_preset') || "anime_webtoon", // Use param or default
-        language: language
+        language: locale
       });
 
       // Clear Draft on Success
@@ -255,7 +255,7 @@ export default function NewProjectWizard() {
       subtitle: subtitle,
       genre: selectedGenres,
       worldview: desc, // Pass simple string, createProject normalizes it
-      language: language
+      language: locale
     });
   };
 
@@ -281,7 +281,7 @@ export default function NewProjectWizard() {
 
   // UI Locking State
   const isLocked = isProcessing || aiLoading || showAiResults;
-  const ct = useTranslations('Common.languages');
+  // Language selection UI removed - follows user locale automatically
 
 
   return (
@@ -350,44 +350,23 @@ export default function NewProjectWizard() {
             {/* Content Area */}
             <div className="flex-1 flex flex-col justify-start pt-16 mb-8 animate-fade-in">
 
-              {/* Step 0: Title & Language */}
+              {/* Step 0: Title */}
               {step === 0 && (
-                <div className="space-y-8">
-                  <div className="space-y-4">
-                    <label className="text-xs font-mono font-bold text-slate-500 ml-1 uppercase">{t('inputs.titleLabel')}</label>
-                    <div className="relative group">
-                      <input
-                        type="text"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                        placeholder={t('inputs.titlePlaceholder')}
-                        disabled={isLocked}
-                        className="w-full bg-transparent border-2 border-slate-700 rounded-xl px-6 py-5 text-2xl font-bold text-white placeholder-slate-700 focus:border-purple-500 outline-none transition-all group-hover:border-slate-600 disabled:opacity-50"
-                        autoFocus
-                        data-testid="project-title-input"
-                        onKeyDown={(e) => e.key === 'Enter' && title && handleNext()}
-                      />
-                      <Type className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-600" />
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <label className="text-xs font-mono font-bold text-slate-500 ml-1 uppercase">{t('inputs.languageLabel') || "Output Language"}</label>
-                    <div className="flex gap-4">
-                      {['en', 'ko'].map((lang) => (
-                        <button
-                          key={lang}
-                          onClick={() => setLanguage(lang)}
-                          className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-xl border-2 transition-all font-bold ${language === lang
-                            ? 'bg-purple-900/20 border-purple-500 text-white'
-                            : 'bg-slate-900/30 border-slate-700 text-slate-500 hover:border-slate-600'
-                            }`}
-                        >
-                          {lang === 'en' ? ct('en') : ct('ko')}
-                          {language === lang && <Check size={16} className="text-purple-400" />}
-                        </button>
-                      ))}
-                    </div>
+                <div className="space-y-4">
+                  <label className="text-xs font-mono font-bold text-slate-500 ml-1 uppercase">{t('inputs.titleLabel')}</label>
+                  <div className="relative group">
+                    <input
+                      type="text"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      placeholder={t('inputs.titlePlaceholder')}
+                      disabled={isLocked}
+                      className="w-full bg-transparent border-2 border-slate-700 rounded-xl px-6 py-5 text-2xl font-bold text-white placeholder-slate-700 focus:border-purple-500 outline-none transition-all group-hover:border-slate-600 disabled:opacity-50"
+                      autoFocus
+                      data-testid="project-title-input"
+                      onKeyDown={(e) => e.key === 'Enter' && title && handleNext()}
+                    />
+                    <Type className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-600" />
                   </div>
                 </div>
               )}

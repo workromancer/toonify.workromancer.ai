@@ -671,28 +671,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                     color="purple"
                                     action={
                                         <div className="flex items-center gap-2">
-                                        {/* Desktop: Full buttons */}
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <ActionButton
-                                                    variant="primary"
-                                                    size="sm"
-                                                    icon={Plus}
-                                                    className="hidden sm:flex"
-                                                >
-                                                    {t('addChar')}
-                                                </ActionButton>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end" className="bg-[#18181B] border-white/10 text-gray-200">
-                                                <DropdownMenuItem
-                                                    className="focus:bg-white/10 cursor-pointer"
-                                                    onClick={() => router.push(`/project/${safeProjectId}/casting`)}
-                                                >
-                                                    <Plus size={14} className="mr-2" />
-                                                    {t('manualAdd')}
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
+                                        {/* AI Recommend Button - Desktop */}
                                         <ActionButton
                                             variant="gradient"
                                             size="sm"
@@ -705,7 +684,40 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                             {(isAiRecommending || project.suggestions_status === 'processing') ? t('aiRecommending') : t('aiRecommend')}
                                         </ActionButton>
                                         
-                                        {/* Mobile: Icon buttons */}
+                                        {/* AI Recommend Button - Mobile Icon */}
+                                        <ActionButton
+                                            variant="gradient"
+                                            size="icon"
+                                            icon={isAiRecommending || project.suggestions_status === 'processing' ? Loader2 : Sparkles}
+                                            onClick={handleAiRecommend}
+                                            disabled={isAiRecommending || project.suggestions_status === 'processing'}
+                                            className="sm:hidden"
+                                        />
+                                        
+                                        {/* Add Character Button - Desktop */}
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <ActionButton
+                                                    variant="primary"
+                                                    size="sm"
+                                                    icon={Plus}
+                                                    className="hidden sm:flex"
+                                                >
+                                                    {t('newChar')}
+                                                </ActionButton>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" className="bg-[#18181B] border-white/10 text-gray-200">
+                                                <DropdownMenuItem
+                                                    className="focus:bg-white/10 cursor-pointer"
+                                                    onClick={() => router.push(`/project/${safeProjectId}/casting`)}
+                                                >
+                                                    <Plus size={14} className="mr-2" />
+                                                    {t('manualAdd')}
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                        
+                                        {/* Add Character Button - Mobile Icon */}
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
                                                 <ActionButton
@@ -725,17 +737,9 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
-                                        <ActionButton
-                                            variant="gradient"
-                                            size="icon"
-                                            icon={isAiRecommending || project.suggestions_status === 'processing' ? Loader2 : Sparkles}
-                                            onClick={handleAiRecommend}
-                                            disabled={isAiRecommending || project.suggestions_status === 'processing'}
-                                            className="sm:hidden"
-                                        />
                                         
-                                        {/* View All - Hidden on mobile */}
-                                        <Link href={`/project/${safeProjectId}/characters`} className="hidden sm:block">
+                                        {/* View All - with spacing */}
+                                        <Link href={`/project/${safeProjectId}/characters`} className="ml-2">
                                             <button className="text-xs font-bold text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1">
                                                 {t('viewAll')} <ChevronDown size={12} className="-rotate-90" />
                                             </button>
@@ -804,9 +808,11 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                                         </div>
                                                     )}
                                                 </div>
-                                                <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/90 to-transparent">
-                                                    <h4 className="text-white text-xs font-bold truncate">{char.name}</h4>
-                                                    <p className="text-[10px] text-gray-400 truncate">{Array.isArray(char.default_mood) ? char.default_mood.join(', ') : (char.default_mood || 'Neutral')}</p>
+                                                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black via-black/80 to-transparent">
+                                                    <div className="absolute inset-x-0 bottom-0 p-3">
+                                                        <h4 className="text-white text-xs font-bold truncate drop-shadow-lg">{char.name}</h4>
+                                                        <p className="text-[10px] text-gray-300 truncate drop-shadow-md">{Array.isArray(char.default_mood) ? char.default_mood.join(', ') : (char.default_mood || 'Neutral')}</p>
+                                                    </div>
                                                 </div>
                                             </div>
                                         );
