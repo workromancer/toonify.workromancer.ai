@@ -60,7 +60,7 @@ export default function NewProjectModal({ onProjectCreated, open, onOpenChange, 
         try {
             await api.post('/projects', {
                 title: data.title,
-                genre_id: data.genre_id, // Send ID
+                genre_ids: data.genre_id ? [data.genre_id] : [], // Convert single ID to array
                 style_preset: initialValues?.style_preset || 'anime_webtoon'
             });
             onOpenChange(false);

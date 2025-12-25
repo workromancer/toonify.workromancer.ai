@@ -77,12 +77,32 @@ export default function NewProjectWizard() {
   const [worldDesc, setWorldDesc] = useState<string | any>('');
   // Language follows user's locale setting automatically
 
+  // Genre Database State
+  const [genreMap, setGenreMap] = useState<Record<string, string>>({});
+
   // AI State
   const [showAiResults, setShowAiResults] = useState(false);
   const [augmentOptions, setAugmentOptions] = useState<any[]>([]);
   const [currentAiIndex, setCurrentAiIndex] = useState(0);
   const [aiLoading, setAiLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Fetch Genres from DB
+  useEffect(() => {
+    const fetchGenres = async () => {
+      try {
+        const res = await api.get('/genres');
+        const map: Record<string, string> = {};
+        res.data.forEach((g: any) => {
+          map[g.name.toLowerCase().replace(/\s/g, '')] = g.id;
+        });
+        setGenreMap(map);
+      } catch (err) {
+        console.error('Failed to fetch genres', err);
+      }
+    };
+    fetchGenres();
+  }, []);
 
   // Local Storage Logic: Load Draft
   useEffect(() => {
@@ -215,10 +235,13 @@ export default function NewProjectWizard() {
         finalWorldview = dataWorldview;
       }
 
+      // Map genre labels to IDs
+      const genreIds = dataGenre.map((genreLabel: string) => genreMap[genreLabel]).filter(Boolean);
+
       const response = await api.post('/projects', {
         title: dataTitle,
         subtitle: dataSubtitle,
-        genre: dataGenre,
+        genre_ids: genreIds, // Send genre IDs array
         worldview: finalWorldview,
         style_preset: searchParams.get('style_preset') || "anime_webtoon", // Use param or default
         language: locale
