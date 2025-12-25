@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from '@/navigation';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { MoreVertical, Trash2, Clock } from 'lucide-react';
 import {
     DropdownMenu,
@@ -24,9 +24,22 @@ interface ProjectCardProps {
     onDelete?: (p: Project) => void;
 }
 
+// Format date based on locale
+const formatDate = (dateStr: string, locale: string): string => {
+    const date = new Date(dateStr);
+    if (locale === 'ko') {
+        const year = date.getFullYear();
+        const month = date.getMonth() + 1;
+        const day = date.getDate();
+        return `${year}년 ${month}월 ${day}일`;
+    }
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
+};
+
 export default function ProjectCard({ project, onDelete }: ProjectCardProps) {
     const router = useRouter();
     const t = useTranslations('Dashboard');
+    const locale = useLocale();
 
     return (
         <div
@@ -91,14 +104,9 @@ export default function ProjectCard({ project, onDelete }: ProjectCardProps) {
             {/* Info Area */}
             <div className="p-5 border-t border-slate-800 bg-[#0f0f16] group-hover:bg-[#13131c] transition-colors relative z-10">
                 <h3 className="text-white font-bold truncate mb-1.5 text-sm">{project.title}</h3>
-                <div className="flex flex-col items-start gap-2 mt-1">
-                    <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700 truncate max-w-full">
-                        {project.style_preset || t('defaultPreset')}
-                    </span>
-                    <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-mono">
-                        <Clock size={10} />
-                        <span className="whitespace-nowrap">{new Date(project.created_at).toLocaleDateString()}</span>
-                    </div>
+                <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-mono mt-1">
+                    <Clock size={10} />
+                    <span className="whitespace-nowrap">{formatDate(project.created_at, locale)}</span>
                 </div>
             </div>
         </div>

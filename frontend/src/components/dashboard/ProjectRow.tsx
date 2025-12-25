@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from '@/navigation';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { MoreVertical, Trash2, Clock, Calendar } from 'lucide-react';
 import {
     DropdownMenu,
@@ -16,9 +16,22 @@ interface ProjectRowProps {
     onDelete: (p: Project) => void;
 }
 
+// Format date based on locale
+const formatDate = (dateStr: string, locale: string): string => {
+    const date = new Date(dateStr);
+    if (locale === 'ko') {
+        const year = date.getFullYear();
+        const month = date.getMonth() + 1;
+        const day = date.getDate();
+        return `${year}년 ${month}월 ${day}일`;
+    }
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
+};
+
 export default function ProjectRow({ project, onDelete }: ProjectRowProps) {
     const router = useRouter();
     const t = useTranslations('Dashboard');
+    const locale = useLocale();
 
     return (
         <div
@@ -45,10 +58,7 @@ export default function ProjectRow({ project, onDelete }: ProjectRowProps) {
                     <div className="flex items-center gap-3 text-xs text-slate-500">
                         <span className="flex items-center gap-1">
                             <Calendar size={12} />
-                            {new Date(project.created_at).toLocaleDateString()}
-                        </span>
-                        <span className="px-1.5 py-0.5 rounded bg-slate-800/50 border border-slate-700/50 text-slate-400">
-                            {project.style_preset || t('defaultPreset')}
+                            {formatDate(project.created_at, locale)}
                         </span>
                     </div>
                 </div>
