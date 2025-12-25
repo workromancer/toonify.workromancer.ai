@@ -915,39 +915,48 @@ def export_episode(
             headers={"Content-Disposition": f"attachment; filename*=UTF-8''{encoded_zip_filename}"}
         )
 
-    # ... Webtoon Strip Logic (Legacy support for data-uri only primarily?) ...
-    # Updating this to use the new get_image_bytes helper for consistency if generic URLs are used too
+    # ... Webtoon Strip Logic ...
+    # All images will be resized to match max_width for consistent strip
     
-    images = []
-    total_height = 0
+    raw_images = []
     max_width = 0
     
-    # Process Images
+    # First pass: Load images and find max width
     for cut in cuts:
         img_data = get_image_bytes(cut.image_path)
         if img_data:
             try:
                 img = Image.open(io.BytesIO(img_data))
                 img.load()
-                images.append(img)
-                total_height += img.height
+                raw_images.append(img)
                 max_width = max(max_width, img.width)
             except Exception as e:
                 print(f"Failed to process image for cut {cut.id}: {e}")
                 
-    if not images:
+    if not raw_images:
          raise HTTPException(status_code=400, detail="No valid images found in cuts")
+
+    # Second pass: Resize all images to max_width while preserving aspect ratio
+    resized_images = []
+    total_height = 0
+    
+    for img in raw_images:
+        if img.width != max_width:
+            # Calculate new height preserving aspect ratio
+            new_height = int(img.height * (max_width / img.width))
+            img = img.resize((max_width, new_height), Image.Resampling.LANCZOS)
+        resized_images.append(img)
+        total_height += img.height
 
     # Create Canvas
     spacing = 50
-    final_height = total_height + (len(images) - 1) * spacing
+    final_height = total_height + (len(resized_images) - 1) * spacing
     
     canvas = Image.new('RGB', (max_width, final_height), (255, 255, 255))
     
     y_offset = 0
-    for img in images:
-        x_offset = (max_width - img.width) // 2
-        canvas.paste(img, (x_offset, y_offset))
+    for img in resized_images:
+        canvas.paste(img, (0, y_offset))
         y_offset += img.height + spacing
         
     # Output
