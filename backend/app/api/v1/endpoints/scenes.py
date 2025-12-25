@@ -15,10 +15,11 @@ class SceneStructureRequest(BaseModel):
     project_id: str | None = None
 
 class SceneOut(BaseModel):
-    option_id: int
-    title: str
+    id: str
+    label: str
     description: str
-    visual_prompt: str
+    aspect_ratio: str
+    image_prompt: str
 
 class SceneRenderRequest(BaseModel):
     prompt: str
@@ -53,7 +54,7 @@ def generate_scene_structure(
     session: Session = Depends(deps.get_session),
     current_user_id: str = Depends(deps.get_current_user_id),
     accept_language: str = Header("en", alias="Accept-Language")
-) -> Dict:
+) -> List[SceneOut]:
     """
     Generate 3 visual direction options based on the script.
     """
@@ -132,7 +133,7 @@ def generate_scene_structure(
                  lang = project.language
 
         options = ai_service.generate_direction_options(request.script, context_str, language=lang)
-        return options
+        return options.get("options", [])
     except HTTPException as he:
         raise he
     except Exception as e:
