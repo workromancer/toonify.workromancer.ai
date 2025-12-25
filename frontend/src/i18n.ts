@@ -9,7 +9,7 @@ export default getRequestConfig(async ({ requestLocale }: { requestLocale: Promi
 
   // Validate that the incoming `locale` parameter is valid
   if (!locale || !locales.includes(locale as any)) {
-    locale = 'en';
+    locale = 'ko';
   }
 
   return {

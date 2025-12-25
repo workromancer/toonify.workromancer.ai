@@ -5,7 +5,7 @@ import { localePrefix, locales } from './navigation';
 
 const intlMiddleware = createMiddleware({
   locales,
-  defaultLocale: 'en',
+  defaultLocale: 'ko',
   localePrefix
 });
 
