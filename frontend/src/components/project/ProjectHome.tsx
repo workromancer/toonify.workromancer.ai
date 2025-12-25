@@ -70,6 +70,7 @@ interface Episode {
     title: string;
     episode_order?: number;
     thumbnail_url?: string;
+    first_cut_image?: string;
     created_at?: string;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [key: string]: any;
@@ -896,9 +897,9 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                             >
                                                 {/* Thumbnail */}
                                                 <div className="aspect-video bg-black/40 relative overflow-hidden">
-                                                    {ep.thumbnail_url ? (
+                                                    {(ep.first_cut_image || ep.thumbnail_url) ? (
                                                         <img
-                                                            src={ep.thumbnail_url}
+                                                            src={ep.first_cut_image || ep.thumbnail_url}
                                                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                                                             alt={ep.title}
                                                         />
@@ -914,11 +915,11 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                                     <div className="absolute top-2 right-2 flex gap-2">
                                                         <span className={cn(
                                                             "px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider backdrop-blur-md border",
-                                                            ep.thumbnail_url
+                                                            (ep.first_cut_image || ep.thumbnail_url)
                                                                 ? "bg-green-500/20 text-green-200 border-green-500/30"
                                                                 : "bg-gray-500/20 text-gray-300 border-gray-500/30"
                                                         )}>
-                                                            {ep.thumbnail_url ? t('ready') : t('draft')}
+                                                            {(ep.first_cut_image || ep.thumbnail_url) ? t('ready') : t('draft')}
                                                         </span>
                                                     </div>
                                                 </div>

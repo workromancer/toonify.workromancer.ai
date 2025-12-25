@@ -43,13 +43,15 @@ class EpisodeOut(BaseModel):
     episode_order: int
     project_id: Any
     story_summary: str = ""
-    story_summary: str = ""
     status: str
     created_at: datetime
     
     # Context
     background_info: Optional[str] = None
     character_outfits: Optional[dict] = None
+    
+    # First cut thumbnail
+    first_cut_image: Optional[str] = None
 
 @router.get("", response_model=List[EpisodeOut])
 def list_episodes(
@@ -68,7 +70,33 @@ def list_episodes(
     
     statement = select(Episode).where(Episode.project_id == project_id).where(Episode.deleted_at == None).order_by(Episode.episode_order)
     episodes = session.exec(statement).all()
-    return episodes
+    
+    # Fetch first cut image for each episode
+    result = []
+    for ep in episodes:
+        first_cut = session.exec(
+            select(StoryCut)
+            .where(StoryCut.episode_id == ep.id)
+            .where(StoryCut.image_path != None)
+            .order_by(StoryCut.cut_order)
+            .limit(1)
+        ).first()
+        
+        ep_dict = {
+            "id": ep.id,
+            "title": ep.title,
+            "episode_order": ep.episode_order,
+            "project_id": ep.project_id,
+            "story_summary": ep.story_summary or "",
+            "status": ep.status,
+            "created_at": ep.created_at,
+            "background_info": ep.background_info,
+            "character_outfits": ep.character_outfits,
+            "first_cut_image": first_cut.image_path if first_cut else None
+        }
+        result.append(ep_dict)
+    
+    return result
 
 @router.post("", response_model=EpisodeOut)
 def create_episode(
