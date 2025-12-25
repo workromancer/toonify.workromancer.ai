@@ -4,6 +4,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/providers/AuthProvider";
 
 
+const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
 export const metadata: Metadata = {
   title: "Toonify - AI Webtoon Studio",
   description: "Create your own webtoon with AI Director",
@@ -15,7 +17,7 @@ export const metadata: Metadata = {
     description: "Create your own webtoon with AI Director",
     images: [
       {
-        url: "/og.png",
+        url: `${appUrl}/og.png`,
         width: 1200,
         height: 630,
         alt: "Toonify - AI Webtoon Studio",
