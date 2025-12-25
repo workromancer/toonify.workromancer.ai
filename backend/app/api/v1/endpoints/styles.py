@@ -45,7 +45,7 @@ def augment_style(
                 
             project_context = {
                 "title": project.title,
-                "worldview": project.worldview_description,
+                "worldview": project.worldview,
                 "genres": genres
             }
 
