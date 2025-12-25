@@ -36,6 +36,16 @@ export const useAuthStore = create<AuthState>()(
             // Clear auth state without redirect (for use by AuthProvider when Clerk handles logout)
             clearAuthState: () => {
                 set({ token: null, user: null, authProvider: 'legacy' });
+                // Clear all browser storage
+                if (typeof window !== 'undefined') {
+                    try {
+                        localStorage.clear();
+                        sessionStorage.clear();
+                        console.log('[AuthStore] Cleared all browser storage via clearAuthState');
+                    } catch (e) {
+                        console.error('[AuthStore] Failed to clear browser storage', e);
+                    }
+                }
             },
             logout: async () => {
                 // Prevent duplicate logout calls (infinite loop protection)
@@ -56,17 +66,34 @@ export const useAuthStore = create<AuthState>()(
                 // Clear local state
                 set({ token: null, user: null, authProvider: 'legacy' });
                 
+                // Clear all browser storage (localStorage and sessionStorage)
+                if (typeof window !== 'undefined') {
+                    try {
+                        localStorage.clear();
+                        sessionStorage.clear();
+                        console.log('[AuthStore] Cleared all browser storage');
+                    } catch (e) {
+                        console.error('[AuthStore] Failed to clear browser storage', e);
+                    }
+                }
+                
                 // Small delay to ensure state is cleared before redirect
                 await new Promise(resolve => setTimeout(resolve, 100));
                 
-                // Redirect to login page
+                // Redirect to landing page
                 if (typeof window !== 'undefined') {
-                    window.location.href = '/login';
+                    window.location.href = '/';
                 }
             },
         }),
         {
             name: 'auth-storage', // unique name
+            // Exclude runtime flags from persistence - they should reset on page reload
+            partialize: (state) => ({
+                token: state.token,
+                user: state.user,
+                authProvider: state.authProvider,
+            }),
             onRehydrateStorage: () => (state) => {
                 state?.setHasHydrated(true);
             },
