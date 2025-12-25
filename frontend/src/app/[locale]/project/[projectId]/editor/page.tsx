@@ -83,7 +83,7 @@ export default function EditorPage() {
         }
         try {
             setExporting(true);
-            const response = await api.post(`/episodes/${activeEpisodeId}/export`, { format: 'zip' }, {
+            const response = await api.post(`/episodes/${activeEpisodeId}/export?format=zip`, {}, {
                 responseType: 'blob'
             });
 

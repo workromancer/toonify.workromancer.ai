@@ -870,11 +870,16 @@ def export_episode(
             return None
 
     if format == "zip":
+        print(f"[ZIP Export] Starting ZIP creation for episode: {episode.title}")
+        print(f"[ZIP Export] Total cuts: {len(cuts)}")
+        
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
             file_count = 0
             for cut in cuts:
+                print(f"[ZIP Export] Processing cut {cut.cut_order}, image_path: {cut.image_path[:50] if cut.image_path else 'None'}...")
                 if not cut.image_path:
+                    print(f"[ZIP Export] Skipping cut {cut.cut_order} - no image_path")
                     continue
                     
                 img_data = get_image_bytes(cut.image_path)
@@ -885,16 +890,27 @@ def export_episode(
                     filename = f"{safe_title}_{cut.cut_order:02d}.png"
                     zf.writestr(filename, img_data)
                     file_count += 1
+                    print(f"[ZIP Export] Added {filename} ({len(img_data)} bytes)")
+                else:
+                    print(f"[ZIP Export] Failed to get image data for cut {cut.cut_order}")
             
+        print(f"[ZIP Export] ZIP file count: {file_count}")
+        
         if file_count == 0:
              raise HTTPException(status_code=400, detail="No valid images found to zip")
-             
+        
+        # Ensure ZIP is fully written
         zip_buffer.seek(0)
+        zip_content = zip_buffer.getvalue()
+        print(f"[ZIP Export] Final ZIP size: {len(zip_content)} bytes")
+        
         zip_filename = f"{episode.title.replace(' ', '_')}_cuts.zip"
         encoded_zip_filename = urllib.parse.quote(zip_filename)
         
-        return StreamingResponse(
-            zip_buffer,
+        # Use Response instead of StreamingResponse to ensure complete ZIP is sent
+        from fastapi import Response
+        return Response(
+            content=zip_content,
             media_type="application/zip",
             headers={"Content-Disposition": f"attachment; filename*=UTF-8''{encoded_zip_filename}"}
         )
