@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import ViewStyleModal from './modals/ViewStyleModal';
 import { cn } from '@/lib/utils';
 import { Link, useRouter, usePathname } from '@/navigation';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import api from '@/lib/api';
 import ProjectLayout from '@/components/layout/ProjectLayout';
@@ -105,8 +105,13 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
     const router = useRouter();
     const searchParams = useSearchParams();
     const pathname = usePathname();
+    const params = useParams();
     const t = useTranslations('Project.Home');
     const tGenres = useTranslations('NewProject.genres');
+    
+    // Use URL params for navigation to avoid undefined issues
+    const urlProjectId = params?.projectId as string;
+    const safeProjectId = urlProjectId || project.id;
 
     const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
     const descriptionText = project.description || project.worldview?.content || project.worldview?.description || t('noDesc');
@@ -679,7 +684,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                             <DropdownMenuContent align="end" className="bg-[#18181B] border-white/10 text-gray-200">
                                                 <DropdownMenuItem
                                                     className="focus:bg-white/10 cursor-pointer"
-                                                    onClick={() => router.push(`/project/${project.id}/casting`)}
+                                                    onClick={() => router.push(`/project/${safeProjectId}/casting`)}
                                                 >
                                                     <Plus size={14} className="mr-2" />
                                                     {t('manualAdd')}
@@ -712,7 +717,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                             <DropdownMenuContent align="end" className="bg-[#18181B] border-white/10 text-gray-200">
                                                 <DropdownMenuItem
                                                     className="focus:bg-white/10 cursor-pointer"
-                                                    onClick={() => router.push(`/project/${project.id}/casting`)}
+                                                    onClick={() => router.push(`/project/${safeProjectId}/casting`)}
                                                 >
                                                     <Plus size={14} className="mr-2" />
                                                     {t('manualAdd')}
@@ -733,7 +738,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                         </Button>
                                         
                                         {/* View All - Hidden on mobile */}
-                                        <Link href={`/project/${project.id}/characters`} className="hidden sm:block">
+                                        <Link href={`/project/${safeProjectId}/characters`} className="hidden sm:block">
                                             <Button variant="ghost" size="sm" className="text-sm text-gray-400 hover:text-white">{t('viewAll')} <ArrowRight size={14} className="ml-1" /></Button>
                                         </Link>
                                     </div>
@@ -754,7 +759,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                         <DropdownMenuContent align="start" className="bg-[#18181B] border-white/10 text-gray-200">
                                             <DropdownMenuItem
                                                 className="focus:bg-white/10 cursor-pointer"
-                                                onClick={() => router.push(`/project/${project.id}/casting`)}
+                                                onClick={() => router.push(`/project/${safeProjectId}/casting`)}
                                             >
                                                 <Plus size={14} className="mr-2" />
                                                 {t('manualAdd')}
@@ -875,7 +880,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                         episodes.map((ep, idx) => (
                                             <div
                                                 key={ep.id}
-                                                onClick={() => router.push(`/project/${project.id}/editor?episode_id=${ep.id}`)}
+                                                onClick={() => router.push(`/project/${safeProjectId}/editor?episode_id=${ep.id}`)}
                                                 className="group relative flex flex-col bg-[#0F0F12] border border-gray-800 rounded-xl overflow-hidden hover:border-gray-600 transition-all cursor-pointer hover:-translate-y-1 hover:shadow-xl"
                                             >
                                                 {/* Thumbnail */}

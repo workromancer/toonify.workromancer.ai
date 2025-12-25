@@ -54,6 +54,14 @@ export default function EpisodesPage() {
     const projectId = params?.projectId as string;
     const t = useTranslations('Project.Episodes');
 
+    // Guard: Redirect if projectId is missing or invalid
+    useEffect(() => {
+        if (!projectId || projectId === 'undefined') {
+            console.warn('EpisodesPage: Invalid projectId, redirecting to dashboard');
+            router.replace('/dashboard');
+        }
+    }, [projectId, router]);
+
     const { toast } = useToast();
     const tCommon = useTranslations('Common');
 

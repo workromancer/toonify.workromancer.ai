@@ -183,17 +183,16 @@ export default function DashboardLayout({ children, accessToken }: DashboardLayo
                 <SidebarHeader>
                     {/* Logo Area */}
                     <Link href="/dashboard" className={cn("flex items-center gap-3 px-2 hover:opacity-80 transition-opacity mt-8 md:mt-0", isSidebarCollapsed && "md:justify-center")}>
-                        <div className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 shadow-sm shrink-0" style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuBN5z1oDmeTFxQPTUuZqFXRVrFpjy9QgdgN7rv824MDXj0NTjJf2cUSjH7YeclTy1qA7RfMULzL6lGPB0I4bZHNNHrSkeRlsh8ShZdCrhnIOWQrexQX3xL1OC7CAWTqbG9zjPeN6nxXKNfnX7EL9jlzWM3lPPERGqxmt9W6cV5zdFUyxhV086nH2nspTA8NdBpwgv32ZZe6ILXWL6fWCGG7q9dHiEZH9OCuBdZ3TVK_QRzEx4ItSKvZ0B4FeqhlaveTmuZFH9g2Gls")' }}></div>
                         {!isSidebarCollapsed && (
                             <div className="flex flex-col animate-in fade-in duration-300">
-                                <h1 className="text-white text-base font-medium leading-normal">Toonify</h1>
+                                <h1 className="text-white text-xl font-bold leading-normal">Toonify</h1>
                                 <p className="text-gray-400 text-sm font-normal leading-normal">{t('subtitle')}</p>
                             </div>
                         )}
                         {/* Show on mobile regardless of collapsed state */}
                         {isSidebarCollapsed && (
                             <div className="flex flex-col animate-in fade-in duration-300 md:hidden">
-                                <h1 className="text-white text-base font-medium leading-normal">Toonify</h1>
+                                <h1 className="text-white text-xl font-bold leading-normal">Toonify</h1>
                                 <p className="text-gray-400 text-sm font-normal leading-normal">{t('subtitle')}</p>
                             </div>
                         )}
