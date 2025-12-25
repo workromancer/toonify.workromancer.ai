@@ -732,7 +732,12 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
             elif ratio in ["vertical", "9:16"]:
                 width, height = 1024, 1536 # 2:3
             
-            # Using generate_panel_image which now supports prev_scene_url correctly
+            # Using generate_panel_image which now supports prev_scene_url and art_style
+            # Combine style_preset and art_style for complete style instruction
+            combined_art_style = project.art_style or project.style_preset
+            if project.art_style and project.style_preset:
+                combined_art_style = f"{project.style_preset} - {project.art_style}"
+            
             img_bytes = ai_service.generate_panel_image(
                 prompt=prompt,
                 width=width,
@@ -741,7 +746,8 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
                 style_ref_url=style_ref_url,
                 character_data=char_data,
                 prev_scene_url=prev_scene_url,
-                language=language
+                language=language,
+                art_style=combined_art_style
             )
             
             url = storage.upload_image(img_bytes, schema="cuts", identifier=str(cut_id))

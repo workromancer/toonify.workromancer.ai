@@ -8,6 +8,7 @@ import json
 import re
 from typing import List, Optional
 import os
+from PIL import Image
 from app.services.storage import storage
 
 class AIService:
@@ -614,6 +615,7 @@ class AIService:
         return self.generate_character_sheet(name, description, style)
 
     def _download_image(self, url: str) -> bytes:
+        """Download image and return as bytes."""
         if not url:
             return None
         try:
@@ -636,6 +638,22 @@ class AIService:
             return None
         except Exception as e:
             print(f"Error downloading image: {e}")
+            return None
+
+    def _download_image_as_pil(self, url: str) -> Image.Image:
+        """
+        Download image and return as PIL Image object.
+        This is the recommended way to pass images to Gemini API.
+        """
+        if not url:
+            return None
+        try:
+            img_bytes = self._download_image(url)
+            if img_bytes:
+                return Image.open(io.BytesIO(img_bytes))
+            return None
+        except Exception as e:
+            print(f"Error converting to PIL Image: {e}")
             return None
 
     def _prepare_multimodal_inputs(self, prompt: str, style_ref_url: str = None, character_image_urls: List[str] = None) -> tuple[str, List[types.Part]]:
@@ -1133,60 +1151,73 @@ class AIService:
                              style_ref_url: str = None, 
                              character_data: List[dict] = None, 
                              prev_scene_url: str = None,
-                             language: str = "en") -> bytes:
+                             language: str = "en",
+                             art_style: str = None) -> bytes:
         """
         Generates a webtoon panel with maximum context:
         - Style Reference (Project Style)
+        - Art Style Description (Text-based style instruction)
         - Character References (Visual consistency)
         - Previous Scene (Visual consistency)
         """
         if not self.client:
              raise Exception("AI Service not initialized")
 
-        # 1. Base Text Prompt Construction
+        # 1. Build Art Style Instruction (TOP PRIORITY)
+        style_instruction = ""
+        if art_style:
+            style_instruction = f"""
+        *** ART STYLE (HIGHEST PRIORITY) ***
+        You MUST draw this panel in the following art style: {art_style}
+        This style instruction takes precedence over all other visual directions.
+        """
+        
+        # 2. Base Text Prompt Construction
         full_prompt = f"""
         Create a high-quality webtoon panel.
+        {style_instruction}
         
         Scene Description:
         {prompt}
         
         Requirements:
-        - Match the art style of the provided Style Reference (if any).
+        - STRICTLY follow the specified art style{f': {art_style}' if art_style else ' of the provided Style Reference'}.
         - Maintain visual consistency with the Previous Scene (if any).
         - Include the specific characters provided (if mentioned in scene).
         {f'- Any speech bubbles or text in the image MUST be in {language}.' if language and language.startswith('ko') else ''}
         """
         
         try:
-            parts = []
+            # Collect PIL Image objects for multimodal input
+            image_parts = []  # List of PIL Image objects
             
-            # 2. Add Style Reference
+            # 2. Add Style Reference (as PIL Image)
             if style_ref_url:
                 print(f"Adding Style Reference: {style_ref_url}")
-                style_bytes = self._download_image(style_ref_url)
-                if style_bytes:
-                    parts.append(types.Part.from_bytes(data=style_bytes, mime_type="image/png"))
+                style_img = self._download_image_as_pil(style_ref_url)
+                if style_img:
+                    image_parts.append(style_img)
                     full_prompt += "\n[Reference Image 1] is the ART STYLE. Mimic it exactly."
 
-            # 3. Add Previous Scene (for continuity)
+            # 3. Add Previous Scene (for continuity, as PIL Image)
             if prev_scene_url:
                 print(f"Adding Previous Scene: {prev_scene_url}")
-                prev_bytes = self._download_image(prev_scene_url)
-                if prev_bytes:
-                    parts.append(types.Part.from_bytes(data=prev_bytes, mime_type="image/png"))
-                    full_prompt += f"\n[Reference Image {len(parts)}] is the PREVIOUS SCENE. Maintain continuity (lighting, colors, environment)."
+                prev_img = self._download_image_as_pil(prev_scene_url)
+                if prev_img:
+                    image_parts.append(prev_img)
+                    full_prompt += f"\n[Reference Image {len(image_parts)}] is the PREVIOUS SCENE. Maintain continuity (lighting, colors, environment)."
 
-            # 4. Add Characters
+            # 4. Add Characters (as PIL Images)
             if character_data:
                 print(f"Adding {len(character_data)} Character References")
                 for char in character_data:
                     c_url = char.get("url")
                     c_name = char.get("name")
                     if c_url:
-                        c_bytes = self._download_image(c_url)
-                        if c_bytes:
-                            parts.append(types.Part.from_bytes(data=c_bytes, mime_type="image/png"))
-                            full_prompt += f"\n[Reference Image {len(parts)}] is character '{c_name}'. Include them if relevant to the scene."
+                        c_img = self._download_image_as_pil(c_url)
+                        if c_img:
+                            image_parts.append(c_img)
+                            full_prompt += f"\n[Reference Image {len(image_parts)}] is character '{c_name}'. Include them if relevant to the scene."
 
             # 5. Determine Aspect Ratio
             final_ratio = "1:1"
@@ -1220,17 +1251,13 @@ class AIService:
                 elif abs(ratio_val - 4/3) < 0.01: final_ratio = "4:3"
                 elif abs(ratio_val - 16/9) < 0.01: final_ratio = "16:9"
 
-            # 6. Call API
-            print(f"Generating Panel with {len(parts)} images. Ratio: {final_ratio}")
+            # 6. Call API with PIL Images directly
+            # Gemini API accepts PIL Image objects directly in contents list
+            print(f"Generating Panel with {len(image_parts)} PIL images. Ratio: {final_ratio}")
             
-            text_part = types.Part.from_text(text=full_prompt)
-            
-            contents = [
-                types.Content(
-                    role="user",
-                    parts=parts + [text_part] # Images first
-                )
-            ]
+            # Build contents list: Images first, then text prompt
+            # Format: [image1, image2, ..., text_prompt]
+            contents = image_parts + [full_prompt]
             
             config = types.GenerateContentConfig(
                 response_modalities=['IMAGE'], 
