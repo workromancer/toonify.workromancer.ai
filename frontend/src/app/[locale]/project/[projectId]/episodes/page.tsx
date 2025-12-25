@@ -143,13 +143,13 @@ export default function EpisodesPage() {
 
     return (
         <ProjectLayout projectId={projectId} projectTitle={project?.title}>
-            <div className="p-6 md:p-10 max-w-7xl mx-auto flex flex-col gap-8 h-full">
+            <div className="p-4 pt-16 md:p-10 max-w-7xl mx-auto flex flex-col gap-8 h-full">
 
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-3xl font-black text-white tracking-tight mb-2">{t('title')}</h1>
-                        <p className="text-gray-400">{t('subtitle')}</p>
+                        <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight mb-2">{t('title')}</h1>
+                        <p className="text-sm md:text-base text-gray-400">{t('subtitle')}</p>
                     </div>
                     <Button
                         onClick={() => setIsGenerateModalOpen(true)}

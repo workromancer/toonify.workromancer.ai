@@ -358,10 +358,11 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
         if ((!project.genres || project.genres.length === 0) && !project.genre || !project.worldview) {
             return {
                 label: t('setupProject'),
-                icon: <Settings className="mr-2 h-4 w-4" />,
+                Icon: Settings,
                 onClick: () => setIsEditModalOpen(true),
                 variant: 'primary',
-                description: t('setupDesc')
+                description: t('setupDesc'),
+                isLoader: false
             };
         }
 
@@ -369,10 +370,11 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
         if (!project.style_preset) {
             return {
                 label: t('selectStyle'),
-                icon: <Palette className="mr-2 h-4 w-4" />,
+                Icon: Palette,
                 onClick: () => setIsArtStyleModalOpen(true),
                 variant: 'primary',
-                description: t('selectStyleDesc')
+                description: t('selectStyleDesc'),
+                isLoader: false
             };
         }
 
@@ -382,13 +384,14 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
             const isProcessing = project.suggestions_status === 'processing';
             return {
                 label: isProcessing ? t('preparingSuggestions') : (hasSuggestions ? t('suggestionsReady') : t('addChar')),
-                icon: isProcessing ? <CustomLoader size={16} className="mr-2" /> : <Sparkles className="mr-2 h-4 w-4" />,
+                Icon: isProcessing ? null : Sparkles,
                 onClick: () => {
                     document.getElementById('cast-section')?.scrollIntoView({ behavior: 'smooth' });
                 },
                 variant: isProcessing ? 'magic' : 'primary',
                 disabled: isProcessing,
-                description: isProcessing ? t('preparingSuggestionsDesc') : (hasSuggestions ? t('suggestionsReadyDesc') : t('addCharDesc'))
+                description: isProcessing ? t('preparingSuggestionsDesc') : (hasSuggestions ? t('suggestionsReadyDesc') : t('addCharDesc')),
+                isLoader: isProcessing
             };
         }
 
@@ -399,11 +402,12 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
 
         return {
             label: isCoverProcessing ? t('generating') : t('genAiCover'),
-            icon: isCoverProcessing ? <CustomLoader size={16} className="mr-2" /> : <Sparkles className="mr-2 h-4 w-4" />,
+            Icon: isCoverProcessing ? null : Sparkles,
             onClick: handleGenerateCover,
             disabled: isCoverProcessing,
             variant: 'magic',
-            description: t('genAiCoverDesc')
+            description: t('genAiCoverDesc'),
+            isLoader: isCoverProcessing
         };
     };
 
@@ -415,7 +419,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                 {/* Main Content */}
                 <div className="flex-1 flex flex-col min-w-0">
                     {/* Hero Section */}
-                    <div className="relative w-full aspect-[21/9] max-h-[400px] bg-black group overflow-visible">
+                    <div className="relative w-full h-[50vh] md:aspect-[21/9] md:h-auto md:max-h-[400px] bg-black group overflow-visible">
                         <div
                             className={cn(
                                 "absolute inset-0 bg-cover bg-center transition-all duration-700 overflow-hidden",
@@ -442,18 +446,18 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                             </div>
                         )}
 
-                        <div className="absolute bottom-0 left-0 w-full p-8 sm:p-12 flex flex-col sm:flex-row items-start sm:items-end justify-between gap-6 z-10">
-                            <div className="flex flex-col gap-4 max-w-2xl">
-                                <div className="flex items-center gap-3">
+                        <div className="absolute bottom-0 left-0 w-full p-4 pt-16 sm:p-12 sm:pt-12 flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 sm:gap-6 z-10">
+                            <div className="flex flex-col gap-2 sm:gap-4 max-w-2xl">
+                                <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                                     {/* Genres */}
                                     {project.genres && project.genres.length > 0 ? (
                                         project.genres.map((gName, idx) => (
-                                            <span key={idx} className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-xs font-bold text-white border border-white/20">
+                                            <span key={idx} className="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-white/10 backdrop-blur-md text-[10px] sm:text-xs font-bold text-white border border-white/20">
                                                 {tGenres(gName.toLowerCase().replace(/\s/g, '') as any)}
                                             </span>
                                         ))
                                     ) : (
-                                        <span className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-xs font-bold text-white border border-white/20">
+                                        <span className="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-white/10 backdrop-blur-md text-[10px] sm:text-xs font-bold text-white border border-white/20">
                                             {/* Legacy Display */}
                                             {(() => {
                                                 const knownGenres = ['fantasy', 'romance', 'sciFi', 'sliceOfLife', 'action', 'thriller', 'historical', 'comedy', 'mystery', 'horror'];
@@ -467,16 +471,16 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                         </span>
                                     )}
                                     {project.worldview?.tone && Array.isArray(project.worldview.tone) && project.worldview.tone.map((t: string) => (
-                                        <span key={t} className="px-3 py-1 rounded-full bg-purple-500/20 backdrop-blur-md text-xs font-bold text-purple-200 border border-purple-500/30">
+                                        <span key={t} className="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-purple-500/20 backdrop-blur-md text-[10px] sm:text-xs font-bold text-purple-200 border border-purple-500/30">
                                             {t}
                                         </span>
                                     ))}
                                 </div>
-                                <h1 className="text-4xl sm:text-6xl font-black text-white leading-tight tracking-tight drop-shadow-2xl">
+                                <h1 className="text-3xl sm:text-4xl md:text-6xl font-black text-white leading-tight tracking-tight drop-shadow-2xl">
                                     {project.title}
                                 </h1>
-                                <div className="max-w-xl">
-                                    <p className={cn("text-lg text-gray-300 font-medium transition-all", isDescriptionExpanded ? "" : "line-clamp-2")}>
+                                <div className="max-w-xl hidden sm:block">
+                                    <p className={cn("text-sm sm:text-lg text-gray-300 font-medium transition-all", isDescriptionExpanded ? "" : "line-clamp-2")}>
                                         {descriptionText}
                                     </p>
                                     {isLongDescription && (
@@ -497,7 +501,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-2 relative">
+                            <div className="flex items-center gap-2 relative self-end sm:self-auto">
                                 {/* Primary CTA */}
                                 {heroAction && (
                                     <Button
@@ -508,15 +512,19 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                         }}
                                         disabled={heroAction.disabled}
                                         className={cn(
-                                            "h-12 px-6 text-base font-bold shadow-xl transition-all hover:shadow-2xl hover:-translate-y-1",
+                                            "h-11 w-11 sm:h-12 sm:w-auto sm:px-6 rounded-full text-sm sm:text-base font-bold shadow-xl transition-all hover:shadow-2xl hover:-translate-y-1",
                                             heroAction.variant === 'magic'
                                                 ? "bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-sm"
                                                 : "bg-white text-black hover:bg-gray-100",
                                             heroAction.disabled && "cursor-not-allowed opacity-70"
                                         )}
                                     >
-                                        {heroAction.icon}
-                                        {heroAction.label}
+                                        {heroAction.isLoader ? (
+                                            <CustomLoader size={16} className="sm:mr-2" />
+                                        ) : heroAction.Icon ? (
+                                            <heroAction.Icon className="h-4 w-4 sm:mr-2" />
+                                        ) : null}
+                                        <span className="hidden sm:inline">{heroAction.label}</span>
                                     </Button>
                                 )}
 
@@ -524,13 +532,13 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                 <div className="relative">
                                     <Button
                                         size="icon"
-                                        className="h-12 w-12 bg-black/40 hover:bg-black/60 text-white border border-white/10 backdrop-blur-md rounded-lg"
+                                        className="h-11 w-11 sm:h-12 sm:w-12 bg-black/40 hover:bg-black/60 text-white border border-white/10 backdrop-blur-md rounded-full"
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             setIsMenuOpen(!isMenuOpen);
                                         }}
                                     >
-                                        <MoreVertical size={20} />
+                                        <MoreVertical size={18} className="sm:w-5 sm:h-5" />
                                     </Button>
 
                                     {/* Dropdown Menu */}
@@ -653,15 +661,16 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
 
                             <section id="cast-section">
                                 <div className="flex items-center justify-between mb-6">
-                                    <div className="flex items-center gap-4">
-                                        <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                                            {t('cast')}
-                                        </h3>
+                                    <h3 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
+                                        {t('cast')}
+                                    </h3>
+                                    <div className="flex items-center gap-2">
+                                        {/* Desktop: Full buttons */}
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
                                                 <Button
                                                     size="sm"
-                                                    className="bg-purple-600 hover:bg-purple-500 text-white rounded-full px-4 h-8 text-xs font-bold shadow-lg shadow-purple-900/20"
+                                                    className="hidden sm:flex bg-purple-600 hover:bg-purple-500 text-white rounded-full px-4 h-8 text-xs font-bold shadow-lg shadow-purple-900/20"
                                                 >
                                                     <Plus size={14} className="mr-1.5" />
                                                     {t('addChar')}
@@ -681,7 +690,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                             size="sm"
                                             onClick={handleAiRecommend}
                                             disabled={isAiRecommending || project.suggestions_status === 'processing'}
-                                            className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-full px-4 h-8 text-xs font-bold shadow-lg disabled:opacity-50"
+                                            className="hidden sm:flex bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-full px-4 h-8 text-xs font-bold shadow-lg disabled:opacity-50"
                                         >
                                             {(isAiRecommending || project.suggestions_status === 'processing') ? (
                                                 <><Loader2 size={14} className="mr-1.5 animate-spin" />{t('aiRecommending')}</>
@@ -689,13 +698,48 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                                 <><Sparkles size={14} className="mr-1.5" />{t('aiRecommend')}</>
                                             )}
                                         </Button>
+                                        
+                                        {/* Mobile: Icon buttons */}
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button
+                                                    size="icon"
+                                                    className="sm:hidden w-10 h-10 bg-purple-600 hover:bg-purple-500 text-white rounded-full shadow-lg shadow-purple-900/20"
+                                                >
+                                                    <Plus size={18} />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" className="bg-[#18181B] border-white/10 text-gray-200">
+                                                <DropdownMenuItem
+                                                    className="focus:bg-white/10 cursor-pointer"
+                                                    onClick={() => router.push(`/project/${project.id}/casting`)}
+                                                >
+                                                    <Plus size={14} className="mr-2" />
+                                                    {t('manualAdd')}
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                        <Button
+                                            size="icon"
+                                            onClick={handleAiRecommend}
+                                            disabled={isAiRecommending || project.suggestions_status === 'processing'}
+                                            className="sm:hidden w-10 h-10 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-full shadow-lg disabled:opacity-50"
+                                        >
+                                            {(isAiRecommending || project.suggestions_status === 'processing') ? (
+                                                <Loader2 size={18} className="animate-spin" />
+                                            ) : (
+                                                <Sparkles size={18} />
+                                            )}
+                                        </Button>
+                                        
+                                        {/* View All - Hidden on mobile */}
+                                        <Link href={`/project/${project.id}/characters`} className="hidden sm:block">
+                                            <Button variant="ghost" size="sm" className="text-sm text-gray-400 hover:text-white">{t('viewAll')} <ArrowRight size={14} className="ml-1" /></Button>
+                                        </Link>
                                     </div>
-                                    <Link href={`/project/${project.id}/characters`}>
-                                        <Button variant="ghost" size="sm" className="text-sm text-gray-400 hover:text-white">{t('viewAll')} <ArrowRight size={14} className="ml-1" /></Button>
-                                    </Link>
                                 </div>
-
-                                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                                {/* Mobile: 3-column grid, Desktop: 4-6 columns */}
+                                <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4">
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <div
@@ -763,7 +807,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
 
                                     {/* Brainstorming Card */}
                                     {(project.suggestions_status === 'processing' || (isSuggestionsLoading && suggestions.length === 0)) && (
-                                        <div className="aspect-[3/4] rounded-xl border border-purple-500/30 bg-purple-500/5 flex flex-col items-center justify-center gap-3 p-4 text-center animate-pulse">
+                                        <div className="aspect-[3/4] rounded-xl border border-purple-500/30 bg-purple-500/5 flex flex-col items-center justify-center gap-3 p-2 sm:p-4 text-center animate-pulse">
                                             <CustomLoader size={40} />
                                             <div className="space-y-1">
                                                 <p className="text-[10px] font-bold text-purple-400 uppercase tracking-widest">{t('preparingSuggestions')}</p>
@@ -777,7 +821,7 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                         <div
                                             key={suggestion.id}
                                             onClick={(e) => handleSuggestionClick(e, suggestion)}
-                                            className="group relative aspect-[3/4] rounded-xl overflow-hidden bg-[#15121c] border border-purple-500/20 hover:border-purple-500/50 transition-all cursor-pointer flex flex-col p-3"
+                                            className="group relative aspect-[3/4] rounded-xl overflow-hidden bg-[#15121c] border border-purple-500/20 hover:border-purple-500/50 transition-all cursor-pointer flex flex-col p-2 sm:p-3"
                                             style={{ borderTop: suggestion.theme_color ? `3px solid ${suggestion.theme_color}` : undefined }}
                                         >
                                             <div className="flex-1 flex flex-col justify-center items-center gap-1">

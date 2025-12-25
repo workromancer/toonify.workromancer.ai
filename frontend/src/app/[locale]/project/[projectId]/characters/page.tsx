@@ -312,10 +312,10 @@ export default function CharacterListPage() {
                 <div className="flex-1 flex flex-col items-center py-10 sm:py-12 md:py-16 relative z-10">
                     <div className="flex w-full max-w-7xl flex-1 flex-col gap-8 px-4 sm:px-6 lg:px-8">
                         {/* PageHeading */}
-                        <div className="flex flex-wrap items-end justify-between gap-4 mb-4">
+                        <div className="flex flex-wrap items-end justify-between gap-4 mb-4 pt-12 md:pt-0">
                             <div className="flex flex-col gap-2">
-                                <h1 className="text-3xl font-black leading-tight tracking-[-0.033em] text-white sm:text-4xl">{tc('title')}</h1>
-                                <p className="text-gray-400">{tc('subtitle')}</p>
+                                <h1 className="text-2xl md:text-3xl font-black leading-tight tracking-[-0.033em] text-white sm:text-4xl">{tc('title')}</h1>
+                                <p className="text-sm md:text-base text-gray-400">{tc('subtitle')}</p>
                             </div>
                             <button
                                 onClick={handleNavigateToCasting}
@@ -346,7 +346,7 @@ export default function CharacterListPage() {
                                     {tc('castList')} <span className="ml-2 px-2 py-0.5 rounded-full bg-white/10 text-[10px] text-white/70">{characters.length}</span>
                                 </SectionLabel>
 
-                                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-6">
                                     {/* Add Card */}
                                     <div
                                         onClick={handleNavigateToCasting}
@@ -414,7 +414,7 @@ export default function CharacterListPage() {
                                         {tc('suggestionList')} <span className="ml-2 px-2 py-0.5 rounded-full bg-purple-500/20 text-[10px] text-purple-300 border border-purple-500/20">{suggestions.length}</span>
                                     </SectionLabel>
 
-                                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                                    <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-6">
                                         {/* Loading Card */}
                                         {(project.suggestions_status === 'processing' || isSuggestionsLoading) && (
                                             <div className="aspect-[3/4] rounded-xl border border-purple-500/30 bg-purple-500/5 flex flex-col items-center justify-center gap-3 p-4 text-center animate-pulse">

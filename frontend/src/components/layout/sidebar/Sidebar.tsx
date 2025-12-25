@@ -42,8 +42,9 @@ export function Sidebar({ children, className }: SidebarProps) {
         };
     }, [isMobileSidebarOpen]);
 
+    // On mobile drawer, always show expanded view regardless of desktop collapsed state
     return (
-        <SidebarContext.Provider value={{ isCollapsed: isSidebarCollapsed }}>
+        <SidebarContext.Provider value={{ isCollapsed: isMobileSidebarOpen ? false : isSidebarCollapsed }}>
             {/* Mobile Overlay */}
             {isMobileSidebarOpen && (
                 <div
