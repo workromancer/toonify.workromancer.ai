@@ -663,7 +663,7 @@ export default function StoryboardView({ projectId, episodeId: propEpisodeId }: 
                     )}
 
                     {/* Director Mode Area */}
-                    {isDirectorMode ? (
+                    {isDirectorMode && (
                         <div className="border border-purple-500/30 bg-[#13131c] p-4 rounded-xl shadow-2xl relative z-20 animate-in fade-in slide-in-from-bottom-4">
                             <div className="flex justify-between items-center mb-3">
                                 <h3 className="text-purple-400 font-bold text-sm flex items-center gap-2">
@@ -724,15 +724,6 @@ export default function StoryboardView({ projectId, episodeId: propEpisodeId }: 
                                 </div>
                             )}
                         </div>
-                    ) : (
-                        cuts.length > 0 && (
-                            <button
-                                onClick={() => setIsDirectorMode(true)}
-                                className="w-full py-4 border-2 border-dashed border-slate-800 rounded-xl text-slate-500 hover:text-white hover:border-slate-600 hover:bg-slate-900/30 transition-all flex items-center justify-center gap-2 text-sm font-bold"
-                            >
-                                <Plus size={16} /> {t('directorMode.addNext')}
-                            </button>
-                        )
                     )}
                 </div>
             </div>
