@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlmodel import Session, select
 
 from app.api import deps
+from app.core.config import settings
 from app.models import Episode, Project, WorkspaceMember, StoryCut, Character, EpisodeSuggestion
 from pydantic import BaseModel
 from datetime import datetime
@@ -82,6 +83,17 @@ def list_episodes(
             .limit(1)
         ).first()
         
+        # Build first_cut_image URL
+        first_cut_image_url = None
+        if first_cut and first_cut.image_path:
+            path = first_cut.image_path
+            if path.startswith("http://") or path.startswith("https://"):
+                first_cut_image_url = path
+            elif settings.STORAGE_HOST:
+                first_cut_image_url = f"{settings.STORAGE_HOST}/{path}"
+            else:
+                first_cut_image_url = path
+        
         ep_dict = {
             "id": ep.id,
             "title": ep.title,
@@ -92,7 +104,7 @@ def list_episodes(
             "created_at": ep.created_at,
             "background_info": ep.background_info,
             "character_outfits": ep.character_outfits,
-            "first_cut_image": first_cut.image_path if first_cut else None
+            "first_cut_image": first_cut_image_url
         }
         result.append(ep_dict)
     
