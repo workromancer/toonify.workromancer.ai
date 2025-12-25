@@ -461,6 +461,7 @@
       },
       "generatingEpisode": "에피소드 생성 중...",
       "generatingDesc": "AI가 컷을 생성하고 이미지를 그리고 있습니다. 잠시만 기다려주세요.",
+      "canLeaveScreen": "이 화면을 나가셔도 됩니다. 생성은 백그라운드에서 계속됩니다.",
       "inspectorPanel": {
         "title": "속성",
         "selected": "선택됨: 장면 #{id}",

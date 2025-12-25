@@ -461,6 +461,7 @@
       },
       "generatingEpisode": "Generating Episode...",
       "generatingDesc": "AI is creating cuts and generating images. Please wait.",
+      "canLeaveScreen": "You can leave this screen. Generation will continue in the background.",
       "inspectorPanel": {
         "title": "Properties",
         "selected": "Selected: Scene #{id}",

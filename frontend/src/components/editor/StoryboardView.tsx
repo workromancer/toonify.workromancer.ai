@@ -412,19 +412,17 @@ export default function StoryboardView({ projectId, episodeId: propEpisodeId }: 
                             <span className="text-xs">{t('loadingScenes')}</span>
                         </div>
                     ) : episodeStatus === 'generating' && cuts.length === 0 ? (
-                        <div className="h-full flex flex-col items-center justify-center py-20 min-h-[300px] text-center">
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
                             <div className="mb-6">
                                 <CustomLoader size={64} />
                             </div>
                             <h3 className="text-xl font-bold text-white mb-2">{t('generatingEpisode')}</h3>
-                            <p className="text-slate-400 text-sm max-w-xs mx-auto mb-8 leading-relaxed">
+                            <p className="text-slate-400 text-sm max-w-xs mx-auto mb-4 leading-relaxed">
                                 {t('generatingDesc')}
                             </p>
-                            <div className="flex gap-2 justify-center">
-                                <div className="w-2 h-2 rounded-full bg-purple-500 animate-bounce [animation-delay:-0.3s]"></div>
-                                <div className="w-2 h-2 rounded-full bg-purple-500 animate-bounce [animation-delay:-0.15s]"></div>
-                                <div className="w-2 h-2 rounded-full bg-purple-500 animate-bounce"></div>
-                            </div>
+                            <p className="text-slate-500 text-xs">
+                                {t('canLeaveScreen')}
+                            </p>
                         </div>
                     ) : cuts.length === 0 && !isDirectorMode ? (
                         <div className="text-center py-12 border border-dashed border-slate-800 rounded-xl bg-[#0f0f16]">
