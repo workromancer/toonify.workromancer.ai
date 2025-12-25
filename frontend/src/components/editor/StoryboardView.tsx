@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
 
-import { Plus, Image as ImageIcon, Trash2, Clapperboard, Loader2, Wand2, Sparkles, RefreshCw, Download } from 'lucide-react';
+import { Plus, Image as ImageIcon, Trash2, Clapperboard, Loader2, Wand2, Sparkles, RefreshCw, Download, ChevronUp, ChevronDown } from 'lucide-react';
 import { CustomLoader } from '@/components/ui/custom-loader';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
@@ -68,6 +68,55 @@ export default function StoryboardView({ projectId, episodeId: propEpisodeId }: 
     const [isRendering, setIsRendering] = useState<string | null>(null); // storing option ID being rendered
     const [modifyingCut, setModifyingCut] = useState<StoryCut | null>(null); // For Director's Cut modal
     const [isBatchGenerating, setIsBatchGenerating] = useState(false);
+
+    // Refs for keyboard navigation and scroll sync
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const cutRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+    // Keyboard navigation handler
+    const handleKeyDown = useCallback((e: KeyboardEvent) => {
+        if (cuts.length === 0 || isDirectorMode) return;
+        
+        const currentIndex = activeCutId ? cuts.findIndex(c => c.id === activeCutId) : -1;
+        let newIndex = currentIndex;
+
+        if (e.key === 'ArrowUp' || e.key === 'k') {
+            e.preventDefault();
+            newIndex = currentIndex <= 0 ? cuts.length - 1 : currentIndex - 1;
+        } else if (e.key === 'ArrowDown' || e.key === 'j') {
+            e.preventDefault();
+            newIndex = currentIndex >= cuts.length - 1 ? 0 : currentIndex + 1;
+        }
+
+        if (newIndex !== currentIndex && cuts[newIndex]) {
+            setActiveCut(cuts[newIndex].id);
+            // Scroll the element into view
+            cutRefs.current[newIndex]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, [cuts, activeCutId, isDirectorMode, setActiveCut]);
+
+    // Add keyboard event listener
+    useEffect(() => {
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [handleKeyDown]);
+
+    // Navigate to previous/next cut
+    const navigateToCut = (direction: 'prev' | 'next') => {
+        const currentIndex = activeCutId ? cuts.findIndex(c => c.id === activeCutId) : -1;
+        let newIndex = currentIndex;
+        
+        if (direction === 'prev') {
+            newIndex = currentIndex <= 0 ? cuts.length - 1 : currentIndex - 1;
+        } else {
+            newIndex = currentIndex >= cuts.length - 1 ? 0 : currentIndex + 1;
+        }
+
+        if (cuts[newIndex]) {
+            setActiveCut(cuts[newIndex].id);
+            cutRefs.current[newIndex]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    };
 
 
     // Reuse existing handlers...
@@ -402,9 +451,63 @@ export default function StoryboardView({ projectId, episodeId: propEpisodeId }: 
                 </div>
             </div>
 
-            {/* Main Content Area */}
-            <div className="flex-1 overflow-y-auto p-4 md:p-8 relative z-10 custom-scrollbar">
-                <div className="w-full max-w-2xl mx-auto space-y-4 md:space-y-6 pb-20">
+            {/* Main Content Area with Position Indicator */}
+            <div className="flex-1 flex relative z-10 overflow-hidden">
+                {/* Position Indicator Sidebar */}
+                {cuts.length > 0 && (
+                    <div className="hidden md:flex flex-col items-center justify-center w-12 py-8 shrink-0">
+                        {/* Up Navigation */}
+                        <button
+                            onClick={() => navigateToCut('prev')}
+                            className="p-1.5 mb-3 rounded-full bg-slate-800/50 hover:bg-slate-700 text-slate-400 hover:text-white transition-all"
+                            title="Previous (↑)"
+                        >
+                            <ChevronUp size={16} />
+                        </button>
+                        
+                        {/* Position Dots */}
+                        <div className="flex flex-col gap-1.5 py-2">
+                            {cuts.map((cut, idx) => (
+                                <button
+                                    key={cut.id}
+                                    onClick={() => {
+                                        setActiveCut(cut.id);
+                                        cutRefs.current[idx]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    }}
+                                    className={`w-2 h-2 rounded-full transition-all ${
+                                        activeCutId === cut.id 
+                                            ? 'bg-purple-500 scale-125 shadow-lg shadow-purple-500/50' 
+                                            : cut.image_path 
+                                                ? 'bg-slate-500 hover:bg-slate-400' 
+                                                : 'bg-slate-700 hover:bg-slate-600'
+                                    }`}
+                                    title={`장면 #${String(cut.cut_order).padStart(2, '0')}`}
+                                />
+                            ))}
+                        </div>
+                        
+                        {/* Down Navigation */}
+                        <button
+                            onClick={() => navigateToCut('next')}
+                            className="p-1.5 mt-3 rounded-full bg-slate-800/50 hover:bg-slate-700 text-slate-400 hover:text-white transition-all"
+                            title="Next (↓)"
+                        >
+                            <ChevronDown size={16} />
+                        </button>
+
+                        {/* Position Counter */}
+                        <div className="mt-4 text-[10px] text-slate-500 font-mono">
+                            {activeCutId ? cuts.findIndex(c => c.id === activeCutId) + 1 : '-'}/{cuts.length}
+                        </div>
+                    </div>
+                )}
+
+                {/* Scrollable Content */}
+                <div 
+                    ref={scrollContainerRef}
+                    className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar"
+                >
+                    <div className="w-full max-w-3xl mx-auto space-y-6 md:space-y-8 pb-20">
 
                     {loading ? (
                         <div className="text-slate-500 text-center py-10 flex flex-col items-center">
@@ -438,24 +541,25 @@ export default function StoryboardView({ projectId, episodeId: propEpisodeId }: 
                         cuts.map((cut, index) => (
                             <div
                                 key={cut.id}
+                                ref={el => { cutRefs.current[index] = el; }}
                                 onClick={() => setActiveCut(cut.id)}
                                 className={`
                                     group relative bg-[#0f0f16] border rounded-xl overflow-hidden transition-all cursor-pointer
                                     ${activeCutId === cut.id
-                                        ? 'border-purple-500 ring-1 ring-purple-500/50 shadow-2xl scale-[1.01]'
+                                        ? 'border-purple-500 ring-2 ring-purple-500/50 shadow-2xl shadow-purple-500/10 scale-[1.01]'
                                         : 'border-slate-800 hover:border-slate-600 opacity-90 hover:opacity-100'}
                                 `}
                             >
                                 {/* Header */}
-                                <div className="flex items-center justify-between px-4 py-3 bg-[#13131c] border-b border-slate-800">
-                                    <span className="text-xs font-bold text-slate-400 font-mono">{t('sceneHeader', { order: String(cut.cut_order).padStart(2, '0') })}</span>
+                                <div className="flex items-center justify-between px-4 md:px-5 py-3 md:py-4 bg-[#13131c] border-b border-slate-800">
+                                    <span className="text-xs md:text-sm font-bold text-slate-400 font-mono">{t('sceneHeader', { order: String(cut.cut_order).padStart(2, '0') })}</span>
                                     <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button
                                             className="p-1 hover:text-purple-400 text-slate-500 transition-colors"
                                             onClick={(e) => { e.stopPropagation(); setModifyingCut(cut); }}
                                             title={t('refineWithAi')}
                                         >
-                                            <Sparkles size={12} />
+                                            <Sparkles size={14} />
                                         </button>
                                         <ConfirmationDialog
                                             open={deleteConfirmationId === cut.id}
@@ -471,17 +575,17 @@ export default function StoryboardView({ projectId, episodeId: propEpisodeId }: 
                                                     className="p-1 hover:text-red-400 text-slate-500 transition-colors"
                                                     onClick={(e) => { e.stopPropagation(); setDeleteConfirmationId(cut.id); }}
                                                 >
-                                                    <Trash2 size={12} />
+                                                    <Trash2 size={14} />
                                                 </button>
                                             }
                                         />
                                     </div>
                                 </div>
 
-                                {/* Content Grid - Vertical on mobile, Horizontal on desktop */}
-                                <div className="flex flex-col md:flex-row min-h-[120px] md:min-h-[160px]">
-                                    {/* Image Area */}
-                                    <div className={`w-full md:w-1/2 aspect-[4/3] md:aspect-auto bg-slate-900 relative flex items-center justify-center md:border-r border-b md:border-b-0 border-slate-800 overflow-hidden group/image`}>
+                                {/* Content Grid - Vertical on mobile, Horizontal on desktop - ENLARGED */}
+                                <div className="flex flex-col md:flex-row min-h-[180px] md:min-h-[240px]">
+                                    {/* Image Area - Now 55% on desktop */}
+                                    <div className={`w-full md:w-[55%] aspect-[4/3] md:aspect-auto bg-slate-900 relative flex items-center justify-center md:border-r border-b md:border-b-0 border-slate-800 overflow-hidden group/image`}>
                                         {cut.image_path ? (
                                             <>
                                                 <img
@@ -538,17 +642,17 @@ export default function StoryboardView({ projectId, episodeId: propEpisodeId }: 
 
                                     </div>
 
-                                    {/* Script Area */}
-                                    <div className="w-full md:w-1/2 p-3 md:p-4 flex flex-col">
-                                        <span className="text-[10px] uppercase text-slate-500 font-bold mb-2 tracking-wider">{t('visualScript')}</span>
-                                        <p className="text-xs md:text-sm text-slate-300 leading-relaxed font-serif italic line-clamp-3 md:line-clamp-4 flex-1">
+                                    {/* Script Area - Now 45% on desktop */}
+                                    <div className="w-full md:w-[45%] p-4 md:p-5 flex flex-col">
+                                        <span className="text-[10px] md:text-xs uppercase text-slate-500 font-bold mb-2 md:mb-3 tracking-wider">{t('visualScript')}</span>
+                                        <p className="text-sm md:text-base text-slate-300 leading-relaxed font-serif italic line-clamp-4 md:line-clamp-5 flex-1">
                                             &quot;{cut.script}&quot;
                                         </p>
-                                        <div className="mt-3 md:mt-4 pt-2 md:pt-3 border-t border-slate-800/50 flex justify-between items-center">
-                                            <span className="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-400 border border-slate-700 font-mono">{cut.aspect_ratio || '1:1'}</span>
+                                        <div className="mt-4 md:mt-5 pt-3 md:pt-4 border-t border-slate-800/50 flex justify-between items-center">
+                                            <span className="text-[10px] md:text-xs bg-slate-800 px-2 py-0.5 md:py-1 rounded text-slate-400 border border-slate-700 font-mono">{cut.aspect_ratio || '1:1'}</span>
                                             {cut.image_path && (
-                                                <span className="text-[10px] text-purple-400 flex items-center gap-1 font-bold">
-                                                    <Wand2 size={10} /> {t('aiReady')}
+                                                <span className="text-[10px] md:text-xs text-purple-400 flex items-center gap-1 font-bold">
+                                                    <Wand2 size={12} /> {t('aiReady')}
                                                 </span>
                                             )}
                                         </div>
@@ -631,6 +735,7 @@ export default function StoryboardView({ projectId, episodeId: propEpisodeId }: 
                         )
                     )}
                 </div>
+            </div>
             </div>
 
             {/* Mobile Viewer */}
