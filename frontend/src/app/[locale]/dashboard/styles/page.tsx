@@ -351,7 +351,7 @@ function ArtStylesContent() {
                             size="lg"
                             className="bg-purple-600 hover:bg-purple-500 text-white shadow-[0_10px_40px_rgba(168,85,247,0.4)] border border-purple-400/50 px-8 h-14 rounded-full font-bold text-lg flex items-center gap-3 transition-transform hover:-translate-y-1"
                         >
-                            Return to Project Setup <ArrowRight size={20} />
+                            {t('returnToSetup')} <ArrowRight size={20} />
                         </Button>
                     </div>
                 )}
