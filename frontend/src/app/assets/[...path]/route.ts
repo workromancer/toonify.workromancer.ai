@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Storage } from '@google-cloud/storage';
+import { createLogger } from '@/lib/logger';
+
+const assetLogger = createLogger('AssetProxy');
 
 /**
  * GCS Asset Proxy with Service Account Authentication
@@ -36,7 +39,7 @@ async function fetchFromGCS(objectPath: string): Promise<{ buffer: Buffer; conte
     
     const [exists] = await file.exists();
     if (!exists) {
-      console.error(`[Asset Proxy] File not found in GCS: ${objectPath}`);
+      assetLogger.warn('File not found in GCS', { objectPath });
       return null;
     }
     
@@ -48,7 +51,7 @@ async function fetchFromGCS(objectPath: string): Promise<{ buffer: Buffer; conte
       contentType: metadata.contentType || 'image/png',
     };
   } catch (error) {
-    console.error(`[Asset Proxy] GCS error for ${objectPath}:`, error);
+    assetLogger.error('GCS error', error, { objectPath });
     return null;
   }
 }
@@ -64,7 +67,7 @@ async function fetchFromMinIO(objectPath: string): Promise<{ buffer: Buffer; con
     });
     
     if (!res.ok) {
-      console.error(`[Asset Proxy] MinIO fetch failed: ${res.status} ${res.statusText}`);
+      assetLogger.warn('MinIO fetch failed', { status: res.status, statusText: res.statusText });
       return null;
     }
     
@@ -73,7 +76,7 @@ async function fetchFromMinIO(objectPath: string): Promise<{ buffer: Buffer; con
     
     return { buffer, contentType };
   } catch (error) {
-    console.error(`[Asset Proxy] MinIO error for ${url}:`, error);
+    assetLogger.error('MinIO error', error, { url });
     return null;
   }
 }
@@ -82,7 +85,7 @@ async function proxyAsset(request: NextRequest, { params }: { params: Promise<{ 
   const { path } = await params;
   const objectPath = path.join('/');
   
-  console.log(`[Asset Proxy] Request: ${request.nextUrl.pathname}, Storage: ${STORAGE_TYPE}`);
+  assetLogger.debug('Asset request', { path: request.nextUrl.pathname, storageType: STORAGE_TYPE });
 
   let result: { buffer: Buffer; contentType: string } | null = null;
 

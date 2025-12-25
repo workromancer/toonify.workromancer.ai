@@ -6,8 +6,14 @@ from fastapi.responses import JSONResponse
 from app.core.config import settings
 from app.core.errors import AppException
 from app.api.v1.api import api_router
+from app.core.logging import configure_logging, get_logger
+from app.core.middleware import LoggingMiddleware
 
 from contextlib import asynccontextmanager
+
+# Configure structured logging for Google Cloud
+configure_logging(project_id=settings.GOOGLE_CLOUD_PROJECT, debug=settings.DEBUG)
+logger = get_logger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -23,7 +29,7 @@ async def lifespan(app: FastAPI):
             session.exec(text("CREATE EXTENSION IF NOT EXISTS vector"))
             session.commit()
     except Exception as e:
-        print(f"Warning: Could not enable pgvector extension: {e}")
+        logger.warning("Could not enable pgvector extension", error=str(e))
 
     # Create tables if they don't exist
     SQLModel.metadata.create_all(engine)
@@ -32,7 +38,7 @@ async def lifespan(app: FastAPI):
         with Session(engine) as session:
             user = session.exec(select(User).where(User.email == "test@example.com")).first()
             if not user:
-                print("Seeding test user...")
+                logger.info("Seeding test user...")
                 hashed_pw = get_password_hash("password")
                 user = User(email="test@example.com", password_hash=hashed_pw)
                 session.add(user)
@@ -49,11 +55,11 @@ async def lifespan(app: FastAPI):
                 member = WorkspaceMember(workspace_id=workspace.id, user_id=user.id, role="owner")
                 session.add(member)
                 session.commit()
-                print("Test user seeded: test@example.com / password")
+                logger.info("Test user seeded", email="test@example.com")
             else:
-                print("Test user already exists.")
+                logger.info("Test user already exists")
     except Exception as e:
-        print(f"Seeding failed: {e}")
+        logger.error("Seeding failed", error=str(e))
         
     yield
     # Shutdown logic if needed
@@ -91,6 +97,9 @@ app.add_middleware(
     allow_headers=["*"],
     expose_headers=["Content-Disposition"],
 )
+
+# Add logging middleware for structured request/response logging
+app.add_middleware(LoggingMiddleware)
 
 # if settings.BACKEND_CORS_ORIGINS:
 #     app.add_middleware(

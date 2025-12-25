@@ -6,6 +6,7 @@ from uuid import UUID
 from app.api import deps
 from app.core import security
 from app.core.errors import AppException, ErrorCode
+from app.core.logging import get_logger
 from app.models import Project, Workspace, WorkspaceMember, User, Character, Genre, Asset
 from app.services.ai import ai_service
 from app.services.billing import billing_service
@@ -13,6 +14,8 @@ from pydantic import BaseModel, root_validator, validator
 from datetime import datetime
 from app.services.storage import storage
 from app.api.deps import engine
+
+logger = get_logger(__name__)
 
 router = APIRouter()
 
@@ -90,14 +93,14 @@ def generate_project_cover_task(project_id: str, title: str, genre_name: str, wo
     Background task to generate and update project cover image.
     """
     try:
-        print(f"Starting background cover generation for project {project_id}")
+        logger.info("Starting background cover generation", project_id=project_id)
         # Generate Image
         img_bytes = ai_service.generate_project_cover_image(title, genre_name, worldview_content, style, tones, style_ref_url, character_image_urls, language=language)
         
         # Upload to Storage
         if img_bytes:
             url = storage.upload_image(img_bytes, schema="projects", identifier=project_id) # uuid string passed in
-            print(f"Cover image uploaded to {url}")
+            logger.info("Cover image uploaded", project_id=project_id, url=url)
             
             # Update Project in DB
             with Session(engine) as session:
@@ -122,9 +125,9 @@ def generate_project_cover_task(project_id: str, title: str, genre_name: str, wo
                     project.cover_image_status = "completed"
                     session.add(project)
                     session.commit()
-                    print(f"Project {project_id} thumbnail updated.")
+                    logger.info("Project thumbnail updated", project_id=project_id)
     except Exception as e:
-        print(f"Background Task Error: {e}")
+        logger.error("Background task error", project_id=project_id, error=str(e))
         # Update status to failed
         with Session(engine) as session:
             try:
@@ -135,7 +138,7 @@ def generate_project_cover_task(project_id: str, title: str, genre_name: str, wo
                     session.add(project)
                     session.commit()
             except Exception as db_e:
-                print(f"Failed to update error status: {db_e}")
+                logger.error("Failed to update error status", project_id=project_id, error=str(db_e))
 
 def generate_suggestions_bg_task(project_id: str, context: str, language: str):
     """
@@ -174,10 +177,10 @@ def generate_suggestions_bg_task(project_id: str, context: str, language: str):
                 session.add(project)
             
             session.commit()
-            print(f"Async Suggestions: Generated {len(items)} items for {project_id}")
+            logger.info("Async suggestions generated", project_id=project_id, count=len(items))
             
     except Exception as e:
-        print(f"Async Suggestion Error: {e}")
+        logger.error("Async suggestion error", project_id=project_id, error=str(e))
         try:
             with Session(engine) as session:
                 project = session.get(Project, UUID(project_id))
@@ -245,7 +248,7 @@ def create_project(
     """
     Create a new project.
     """
-    print(f"DEBUG: create_project called with title={project_in.title}")
+    logger.debug("create_project called", title=project_in.title)
     try:
         # Get user's default workspace
         ws_statement = select(WorkspaceMember).where(WorkspaceMember.user_id == current_user_id)
@@ -404,9 +407,9 @@ def get_project(
                     char_dict = c.dict(exclude={'embedding'})
                     chars_data.append(char_dict)
                 except Exception as e:
-                    print(f"Failed to serialize character {c.id}: {e}")
+                    logger.warning("Failed to serialize character", character_id=str(c.id), error=str(e))
     except Exception as e:
-        print(f"Failed to load characters: {e}")
+        logger.warning("Failed to load characters", error=str(e))
         
     p_dict['characters'] = chars_data
     
@@ -518,7 +521,7 @@ def generate_cover(
         if c.profile_image_url:
             char_urls.append(c.profile_image_url)
     
-    print(f"Found {len(char_urls)} character images for cover generation.")
+    logger.debug("Found character images for cover generation", count=len(char_urls))
 
     project.cover_image_status = "processing"
     session.add(project)

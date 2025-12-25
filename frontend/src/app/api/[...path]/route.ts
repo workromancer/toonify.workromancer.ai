@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { createLogger } from '@/lib/logger';
+
+const proxyLogger = createLogger('Proxy');
 
 const BACKEND_URL = process.env.INTERNAL_BACKEND_URL || 'http://localhost:8000';
 
@@ -15,10 +18,21 @@ async function proxyRequest(request: NextRequest, { params }: { params: Promise<
   // We re-construct the target URL by ensuring we have EXACTLY ONE '/api/' between base and pathString.
   const targetUrl = `${backendBase}/api/${pathString}${request.nextUrl.search}`;
 
-  console.log(`[Proxy] Forwarding: ${request.method} ${request.nextUrl.pathname} -> ${targetUrl}`);
+  // Generate request ID for tracing
+  const requestId = request.headers.get('X-Request-ID') || `proxy-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  
+  proxyLogger.info('Forwarding request', {
+    method: request.method,
+    path: request.nextUrl.pathname,
+    target: targetUrl,
+    requestId,
+  });
 
   try {
     const requestHeaders = new Headers(request.headers);
+    
+    // Add request ID to forwarded headers
+    requestHeaders.set('X-Request-ID', requestId);
     
     // CRITICAL: Strip the Host header as it will conflict with the target backend (Cloud Run)
     requestHeaders.delete('host');
@@ -88,7 +102,7 @@ async function proxyRequest(request: NextRequest, { params }: { params: Promise<
       });
     }
   } catch (error) {
-    console.error(`[Proxy] Error forwarding request to ${targetUrl}:`, error);
+    proxyLogger.error('Error forwarding request', error, { targetUrl });
     return NextResponse.json({ error: 'Failed to proxy request' }, { status: 500 });
   }
 }

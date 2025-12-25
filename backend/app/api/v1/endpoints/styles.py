@@ -9,6 +9,9 @@ from app.services.ai import ai_service
 from app.services.storage import storage
 from pydantic import BaseModel
 from app.api.deps import engine
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 router = APIRouter()
 
@@ -57,7 +60,7 @@ def augment_style(
         )
         return AugmentStyleResponse(result=enhanced_prompt)
     except Exception as e:
-        print(f"Augmentation failed: {e}")
+        logger.error("Augmentation failed", error=str(e))
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -88,7 +91,7 @@ def generate_style_preview_task(style_id: str, description: str):
     Background task to generate style preview image.
     """
     try:
-        print(f"Starting background style generation for {style_id}")
+        logger.info("Starting background style generation", style_id=style_id)
         
         # Determine strict Prompt for style preview
         # We want a representative image of the style
@@ -110,7 +113,7 @@ def generate_style_preview_task(style_id: str, description: str):
         
         if img_bytes:
             url = storage.upload_image(img_bytes, schema="styles", identifier=style_id)
-            print(f"Style preview uploaded to {url}")
+            logger.info("Style preview uploaded", style_id=style_id, url=url)
             
             with Session(engine) as session:
                 s_uuid = UUID(style_id)
@@ -121,7 +124,7 @@ def generate_style_preview_task(style_id: str, description: str):
                     session.add(style)
                     session.commit()
     except Exception as e:
-        print(f"Style Generation Failed: {e}")
+        logger.error("Style generation failed", style_id=style_id, error=str(e))
         with Session(engine) as session:
             try:
                 s_uuid = UUID(style_id)

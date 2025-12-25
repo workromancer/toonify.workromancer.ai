@@ -6,7 +6,10 @@ from app.models import User
 from sqlmodel import Session, select
 from app.services.ai import ai_service
 from app.services.storage import storage
+from app.core.logging import get_logger
 import time
+
+logger = get_logger(__name__)
 
 router = APIRouter()
 
@@ -65,6 +68,6 @@ async def generate_image(
         return GenerateResponse(image_url=image_url)
         
     except Exception as e:
-        print(f"Generation failed: {e}")
+        logger.error("Generation failed", error=str(e))
         raise HTTPException(status_code=500, detail=str(e))
 

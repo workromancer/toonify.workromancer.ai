@@ -4,6 +4,7 @@ from sqlmodel import Session, select
 
 from app.api import deps
 from app.core.config import settings
+from app.core.logging import get_logger
 from app.models import Episode, Project, WorkspaceMember, StoryCut, Character, EpisodeSuggestion
 from pydantic import BaseModel
 from datetime import datetime
@@ -16,6 +17,7 @@ from app.services.storage import storage
 from fastapi import BackgroundTasks
 from app.db.engine import engine # Need engine for background task session
 
+logger = get_logger(__name__)
 
 router = APIRouter()
 
@@ -382,7 +384,7 @@ def generate_episode_cuts_task(
     num_cuts: int,
     language: str
 ):
-    print(f"Background Task: Generating cuts for episode {episode_id}")
+    logger.info("Background task: Generating cuts for episode", episode_id=str(episode_id))
     with Session(engine) as session:
         episode = session.get(Episode, episode_id)
         if not episode: return
@@ -477,13 +479,13 @@ def generate_episode_cuts_task(
             episode.status = "ready"
             session.add(episode)
             session.commit()
-            print(f"Task Complete: Generated {len(created_cuts)} cuts for episode {episode_id}")
+            logger.info("Task complete: Generated cuts for episode", episode_id=str(episode_id), count=len(created_cuts))
             
             # Note: Automatic image generation triggering removed per user request.
             # Images will be generated manually or via 'Generate All' in frontend.
             
         except Exception as e:
-            print(f"Error generating cuts: {e}")
+            logger.error("Error generating cuts", episode_id=str(episode_id), error=str(e))
             episode.status = "failed"
             session.add(episode)
             session.commit()
@@ -529,7 +531,7 @@ def generate_cut_image(
     return {"message": "Generation started", "cut_id": cut_id}
     
 def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: str = "en", use_previous_context: bool = True, prev_image_url_override: str = None) -> str | None:
-    print(f"Background Task: Generating image for cut {cut_id}, language={language}")
+    logger.info("Background task: Generating image for cut", cut_id=str(cut_id), language=language)
     with Session(engine) as session:
         cut = session.get(StoryCut, cut_id)
         if not cut: return None
@@ -758,18 +760,18 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
             session.add(cut)
             session.commit()
             
-            print(f"Task Complete: Generated image for cut {cut_id} -> {url}")
+            logger.info("Task complete: Generated image for cut", cut_id=str(cut_id), url=url)
             return url
 
         except Exception as e:
-            print(f"Cut Gen Failed: {e}")
+            logger.error("Cut gen failed", cut_id=str(cut_id), error=str(e))
             cut.status = "failed"
             session.add(cut)
             session.commit()
             return None
 
 def generate_episode_images_sequentially(episode_id: UUID):
-    print(f"Background Task: Starting sequential image generation for episode {episode_id}")
+    logger.info("Background task: Starting sequential image generation for episode", episode_id=str(episode_id))
     try:
         with Session(engine) as session:
             # Fetch cuts
@@ -778,10 +780,10 @@ def generate_episode_images_sequentially(episode_id: UUID):
             for cut in cuts:
                  # Check if image already exists
                 if cut.image_path:
-                    print(f"Skipping cut {cut.cut_order} (already exists)")
+                    logger.debug("Skipping cut (already exists)", cut_order=cut.cut_order)
                     continue
 
-                print(f"Sequentially generating cut {cut.cut_order}")
+                logger.debug("Sequentially generating cut", cut_order=cut.cut_order)
                 
                 # Call generation task (synchronously)
                 # This function handles its own DB session for the cut update, 
@@ -789,7 +791,7 @@ def generate_episode_images_sequentially(episode_id: UUID):
                 generate_cut_task(cut.id, prompt_override=None, language="en", use_previous_context=True)
 
             # After loop finishes, update episode status to 'ready'
-            print(f"Sequential generation finished for episode {episode_id}")
+            logger.info("Sequential generation finished for episode", episode_id=str(episode_id))
             episode = session.get(Episode, episode_id)
             if episode:
                 episode.status = "ready"
@@ -797,7 +799,7 @@ def generate_episode_images_sequentially(episode_id: UUID):
                 session.commit()
                 
     except Exception as e:
-        print(f"Sequential Generation Error: {e}")
+        logger.error("Sequential generation error", episode_id=str(episode_id), error=str(e))
         # Ensure status is reset even on error
         with Session(engine) as session:
              episode = session.get(Episode, episode_id)
@@ -884,20 +886,19 @@ def export_episode(
                 return resp.content
             return None
         except Exception as e:
-            print(f"Failed to fetch image: {e}")
+            logger.warning("Failed to fetch image", error=str(e))
             return None
 
     if format == "zip":
-        print(f"[ZIP Export] Starting ZIP creation for episode: {episode.title}")
-        print(f"[ZIP Export] Total cuts: {len(cuts)}")
+        logger.info("ZIP Export: Starting ZIP creation", episode_title=episode.title, cuts_count=len(cuts))
         
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
             file_count = 0
             for cut in cuts:
-                print(f"[ZIP Export] Processing cut {cut.cut_order}, image_path: {cut.image_path[:50] if cut.image_path else 'None'}...")
+                logger.debug("ZIP Export: Processing cut", cut_order=cut.cut_order)
                 if not cut.image_path:
-                    print(f"[ZIP Export] Skipping cut {cut.cut_order} - no image_path")
+                    logger.debug("ZIP Export: Skipping cut - no image_path", cut_order=cut.cut_order)
                     continue
                     
                 img_data = get_image_bytes(cut.image_path)
@@ -908,11 +909,11 @@ def export_episode(
                     filename = f"{safe_title}_{cut.cut_order:02d}.png"
                     zf.writestr(filename, img_data)
                     file_count += 1
-                    print(f"[ZIP Export] Added {filename} ({len(img_data)} bytes)")
+                    logger.debug("ZIP Export: Added file", filename=filename, size=len(img_data))
                 else:
-                    print(f"[ZIP Export] Failed to get image data for cut {cut.cut_order}")
+                    logger.warning("ZIP Export: Failed to get image data", cut_order=cut.cut_order)
             
-        print(f"[ZIP Export] ZIP file count: {file_count}")
+        logger.info("ZIP Export: Completed", file_count=file_count)
         
         if file_count == 0:
              raise HTTPException(status_code=400, detail="No valid images found to zip")
@@ -920,7 +921,7 @@ def export_episode(
         # Ensure ZIP is fully written
         zip_buffer.seek(0)
         zip_content = zip_buffer.getvalue()
-        print(f"[ZIP Export] Final ZIP size: {len(zip_content)} bytes")
+        logger.debug("ZIP Export: Final ZIP size", size=len(zip_content))
         
         zip_filename = f"{episode.title.replace(' ', '_')}_cuts.zip"
         encoded_zip_filename = urllib.parse.quote(zip_filename)
@@ -949,7 +950,7 @@ def export_episode(
                 raw_images.append(img)
                 max_width = max(max_width, img.width)
             except Exception as e:
-                print(f"Failed to process image for cut {cut.id}: {e}")
+                logger.warning("Failed to process image for cut", cut_id=str(cut.id), error=str(e))
                 
     if not raw_images:
          raise HTTPException(status_code=400, detail="No valid images found in cuts")

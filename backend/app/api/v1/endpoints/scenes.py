@@ -5,8 +5,11 @@ from app.api import deps
 from app.services.ai import ai_service
 from app.services.billing import billing_service
 from app.models import Project, WorkspaceMember, Character
+from app.core.logging import get_logger
 from pydantic import BaseModel
 from uuid import UUID
+
+logger = get_logger(__name__)
 
 router = APIRouter()
 
@@ -121,7 +124,7 @@ def generate_scene_structure(
                     if rag_parts:
                         context_str += "SIMILAR PREVIOUS SCENES (For Visual Consistency):\n" + "\n".join(rag_parts)
             except Exception as e:
-                print(f"RAG Retrieval warning: {e}")
+                logger.warning("RAG retrieval warning", error=str(e))
         
         # Parse language
         # Fix: Prioritize project language if available

@@ -7,6 +7,9 @@ import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';
 import { SignUp } from '@clerk/nextjs';
+import { createLogger } from '@/lib/logger';
+
+const signupLogger = createLogger('SignupPage');
 
 export default function SignupPage() {
     const { register, handleSubmit } = useForm();
@@ -19,21 +22,20 @@ export default function SignupPage() {
     const showLegacy = authMode === 'legacy' || authMode === 'hybrid';
 
     const onSubmit = async (data: any) => {
-        // ... existing onSubmit ...
-        console.log('Signup form submitted with data:', data);
+        signupLogger.info('Signup form submitted');
         try {
-            console.log('Sending API request to /auth/signup');
+            signupLogger.debug('Sending API request to /auth/signup');
             const response = await api.post('/auth/signup', {
                 email: data.email,
                 password: data.password,
                 username: data.email.split('@')[0]
             });
-            console.log('API response success:', response);
+            signupLogger.info('Signup successful');
             router.push('/login');
         } catch (err: any) {
-            console.error('API request failed:', err);
+            signupLogger.error('Signup failed', err);
             if (err.response) {
-                console.error('Error response data:', err.response.data);
+                signupLogger.debug('Error response data', { data: err.response.data });
                 const detail = err.response.data.detail;
                 if (detail) {
                     if (Array.isArray(detail)) {
@@ -45,10 +47,10 @@ export default function SignupPage() {
                     setError('Signup failed. Unknown server error.');
                 }
             } else if (err.request) {
-                console.error('No response received:', err.request);
+                signupLogger.debug('No response received');
                 setError('Network error. Check your connection.');
             } else {
-                console.error('Error setting up request:', err.message);
+                signupLogger.debug('Error setting up request', { message: err.message });
                 setError(t('unknownError'));
             }
         }

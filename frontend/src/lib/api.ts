@@ -7,9 +7,17 @@ import {
     type ErrorEventDetail,
     type ErrorCode,
 } from '@/lib/errorUtils';
+import { createLogger, getTraceId, setTraceId } from '@/lib/logger';
 
 // Environment variable for API URL or default to localhost
 import { config } from '@/lib/config';
+
+const apiLogger = createLogger('API');
+
+// Generate a unique request ID
+function generateRequestId(): string {
+    return `req-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+}
 
 // Environment variable for API URL or default to localhost
 const API_URL = config.API_URL;
@@ -21,11 +29,21 @@ const api = axios.create({
     },
 });
 
-// Add a request interceptor to include the auth token
+// Add a request interceptor to include the auth token and request ID
 api.interceptors.request.use(
     (config) => {
+        // Generate and attach request ID for tracing
+        const requestId = generateRequestId();
+        config.headers['X-Request-ID'] = requestId;
+        
         const token = useAuthStore.getState().token;
-        console.log("API Request Interceptor - URL:", config.url, "Token:", token ? "Present" : "Missing");
+        apiLogger.debug('Request started', {
+            url: config.url,
+            method: config.method?.toUpperCase(),
+            requestId,
+            hasToken: !!token,
+        });
+        
         if (token && token !== 'undefined' && token !== 'null') {
             config.headers.Authorization = `Bearer ${token}`;
         } else {
@@ -62,7 +80,7 @@ api.interceptors.response.use(
                 // 401 Unauthorized - Trigger logout
                 // Check if already logging out to prevent infinite loop
                 if (useAuthStore.getState().isLoggingOut) {
-                    console.log('[API] 401 received but logout already in progress, skipping');
+                    apiLogger.debug('401 received but logout already in progress, skipping');
                     return Promise.reject(error);
                 }
 
@@ -73,11 +91,11 @@ api.interceptors.response.use(
                 // Only logout/notify if the 401 comes from the CURRENT token.
                 // If the user has already re-logged in (new token), ignore this old 401.
                 if (currentToken && requestToken && currentToken !== requestToken) {
-                    console.warn("Ignoring 401 from stale token");
+                    apiLogger.warn('Ignoring 401 from stale token');
                     return Promise.reject(error);
                 }
 
-                console.log("401 received, logging out user...");
+                apiLogger.info('401 received, logging out user');
                 
                 // Dispatch error event with error code for i18n
                 if (typeof window !== 'undefined') {

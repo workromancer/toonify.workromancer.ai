@@ -7,7 +7,10 @@ from sqlmodel import Session
 from app.core.config import settings
 from app.core import security
 from app.core.errors import AppException, ErrorCode
+from app.core.logging import get_logger
 from app.models import User
+
+logger = get_logger(__name__)
 
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/auth/login/access-token"
@@ -29,7 +32,7 @@ def get_current_user_id(
         token_data = payload.get("sub")
     except (JWTError, ValidationError) as e:
         if settings.DEBUG:
-            print(f"JWT Validation Error: {e}")
+            logger.warning("JWT validation error", error=str(e))
             raise AppException(
                 error_code=ErrorCode.AUTH_TOKEN_INVALID,
                 detail=f"Could not validate credentials: {e}"

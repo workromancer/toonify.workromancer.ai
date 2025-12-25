@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { createLogger } from '@/lib/logger';
+
+const authLogger = createLogger('Auth');
 
 const BACKEND_URL = process.env.INTERNAL_BACKEND_URL || 'http://localhost:8000';
 
@@ -17,7 +20,7 @@ export async function POST(request: NextRequest) {
         const cleanBackendUrl = BACKEND_URL.replace(/\/api\/v1\/?$/, '').replace(/\/api\/?$/, '');
         const targetUrl = `${cleanBackendUrl}/api/v1/auth/login/access-token`;
 
-        console.log(`[Auth Route] Proxying login to ${targetUrl}`);
+        authLogger.info('Proxying login request', { targetUrl });
 
         const res = await fetch(targetUrl, {
             method: 'POST',
@@ -30,7 +33,7 @@ export async function POST(request: NextRequest) {
 
         if (!res.ok) {
             const errorData = await res.json().catch(() => ({}));
-            console.error('[Auth Route] Login failed:', res.status, errorData);
+            authLogger.warn('Login failed', { status: res.status, errorData });
             return NextResponse.json(
                 { error: 'Login failed', details: errorData },
                 { status: res.status }
@@ -55,7 +58,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: true, user: data.user, access_token: accessToken }, { status: 200 });
 
     } catch (error) {
-        console.error('[Auth Route] Unexpected error:', error);
+        authLogger.error('Unexpected error during login', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }

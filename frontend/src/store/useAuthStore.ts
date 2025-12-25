@@ -1,5 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { createLogger } from '@/lib/logger';
+
+const authLogger = createLogger('AuthStore');
 
 interface User {
     id: string;
@@ -41,26 +44,26 @@ export const useAuthStore = create<AuthState>()(
                     try {
                         localStorage.clear();
                         sessionStorage.clear();
-                        console.log('[AuthStore] Cleared all browser storage via clearAuthState');
+                        authLogger.debug('Cleared all browser storage via clearAuthState');
                     } catch (e) {
-                        console.error('[AuthStore] Failed to clear browser storage', e);
+                        authLogger.error('Failed to clear browser storage', e);
                     }
                 }
             },
             logout: async () => {
                 // Prevent duplicate logout calls (infinite loop protection)
                 if (get().isLoggingOut) {
-                    console.log('[AuthStore] Logout already in progress, skipping duplicate call');
+                    authLogger.debug('Logout already in progress, skipping duplicate call');
                     return;
                 }
                 
                 set({ isLoggingOut: true });
-                console.log('[AuthStore] Starting logout process');
+                authLogger.info('Starting logout process');
                 
                 try {
                     await fetch('/api/auth/logout', { method: 'POST' });
                 } catch (e) {
-                    console.error("Failed to logout server-side", e);
+                    authLogger.error('Failed to logout server-side', e);
                 }
                 
                 // Clear local state
@@ -71,9 +74,9 @@ export const useAuthStore = create<AuthState>()(
                     try {
                         localStorage.clear();
                         sessionStorage.clear();
-                        console.log('[AuthStore] Cleared all browser storage');
+                        authLogger.debug('Cleared all browser storage');
                     } catch (e) {
-                        console.error('[AuthStore] Failed to clear browser storage', e);
+                        authLogger.error('Failed to clear browser storage', e);
                     }
                 }
                 

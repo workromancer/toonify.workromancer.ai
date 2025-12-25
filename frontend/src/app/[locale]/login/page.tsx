@@ -9,6 +9,9 @@ import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';
 import axios from 'axios';
 import { SignIn } from '@clerk/nextjs';
+import { createLogger } from '@/lib/logger';
+
+const loginLogger = createLogger('LoginPage');
 
 export default function LoginPage() {
     const { register, handleSubmit } = useForm();
@@ -30,7 +33,7 @@ export default function LoginPage() {
             // POST to our new Next.js internal route
             const res = await axios.post('/api/auth/login', formData);
 
-            console.log("Login Route Response:", res.data);
+            loginLogger.info('Login response received', { success: res.data.success });
 
             // Update client store for reactivity (Cookie handles the real auth)
             // Ideally we also get the user object back

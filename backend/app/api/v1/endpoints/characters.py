@@ -5,6 +5,7 @@ from sqlmodel import Session, select, col
 from app.api import deps
 from app.models import Character, Project, Asset
 from app.core.config import settings
+from app.core.logging import get_logger
 from pydantic import BaseModel, validator
 from datetime import datetime
 from uuid import UUID
@@ -13,6 +14,8 @@ from app.services.storage import storage
 from app.api.deps import engine
 from app.services.ai import ai_service
 from app.services.billing import billing_service
+
+logger = get_logger(__name__)
 
 router = APIRouter()
 
@@ -244,12 +247,12 @@ def generate_character_image_task(character_id: UUID, prompt: str):
     Background task to generate character sheet and save it.
     """
     try:
-        print(f"Starting background character generation for {character_id}")
+        logger.info("Starting background character generation", character_id=str(character_id))
         
         with Session(engine) as session:
             character = session.get(Character, character_id)
             if not character:
-                print(f"Character {character_id} not found via background task.")
+                logger.warning("Character not found via background task", character_id=str(character_id))
                 return
             
             # Update status to processing
@@ -259,7 +262,7 @@ def generate_character_image_task(character_id: UUID, prompt: str):
             
             project = session.get(Project, character.project_id)
             if not project:
-                print(f"Project for character {character_id} not found.")
+                logger.warning("Project for character not found", character_id=str(character_id))
                 return
 
             try:
@@ -294,21 +297,21 @@ def generate_character_image_task(character_id: UUID, prompt: str):
                     character.sheet_status = "completed"
                     session.add(character)
                     session.commit()
-                    print(f"Character {character_id} image updated: {url}")
+                    logger.info("Character image updated", character_id=str(character_id), url=url)
                 else:
-                    print("No image bytes returned for character generation.")
+                    logger.warning("No image bytes returned for character generation", character_id=str(character_id))
                     character.sheet_status = "failed"
                     session.add(character)
                     session.commit()
                     
             except Exception as e:
-                print(f"Generation logic error: {e}")
+                logger.error("Generation logic error", character_id=str(character_id), error=str(e))
                 character.sheet_status = "failed"
                 session.add(character)
                 session.commit()
                 
     except Exception as e:
-        print(f"Background Character Gen Task Error: {e}")
+        logger.error("Background character gen task error", character_id=str(character_id), error=str(e))
                 
 
 
@@ -529,7 +532,7 @@ def generate_batch_suggestions(
         return saved_suggestions
         
     except Exception as e:
-        print(f"Batch Gen Failed: {e}")
+        logger.error("Batch gen failed", project_id=str(request.project_id), error=str(e))
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/suggestions/{project_id}", response_model=List[Any])
@@ -654,7 +657,7 @@ def promote_suggestion(
     try:
         character.embedding = ai_service.get_embedding(combined_text)
     except Exception as e:
-        print(f"Embedding failed: {e}")
+        logger.error("Embedding failed", character_name=character.name, error=str(e))
 
     session.add(character)
     
