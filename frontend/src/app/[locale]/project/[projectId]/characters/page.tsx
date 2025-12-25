@@ -10,7 +10,8 @@ import ProjectLayout from '@/components/layout/ProjectLayout';
 import CharacterDetailModal from '@/components/project/modals/CharacterDetailModal';
 import SuggestionDetailModal from '@/components/project/modals/SuggestionDetailModal';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
-import { Plus, AlertCircle, Sparkles, Users, X, Loader2 } from 'lucide-react';
+import SuggestionCard from '@/components/project/SuggestionCard';
+import { Plus, AlertCircle, Sparkles, Users, Loader2 } from 'lucide-react';
 import { CustomLoader } from '@/components/ui/custom-loader';
 import { SectionLabel } from '@/components/ui/section-label';
 import { cn } from '@/lib/utils';
@@ -449,47 +450,12 @@ export default function CharacterListPage() {
                                         )}
 
                                         {suggestions.map((suggestion) => (
-                                            <div
+                                            <SuggestionCard
                                                 key={suggestion.id}
+                                                suggestion={suggestion}
                                                 onClick={() => handleSuggestionClick(suggestion)}
-                                                className="group relative aspect-[3/4] rounded-xl overflow-hidden bg-[#15121c] border border-purple-500/20 hover:border-purple-500/50 transition-all cursor-pointer flex flex-col p-4"
-                                                style={{ borderTop: suggestion.theme_color ? `4px solid ${suggestion.theme_color}` : undefined }}
-                                            >
-                                                {/* Reject Button */}
-                                                <button
-                                                    onClick={(e) => handleRejectClick(e, suggestion)}
-                                                    className="absolute top-2 right-2 p-1.5 rounded-full bg-black/40 text-gray-400 hover:bg-red-500/20 hover:text-red-400 transition-colors z-20 opacity-0 group-hover:opacity-100"
-                                                >
-                                                    <X size={14} />
-                                                </button>
-
-                                                <div className="flex-1 flex flex-col justify-center items-center gap-2">
-                                                    <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center mb-1">
-                                                        <Sparkles className="w-5 h-5 text-purple-400" />
-                                                    </div>
-                                                    <h4 className="text-white text-xs font-bold uppercase tracking-tight text-center">{suggestion.name}</h4>
-                                                    <p className="text-[10px] text-purple-300/70 font-medium">{suggestion.role || "Potential Cast"}</p>
-                                                </div>
-                                                <div className="mt-auto pt-3 border-t border-white/5">
-                                                    <p className="text-[10px] text-gray-500 line-clamp-3 leading-tight italic">
-                                                        "{suggestion.bio || suggestion.personality}"
-                                                    </p>
-                                                </div>
-
-                                                {/* Hover HUD */}
-                                                <div className="absolute inset-0 bg-purple-600/0 group-hover:bg-purple-600/10 transition-colors flex items-center justify-center pointer-events-none">
-                                                    <div
-                                                        onClick={(e) => !promotingSuggestionId && handleCastNowClick(e as any, suggestion)}
-                                                        className={cn(
-                                                            "bg-purple-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0 duration-300 pointer-events-auto shadow-xl shadow-purple-900/40",
-                                                            promotingSuggestionId === suggestion.id ? "opacity-50 cursor-not-allowed" : "hover:bg-purple-500"
-                                                        )}
-                                                    >
-                                                        {promotingSuggestionId === suggestion.id ? <Loader2 size={12} className="inline mr-1 animate-spin" /> : null}
-                                                        {promotingSuggestionId === suggestion.id ? 'CASTING...' : 'CAST NOW'}
-                                                    </div>
-                                                </div>
-                                            </div>
+                                                onReject={(e) => handleRejectClick(e, suggestion)}
+                                            />
                                         ))}
                                     </div>
                                 </section>
