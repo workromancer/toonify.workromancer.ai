@@ -59,7 +59,13 @@ api.interceptors.response.use(
             const errorCode = parsedError.code as ErrorCode | undefined;
 
             if (status === 401) {
-                // 401 Unauthorized - Always logout
+                // 401 Unauthorized - Trigger logout
+                // Check if already logging out to prevent infinite loop
+                if (useAuthStore.getState().isLoggingOut) {
+                    console.log('[API] 401 received but logout already in progress, skipping');
+                    return Promise.reject(error);
+                }
+
                 // Check if the token has changed since the request was made (Race Condition protection)
                 const currentToken = useAuthStore.getState().token;
                 const requestToken = error.config?.headers?.Authorization?.replace('Bearer ', '');
@@ -71,14 +77,8 @@ api.interceptors.response.use(
                     return Promise.reject(error);
                 }
 
-                const authProvider = useAuthStore.getState().authProvider;
-
-                // ALWAYS logout on 401, regardless of auth provider
                 console.log("401 received, logging out user...");
                 
-                // Clear auth state immediately
-                useAuthStore.getState().logout();
-
                 // Dispatch error event with error code for i18n
                 if (typeof window !== 'undefined') {
                     dispatchErrorEvent({
@@ -86,10 +86,10 @@ api.interceptors.response.use(
                         code: errorCode,
                         shouldLogout: true,
                     });
-                    
-                    // Redirect to login page
-                    window.location.href = '/login';
                 }
+
+                // Clear auth state - logout() handles redirect
+                useAuthStore.getState().logout();
             } else if (status === 403) {
                 if (typeof window !== 'undefined') {
                     dispatchErrorEvent({
