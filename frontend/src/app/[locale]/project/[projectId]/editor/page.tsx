@@ -83,37 +83,54 @@ export default function EditorPage() {
         }
         try {
             setExporting(true);
+            toast({ title: t('toasts.exporting'), description: t('toasts.exportPreparing') });
+            
             const response = await api.post(`/episodes/${activeEpisodeId}/export?format=zip`, {}, {
                 responseType: 'blob'
             });
 
-            // Check if backend returned an error (JSON blob) instead of a file
-            if (response.data.type === 'application/json') {
-                const text = await response.data.text();
-                const error = JSON.parse(text);
-                throw new Error(error.detail || t('exportFailed'));
-            }
-
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', `${episodeTitle || 'export'}.zip`);
+
+            // Try to extract filename from header
+            const contentDisposition = response.headers['content-disposition'];
+            let filename = `episode_export.zip`;
+            if (contentDisposition) {
+                // Check for standard filename
+                const fileNameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+                if (fileNameMatch && fileNameMatch.length === 2) {
+                    filename = fileNameMatch[1];
+                }
+
+                // Check for UTF-8 encoded filename (overrides standard)
+                const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/);
+                if (utf8Match && utf8Match.length === 2) {
+                    filename = decodeURIComponent(utf8Match[1]);
+                }
+            }
+
+            link.setAttribute('download', filename);
             document.body.appendChild(link);
             link.click();
-            link.parentNode?.removeChild(link);
-
-            toast({
-                title: t('exportStarted'),
-                description: t('exportDownloading'),
-            });
+            link.remove();
 
         } catch (err: any) {
             console.error("Export failed", err);
-            toast({
-                title: t('exportFailed'),
-                description: err.message || t('exportFailedDesc'),
-                variant: 'destructive'
-            });
+
+            let errorMessage = t('toasts.exportDownloadFailed');
+            if (err.response && err.response.data instanceof Blob && err.response.data.type === 'application/json') {
+                // Try to read the blob error if Axios caught it as a Blob
+                try {
+                    const text = await err.response.data.text();
+                    const errorObj = JSON.parse(text);
+                    if (errorObj.detail) errorMessage = errorObj.detail;
+                } catch (e) { /* ignore */ }
+            } else if (err.message) {
+                errorMessage = err.message;
+            }
+
+            toast({ title: t('toasts.exportFailed'), description: errorMessage, variant: "destructive" });
         } finally {
             setExporting(false);
         }
