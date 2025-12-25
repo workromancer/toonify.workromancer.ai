@@ -132,7 +132,10 @@ export default function StoryboardView({ projectId, episodeId: propEpisodeId }: 
         }
 
         setIsBatchGenerating(true);
-        toast({ title: t('toasts.batchStart'), description: t('toasts.batchStartDesc', { count: cuts.length }) });
+        
+        // Count how many cuts are pending (no image yet)
+        const pendingCuts = cuts.filter(c => !c.image_path);
+        toast({ title: t('toasts.batchStart'), description: t('toasts.batchStartDesc', { count: pendingCuts.length }) });
 
         try {
             // Trigger server-side sequential generation
@@ -145,14 +148,9 @@ export default function StoryboardView({ projectId, episodeId: propEpisodeId }: 
         } catch (err) {
             console.error("Batch Gen Failed", err);
             toast({ title: t('toasts.genFailed'), description: t('toasts.genServerFailed'), variant: "destructive" });
-        } finally {
-            // We keep isBatchGenerating true? Or false? 
-            // The polling handles the "Generating..." UI usually based on episodeStatus.
-            // isBatchGenerating might disable the button.
-            // Let's keep it true until status changes back to ready? 
-            // Or just set false and let episodeStatus control the UI state (spinner).
             setIsBatchGenerating(false);
         }
+        // Note: isBatchGenerating stays true until episodeStatus changes back to 'ready'
     };
 
     const activeIdRef = useRef(activeEpisodeId);
@@ -177,28 +175,28 @@ export default function StoryboardView({ projectId, episodeId: propEpisodeId }: 
             setEpisodeStatus(status);
             setActiveEpisodeStatus(status);
 
+            // Always fetch cuts, even when generating (to show partial progress)
+            const res = await api.get(`/cuts/?episode_id=${targetId}`);
+            // Check after cuts fetch
+            if (activeIdRef.current !== targetId && !targetIdOverride) return;
+
+            const newCuts = res.data as StoryCut[];
+            setCuts(newCuts);
+
+            // Cleanup finished generations
+            newCuts.forEach(cut => {
+                if (generatingIds.has(cut.id) && cut.image_path) {
+                    removeGeneratingId(cut.id);
+                }
+                if (generatingIds.has(cut.id) && cut.status === 'failed') {
+                    removeGeneratingId(cut.id);
+                    toast({ title: t('toasts.genFailed'), variant: "destructive" });
+                }
+            });
+
+            // Reset batch generating flag when done
             if (status !== 'generating') {
-                const res = await api.get(`/cuts/?episode_id=${targetId}`);
-                // Check after cuts fetch
-                if (activeIdRef.current !== targetId && !targetIdOverride) return;
-
-                const newCuts = res.data as StoryCut[];
-                setCuts(newCuts);
-
-                // Cleanup finished generations
-                newCuts.forEach(cut => {
-                    if (generatingIds.has(cut.id) && cut.image_path) {
-                        removeGeneratingId(cut.id);
-                    }
-                    if (generatingIds.has(cut.id) && cut.status === 'failed') {
-                        removeGeneratingId(cut.id);
-                        toast({ title: t('toasts.genFailed'), variant: "destructive" });
-                    }
-                });
-
-            } else {
-                if (activeIdRef.current !== targetId && !targetIdOverride) return;
-                setCuts([]);
+                setIsBatchGenerating(false);
             }
         } catch (err) {
             console.error("Fetch Cuts Error:", err);
@@ -514,7 +512,8 @@ export default function StoryboardView({ projectId, episodeId: propEpisodeId }: 
                             <CustomLoader size={24} className="mb-2" />
                             <span className="text-xs">{t('loadingScenes')}</span>
                         </div>
-                    ) : episodeStatus === 'generating' && cuts.length === 0 ? (
+                    ) : cuts.length === 0 && episodeStatus === 'generating' ? (
+                        // Full-screen loading only when there are NO cuts yet (initial generation)
                         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
                             <div className="mb-6">
                                 <CustomLoader size={64} />
@@ -617,10 +616,15 @@ export default function StoryboardView({ projectId, episodeId: propEpisodeId }: 
                                             </>
                                         ) : (
                                             <div className="text-slate-600 flex flex-col items-center gap-2 py-4 md:py-0">
-                                                {generatingIds.has(cut.id) || cut.status === 'generating' ? (
+                                                {generatingIds.has(cut.id) || cut.status === 'generating' || (isBatchGenerating && !cut.image_path) ? (
+                                                    // Show loading for: individual generation, server status 'generating', or batch generation pending
                                                     <>
                                                         <CustomLoader size={24} />
-                                                        <span className="text-[10px] text-purple-400">{t('rendering')}</span>
+                                                        <span className="text-[10px] text-purple-400">
+                                                            {isBatchGenerating && !generatingIds.has(cut.id) && cut.status !== 'generating' 
+                                                                ? t('waiting') 
+                                                                : t('rendering')}
+                                                        </span>
                                                     </>
                                                 ) : (
                                                     <>
@@ -629,11 +633,11 @@ export default function StoryboardView({ projectId, episodeId: propEpisodeId }: 
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            disabled={isBatchGenerating}
+                                                            disabled={isBatchGenerating || episodeStatus === 'generating'}
                                                             onClick={(e) => { e.stopPropagation(); handleGenerateImage(cut.id); }}
-                                                            className={`h-6 text-[10px] mt-1 border border-slate-700 ${isBatchGenerating ? 'bg-slate-900 text-slate-600 cursor-not-allowed' : 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white'}`}
+                                                            className={`h-6 text-[10px] mt-1 border border-slate-700 ${isBatchGenerating || episodeStatus === 'generating' ? 'bg-slate-900 text-slate-600 cursor-not-allowed' : 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white'}`}
                                                         >
-                                                            {isBatchGenerating ? t('waiting') : t('generate')}
+                                                            {t('generate')}
                                                         </Button>
                                                     </>
                                                 )}
