@@ -317,6 +317,7 @@
       "showMore": "더 보기",
       "showLess": "접기",
       "castFailed": "캐스팅에 실패했습니다",
+      "alreadyCast": "이미 캐스팅된 캐릭터입니다",
       "creating": "생성 중...",
       "failed": "실패",
       "episodes": "에피소드",

@@ -602,21 +602,39 @@ def promote_suggestion(
 ):
     """
     Promote a suggestion to a real character and start image generation.
+    Uses optimistic locking to prevent duplicate casting.
     """
     from app.models import CharacterSuggestion
     
-    # 1. Get Suggestion
+    # 1. Get Suggestion with lock check
     suggestion = session.get(CharacterSuggestion, suggestion_id)
     if not suggestion:
         raise HTTPException(status_code=404, detail="Suggestion not found")
+    
+    # 2. Check if already used (Optimistic Lock)
+    if suggestion.is_used:
+        raise HTTPException(
+            status_code=409, 
+            detail="ALREADY_CAST",
+            headers={"X-Error-Code": "ALREADY_CAST"}
+        )
+    
+    # 3. Check if deleted
+    if suggestion.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Suggestion has been rejected")
+    
+    # 4. Immediately mark as used to prevent race conditions
+    suggestion.is_used = True
+    session.add(suggestion)
+    session.flush()  # Flush to ensure the lock is acquired before proceeding
         
-    # 2. Create Character
+    # 5. Create Character
     character = Character(
         name=suggestion.name,
         project_id=suggestion.project_id,
         appearance_tags=suggestion.visual_keywords,
         default_mood=suggestion.personality_tags or ["Neutral"],
-        consistency_seed=0, # Will be set later or randomized?
+        consistency_seed=0,
         profile_image_url=None,
         description=suggestion.bio or f"Role: {suggestion.role}\nPersonality: {suggestion.personality}",
         profile={
@@ -633,8 +651,6 @@ def promote_suggestion(
     tags = character.appearance_tags or []
     mood_str = " ".join(moods)
     combined_text = f"{character.name} {mood_str} {' '.join(tags)}"
-    # Using a sync call for embedding or can be async? 
-    # Current create_character uses sync call.
     try:
         character.embedding = ai_service.get_embedding(combined_text)
     except Exception as e:
@@ -642,14 +658,10 @@ def promote_suggestion(
 
     session.add(character)
     
-    # 3. Mark Suggestion as Used
-    suggestion.is_used = True
-    session.add(suggestion)
-    
     session.commit()
     session.refresh(character)
     
-    # 4. Trigger Image Generation
+    # 6. Trigger Image Generation
     background_tasks.add_task(generate_character_image_task, character.id, character.description)
     
     return character

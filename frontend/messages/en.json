@@ -317,6 +317,7 @@
       "showMore": "Show More",
       "showLess": "Show Less",
       "castFailed": "Failed to cast suggestion",
+      "alreadyCast": "This character has already been cast",
       "creating": "CREATING...",
       "failed": "FAILED",
       "newEpisode": "New Episode",

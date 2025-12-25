@@ -324,13 +324,24 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
             toast({
                 title: t('castSuccess'),
             });
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            toast({
-                title: "Error",
-                description: t('castFailed'),
-                variant: 'destructive',
-            });
+            // Handle 409 Conflict (already cast)
+            if (error.response?.status === 409) {
+                toast({
+                    title: t('alreadyCast'),
+                    variant: 'destructive',
+                });
+                // Remove from suggestions list since it's already cast
+                setSuggestions(prev => prev.filter(s => s.id !== suggestionToPromote.id));
+                if (onRefreshCharacters) onRefreshCharacters();
+            } else {
+                toast({
+                    title: "Error",
+                    description: t('castFailed'),
+                    variant: 'destructive',
+                });
+            }
         } finally {
             setPromotingSuggestionId(null);
         }
@@ -747,7 +758,15 @@ export default function ProjectHome({ project, characters, episodes, onProjectUp
                                         </div>
                                     }
                                 >
-                                    {t('cast')}
+                                    <span className="flex items-center gap-2">
+                                        {t('cast')}
+                                        {(project.suggestions_status === 'processing' || isSuggestionsLoading) && (
+                                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/30 animate-pulse">
+                                                <Loader2 size={10} className="animate-spin text-purple-400" />
+                                                <span className="text-[10px] font-bold text-purple-300 uppercase tracking-wide">{t('aiRecommending')}</span>
+                                            </span>
+                                        )}
+                                    </span>
                                 </SectionTitle>
                                 {/* Mobile: 3-column grid, Desktop: 4-6 columns */}
                                 <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4">

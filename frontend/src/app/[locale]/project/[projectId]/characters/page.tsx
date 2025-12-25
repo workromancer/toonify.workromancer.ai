@@ -282,13 +282,24 @@ export default function CharacterListPage() {
             toast({
                 title: tc('castSuccess'),
             });
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            toast({
-                title: "Error",
-                description: "Failed to cast suggestion",
-                variant: 'destructive',
-            });
+            // Handle 409 Conflict (already cast)
+            if (error.response?.status === 409) {
+                toast({
+                    title: t('alreadyCast'),
+                    variant: 'destructive',
+                });
+                // Remove from suggestions list since it's already cast
+                setSuggestions(prev => prev.filter(s => s.id !== suggestionToPromote.id));
+                await fetchCharacters();
+            } else {
+                toast({
+                    title: "Error",
+                    description: "Failed to cast suggestion",
+                    variant: 'destructive',
+                });
+            }
         } finally {
             setPromotingSuggestionId(null);
         }
@@ -347,6 +358,12 @@ export default function CharacterListPage() {
                             <section>
                                 <SectionLabel icon={<Users size={14} />} className="mb-4 text-purple-300">
                                     {tc('castList')} <span className="ml-2 px-2 py-0.5 rounded-full bg-white/10 text-[10px] text-white/70">{characters.length}</span>
+                                    {(project.suggestions_status === 'processing' || isSuggestionsLoading) && (
+                                        <span className="ml-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/30 animate-pulse">
+                                            <Loader2 size={10} className="animate-spin text-purple-400" />
+                                            <span className="text-[10px] font-bold text-purple-300 uppercase tracking-wide">{t('aiRecommending')}</span>
+                                        </span>
+                                    )}
                                 </SectionLabel>
 
                                 <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-6">
