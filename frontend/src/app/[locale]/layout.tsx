@@ -7,6 +7,21 @@ import { AuthProvider } from "@/providers/AuthProvider";
 export const metadata: Metadata = {
   title: "Toonify - AI Webtoon Studio",
   description: "Create your own webtoon with AI Director",
+  icons: {
+    icon: "/icon.png",
+  },
+  openGraph: {
+    title: "Toonify - AI Webtoon Studio",
+    description: "Create your own webtoon with AI Director",
+    images: [
+      {
+        url: "/og.png",
+        width: 1200,
+        height: 630,
+        alt: "Toonify - AI Webtoon Studio",
+      },
+    ],
+  },
 };
 
 /* Mobile viewport configuration: disable pinch zoom */
