@@ -7,6 +7,7 @@ from app.api import deps
 from app.models import CustomStyle, WorkspaceMember, Project, Genre, ProjectGenreLink
 from app.services.ai import ai_service
 from app.services.storage import storage
+from app.services.billing import billing_service
 from pydantic import BaseModel
 from app.api.deps import engine
 from app.core.logging import get_logger
@@ -167,12 +168,17 @@ def create_style(
     """
     Create a new custom style and trigger preview generation.
     """
+    from uuid import UUID as UUIDType
+    
     # Get user's workspace
     ws_statement = select(WorkspaceMember).where(WorkspaceMember.user_id == current_user_id)
     member = session.exec(ws_statement).first()
     
     if not member:
          raise HTTPException(status_code=404, detail="No workspace found for user.")
+    
+    # Deduct Credits (Cost: 10 for style_sample_generation)
+    billing_service.deduct_credits(session, member.workspace_id, UUIDType(current_user_id), "style_sample_generation")
     
     style = CustomStyle(
         workspace_id=member.workspace_id,
@@ -201,6 +207,8 @@ def regenerate_style(
     """
     Regenerate a failed style.
     """
+    from uuid import UUID as UUIDType
+    
     try:
         s_uuid = UUID(style_id)
     except ValueError:
@@ -209,6 +217,9 @@ def regenerate_style(
     style = session.get(CustomStyle, s_uuid)
     if not style:
         raise HTTPException(status_code=404, detail="Style not found")
+
+    # Deduct Credits (Cost: 10 for style_sample_generation)
+    billing_service.deduct_credits(session, style.workspace_id, UUIDType(current_user_id), "style_sample_generation")
 
     # Update status
     style.status = "processing"

@@ -58,7 +58,7 @@ def create_user(
         name=f"{user_in.email.split('@')[0]}'s Workspace",
         owner_id=user.id,
         tier="free",
-        credits=50
+        credits=500  # Welcome Bonus: 500 Credits (PLANS.md)
     )
     session.add(workspace)
     session.commit()
@@ -160,7 +160,7 @@ def sync_clerk_user(
             name=ws_name,
             owner_id=user.id,
             tier="free",
-            credits=50
+            credits=500  # Welcome Bonus: 500 Credits (PLANS.md)
         )
         session.add(workspace)
         session.commit()

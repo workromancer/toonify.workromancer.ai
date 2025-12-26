@@ -7,35 +7,37 @@ from app.core.errors import AppException, ErrorCode
 
 class BillingService:
     # Pricing Matrix (Cost per action)
+    # Tiers: free, plus ($12/mo), pro ($39/mo), studio ($119/mo)
     PRICING = {
         # Project & Worldview
-        "augment_worldview": {"free": 5, "plus": 5},
-        "generate_project_cover_image": {"free": 15, "plus": 15},
+        "augment_worldview": {"free": 5, "plus": 5, "pro": 5, "studio": 5},
+        "generate_project_cover_image": {"free": 15, "plus": 15, "pro": 15, "studio": 15},
         
         # Art Style
-        "recommend_style": {"free": 1, "plus": 1},
-        "style_sample_generation": {"free": 10, "plus": 10},
+        "recommend_style": {"free": 1, "plus": 1, "pro": 1, "studio": 1},
+        "style_sample_generation": {"free": 10, "plus": 10, "pro": 10, "studio": 10},
         
         # Character
-        "augment_character_text": {"free": 5, "plus": 5},
-        "get_character_suggestion": {"free": 1, "plus": 1},
-        "analyze_character_concept": {"free": 1, "plus": 1},
-        "generate_character_sheet": {"free": 20, "plus": 20},
+        "augment_character_text": {"free": 5, "plus": 5, "pro": 5, "studio": 5},
+        "get_character_suggestion": {"free": 1, "plus": 1, "pro": 1, "studio": 1},
+        "analyze_character_concept": {"free": 1, "plus": 1, "pro": 1, "studio": 1},
+        "batch_character_suggestions": {"free": 5, "plus": 5, "pro": 5, "studio": 5},
+        "generate_character_sheet": {"free": 20, "plus": 20, "pro": 20, "studio": 20},
         
         # Episode & Storyboard
-        "generate_episode_ideas": {"free": 3, "plus": 3},
-        "generate_initial_cuts": {"free": 5, "plus": 5},
-        "generate_direction_options": {"free": 2, "plus": 2},
-        "generate_panel_image": {"free": 12, "plus": 12},
-        "bg_generate_cut_image": {"free": 8, "plus": 8},
+        "generate_episode_ideas": {"free": 3, "plus": 3, "pro": 3, "studio": 3},
+        "generate_initial_cuts": {"free": 5, "plus": 5, "pro": 5, "studio": 5},
+        "generate_direction_options": {"free": 2, "plus": 2, "pro": 2, "studio": 2},
+        "generate_panel_image": {"free": 12, "plus": 12, "pro": 12, "studio": 12},
+        "bg_generate_cut_image": {"free": 8, "plus": 8, "pro": 8, "studio": 8},
         
         # Utilities
-        "generate_image": {"free": 10, "plus": 10},
-        "modify_image": {"free": 8, "plus": 8},
+        "generate_image": {"free": 10, "plus": 10, "pro": 10, "studio": 10},
+        "modify_image": {"free": 8, "plus": 8, "pro": 8, "studio": 8},
         
         # Legacy / Fallbacks
-        "director_suggestion": {"free": 1, "plus": 1},
-        "upscale": {"free": 10, "plus": 10},
+        "director_suggestion": {"free": 1, "plus": 1, "pro": 1, "studio": 1},
+        "upscale": {"free": 10, "plus": 10, "pro": 10, "studio": 10},
     }
 
     def check_credits(self, session: Session, workspace_id: UUID, action_type: str) -> int:
