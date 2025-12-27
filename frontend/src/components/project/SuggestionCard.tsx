@@ -1,6 +1,6 @@
 'use client';
 
-import { Sparkles, X } from 'lucide-react';
+import { Sparkles, X, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface Suggestion {
@@ -20,6 +20,7 @@ interface SuggestionCardProps {
     suggestion: Suggestion;
     onClick: () => void;
     onReject?: (e: React.MouseEvent) => void;
+    isPromoting?: boolean;
     className?: string;
 }
 
@@ -27,19 +28,31 @@ export default function SuggestionCard({
     suggestion,
     onClick,
     onReject,
+    isPromoting = false,
     className,
 }: SuggestionCardProps) {
     return (
         <div
-            onClick={onClick}
+            onClick={isPromoting ? undefined : onClick}
             className={cn(
-                "group relative aspect-[3/4] rounded-xl overflow-hidden bg-[#15121c] border border-purple-500/20 hover:border-purple-500/50 transition-all cursor-pointer flex flex-col p-2 sm:p-3",
+                "group relative aspect-[3/4] rounded-xl overflow-hidden bg-[#15121c] border border-purple-500/20 hover:border-purple-500/50 transition-all flex flex-col p-2 sm:p-3",
+                isPromoting 
+                    ? "cursor-wait opacity-70 border-purple-500/50" 
+                    : "cursor-pointer",
                 className
             )}
             style={{ borderTop: suggestion.theme_color ? `3px solid ${suggestion.theme_color}` : undefined }}
         >
-            {/* Reject Button - Only show if onReject is provided */}
-            {onReject && (
+            {/* Promoting Overlay */}
+            {isPromoting && (
+                <div className="absolute inset-0 z-30 bg-purple-900/40 backdrop-blur-sm flex flex-col items-center justify-center gap-2">
+                    <Loader2 className="w-6 h-6 text-purple-400 animate-spin" />
+                    <span className="text-[10px] font-bold text-purple-300 uppercase tracking-wider animate-pulse">Casting...</span>
+                </div>
+            )}
+
+            {/* Reject Button - Only show if onReject is provided and not promoting */}
+            {onReject && !isPromoting && (
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
@@ -70,3 +83,4 @@ export default function SuggestionCard({
         </div>
     );
 }
+

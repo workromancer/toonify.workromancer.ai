@@ -473,6 +473,7 @@ export default function CharacterListPage() {
                                                 suggestion={suggestion}
                                                 onClick={() => handleSuggestionClick(suggestion)}
                                                 onReject={(e) => handleRejectClick(e, suggestion)}
+                                                isPromoting={promotingSuggestionIds.has(suggestion.id)}
                                             />
                                         ))}
                                     </div>

@@ -18,6 +18,7 @@ interface CharacterSectionProps {
   isSuggestionsLoading: boolean;
   isAiRecommending: boolean;
   safeProjectId: string;
+  promotingSuggestionIds?: Set<string>;
   onCharacterClick: (char: Character) => void;
   onAiRecommend: () => void;
   onSuggestionClick: (suggestion: Suggestion) => void;
@@ -30,6 +31,7 @@ export function CharacterSection({
   isSuggestionsLoading,
   isAiRecommending,
   safeProjectId,
+  promotingSuggestionIds = new Set(),
   onCharacterClick,
   onAiRecommend,
   onSuggestionClick,
@@ -179,6 +181,7 @@ export function CharacterSection({
             key={suggestion.id}
             suggestion={suggestion}
             onClick={() => onSuggestionClick(suggestion)}
+            isPromoting={promotingSuggestionIds.has(suggestion.id)}
           />
         ))}
       </div>

@@ -64,6 +64,7 @@ export default function ProjectHome({
     isAiRecommending,
     handleAiRecommend,
     handlePromoteConfirm: promoteConfirm,
+    promotingSuggestionIds,
   } = useSuggestions({
     projectId: project.id,
     suggestionsStatus: project.suggestions_status,
@@ -235,6 +236,7 @@ export default function ProjectHome({
                 isSuggestionsLoading={isSuggestionsLoading}
                 isAiRecommending={isAiRecommending}
                 safeProjectId={safeProjectId}
+                promotingSuggestionIds={promotingSuggestionIds}
                 onCharacterClick={handleCharacterClick}
                 onAiRecommend={handleAiRecommend}
                 onSuggestionClick={handleSuggestionClick}
