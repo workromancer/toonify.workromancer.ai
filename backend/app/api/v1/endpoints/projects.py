@@ -2,91 +2,29 @@ from typing import Any, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlmodel import Session, select, col
 from uuid import UUID
+from datetime import datetime
 
 from app.api import deps
+from app.api.deps import engine
 from app.core import security
 from app.core.errors import AppException, ErrorCode
 from app.core.logging import get_logger
 from app.models import Project, Workspace, WorkspaceMember, User, Character, Genre, Asset
 from app.services.ai import ai_service
 from app.services.billing import billing_service
-from pydantic import BaseModel, root_validator, validator
-from datetime import datetime
 from app.services.storage import storage
-from app.api.deps import engine
+from app.schemas import (
+    ProjectCreate,
+    ProjectUpdate,
+    ProjectOut,
+    ProjectDetailOut,
+    WorldviewAugmentRequest,
+    StyleRecommendRequest,
+)
 
 logger = get_logger(__name__)
 
 router = APIRouter()
-
-class ProjectCreate(BaseModel):
-    title: str
-    subtitle: str | None = None
-    genre_ids: List[UUID] = []
-    worldview: dict | str | None = None
-    style_preset: str = "anime_webtoon" # Default
-    style_reference_url: str | None = None
-    language: str | None = None
-
-class ProjectUpdate(BaseModel):
-    title: str | None = None
-    subtitle: str | None = None
-    genre_ids: List[UUID] | None = None
-    worldview: dict | str | None = None
-    style_preset: str | None = None
-    style_reference_url: str | None = None
-    description: str | None = None
-    language: str | None = None
-
-class WorldviewAugmentRequest(BaseModel):
-    title: str
-    description: str
-    subtitle: str | None = None
-    genres: List[str] = []
-    language: str | None = None
-
-class StyleRecommendRequest(BaseModel):
-    description: str
-
-from app.core.config import settings
-
-class ProjectOut(BaseModel):
-    id: Any
-    title: str
-    subtitle: str | None
-    genres: List[str] = []
-    genre_ids: List[UUID] = []
-    # genre: str | None = None # Deprecated
-    # genre_id: UUID | None = None # Deprecated
-    worldview: dict | str | None
-    style_preset: str
-    style_reference_url: str | None = None
-    language: str = "en"
-    thumbnail_url: str | None = None
-    cover_image_status: str | None = None
-    created_at: datetime
-    workspace_id: Any
-
-    @root_validator(pre=True)
-    def resolve_fields(cls, values):
-        # Flatten genres if they exist in ORM object
-        if hasattr(values, "genres") and values.genres:
-             pass 
-        return values
-    
-    @validator("thumbnail_url", pre=True, always=True)
-    def make_full_url(cls, v: str | None) -> str | None:
-        if v and not v.startswith("http"):
-             return f"{settings.STORAGE_HOST}/{v}"
-        return v
-        
-    class Config:
-        orm_mode = True
-
-class ProjectDetailOut(ProjectOut):
-    characters: List[dict] = []
-
-# ... (existing code)
 
 def generate_project_cover_task(project_id: str, title: str, genre_name: str, worldview_content: str, style: str, tones: List[str] = None, style_ref_url: str = None, character_image_urls: List[str] = None, language: str = "en"):
     """

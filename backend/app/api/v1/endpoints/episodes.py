@@ -1,60 +1,30 @@
 from typing import Any, List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, Depends, HTTPException, Header, BackgroundTasks, Response
 from sqlmodel import Session, select
+from datetime import datetime
+from uuid import UUID
+import json
 
 from app.api import deps
 from app.core.config import settings
 from app.core.logging import get_logger
 from app.models import Episode, Project, WorkspaceMember, StoryCut, Character, EpisodeSuggestion
-from pydantic import BaseModel
-from datetime import datetime
-from uuid import UUID
-
-from uuid import UUID
-import json
 from app.services.ai import ai_service
 from app.services.storage import storage
-from fastapi import BackgroundTasks
-from app.db.engine import engine # Need engine for background task session
+from app.db.engine import engine  # Need engine for background task session
+from app.schemas import (
+    EpisodeCreate,
+    EpisodeUpdate,
+    EpisodeOut,
+    EpisodeSuggestionOut,
+    GenerateCutsRequest,
+    GenerateImageRequest,
+)
 
 logger = get_logger(__name__)
 
 router = APIRouter()
 
-class GenerateCutsRequest(BaseModel):
-    project_id: UUID
-    episode_title: str
-    episode_summary: str
-    style: Optional[str] = None
-    num_cuts: int = 6
-
-class GenerateImageRequest(BaseModel):
-    prompt_override: Optional[str] = None
-    use_previous_context: bool = True
-
-
-
-class EpisodeCreate(BaseModel):
-    title: str
-    project_id: UUID
-    episode_order: int
-    story_summary: str = ""
-
-class EpisodeOut(BaseModel):
-    id: Any
-    title: str
-    episode_order: int
-    project_id: Any
-    story_summary: str = ""
-    status: str
-    created_at: datetime
-    
-    # Context
-    background_info: Optional[str] = None
-    character_outfits: Optional[dict] = None
-    
-    # First cut thumbnail
-    first_cut_image: Optional[str] = None
 
 @router.get("", response_model=List[EpisodeOut])
 def list_episodes(
@@ -112,6 +82,7 @@ def list_episodes(
     
     return result
 
+
 @router.post("", response_model=EpisodeOut)
 def create_episode(
     *,
@@ -150,11 +121,6 @@ def get_episode(
         raise HTTPException(status_code=404, detail="Episode not found")
     return episode
 
-class EpisodeUpdate(BaseModel):
-    title: Optional[str] = None
-    story_summary: Optional[str] = None
-    background_info: Optional[str] = None
-    character_outfits: Optional[dict] = None
 
 @router.put("/{episode_id}", response_model=EpisodeOut)
 def update_episode(
@@ -185,6 +151,7 @@ def update_episode(
     session.refresh(episode)
     return episode
 
+
 @router.delete("/{episode_id}")
 def delete_episode(
     *,
@@ -204,19 +171,9 @@ def delete_episode(
     session.add(episode)
     session.commit()
     
-    from fastapi import Response
     return Response(status_code=204)
 
 # Episode Suggestions CRUD
-class EpisodeSuggestionOut(BaseModel):
-    id: UUID
-    title: str
-    summary: str
-    reason: Optional[str] = None
-    user_instruction: Optional[str] = None
-    is_used: bool
-    created_at: datetime
-
 @router.get("/suggestions/{project_id}", response_model=List[EpisodeSuggestionOut])
 def list_episode_suggestions(
     *,
@@ -253,7 +210,6 @@ def delete_episode_suggestion(
     session.add(suggestion)
     session.commit()
     
-    from fastapi import Response
     return Response(status_code=204)
 
 @router.post("/generate-options")

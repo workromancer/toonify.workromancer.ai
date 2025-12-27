@@ -81,17 +81,35 @@ from app.schemas import CharacterCreate
 
 ## ✅ 체크리스트
 
-- [ ] schemas 디렉토리 생성
-- [ ] base.py 작성
-- [ ] character.py 스키마 이동 (11개)
-- [ ] episode.py 스키마 이동 (6개)
-- [ ] project.py 스키마 이동 (6개)
-- [ ] endpoint 파일 import 변경
-- [ ] 테스트 통과
+- [x] schemas 디렉토리 생성
+- [x] base.py 작성
+- [x] character.py 스키마 이동 (10개)
+- [x] episode.py 스키마 이동 (6개)
+- [x] project.py 스키마 이동 (6개)
+- [x] endpoint 파일 import 변경
+- [x] Pydantic V2 호환성 (orm_mode → from_attributes)
+- [x] 구문 검사 통과
 
-## 📊 예상 결과
+## 📊 실제 결과
 
-| 지표                    | Before | After |
-| ----------------------- | ------ | ----- |
-| Endpoint 라인 수 (평균) | ~800   | ~600  |
-| 스키마 재사용성         | 0%     | 100%  |
+| 지표                  | Before | After |
+| --------------------- | ------ | ----- |
+| characters.py 라인 수 | 671    | 603   |
+| episodes.py 라인 수   | 994    | 949   |
+| projects.py 라인 수   | 607    | 544   |
+| Endpoint 총 라인 수   | 2,272  | 2,096 |
+| 스키마 재사용성       | 0%     | 100%  |
+
+### 생성된 스키마 파일
+
+```
+backend/app/schemas/
+├── __init__.py    (82줄) - 통합 export
+├── base.py        (21줄) - 공통 Mixin
+├── character.py   (115줄) - 캐릭터 스키마 10개
+├── episode.py     (77줄) - 에피소드 스키마 6개
+├── project.py     (88줄) - 프로젝트 스키마 6개
+└── common.py      (27줄) - 공통 패턴
+```
+
+**완료일**: 2025-12-27

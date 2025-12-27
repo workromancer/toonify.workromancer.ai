@@ -1,64 +1,33 @@
 from typing import Any, List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks, Response
 from sqlmodel import Session, select, col
-
-from app.api import deps
-from app.models import Character, Project, Asset
-from app.core.config import settings
-from app.core.logging import get_logger
-from pydantic import BaseModel, validator
 from datetime import datetime
 from uuid import UUID
-from fastapi import BackgroundTasks
-from app.services.storage import storage
+
+from app.api import deps
 from app.api.deps import engine
+from app.models import Character, Project, Asset
+from app.core.logging import get_logger
+from app.services.storage import storage
 from app.services.ai import ai_service
 from app.services.billing import billing_service
+from app.schemas import (
+    CharacterCreate,
+    CharacterUpdate,
+    CharacterAugmentRequest,
+    CharacterOut,
+    CharacterOption,
+    CharacterAugmentResponse,
+    SuggestionRequest,
+    CharacterAnalysisRequest,
+    BatchSuggestionRequest,
+    SuggestionUseRequest,
+)
 
 logger = get_logger(__name__)
 
 router = APIRouter()
 
-class CharacterCreate(BaseModel):
-    name: str
-    project_id: UUID
-    appearance_tags: List[str] = []
-    default_mood: List[str] = []
-    description: Optional[str] = None
-    profile: Optional[dict] = {}
-
-class CharacterUpdate(BaseModel):
-    name: Optional[str] = None
-    appearance_tags: Optional[List[str]] = None
-    default_mood: Optional[List[str]] = None
-    profile_image_url: Optional[str] = None
-    description: Optional[str] = None
-    profile: Optional[dict] = None
-
-class CharacterAugmentRequest(BaseModel):
-    name: str
-    tags: List[str]
-    mood: List[str]
-    project_id: UUID
-    language: Optional[str] = "en"
-
-class CharacterOut(BaseModel):
-    id: Any
-    name: str
-    project_id: Any
-    appearance_tags: List[str] = []
-    default_mood: Any = [] # Handle list or json string
-    profile_image_url: Optional[str] = None
-    description: Optional[str] = None
-    profile: Optional[dict] = {}
-    sheet_status: Optional[str] = "pending"
-    created_at: datetime
-
-    @validator("profile_image_url", pre=True, always=True)
-    def make_full_url(cls, v: str | None) -> str | None:
-        if v and not v.startswith("http"):
-             return f"{settings.STORAGE_HOST}/{v}"
-        return v
 
 @router.get("", response_model=List[CharacterOut])
 def list_characters(
@@ -78,6 +47,7 @@ def list_characters(
     statement = select(Character).where(Character.project_id == project_id).where(Character.deleted_at == None)
     characters = session.exec(statement).all()
     return characters
+
 
 @router.post("", response_model=CharacterOut)
 def create_character(
@@ -115,6 +85,7 @@ def create_character(
     session.refresh(character)
     return character
 
+
 @router.patch("/{character_id}", response_model=CharacterOut)
 def update_character(
     *,
@@ -150,6 +121,7 @@ def update_character(
     session.refresh(character)
     return character
 
+
 @router.get("/{character_id}", response_model=CharacterOut)
 def get_character(
     *,
@@ -164,6 +136,7 @@ def get_character(
     if not character or character.deleted_at is not None:
         raise HTTPException(status_code=404, detail="Character not found")
     return character
+
 
 @router.delete("/{character_id}")
 def delete_character(
@@ -183,22 +156,7 @@ def delete_character(
     session.add(character)
     session.commit()
     
-    from fastapi import Response
     return Response(status_code=204)
-
-
-class CharacterOption(BaseModel):
-    name: str
-    age: str
-    personality: str
-    features: List[str]
-    pros: List[str]
-    cons: List[str]
-    visual_description: str
-    reason: Optional[str] = None
-
-class CharacterAugmentResponse(BaseModel):
-    options: List[CharacterOption]
 
 @router.post("/augment", response_model=CharacterAugmentResponse)
 def augment_character(
@@ -348,16 +306,6 @@ def generate_character_image(
     
     return character
 
-class SuggestionRequest(BaseModel):
-    project_id: UUID
-    type: str # "name", "visuals", "lore"
-    current_name: Optional[str] = None
-    age: Optional[str] = None
-    role: Optional[str] = None
-    visual_keywords: Optional[List[str]] = []
-    personality: Optional[str] = None
-    language: Optional[str] = "en"
-
 @router.post("/suggest", response_model=Any)
 def suggest_character_attribute(
     *,
@@ -407,14 +355,6 @@ def suggest_character_attribute(
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-class CharacterAnalysisRequest(BaseModel):
-    project_id: UUID
-    name: str
-    age: str
-    visual_keywords: List[str]
-    personality: str
-    language: Optional[str] = "en"
-
 @router.post("/analyze", response_model=Any)
 def analyze_character(
     *,
@@ -458,13 +398,6 @@ def analyze_character(
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-class BatchSuggestionRequest(BaseModel):
-    project_id: UUID
-    language: Optional[str] = "en"
-
-class SuggestionUseRequest(BaseModel):
-    suggestion_id: UUID
 
 @router.post("/suggestions/batch", response_model=Any)
 def generate_batch_suggestions(
