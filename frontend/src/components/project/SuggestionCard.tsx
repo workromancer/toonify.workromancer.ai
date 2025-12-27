@@ -1,7 +1,8 @@
 'use client';
 
-import { Sparkles, X, Loader2 } from 'lucide-react';
+import { Sparkles, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { CustomLoader } from '@/components/ui/custom-loader';
 
 export interface Suggestion {
     id: string;
@@ -37,17 +38,37 @@ export default function SuggestionCard({
             className={cn(
                 "group relative aspect-[3/4] rounded-xl overflow-hidden bg-[#15121c] border border-purple-500/20 hover:border-purple-500/50 transition-all flex flex-col p-2 sm:p-3",
                 isPromoting 
-                    ? "cursor-wait opacity-70 border-purple-500/50" 
+                    ? "cursor-wait border-purple-500/50" 
                     : "cursor-pointer",
                 className
             )}
             style={{ borderTop: suggestion.theme_color ? `3px solid ${suggestion.theme_color}` : undefined }}
         >
-            {/* Promoting Overlay */}
+            {/* Promoting Overlay - Same style as ImageGeneratingPlaceholder */}
             {isPromoting && (
-                <div className="absolute inset-0 z-30 bg-purple-900/40 backdrop-blur-sm flex flex-col items-center justify-center gap-2">
-                    <Loader2 className="w-6 h-6 text-purple-400 animate-spin" />
-                    <span className="text-[10px] font-bold text-purple-300 uppercase tracking-wider animate-pulse">Casting...</span>
+                <div className="absolute inset-0 z-30 overflow-hidden bg-black/40 backdrop-blur-sm">
+                    {/* Animated Gradient Background */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer" style={{ backgroundSize: '200% 100%' }} />
+
+                    {/* Pulse Effect */}
+                    <div className="absolute inset-0 bg-purple-500/10 animate-pulse" />
+
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="flex flex-col items-center gap-2">
+                            <div className="relative">
+                                {/* Outer Glow */}
+                                <div className="absolute inset-0 bg-purple-500 blur-xl opacity-50 animate-pulse" />
+                                <CustomLoader size={32} className="relative text-purple-400" />
+                            </div>
+                            <span className="text-purple-200 font-bold tracking-widest text-xs animate-pulse drop-shadow-lg text-center px-2">
+                                생성 중...
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Corner Accents */}
+                    <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-purple-500/50 rounded-tl-lg m-2" />
+                    <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-purple-500/50 rounded-br-lg m-2" />
                 </div>
             )}
 
