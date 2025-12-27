@@ -2,12 +2,13 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Wand2 } from 'lucide-react';
+import { Wand2, RefreshCw, X, CheckSquare, Square } from 'lucide-react';
 import { CustomLoader } from '@/components/ui/custom-loader';
 import MobileEpisodeViewer from '@/components/viewer/MobileEpisodeViewer';
 import { useTranslations } from 'next-intl';
 import api from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { useCanvasStore } from '@/store/useCanvasStore';
 
 import { useStoryboard, useCutGeneration, useExport, useDirectorMode } from './hooks';
 import { StoryboardToolbar } from './StoryboardToolbar';
@@ -19,6 +20,16 @@ import type { StoryboardViewProps } from './types';
 export default function StoryboardView({ projectId, episodeId: propEpisodeId }: StoryboardViewProps) {
   const t = useTranslations('Project.Editor');
   const { toast } = useToast();
+  
+  // Regenerate mode state from store
+  const { 
+    isRegenerateMode, 
+    setRegenerateMode, 
+    selectedCutIds, 
+    toggleCutSelection, 
+    clearCutSelection,
+    selectAllCuts 
+  } = useCanvasStore();
   
   // Main storyboard state
   const {
@@ -48,6 +59,7 @@ export default function StoryboardView({ projectId, episodeId: propEpisodeId }: 
     setIsBatchGenerating,
     handleGenerateImage,
     handleGenerateAll,
+    handleRegenerateSelected,
   } = useCutGeneration({
     activeEpisodeId,
     cuts,
@@ -101,6 +113,21 @@ export default function StoryboardView({ projectId, episodeId: propEpisodeId }: 
     }
   };
 
+  // Handle cut click in regenerate mode
+  const handleCutClick = (cutId: string) => {
+    if (isRegenerateMode) {
+      toggleCutSelection(cutId);
+    } else {
+      setActiveCut(cutId);
+    }
+  };
+
+  // Select all cuts with images
+  const handleSelectAll = () => {
+    const cutsWithImages = cuts.filter(c => c.image_path).map(c => c.id);
+    selectAllCuts(cutsWithImages);
+  };
+
   // Reset batch generating flag when status changes
   if (episodeStatus !== 'generating' && isBatchGenerating) {
     setIsBatchGenerating(false);
@@ -125,6 +152,8 @@ export default function StoryboardView({ projectId, episodeId: propEpisodeId }: 
         isBatchGenerating={isBatchGenerating}
         onGenerateAll={handleGenerateAll}
         onExport={handleExport}
+        isRegenerateMode={isRegenerateMode}
+        onToggleRegenerateMode={() => setRegenerateMode(!isRegenerateMode)}
       />
 
       {/* Main Content Area with Position Indicator */}
@@ -135,7 +164,7 @@ export default function StoryboardView({ projectId, episodeId: propEpisodeId }: 
           activeCutId={activeCutId}
           cutRefs={cutRefs}
           onNavigate={navigateToCut}
-          onCutClick={(cutId) => setActiveCut(cutId)}
+          onCutClick={(cutId) => handleCutClick(cutId)}
         />
 
         {/* Scrollable Content */}
@@ -179,18 +208,19 @@ export default function StoryboardView({ projectId, episodeId: propEpisodeId }: 
                   key={cut.id}
                   cut={cut}
                   index={index}
-                  isSelected={activeCutId === cut.id}
+                  isSelected={isRegenerateMode ? selectedCutIds.has(cut.id) : activeCutId === cut.id}
                   isGenerating={generatingIds.has(cut.id)}
                   isBatchGenerating={isBatchGenerating}
                   episodeStatus={episodeStatus}
                   deleteConfirmationId={deleteConfirmationId}
-                  onSelect={() => setActiveCut(cut.id)}
+                  onSelect={() => handleCutClick(cut.id)}
                   onGenerate={() => handleGenerateImage(cut.id)}
                   onModify={() => setModifyingCut(cut)}
                   onDeleteRequest={() => setDeleteConfirmationId(cut.id)}
                   onDeleteConfirm={() => handleDeleteConfirm(cut.id)}
                   onDeleteCancel={() => setDeleteConfirmationId(null)}
                   cutRef={(el) => { cutRefs.current[index] = el; }}
+                  isRegenerateMode={isRegenerateMode}
                 />
               ))
             )}
@@ -210,6 +240,50 @@ export default function StoryboardView({ projectId, episodeId: propEpisodeId }: 
           </div>
         </div>
       </div>
+
+      {/* Regenerate Mode Floating Action Bar */}
+      {isRegenerateMode && (
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-4 duration-300">
+          <div className="bg-slate-900/95 border border-slate-700 rounded-2xl shadow-2xl shadow-black/50 px-4 py-3 flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSelectAll}
+              className="text-slate-400 hover:text-white text-xs"
+            >
+              <CheckSquare size={14} className="mr-1" />
+              {t('selectAll') || '전체 선택'}
+            </Button>
+            
+            <div className="h-4 w-px bg-slate-700" />
+            
+            <span className="text-xs text-slate-400">
+              {selectedCutIds.size}개 선택됨
+            </span>
+            
+            <Button
+              onClick={() => handleRegenerateSelected(selectedCutIds, clearCutSelection, setRegenerateMode)}
+              disabled={selectedCutIds.size === 0}
+              className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white font-bold text-xs px-4 disabled:opacity-50"
+            >
+              <RefreshCw size={14} className="mr-1" />
+              {t('regenerateSelected') || '다시 생성'} ({selectedCutIds.size})
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                clearCutSelection();
+                setRegenerateMode(false);
+              }}
+              className="text-slate-400 hover:text-white"
+            >
+              <X size={16} />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Mobile Viewer */}
       <MobileEpisodeViewer

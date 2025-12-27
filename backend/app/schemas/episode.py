@@ -40,6 +40,11 @@ class GenerateImageRequest(BaseModel):
     use_previous_context: bool = True
 
 
+class BatchRegenerateRequest(BaseModel):
+    """Schema for regenerating multiple cuts."""
+    cut_ids: List[UUID]
+
+
 # ========== Response Schemas ==========
 
 class EpisodeOut(BaseModel):

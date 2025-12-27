@@ -19,6 +19,13 @@ interface CanvasState {
     generatingIdsSet: Set<string>;
     addGeneratingId: (id: string) => void;
     removeGeneratingId: (id: string) => void;
+    // Multi-select regeneration mode
+    isRegenerateMode: boolean;
+    setRegenerateMode: (isOn: boolean) => void;
+    selectedCutIds: Set<string>;
+    toggleCutSelection: (id: string) => void;
+    clearCutSelection: () => void;
+    selectAllCuts: (ids: string[]) => void;
 }
 
 export const useCanvasStore = create<CanvasState>((set, get) => ({
@@ -27,7 +34,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     activeEpisodeStatus: 'ready',
     activeCutId: null,
     setActiveCharacter: (char) => set({ activeCharacter: char }),
-    setActiveEpisode: (id) => set({ activeEpisodeId: id, activeCutId: null }),
+    setActiveEpisode: (id) => set({ activeEpisodeId: id, activeCutId: null, selectedCutIds: new Set(), isRegenerateMode: false }),
     setActiveEpisodeStatus: (status) => set({ activeEpisodeStatus: status }),
     setActiveCut: (id) => set({ activeCutId: id }),
     isReviewMode: false,
@@ -39,6 +46,22 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
         next.delete(id);
         return { generatingIdsSet: next };
     }),
+    
+    // Multi-select regeneration mode
+    isRegenerateMode: false,
+    setRegenerateMode: (isOn) => set({ isRegenerateMode: isOn, selectedCutIds: new Set() }),
+    selectedCutIds: new Set(),
+    toggleCutSelection: (id) => set((state) => {
+        const next = new Set(state.selectedCutIds);
+        if (next.has(id)) {
+            next.delete(id);
+        } else {
+            next.add(id);
+        }
+        return { selectedCutIds: next };
+    }),
+    clearCutSelection: () => set({ selectedCutIds: new Set() }),
+    selectAllCuts: (ids) => set({ selectedCutIds: new Set(ids) }),
 
     updateCut: async (updates: any) => {
         const { activeCutId } = get();

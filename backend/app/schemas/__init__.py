@@ -33,6 +33,7 @@ from app.schemas.episode import (
     EpisodeSuggestionOut,
     GenerateCutsRequest,
     GenerateImageRequest,
+    BatchRegenerateRequest,
 )
 
 # Project schemas
@@ -72,6 +73,7 @@ __all__ = [
     "EpisodeSuggestionOut",
     "GenerateCutsRequest",
     "GenerateImageRequest",
+    "BatchRegenerateRequest",
     # Project
     "ProjectCreate",
     "ProjectUpdate",

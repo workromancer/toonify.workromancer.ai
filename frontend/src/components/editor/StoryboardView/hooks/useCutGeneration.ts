@@ -82,6 +82,40 @@ export function useCutGeneration({
     }
   }, [activeEpisodeId, cuts, toast, t, setEpisodeStatus, setActiveEpisodeStatus]);
 
+  const handleRegenerateSelected = useCallback(async (selectedCutIds: Set<string>, clearSelection: () => void, setRegenerateMode: (v: boolean) => void) => {
+    if (!activeEpisodeId || selectedCutIds.size === 0) return;
+
+    const cutIds = Array.from(selectedCutIds);
+    
+    // Mark all as generating
+    cutIds.forEach(id => addGeneratingId(id));
+    
+    toast({ 
+      title: t('toasts.batchStart') || 'Regenerating...', 
+      description: t('toasts.batchStartDesc', { count: cutIds.length }) || `Regenerating ${cutIds.length} cuts...`
+    });
+
+    try {
+      await api.post(`/episodes/${activeEpisodeId}/regenerate-selected`, {
+        cut_ids: cutIds
+      });
+
+      sendGAEvent('event', 'batch_regenerate_cuts', {
+        episode_id: activeEpisodeId,
+        cut_count: cutIds.length
+      });
+      
+      // Clear selection and exit regenerate mode
+      clearSelection();
+      setRegenerateMode(false);
+
+    } catch (err) {
+      console.error("Batch Regen Failed", err);
+      toast({ title: t('toasts.genFailed'), description: t('toasts.genServerFailed'), variant: "destructive" });
+      cutIds.forEach(id => removeGeneratingId(id));
+    }
+  }, [activeEpisodeId, addGeneratingId, removeGeneratingId, toast, t]);
+
   // Reset batch generating flag when episode status changes
   const resetBatchGenerating = useCallback((status: string) => {
     if (status !== 'generating') {
@@ -94,6 +128,7 @@ export function useCutGeneration({
     setIsBatchGenerating,
     handleGenerateImage,
     handleGenerateAll,
+    handleRegenerateSelected,
     resetBatchGenerating,
   };
 }

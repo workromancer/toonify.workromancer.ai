@@ -639,3 +639,36 @@ def generate_episode_images_sequentially(episode_id: UUID):
                  episode.status = "ready" # Or 'failed'
                  session.add(episode)
                  session.commit()
+
+
+def regenerate_selected_cuts_task(episode_id: UUID, cut_ids: list[UUID], language: str = "en"):
+    """Background task to regenerate selected cuts in an episode sequentially."""
+    logger.info("Starting sequential batch regeneration", episode_id=str(episode_id), cut_count=len(cut_ids))
+    
+    try:
+        # Sort cuts by cut_order to ensure correct previous cut reference
+        with Session(engine) as session:
+            cuts = session.exec(
+                select(StoryCut)
+                .where(StoryCut.id.in_(cut_ids))
+                .order_by(StoryCut.cut_order)
+            ).all()
+            sorted_cut_ids = [cut.id for cut in cuts]
+        
+        # Generate sequentially in order
+        for cut_id in sorted_cut_ids:
+            logger.debug("Regenerating cut (sequential)", cut_id=str(cut_id))
+            generate_cut_task(cut_id, prompt_override=None, language=language, use_previous_context=True)
+        
+        logger.info("Sequential batch regeneration completed", episode_id=str(episode_id), cut_count=len(cut_ids))
+        
+    except Exception as e:
+        logger.error("Batch regeneration error", episode_id=str(episode_id), error=str(e))
+        # Reset status for remaining cuts
+        with Session(engine) as session:
+            for cut_id in cut_ids:
+                cut = session.get(StoryCut, cut_id)
+                if cut and cut.status == "generating":
+                    cut.status = "failed"
+                    session.add(cut)
+            session.commit()

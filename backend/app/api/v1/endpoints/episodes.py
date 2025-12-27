@@ -18,11 +18,13 @@ from app.schemas import (
     EpisodeSuggestionOut,
     GenerateCutsRequest,
     GenerateImageRequest,
+    BatchRegenerateRequest,
 )
 from app.tasks.episode_tasks import (
     generate_episode_cuts_task,
     generate_cut_task,
     generate_episode_images_sequentially,
+    regenerate_selected_cuts_task,
 )
 
 logger = get_logger(__name__)
@@ -492,6 +494,46 @@ def generate_episode_images(
     
     return {"message": "Sequential generation started"}
 
+
+@router.post("/{episode_id}/regenerate-selected")
+def regenerate_selected_cuts(
+    *,
+    session: Session = Depends(deps.get_session),
+    episode_id: UUID,
+    request: BatchRegenerateRequest,
+    background_tasks: BackgroundTasks,
+    current_user_id: str = Depends(deps.get_current_user_id),
+) -> Any:
+    """
+    Regenerate selected cuts in an episode.
+    """
+    episode = session.get(Episode, episode_id)
+    if not episode or episode.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Episode not found")
+    
+    # Validate cut IDs belong to this episode
+    valid_cut_ids = []
+    for cut_id in request.cut_ids:
+        cut = session.get(StoryCut, cut_id)
+        if cut and cut.episode_id == episode_id:
+            valid_cut_ids.append(cut_id)
+            # Set cut status to generating
+            cut.status = "generating"
+            session.add(cut)
+    
+    if not valid_cut_ids:
+        raise HTTPException(status_code=400, detail="No valid cuts to regenerate")
+    
+    # Get project language
+    project = session.get(Project, episode.project_id)
+    language = project.language if project else "en"
+    
+    session.commit()
+    
+    # Start background task
+    background_tasks.add_task(regenerate_selected_cuts_task, episode_id, valid_cut_ids, language)
+    
+    return {"message": f"Regenerating {len(valid_cut_ids)} cuts", "cut_ids": valid_cut_ids}
 
 @router.post("/{episode_id}/export")
 def export_episode(

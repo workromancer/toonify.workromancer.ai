@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Image as ImageIcon, Trash2, Sparkles, RefreshCw, Wand2 } from 'lucide-react';
+import { Image as ImageIcon, Trash2, Sparkles, RefreshCw, Wand2, CheckCircle2, Circle } from 'lucide-react';
 import { CustomLoader } from '@/components/ui/custom-loader';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useTranslations } from 'next-intl';
@@ -22,6 +22,7 @@ interface CutCardProps {
   onDeleteConfirm: () => void;
   onDeleteCancel: () => void;
   cutRef: (el: HTMLDivElement | null) => void;
+  isRegenerateMode?: boolean;
 }
 
 export function CutCard({
@@ -38,6 +39,7 @@ export function CutCard({
   onDeleteConfirm,
   onDeleteCancel,
   cutRef,
+  isRegenerateMode = false,
 }: CutCardProps) {
   const t = useTranslations('Project.Editor');
   const tc = useTranslations('Common');
@@ -45,49 +47,68 @@ export function CutCard({
   const isCurrentlyGenerating = isGenerating || cut.status === 'generating';
   const isDisabledForGeneration = isBatchGenerating || episodeStatus === 'generating';
 
+  // In regenerate mode, only cuts with images can be selected
+  const canSelect = !isRegenerateMode || cut.image_path;
+
   return (
     <div
       ref={cutRef}
-      onClick={onSelect}
+      onClick={canSelect ? onSelect : undefined}
       className={`
-        group relative bg-[#0f0f16] border rounded-xl overflow-hidden transition-all cursor-pointer
-        ${isSelected
-          ? 'border-purple-500 ring-2 ring-purple-500/50 shadow-2xl shadow-purple-500/10 scale-[1.01]'
-          : 'border-slate-800 hover:border-slate-600 opacity-90 hover:opacity-100'}
+        group relative bg-[#0f0f16] border rounded-xl overflow-hidden transition-all
+        ${canSelect ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}
+        ${isRegenerateMode && isSelected
+          ? 'border-orange-500 ring-2 ring-orange-500/50 shadow-2xl shadow-orange-500/10 scale-[1.01]'
+          : isSelected && !isRegenerateMode
+            ? 'border-purple-500 ring-2 ring-purple-500/50 shadow-2xl shadow-purple-500/10 scale-[1.01]'
+            : 'border-slate-800 hover:border-slate-600 opacity-90 hover:opacity-100'}
       `}
     >
+      {/* Regenerate Mode Selection Indicator */}
+      {isRegenerateMode && cut.image_path && (
+        <div className="absolute top-3 left-3 z-20">
+          {isSelected ? (
+            <CheckCircle2 size={24} className="text-orange-500 fill-orange-500/20" />
+          ) : (
+            <Circle size={24} className="text-slate-500" />
+          )}
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between px-4 md:px-5 py-3 md:py-4 bg-[#13131c] border-b border-slate-800">
         <span className="text-xs md:text-sm font-bold text-slate-400 font-mono">
           {t('sceneHeader', { order: String(cut.cut_order).padStart(2, '0') })}
         </span>
-        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button
-            className="p-1 hover:text-purple-400 text-slate-500 transition-colors"
-            onClick={(e) => { e.stopPropagation(); onModify(); }}
-            title={t('refineWithAi')}
-          >
-            <Sparkles size={14} />
-          </button>
-          <ConfirmationDialog
-            open={deleteConfirmationId === cut.id}
-            onOpenChange={(open) => !open && onDeleteCancel()}
-            title={tc('delete')}
-            description={tc('deleteConfirm')}
-            confirmLabel={tc('delete')}
-            cancelLabel={tc('cancel')}
-            onConfirm={onDeleteConfirm}
-            variant="destructive"
-            trigger={
-              <button
-                className="p-1 hover:text-red-400 text-slate-500 transition-colors"
-                onClick={(e) => { e.stopPropagation(); onDeleteRequest(); }}
-              >
-                <Trash2 size={14} />
-              </button>
-            }
-          />
-        </div>
+        {!isRegenerateMode && (
+          <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              className="p-1 hover:text-purple-400 text-slate-500 transition-colors"
+              onClick={(e) => { e.stopPropagation(); onModify(); }}
+              title={t('refineWithAi')}
+            >
+              <Sparkles size={14} />
+            </button>
+            <ConfirmationDialog
+              open={deleteConfirmationId === cut.id}
+              onOpenChange={(open) => !open && onDeleteCancel()}
+              title={tc('delete')}
+              description={tc('deleteConfirm')}
+              confirmLabel={tc('delete')}
+              cancelLabel={tc('cancel')}
+              onConfirm={onDeleteConfirm}
+              variant="destructive"
+              trigger={
+                <button
+                  className="p-1 hover:text-red-400 text-slate-500 transition-colors"
+                  onClick={(e) => { e.stopPropagation(); onDeleteRequest(); }}
+                >
+                  <Trash2 size={14} />
+                </button>
+              }
+            />
+          </div>
+        )}
       </div>
 
       {/* Content Grid */}
@@ -108,8 +129,8 @@ export function CutCard({
                   <span className="text-[10px] text-purple-200 font-bold bg-black/50 px-2 py-0.5 rounded-full">{t('rendering')}</span>
                 </div>
               )}
-              {/* Regenerate Button Overlay */}
-              {!isCurrentlyGenerating && (
+              {/* Regenerate Button Overlay - Hide in regenerate mode */}
+              {!isCurrentlyGenerating && !isRegenerateMode && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity">
                   <Button
                     variant="secondary"
@@ -138,15 +159,17 @@ export function CutCard({
                 <>
                   <ImageIcon size={32} className="opacity-30" />
                   <span className="text-[10px] opacity-50">{t('noImage')}</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    disabled={isDisabledForGeneration}
-                    onClick={(e) => { e.stopPropagation(); onGenerate(); }}
-                    className={`h-6 text-[10px] mt-1 border border-slate-700 ${isDisabledForGeneration ? 'bg-slate-900 text-slate-600 cursor-not-allowed' : 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white'}`}
-                  >
-                    {t('generate')}
-                  </Button>
+                  {!isRegenerateMode && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={isDisabledForGeneration}
+                      onClick={(e) => { e.stopPropagation(); onGenerate(); }}
+                      className={`h-6 text-[10px] mt-1 border border-slate-700 ${isDisabledForGeneration ? 'bg-slate-900 text-slate-600 cursor-not-allowed' : 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white'}`}
+                    >
+                      {t('generate')}
+                    </Button>
+                  )}
                 </>
               )}
             </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Loader2, Sparkles, Download, Clapperboard } from 'lucide-react';
+import { Loader2, Sparkles, Download, Clapperboard, RefreshCw } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import {
   DropdownMenu,
@@ -16,6 +16,8 @@ interface StoryboardToolbarProps {
   isBatchGenerating: boolean;
   onGenerateAll: () => void;
   onExport: (format: 'zip' | 'webtoon') => void;
+  isRegenerateMode?: boolean;
+  onToggleRegenerateMode?: () => void;
 }
 
 export function StoryboardToolbar({
@@ -23,6 +25,8 @@ export function StoryboardToolbar({
   isBatchGenerating,
   onGenerateAll,
   onExport,
+  isRegenerateMode,
+  onToggleRegenerateMode,
 }: StoryboardToolbarProps) {
   const t = useTranslations('Project.Editor');
 
@@ -33,6 +37,22 @@ export function StoryboardToolbar({
         {t('storyboardTitle')}
       </h2>
       <div className="flex gap-2">
+        {/* Regenerate Mode Toggle */}
+        {cuts.some(c => c.image_path) && onToggleRegenerateMode && (
+          <Button
+            variant={isRegenerateMode ? "default" : "outline"}
+            size="sm"
+            onClick={onToggleRegenerateMode}
+            className={`h-7 text-xs ${isRegenerateMode 
+              ? 'bg-orange-600 hover:bg-orange-500 text-white border-orange-600' 
+              : 'border-orange-500/30 text-orange-400 bg-orange-500/10 hover:bg-orange-500/20 hover:text-orange-300'
+            }`}
+          >
+            <RefreshCw size={12} className="mr-1" />
+            {t('regenerateMode') || '다시 생성 모드'}
+          </Button>
+        )}
+
         {cuts.some(c => !c.image_path) && (
           <Button
             variant="outline"
