@@ -38,28 +38,28 @@ const STYLES: ArtStyle[] = [
     { id: 'sd-chibi-mix', name: 'SD Chibi Mix', description: 'Custom merge model', previewColor: 'bg-pink-600', category: 'MY_MODELS', isLocked: true },
 
     // CLASSIC & WEBTOON
-    { id: 'standard-webtoon', name: 'Standard Webtoon', description: 'Clean lines, vibrant colors', previewColor: 'bg-blue-600', imageUrl: '/images/styles/standard-webtoon.png', category: 'CLASSIC_WEBTOON' },
-    { id: 'classic-manhwa', name: 'Classic Manhwa', description: 'Detailed B&W inking', previewColor: 'bg-slate-600', imageUrl: '/images/styles/classic-manhwa.png', category: 'CLASSIC_WEBTOON' },
-    { id: 'anime-style', name: 'Anime Style', description: 'Large eyes, cel shading', previewColor: 'bg-pink-500', imageUrl: '/images/styles/anime-style.png', category: 'CLASSIC_WEBTOON' },
-    { id: 'semi-realism', name: 'Semi-Realism', description: 'Balanced proportions', previewColor: 'bg-indigo-500', imageUrl: '/images/styles/semi-realism.png', category: 'CLASSIC_WEBTOON' },
+    { id: 'standard-webtoon', name: 'Standard Webtoon', description: 'Clean lines, vibrant colors', previewColor: 'bg-blue-600', imageUrl: 'https://storage.googleapis.com/toonify-prod-assets/styles/presets/standard-webtoon.png', category: 'CLASSIC_WEBTOON' },
+    { id: 'classic-manhwa', name: 'Classic Manhwa', description: 'Detailed B&W inking', previewColor: 'bg-slate-600', imageUrl: 'https://storage.googleapis.com/toonify-prod-assets/styles/presets/classic-manhwa.png', category: 'CLASSIC_WEBTOON' },
+    { id: 'anime-style', name: 'Anime Style', description: 'Large eyes, cel shading', previewColor: 'bg-pink-500', imageUrl: 'https://storage.googleapis.com/toonify-prod-assets/styles/presets/anime-style.png', category: 'CLASSIC_WEBTOON' },
+    { id: 'semi-realism', name: 'Semi-Realism', description: 'Balanced proportions', previewColor: 'bg-indigo-500', imageUrl: 'https://storage.googleapis.com/toonify-prod-assets/styles/presets/semi-realism.png', category: 'CLASSIC_WEBTOON' },
 
     // ARTISTIC & PAINTERLY
-    { id: 'watercolor', name: 'Watercolor', description: 'Soft edges, wet texture', previewColor: 'bg-cyan-500', imageUrl: '/images/styles/watercolor.png', category: 'ARTISTIC_PAINTERLY' },
-    { id: 'oil-painting', name: 'Oil Painting', description: 'Rich texture, heavy strokes', previewColor: 'bg-orange-700', imageUrl: '/images/styles/oil-painting.png', category: 'ARTISTIC_PAINTERLY' },
-    { id: 'impasto', name: 'Impasto', description: 'Thick, 3D paint texture', previewColor: 'bg-red-700', imageUrl: '/images/styles/impasto.png', category: 'ARTISTIC_PAINTERLY' },
-    { id: 'ink-wash', name: 'Ink Wash (Sumi-e)', description: 'Traditional asian ink', previewColor: 'bg-stone-600', imageUrl: '/images/styles/ink-wash.png', category: 'ARTISTIC_PAINTERLY' },
+    { id: 'watercolor', name: 'Watercolor', description: 'Soft edges, wet texture', previewColor: 'bg-cyan-500', imageUrl: 'https://storage.googleapis.com/toonify-prod-assets/styles/presets/watercolor.png', category: 'ARTISTIC_PAINTERLY' },
+    { id: 'oil-painting', name: 'Oil Painting', description: 'Rich texture, heavy strokes', previewColor: 'bg-orange-700', imageUrl: 'https://storage.googleapis.com/toonify-prod-assets/styles/presets/oil-painting.png', category: 'ARTISTIC_PAINTERLY' },
+    { id: 'impasto', name: 'Impasto', description: 'Thick, 3D paint texture', previewColor: 'bg-red-700', imageUrl: 'https://storage.googleapis.com/toonify-prod-assets/styles/presets/impasto.png', category: 'ARTISTIC_PAINTERLY' },
+    { id: 'ink-wash', name: 'Ink Wash (Sumi-e)', description: 'Traditional asian ink', previewColor: 'bg-stone-600', imageUrl: 'https://storage.googleapis.com/toonify-prod-assets/styles/presets/ink-wash.png', category: 'ARTISTIC_PAINTERLY' },
 
     // STYLIZED & GRAPHIC
-    { id: 'flat-vector', name: 'Flat Vector', description: 'Minimalist, no outlines', previewColor: 'bg-emerald-500', imageUrl: '/images/styles/flat-vector.png', category: 'STYLIZED_GRAPHIC' },
-    { id: 'pixel-art', name: 'Pixel Art', description: 'Retro 8-bit aesthetic', previewColor: 'bg-purple-600', imageUrl: '/images/styles/pixel-art.png', category: 'STYLIZED_GRAPHIC' },
-    { id: 'chibi-sd', name: 'Chibi (SD)', description: 'Cute, small proportions', previewColor: 'bg-yellow-500', imageUrl: '/images/styles/chibi-sd.png', category: 'STYLIZED_GRAPHIC' },
-    { id: 'pop-art', name: 'Pop Art', description: 'Halftones, bold contrast', previewColor: 'bg-fuchsia-600', imageUrl: '/images/styles/pop-art.png', category: 'STYLIZED_GRAPHIC' },
+    { id: 'flat-vector', name: 'Flat Vector', description: 'Minimalist, no outlines', previewColor: 'bg-emerald-500', imageUrl: 'https://storage.googleapis.com/toonify-prod-assets/styles/presets/flat-vector.png', category: 'STYLIZED_GRAPHIC' },
+    { id: 'pixel-art', name: 'Pixel Art', description: 'Retro 8-bit aesthetic', previewColor: 'bg-purple-600', imageUrl: 'https://storage.googleapis.com/toonify-prod-assets/styles/presets/pixel-art.png', category: 'STYLIZED_GRAPHIC' },
+    { id: 'chibi-sd', name: 'Chibi (SD)', description: 'Cute, small proportions', previewColor: 'bg-yellow-500', imageUrl: 'https://storage.googleapis.com/toonify-prod-assets/styles/presets/chibi-sd.png', category: 'STYLIZED_GRAPHIC' },
+    { id: 'pop-art', name: 'Pop Art', description: 'Halftones, bold contrast', previewColor: 'bg-fuchsia-600', imageUrl: 'https://storage.googleapis.com/toonify-prod-assets/styles/presets/pop-art.png', category: 'STYLIZED_GRAPHIC' },
 
     // GENRE SPECIFIC
-    { id: 'noir', name: 'Noir / Dark', description: 'High contrast shadows', previewColor: 'bg-slate-800', imageUrl: '/images/styles/noir.png', category: 'GENRE_SPECIFIC' },
-    { id: 'cyberpunk', name: 'Cyberpunk', description: 'Neon lights, futuristic', previewColor: 'bg-violet-600', imageUrl: '/images/styles/cyberpunk.png', category: 'GENRE_SPECIFIC' },
-    { id: 'eldritch', name: 'Eldritch Horror', description: 'Gritty, unsettling lines', previewColor: 'bg-rose-900', imageUrl: '/images/styles/eldritch.png', category: 'GENRE_SPECIFIC' },
-    { id: 'vintage-comic', name: 'Vintage Comic', description: 'Retro paper texture', previewColor: 'bg-amber-700', imageUrl: '/images/styles/vintage-comic.png', category: 'GENRE_SPECIFIC' },
+    { id: 'noir', name: 'Noir / Dark', description: 'High contrast shadows', previewColor: 'bg-slate-800', imageUrl: 'https://storage.googleapis.com/toonify-prod-assets/styles/presets/noir.png', category: 'GENRE_SPECIFIC' },
+    { id: 'cyberpunk', name: 'Cyberpunk', description: 'Neon lights, futuristic', previewColor: 'bg-violet-600', imageUrl: 'https://storage.googleapis.com/toonify-prod-assets/styles/presets/cyberpunk.png', category: 'GENRE_SPECIFIC' },
+    { id: 'eldritch', name: 'Eldritch Horror', description: 'Gritty, unsettling lines', previewColor: 'bg-rose-900', imageUrl: 'https://storage.googleapis.com/toonify-prod-assets/styles/presets/eldritch.png', category: 'GENRE_SPECIFIC' },
+    { id: 'vintage-comic', name: 'Vintage Comic', description: 'Retro paper texture', previewColor: 'bg-amber-700', imageUrl: 'https://storage.googleapis.com/toonify-prod-assets/styles/presets/vintage-comic.png', category: 'GENRE_SPECIFIC' },
 ];
 
 export default function ArtStyleSetupModal({

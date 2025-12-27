@@ -216,7 +216,16 @@ class ImageAIService(BaseAIService):
                     )
                 ]
                  
+                # System instruction for style consistency in cover
+                cover_system_instruction = (
+                    "You are a professional webtoon cover artist. "
+                    "Your PRIMARY OBJECTIVE is to create an eye-catching cover that perfectly matches the specified art style. "
+                    "If a STYLE REFERENCE IMAGE is provided, replicate its exact visual aesthetic. "
+                    f"TARGET ART STYLE: {style}"
+                )
+                
                 config = types.GenerateContentConfig(
+                    system_instruction=cover_system_instruction,
                     response_modalities=['IMAGE'], 
                     image_config=types.ImageConfig(
                         aspect_ratio="16:9",
@@ -283,7 +292,17 @@ class ImageAIService(BaseAIService):
                     )
                 ]
                  
+                # System instruction for style consistency in character sheet
+                sheet_system_instruction = (
+                    "You are a professional character concept artist. "
+                    "Your PRIMARY OBJECTIVE is to create a consistent character reference sheet. "
+                    "If a STYLE REFERENCE IMAGE is provided, replicate its exact visual aesthetic. "
+                    f"TARGET ART STYLE: {style}. "
+                    "IMPORTANT: Use a pure white background with NO scenery or complex elements."
+                )
+                
                 config = types.GenerateContentConfig(
+                    system_instruction=sheet_system_instruction,
                     response_modalities=['IMAGE'], 
                     image_config=types.ImageConfig(
                         aspect_ratio="9:16",

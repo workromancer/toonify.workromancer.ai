@@ -123,7 +123,24 @@ class PanelAIService(BaseAIService):
             
             contents = image_parts + [full_prompt]
             
+            # Build System Instruction for style consistency
+            system_parts = [
+                "You are a professional webtoon artist. Your PRIMARY OBJECTIVE is visual consistency.",
+                "CRITICAL RULES:",
+                "1. If a STYLE REFERENCE IMAGE is provided, you MUST replicate its exact art style - brushwork, color palette, shading technique, and overall aesthetic.",
+                "2. IMPORTANT: The STYLE REFERENCE IMAGE is for STYLE ONLY. Do NOT copy or reproduce any people, characters, or figures shown in the style reference. Create NEW characters based on the scene description.",
+                "3. The specified art style takes ABSOLUTE PRECEDENCE over any other visual interpretation.",
+                "4. Maintain consistent character appearances across panels using the CHARACTER REFERENCE IMAGES (if provided).",
+                "5. Do NOT add text labels, character names, or watermarks to the image.",
+                "6. Panel borders should only be used when dramatically necessary."
+            ]
+            if art_style:
+                system_parts.append(f"7. TARGET ART STYLE: {art_style}")
+            
+            system_instruction = "\n".join(system_parts)
+            
             config = types.GenerateContentConfig(
+                system_instruction=system_instruction,
                 response_modalities=['IMAGE'], 
                 image_config=types.ImageConfig(aspect_ratio=final_ratio)
             )
