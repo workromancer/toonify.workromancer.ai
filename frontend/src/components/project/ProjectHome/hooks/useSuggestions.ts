@@ -19,7 +19,7 @@ interface UseSuggestionsReturn {
   isAiRecommending: boolean;
   handleAiRecommend: () => Promise<void>;
   handlePromoteConfirm: (suggestionId: string) => Promise<void>;
-  promotingSuggestionId: string | null;
+  promotingSuggestionIds: Set<string>;
 }
 
 export function useSuggestions({
@@ -30,7 +30,7 @@ export function useSuggestions({
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [isSuggestionsLoading, setIsSuggestionsLoading] = useState(false);
   const [isAiRecommending, setIsAiRecommending] = useState(false);
-  const [promotingSuggestionId, setPromotingSuggestionId] = useState<string | null>(null);
+  const [promotingSuggestionIds, setPromotingSuggestionIds] = useState<Set<string>>(new Set());
 
   const { toast } = useToast();
   const t = useTranslations('Project.Home');
@@ -50,8 +50,11 @@ export function useSuggestions({
   }, [projectId, toast, t]);
 
   const handlePromoteConfirm = useCallback(async (suggestionId: string) => {
-    if (promotingSuggestionId) return;
-    setPromotingSuggestionId(suggestionId);
+    // Check if this specific suggestion is already being promoted
+    if (promotingSuggestionIds.has(suggestionId)) return;
+    
+    // Add this suggestion to the promoting set
+    setPromotingSuggestionIds(prev => new Set(prev).add(suggestionId));
     
     try {
       await api.post(`/characters/suggestions/${suggestionId}/promote`);
@@ -68,9 +71,14 @@ export function useSuggestions({
         toast({ title: "Error", description: t('castFailed'), variant: 'destructive' });
       }
     } finally {
-      setPromotingSuggestionId(null);
+      // Remove this suggestion from the promoting set
+      setPromotingSuggestionIds(prev => {
+        const next = new Set(prev);
+        next.delete(suggestionId);
+        return next;
+      });
     }
-  }, [promotingSuggestionId, onRefreshCharacters, toast, t]);
+  }, [promotingSuggestionIds, onRefreshCharacters, toast, t]);
 
   // Polling for suggestions
   useEffect(() => {
@@ -109,6 +117,6 @@ export function useSuggestions({
     isAiRecommending,
     handleAiRecommend,
     handlePromoteConfirm,
-    promotingSuggestionId,
+    promotingSuggestionIds,
   };
 }

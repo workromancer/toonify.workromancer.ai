@@ -79,7 +79,7 @@ export default function CharacterListPage() {
     const [isPromoteConfirmOpen, setIsPromoteConfirmOpen] = useState(false);
     const [promoteSource, setPromoteSource] = useState<'list' | 'modal'>('list');
     const [isAiRecommending, setIsAiRecommending] = useState(false);
-    const [promotingSuggestionId, setPromotingSuggestionId] = useState<string | null>(null);
+    const [promotingSuggestionIds, setPromotingSuggestionIds] = useState<Set<string>>(new Set());
 
     const handleAiRecommend = async () => {
         if (!project) return;
@@ -273,8 +273,12 @@ export default function CharacterListPage() {
     };
 
     const handlePromoteConfirm = async () => {
-        if (!suggestionToPromote || promotingSuggestionId) return;
-        setPromotingSuggestionId(suggestionToPromote.id);
+        if (!suggestionToPromote) return;
+        // Check if this specific suggestion is already being promoted
+        if (promotingSuggestionIds.has(suggestionToPromote.id)) return;
+        
+        // Add this suggestion to the promoting set
+        setPromotingSuggestionIds(prev => new Set(prev).add(suggestionToPromote.id));
         try {
             await api.post(`/characters/suggestions/${suggestionToPromote.id}/promote`);
 
@@ -311,7 +315,12 @@ export default function CharacterListPage() {
                 });
             }
         } finally {
-            setPromotingSuggestionId(null);
+            // Remove this suggestion from the promoting set
+            setPromotingSuggestionIds(prev => {
+                const next = new Set(prev);
+                next.delete(suggestionToPromote.id);
+                return next;
+            });
         }
         setIsPromoteConfirmOpen(false);
         setSuggestionToPromote(null);
