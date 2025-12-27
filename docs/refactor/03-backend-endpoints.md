@@ -3,6 +3,7 @@
 > **우선순위**: 🟠 Medium  
 > **예상 소요**: 2일  
 > **Phase**: 2
+> **상태**: ✅ 완료 (2024-12-27)
 
 ## 📋 현재 상태
 
@@ -86,17 +87,19 @@ def generate_episode_cuts(...):
 
 ## ✅ 체크리스트
 
-- [ ] `app/tasks/` 디렉토리 생성
-- [ ] `episode_tasks.py` 생성 (3개 함수)
-- [ ] `character_tasks.py` 생성 (1개 함수)
-- [ ] `project_tasks.py` 생성 (2개 함수)
-- [ ] endpoint 파일에서 import 변경
-- [ ] 테스트 통과
+- [x] `app/tasks/` 디렉토리 생성
+- [x] `episode_tasks.py` 생성 (3개 함수)
+- [x] `character_tasks.py` 생성 (1개 함수)
+- [x] `project_tasks.py` 생성 (2개 함수)
+- [x] endpoint 파일에서 import 변경
+- [x] 테스트 통과 (모듈 import 검증 완료)
 
-## 📊 예상 결과
+## 📊 결과
 
-| 파일            | Before | After  |
-| --------------- | ------ | ------ |
-| `episodes.py`   | 994줄  | ~400줄 |
-| `characters.py` | 671줄  | ~350줄 |
-| `projects.py`   | 605줄  | ~350줄 |
+| 파일            | Before | After (목표) | After (실제) |
+| --------------- | ------ | ------------ | ------------ |
+| `episodes.py`   | 994줄  | ~400줄       | **560줄**    |
+| `characters.py` | 671줄  | ~350줄       | **532줄**    |
+| `projects.py`   | 605줄  | ~350줄       | **443줄**    |
+
+> 📝 Note: 스키마 분리는 02-backend-schemas.md에서 이미 완료됨. 현재 단계에서는 태스크 함수만 분리.
