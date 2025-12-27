@@ -88,7 +88,7 @@ class BaseAIService:
         return text.strip()
     
     def _download_image(self, url: str) -> Optional[bytes]:
-        """이미지 URL에서 바이트로 다운로드"""
+        """이미지 URL 또는 상대 경로에서 바이트로 다운로드"""
         if not url:
             return None
         try:
@@ -106,7 +106,11 @@ class BaseAIService:
                 else:
                     print(f"Failed to download image from {url}: {res.status_code}")
                     return None
-            return None
+            else:
+                # Relative path - use storage service
+                from app.services.storage import storage
+                print(f"[BaseAI] Downloading from storage: {url[:60]}...")
+                return storage.download_image(url)
         except Exception as e:
             print(f"Error downloading image: {e}")
             return None

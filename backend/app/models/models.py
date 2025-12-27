@@ -198,6 +198,7 @@ class Episode(SQLModel, table=True):
     # Context for consistency
     background_info: Optional[str] = Field(default=None, sa_column=Column(Text))
     character_outfits: Optional[dict] = Field(sa_column=Column(JSON), default={}) # {CharacterName: Description}
+    character_reference_board_urls: List[str] = Field(sa_column=Column(JSON), default=[])  # Cached reference board images (max 4 chars each)
     
     deleted_at: Optional[datetime] = Field(default=None)
 

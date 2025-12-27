@@ -57,6 +57,7 @@ const EpisodeContextEditor = ({ episodeId, projectId, characters, disabled, t }:
     const [outfits, setOutfits] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [hasReferenceBoard, setHasReferenceBoard] = useState(false);
 
     // Fetch initial data
     useEffect(() => {
@@ -69,6 +70,8 @@ const EpisodeContextEditor = ({ episodeId, projectId, characters, disabled, t }:
                 const ep = res.data;
                 setBgInfo(ep.background_info || '');
                 setOutfits(ep.character_outfits || {});
+                // Check if reference board exists (outfits are locked)
+                setHasReferenceBoard(!!(ep.character_reference_board_urls && ep.character_reference_board_urls.length > 0));
             } catch (e) {
                 console.error("Failed to load episode context", e);
             } finally {
@@ -84,7 +87,7 @@ const EpisodeContextEditor = ({ episodeId, projectId, characters, disabled, t }:
         try {
             await api.put(`/episodes/${episodeId}`, {
                 background_info: bgInfo,
-                character_outfits: outfits
+                character_outfits: hasReferenceBoard ? undefined : outfits  // Don't send outfits if locked
             });
             // Optional: Toast success
         } catch (e) {
@@ -98,6 +101,7 @@ const EpisodeContextEditor = ({ episodeId, projectId, characters, disabled, t }:
 
 
     const updateOutfit = (name: string, desc: string) => {
+        if (hasReferenceBoard) return; // Prevent updates if locked
         setOutfits(prev => ({
             ...prev,
             [name.toLowerCase()]: desc
@@ -144,7 +148,19 @@ const EpisodeContextEditor = ({ episodeId, projectId, characters, disabled, t }:
                             </div>
 
                             <div>
-                                <label className="text-xs text-slate-500 mb-2 block">{t('characterOutfits')}</label>
+                                <label className="text-xs text-slate-500 mb-2 flex items-center gap-2">
+                                    {t('characterOutfits')}
+                                    {hasReferenceBoard && (
+                                        <span className="text-[10px] text-amber-400 flex items-center gap-1">
+                                            🔒 {t('outfitsLocked') || 'Locked'}
+                                        </span>
+                                    )}
+                                </label>
+                                {hasReferenceBoard && (
+                                    <div className="text-[10px] text-amber-500 bg-amber-900/20 p-2 rounded border border-amber-900/50 mb-2">
+                                        {t('outfitsLockedDesc') || 'Character outfits are locked after image generation. Create a new episode to use different outfits.'}
+                                    </div>
+                                )}
                                 <div className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar pr-1">
                                     {characters.map(char => (
                                         <div key={char.id} className="flex flex-col gap-1">
@@ -153,8 +169,8 @@ const EpisodeContextEditor = ({ episodeId, projectId, characters, disabled, t }:
                                                 value={outfits[char.name.toLowerCase()] || ''}
                                                 onChange={(e) => updateOutfit(char.name, e.target.value)}
                                                 placeholder={t('outfitPlaceholder', { name: char.name })}
-                                                disabled={loading || saving || disabled}
-                                                className="w-full bg-[#0f0f16] border border-slate-700 rounded px-2 py-1 text-xs text-slate-300 focus:border-purple-500 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                                disabled={loading || saving || disabled || hasReferenceBoard}
+                                                className={`w-full bg-[#0f0f16] border rounded px-2 py-1 text-xs text-slate-300 focus:border-purple-500 outline-none disabled:opacity-50 disabled:cursor-not-allowed ${hasReferenceBoard ? 'border-amber-900/50' : 'border-slate-700'}`}
                                             />
                                         </div>
                                     ))}

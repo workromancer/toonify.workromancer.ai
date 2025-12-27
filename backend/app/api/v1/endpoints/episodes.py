@@ -148,6 +148,12 @@ def update_episode(
     if episode_in.background_info is not None:
         episode.background_info = episode_in.background_info
     if episode_in.character_outfits is not None:
+        # 레퍼런스 보드가 이미 생성되었으면 의상 변경 불가
+        if episode.character_reference_board_urls:
+            raise HTTPException(
+                status_code=400, 
+                detail="Cannot change character outfits after reference board has been generated. Create a new episode instead."
+            )
         episode.character_outfits = episode_in.character_outfits
         
     session.add(episode)
@@ -314,8 +320,10 @@ def generate_prologue_options(
         char_list = []
         for char in characters:
             char_info = f"- {char.name}"
-            if char.role:
-                char_info += f" ({char.role})"
+            # role is in profile dict, not a direct attribute
+            role = char.profile.get("role") if char.profile else None
+            if role:
+                char_info += f" ({role})"
             if char.description:
                 char_info += f": {char.description[:100]}..."
             char_list.append(char_info)

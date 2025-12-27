@@ -37,7 +37,9 @@ class PanelAIService(BaseAIService):
         character_data: List[dict] = None, 
         prev_scene_url: str = None,
         language: str = "en",
-        art_style: str = None
+        art_style: str = None,
+        reference_board_urls: List[str] = None,
+        reference_board_prompt: str = None
     ) -> bytes:
         """
         웹툰 패널 이미지 생성
@@ -47,10 +49,12 @@ class PanelAIService(BaseAIService):
             width, height: 이미지 크기
             aspect_ratio: 비율 문자열 (예: "16:9", "wide")
             style_ref_url: 스타일 참조 이미지 URL
-            character_data: 캐릭터 참조 정보 목록 [{"name": "...", "url": "..."}]
+            character_data: 캐릭터 참조 정보 목록 (레퍼런스 보드 없을 때 사용)
             prev_scene_url: 이전 장면 이미지 URL (연속성 유지)
             language: 언어 코드
             art_style: 아트 스타일 설명 텍스트
+            reference_board_urls: 캐릭터 레퍼런스 보드 URL 리스트 (있으면 character_data 대신 사용)
+            reference_board_prompt: 레퍼런스 보드 설명 프롬프트
         """
         self._ensure_client()
 
@@ -98,8 +102,22 @@ class PanelAIService(BaseAIService):
                     image_parts.append(prev_img)
                     full_prompt += f"\n[Reference Image {len(image_parts)}] is the PREVIOUS SCENE. Maintain continuity (lighting, colors, environment)."
 
-            # 4. Add Characters
-            if character_data:
+            # 4. Add Character References (Board or Individual)
+            if reference_board_urls:
+                # Use Reference Board(s) - preferred method for consistency
+                print(f"Adding {len(reference_board_urls)} Reference Board(s)")
+                for idx, board_url in enumerate(reference_board_urls):
+                    board_img = self._download_image_as_pil(board_url)
+                    if board_img:
+                        image_parts.append(board_img)
+                
+                # Add board description to prompt
+                if reference_board_prompt:
+                    full_prompt += f"\n\n{reference_board_prompt}"
+                else:
+                    full_prompt += f"\n\n[Reference Image(s)] show the CHARACTER REFERENCE BOARD(s). Each character MUST wear their EXACT outfit as shown."
+            elif character_data:
+                # Fallback to individual character references
                 print(f"Adding {len(character_data)} Character References")
                 for char in character_data:
                     c_url = char.get("url")

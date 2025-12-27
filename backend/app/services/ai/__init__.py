@@ -226,6 +226,21 @@ class AIService:
     ) -> bytes:
         return self._image.generate_character_sheet(name, description, style, style_ref_url)
     
+    def generate_character_outfit_image(
+        self,
+        character_name: str,
+        character_description: str,
+        outfit_description: str,
+        style: str,
+        profile_image_url: str = None,
+        style_ref_url: str = None
+    ) -> bytes:
+        """에피소드 특정 의상을 입은 캐릭터 이미지 생성"""
+        return self._image.generate_character_outfit_image(
+            character_name, character_description, outfit_description, 
+            style, profile_image_url, style_ref_url
+        )
+    
     # Legacy async wrapper methods (for backward compatibility)
     def generate_project_cover_async(
         self, 
@@ -260,11 +275,14 @@ class AIService:
         character_data: List[dict] = None, 
         prev_scene_url: str = None,
         language: str = "en",
-        art_style: str = None
+        art_style: str = None,
+        reference_board_urls: List[str] = None,
+        reference_board_prompt: str = None
     ) -> bytes:
         return self._panel.generate_panel_image(
             prompt, width, height, aspect_ratio, style_ref_url, 
-            character_data, prev_scene_url, language, art_style
+            character_data, prev_scene_url, language, art_style,
+            reference_board_urls, reference_board_prompt
         )
 
 

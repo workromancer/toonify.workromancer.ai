@@ -11,6 +11,10 @@ from app.db.engine import engine
 from app.models import Episode, Project, Character, StoryCut
 from app.services.ai import ai_service
 from app.services.storage import storage
+from app.services.reference_board import (
+    create_reference_boards, 
+    generate_board_prompt_description
+)
 
 logger = get_logger(__name__)
 
@@ -132,6 +136,179 @@ def generate_episode_cuts_task(
             session.commit()
 
 
+def generate_reference_boards_for_episode(
+    episode_id: UUID,
+    session: Session = None
+) -> tuple[list[str], list[dict]]:
+    """
+    에피소드에 등장하는 캐릭터들의 레퍼런스 보드를 생성하고 캐싱.
+    
+    1. 에피소드에 등장하는 캐릭터만 추출 (character_outfits 기준)
+    2. 각 캐릭터별로 의상 반영 이미지 AI 생성
+    3. PIL로 레퍼런스 보드 합성
+    4. GCS 업로드 및 캐싱
+    
+    Returns:
+        (board_urls, characters_info) - 보드 URL 리스트와 캐릭터 정보 리스트
+    """
+    close_session = False
+    if session is None:
+        session = Session(engine)
+        close_session = True
+    
+    try:
+        episode = session.get(Episode, episode_id)
+        if not episode:
+            return [], []
+        
+        # 이미 캐싱된 보드가 있으면 반환
+        if episode.character_reference_board_urls:
+            logger.info("Using cached reference boards", episode_id=str(episode_id))
+            # 캐릭터 정보는 다시 수집
+            episode_outfits = episode.character_outfits or {}
+            project = session.get(Project, episode.project_id)
+            all_chars = session.exec(
+                select(Character)
+                .where(Character.project_id == project.id)
+                .where(Character.deleted_at == None)
+            ).all()
+            
+            # Only include characters that appear in this episode
+            appearing_char_names = set(k.lower() for k in episode_outfits.keys())
+            chars_info = []
+            for c in all_chars:
+                if c.name.lower() in appearing_char_names:
+                    chars_info.append({
+                        "name": c.name,
+                        "description": c.description or "",
+                        "outfit": episode_outfits.get(c.name.lower(), "")
+                    })
+            
+            return episode.character_reference_board_urls, chars_info
+        
+        # 에피소드 의상 정보 확인
+        episode_outfits = episode.character_outfits or {}
+        if not episode_outfits:
+            logger.info("No character_outfits defined for episode", episode_id=str(episode_id))
+            return [], []
+        
+        # 프로젝트 및 캐릭터 조회
+        project = session.get(Project, episode.project_id)
+        all_chars = session.exec(
+            select(Character)
+            .where(Character.project_id == project.id)
+            .where(Character.deleted_at == None)
+        ).all()
+        
+        # 캐릭터 이름 -> 캐릭터 객체 매핑
+        char_by_name = {c.name.lower(): c for c in all_chars}
+        
+        # 에피소드에 등장하는 캐릭터만 추출
+        appearing_characters = []
+        for char_name_lower, outfit_desc in episode_outfits.items():
+            if char_name_lower in char_by_name:
+                c = char_by_name[char_name_lower]
+                appearing_characters.append({
+                    "character": c,
+                    "outfit": outfit_desc
+                })
+        
+        if not appearing_characters:
+            logger.info("No matching characters for episode outfits", episode_id=str(episode_id))
+            return [], []
+        
+        logger.info(
+            "Generating outfit images for episode characters", 
+            episode_id=str(episode_id), 
+            char_count=len(appearing_characters)
+        )
+        
+        # 프로젝트 스타일 정보
+        art_style = project.art_style or project.style_preset or "Webtoon"
+        style_ref_url = project.style_reference_url
+        
+        # 각 캐릭터별로 의상 이미지 AI 생성
+        characters_for_board = []
+        for item in appearing_characters:
+            c = item["character"]
+            outfit = item["outfit"]
+            
+            logger.info(f"Generating outfit image for {c.name}: {outfit[:50]}...")
+            
+            try:
+                # AI로 의상 이미지 생성
+                outfit_image_bytes = ai_service.generate_character_outfit_image(
+                    character_name=c.name,
+                    character_description=c.description or ", ".join(c.appearance_tags or []),
+                    outfit_description=outfit,
+                    style=art_style,
+                    profile_image_url=c.profile_image_url,
+                    style_ref_url=style_ref_url
+                )
+                
+                # 생성된 이미지를 임시로 GCS에 업로드
+                outfit_image_url = storage.upload_image(
+                    outfit_image_bytes,
+                    schema="outfit_refs",
+                    identifier=f"{episode_id}_{c.id}"
+                )
+                
+                characters_for_board.append({
+                    "name": c.name,
+                    "image_url": outfit_image_url,
+                    "description": c.description or "",
+                    "outfit": outfit
+                })
+                
+                logger.info(f"Outfit image generated for {c.name}")
+                
+            except Exception as e:
+                logger.error(f"Failed to generate outfit image for {c.name}", error=str(e))
+                # 실패 시 기존 프로필 이미지 사용
+                if c.profile_image_url:
+                    characters_for_board.append({
+                        "name": c.name,
+                        "image_url": c.profile_image_url,
+                        "description": c.description or "",
+                        "outfit": outfit
+                    })
+        
+        if not characters_for_board:
+            logger.info("No outfit images generated", episode_id=str(episode_id))
+            return [], []
+        
+        logger.info("Creating reference boards from outfit images", char_count=len(characters_for_board))
+        
+        # PIL로 보드 생성
+        board_bytes_list = create_reference_boards(characters_for_board)
+        
+        # GCS에 업로드
+        board_urls = []
+        for idx, board_bytes in enumerate(board_bytes_list):
+            url = storage.upload_image(
+                board_bytes, 
+                schema="reference_boards", 
+                identifier=f"{episode_id}_{idx}"
+            )
+            board_urls.append(url)
+        
+        # 에피소드에 캐싱
+        episode.character_reference_board_urls = board_urls
+        session.add(episode)
+        session.commit()
+        
+        logger.info("Reference boards created and cached", episode_id=str(episode_id), board_count=len(board_urls))
+        
+        return board_urls, characters_for_board
+        
+    except Exception as e:
+        logger.error("Failed to generate reference boards", episode_id=str(episode_id), error=str(e))
+        return [], []
+    
+    finally:
+        if close_session:
+            session.close()
+
 def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: str = "en", use_previous_context: bool = True, prev_image_url_override: str = None) -> str | None:
     """Background task to generate image for a single story cut."""
     logger.info("Background task: Generating image for cut", cut_id=str(cut_id), language=language)
@@ -159,6 +336,18 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
             # A2. Episode Global Context
             episode_bg_info = episode.background_info
             episode_char_outfits = episode.character_outfits or {}
+            
+            # A3. Character Reference Board (for consistency)
+            reference_board_urls, board_characters = generate_reference_boards_for_episode(
+                episode.id, session
+            )
+            reference_board_prompt = None
+            if reference_board_urls and board_characters:
+                # 보드 설명 프롬프트 생성
+                prompt_lines = []
+                for idx in range(len(reference_board_urls)):
+                    prompt_lines.append(generate_board_prompt_description(board_characters, idx))
+                reference_board_prompt = "\n\n".join(prompt_lines)
 
             # B. Previous Scene (for continuity)
             prev_scene_url = prev_image_url_override # Priority to override
@@ -283,33 +472,58 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
             # If prompt_override is provided (Regenerate with custom text), use it as the main instruction
             # Otherwise use the cut script and dialogues
             
-            scene_instruction = ""
-            if prompt_override:
-                scene_instruction = f"User Instruction/Action: {prompt_override}"
-            else:
-                dialogue_parts = []
-                for d in cut.dialogues:
-                    speaker = d.get('speaker', 'Unknown')
-                    text = d.get('text', '')
-                    dtype = d.get('type', 'speech')
-                    
-                    # Legacy fallback
-                    if "(속마음)" in text or "(thought)" in text:
-                         text = text.replace("(속마음)", "").replace("(thought)", "").strip()
-                         dtype = 'thought'
-                    
-                    if dtype == 'thought':
-                        dialogue_parts.append(f"{speaker} (Thinking): {text}")
-                    elif dtype == 'shout':
-                         dialogue_parts.append(f"{speaker} (Shouting): {text}")
-                    else:
-                        dialogue_parts.append(f"{speaker}: {text}")
-                dialogue_text = " ".join(dialogue_parts)
+            # Always process dialogues from DB (not from prompt_override)
+            has_dialogues = False
+            dialogue_parts = []
+            for d in cut.dialogues or []:
+                speaker = d.get('speaker', 'Unknown')
+                text = d.get('text', '')
+                dtype = d.get('type', 'speech')
                 
-                scene_instruction = f"""
-                Action/Scene: {cut.script}
-                Dialogues: {dialogue_text}
-                """
+                if not text:
+                    continue
+                
+                has_dialogues = True
+                
+                # Legacy fallback
+                if "(속마음)" in text or "(thought)" in text:
+                     text = text.replace("(속마음)", "").replace("(thought)", "").strip()
+                     dtype = 'thought'
+                
+                if dtype == 'thought':
+                    dialogue_parts.append(f"- {speaker}'s INNER THOUGHT (use cloud bubble): \"{text}\"")
+                elif dtype == 'shout':
+                    dialogue_parts.append(f"- {speaker} SHOUTS (use spiky speech bubble): \"{text}\"")
+                else:
+                    dialogue_parts.append(f"- {speaker} says (use speech bubble): \"{text}\"")
+            dialogue_text = "\n                ".join(dialogue_parts)
+            
+            # Scene instruction: use prompt_override if provided, otherwise use cut.script
+            scene_description = prompt_override if prompt_override else cut.script
+            scene_instruction = f"""
+            Action/Scene: {scene_description}
+            """
+            
+            if dialogue_parts:
+                scene_instruction += f"""
+            DIALOGUES TO INCLUDE IN IMAGE:
+            {dialogue_text}
+            """
+
+            # Build prompt
+            dialogue_instruction = ""
+            if has_dialogues:
+                dialogue_instruction = """
+            4. INCLUDE SPEECH BUBBLES: Draw proper speech bubbles containing the dialogue text.
+               - For THOUGHTS: Use cloud-shaped thought bubbles
+               - For SHOUTS: Use spiky/jagged speech bubbles
+               - For normal speech: Use smooth oval speech bubbles
+               - The dialogue text MUST appear inside the bubbles in the image
+            """
+            else:
+                dialogue_instruction = """
+            4. This scene has no dialogue. Focus on the visual action and emotion.
+            """
 
             prompt = f"""
             Style: {project.style_preset} {f'({project.art_style})' if project.art_style else ''}
@@ -325,7 +539,8 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
             IMPORTANT INSTRUCTIONS:
             1. STRICTLY follow the specified art style ({project.style_preset}{f' - {project.art_style}' if project.art_style else ''}). Draw consistently in that visual style throughout.
             2. Panel borders/frames should ONLY be included when dramatically necessary for storytelling effect. Otherwise, draw without borders.
-            3. Do NOT include Name Tags, Character Labels, or Watermarks. Speech bubbles representing dialogue are allowed, but do NOT include specific character names as labels next to characters.
+            3. Do NOT include Name Tags, Character Labels, or Watermarks.
+            {dialogue_instruction}
             """
     
             # 3. Determine Dimensions
@@ -343,16 +558,19 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
             if project.art_style and project.style_preset:
                 combined_art_style = f"{project.style_preset} - {project.art_style}"
             
+            # Use reference board if available, otherwise fallback to individual character data
             img_bytes = ai_service.generate_panel_image(
                 prompt=prompt,
                 width=width,
                 height=height,
                 aspect_ratio=ratio,
                 style_ref_url=style_ref_url,
-                character_data=char_data,
+                character_data=char_data if not reference_board_urls else None,
                 prev_scene_url=prev_scene_url,
                 language=language,
-                art_style=combined_art_style
+                art_style=combined_art_style,
+                reference_board_urls=reference_board_urls,
+                reference_board_prompt=reference_board_prompt
             )
             
             url = storage.upload_image(img_bytes, schema="cuts", identifier=str(cut_id))
@@ -379,6 +597,15 @@ def generate_episode_images_sequentially(episode_id: UUID):
     logger.info("Background task: Starting sequential image generation for episode", episode_id=str(episode_id))
     try:
         with Session(engine) as session:
+            # Fetch episode and project for language
+            episode = session.get(Episode, episode_id)
+            if not episode:
+                logger.error("Episode not found", episode_id=str(episode_id))
+                return
+            
+            project = session.get(Project, episode.project_id)
+            language = project.language if project else "en"
+            
             # Fetch cuts
             cuts = session.exec(select(StoryCut).where(StoryCut.episode_id == episode_id).order_by(StoryCut.cut_order)).all()
             
@@ -393,7 +620,7 @@ def generate_episode_images_sequentially(episode_id: UUID):
                 # Call generation task (synchronously)
                 # This function handles its own DB session for the cut update, 
                 # but we are calling it directly.
-                generate_cut_task(cut.id, prompt_override=None, language="en", use_previous_context=True)
+                generate_cut_task(cut.id, prompt_override=None, language=language, use_previous_context=True)
 
             # After loop finishes, update episode status to 'ready'
             logger.info("Sequential generation finished for episode", episode_id=str(episode_id))

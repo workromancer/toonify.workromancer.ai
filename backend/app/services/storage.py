@@ -14,6 +14,14 @@ class StorageService(ABC):
         Returns relative path: {schema}/{identifier}/{uuid}.png
         """
         pass
+    
+    @abstractmethod
+    def download_image(self, relative_path: str) -> bytes | None:
+        """
+        Downloads image from storage by relative path.
+        Returns image bytes or None if not found.
+        """
+        pass
 
 class MinIOStorage(StorageService):
     def __init__(self):
@@ -54,6 +62,17 @@ class MinIOStorage(StorageService):
         except S3Error as e:
             print(f"Error uploading file: {e}")
             raise e
+    
+    def download_image(self, relative_path: str) -> bytes | None:
+        try:
+            response = self.client.get_object(self.bucket_name, relative_path)
+            data = response.read()
+            response.close()
+            response.release_conn()
+            return data
+        except S3Error as e:
+            print(f"Error downloading file from MinIO: {e}")
+            return None
 
 class GCSStorage(StorageService):
     def __init__(self):
@@ -72,6 +91,14 @@ class GCSStorage(StorageService):
         # Assuming bucket is public or we use signed URLs (public for now based on MinIO logic)
         # Note: Bucket must be configured to be public readable
         return relative_path
+    
+    def download_image(self, relative_path: str) -> bytes | None:
+        try:
+            blob = self.bucket.blob(relative_path)
+            return blob.download_as_bytes()
+        except Exception as e:
+            print(f"Error downloading file from GCS: {e}")
+            return None
 
 def get_storage_service() -> StorageService:
     # Use STORAGE_TYPE env var (gcs, minio, or local)

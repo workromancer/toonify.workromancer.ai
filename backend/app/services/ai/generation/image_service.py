@@ -329,5 +329,110 @@ class ImageAIService(BaseAIService):
         # Fallback
         return self.generate_image(prompt, width=576, height=1024)
 
+    def generate_character_outfit_image(
+        self,
+        character_name: str,
+        character_description: str,
+        outfit_description: str,
+        style: str,
+        profile_image_url: str = None,
+        style_ref_url: str = None
+    ) -> bytes:
+        """
+        에피소드 특정 의상을 입은 캐릭터 이미지 생성
+        
+        Args:
+            character_name: 캐릭터 이름
+            character_description: 캐릭터 외모 설명
+            outfit_description: 에피소드 의상 설명
+            style: 아트 스타일
+            profile_image_url: 기존 캐릭터 프로필 이미지 URL (참조용)
+            style_ref_url: 스타일 참조 이미지 URL
+        
+        Returns:
+            생성된 이미지 바이트
+        """
+        self._ensure_client()
+        
+        prompt = f"""
+Create a character portrait for a webtoon/manhwa.
+
+CHARACTER: {character_name}
+APPEARANCE: {character_description}
+OUTFIT: {outfit_description}
+ART STYLE: {style}
+
+Requirements:
+- Single character, upper body or full body portrait
+- Clean, simple background (white or light gradient)
+- Character facing forward or slightly angled (3/4 view)
+- The character MUST be wearing the specified OUTFIT exactly
+- Maintain consistency with the reference image if provided
+- Do NOT include any text, labels, or watermarks
+- High quality, professional webtoon art style
+"""
+        
+        try:
+            # Try multimodal generation with reference images
+            has_refs = bool(profile_image_url or style_ref_url)
+            
+            if has_refs:
+                parts = []
+                
+                # Style reference first (highest priority)
+                if style_ref_url:
+                    print(f"[OutfitGen] Using style reference: {style_ref_url[:60]}...")
+                    style_img = self._download_image_as_pil(style_ref_url)
+                    if style_img:
+                        parts.append(style_img)
+                        prompt += "\n[Reference Image 1] is the ART STYLE reference. Replicate this exact visual style."
+                
+                # Character profile reference
+                if profile_image_url:
+                    print(f"[OutfitGen] Using character profile: {profile_image_url[:60]}...")
+                    char_img = self._download_image_as_pil(profile_image_url)
+                    if char_img:
+                        parts.append(char_img)
+                        prompt += f"\n[Reference Image {len(parts)}] is the CHARACTER reference. This is {character_name}. Draw this same character but wearing the new outfit."
+                
+                if parts:
+                    contents = parts + [prompt]
+                    
+                    system_instruction = (
+                        "You are a professional webtoon/manhwa character artist. "
+                        "Your task is to draw a character portrait with a SPECIFIC OUTFIT. "
+                        "Maintain character identity from the reference but apply the new outfit exactly. "
+                        "Use a clean, simple background. NO text or labels."
+                    )
+                    
+                    config = types.GenerateContentConfig(
+                        system_instruction=system_instruction,
+                        response_modalities=['IMAGE'],
+                        image_config=types.ImageConfig(
+                            aspect_ratio="3:4",  # Portrait orientation
+                        )
+                    )
+                    
+                    print(f"[OutfitGen] Generating outfit image for {character_name}...")
+                    response = self.client.models.generate_content(
+                        model=self.model_config["image"],
+                        contents=contents,
+                        config=config,
+                    )
+                    
+                    if response.candidates and response.candidates[0].content and response.candidates[0].content.parts:
+                        for part in response.candidates[0].content.parts:
+                            if part.inline_data:
+                                print(f"[OutfitGen] Successfully generated outfit image for {character_name}")
+                                return part.inline_data.data
+                    
+                    print("[OutfitGen] Multimodal generation returned no image, falling back to text-only.")
+                    
+        except Exception as e:
+            print(f"[OutfitGen] Multimodal generation error: {e}. Falling back to text-only.")
+        
+        # Fallback to text-only generation
+        return self.generate_image(prompt, width=768, height=1024)
+
 
 # 인스턴스는 AIService Facade에서 관리됨
