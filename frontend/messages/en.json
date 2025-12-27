@@ -322,6 +322,8 @@
       "failed": "FAILED",
       "newEpisode": "New Episode",
       "noEpisodes": "No episodes created yet.",
+      "createPrologue": "Create Prologue Episode",
+      "createPrologueDesc": "Create a special prologue episode to introduce your story.",
       "ready": "Ready",
       "draft": "Draft",
       "episode": "Episode",
@@ -809,6 +811,8 @@
     "GenerateEpisode": {
       "title": "New Episode",
       "desc": "Create a new episode with AI assistance.",
+      "prologueTitle": "Create Prologue",
+      "prologueDesc": "Create a special prologue episode to introduce your story.",
       "titleGenerating": "Creating Episode...",
       "descGenerating": "AI is writing script, storyboarding, and preparing assets.",
       "thinking": "Thinking...",
@@ -857,7 +861,8 @@
       "titlePlaceholder": "e.g. The Beginning of the End",
       "noSuggestionsDesc": "Saved ideas will appear here",
       "selected": "SELECTED",
-      "delete": "Delete"
+      "delete": "Delete",
+      "prologueDefaultTitle": "Prologue"
     },
     "DirectorCut": {
       "title": "Director's Cut",

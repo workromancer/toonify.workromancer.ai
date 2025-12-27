@@ -37,6 +37,7 @@ export default function ProjectHome({
   // Modal States
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isEpisodeModalOpen, setIsEpisodeModalOpen] = useState(false);
+  const [isPrologueMode, setIsPrologueMode] = useState(false);
   const [isArtStyleModalOpen, setIsArtStyleModalOpen] = useState(false);
   const [isViewStyleModalOpen, setIsViewStyleModalOpen] = useState(false);
 
@@ -247,6 +248,10 @@ export default function ProjectHome({
                 episodes={episodes}
                 safeProjectId={safeProjectId}
                 onOpenEpisodeModal={() => setIsEpisodeModalOpen(true)}
+                onOpenPrologueModal={(!episodes || episodes.length === 0) ? () => {
+                  setIsPrologueMode(true);
+                  setIsEpisodeModalOpen(true);
+                } : undefined}
               />
             </div>
           </div>
@@ -269,10 +274,14 @@ export default function ProjectHome({
       />
       <GenerateEpisodeModal
         isOpen={isEpisodeModalOpen}
-        onClose={() => setIsEpisodeModalOpen(false)}
+        onClose={() => {
+          setIsEpisodeModalOpen(false);
+          setIsPrologueMode(false);
+        }}
         projectId={project.id}
         onGenerate={onEpisodeAdd}
         nextOrder={episodes ? episodes.length + 1 : 1}
+        isPrologueMode={isPrologueMode}
       />
       <ArtStyleSetupModal
         isOpen={isArtStyleModalOpen}

@@ -120,6 +120,113 @@ class EpisodeAIService(BaseAIService):
             print(f"Episode Idea Gen Failed: {e}")
             raise e
     
+    def generate_prologue_ideas(
+        self, 
+        project_title: str, 
+        worldview: str, 
+        characters: str,
+        language: str = "en", 
+        user_instruction: str = None
+    ) -> dict:
+        """프롤로그 에피소드 아이디어 생성 (3개 제안)
+        
+        프롤로그는 이야기의 시작을 알리는 특별한 에피소드로:
+        - 세계관 소개
+        - 분위기/톤 설정  
+        - 주요 인물 첫 등장
+        - 핵심 갈등의 암시
+        """
+        self._ensure_client()
+        
+        # System instruction for consistent prologue quality
+        system_instruction = """
+You are a senior webtoon writer and story consultant with 15+ years of experience in the Korean/global webtoon industry.
+
+## Your Expertise
+- Master of visual storytelling and panel-by-panel narrative flow
+- Deep understanding of scroll-based reading experience (mobile-first)
+- Expert in creating "hook moments" that prevent readers from swiping away
+- Skilled at balancing mystery, action, and emotional beats
+
+## Core Principles
+1. **Show, Don't Tell**: Prefer visual storytelling over exposition dumps
+2. **First 3 Cuts Rule**: The first 3 panels must grab attention - no slow starts
+3. **Emotional Anchor**: Every episode needs at least one moment readers will remember
+4. **Cliffhanger DNA**: End with a reason to continue reading
+5. **Character First**: Plot serves character, not the other way around
+
+## Quality Standards
+- Avoid clichés unless intentionally subverting them
+- Each character must have a distinct voice and motivation
+- World-building should feel organic, never like an info-dump
+- Pacing should match genre expectations (action = fast, romance = lingering moments)
+
+## Output Guidelines
+- Be specific and visual in descriptions
+- Consider the vertical scroll format when suggesting scenes
+- Balance dialogue with action/visual moments
+- Think in terms of "what would make a great thumbnail preview"
+"""
+             
+        prompt = f"""
+Your task is to propose 3 unique PROLOGUE episode ideas that will hook readers from the very first scene.
+
+# Project Context
+Title: {project_title}
+Worldview: {worldview}
+
+# Available Characters (for reference)
+{characters if characters else "None specified yet"}
+
+{f'# User Instruction: {user_instruction}' if user_instruction else ''}
+
+{f'IMPORTANT: All output text (titles, summaries, reasons) MUST be in {language} language.' if language else ''}
+{f'If language is Korean, use Hangul.' if language and language.startswith('ko') else ''}
+
+# Prologue-Specific Guidelines
+1. **Hook the Reader**: Start with an attention-grabbing moment - mystery, action, emotion, or intrigue.
+2. **Establish the World**: Introduce key elements of the worldview naturally through the narrative.
+3. **Set the Tone**: The prologue should clearly establish the mood/genre of the story.
+4. **Introduce Key Characters**: Feature main character(s) in a memorable way, showing their personality.
+5. **Plant Seeds**: Hint at the main conflict or mystery without revealing too much.
+6. **Stand Alone & Connect**: The prologue should work as a compelling short story while leading into episode 1.
+
+# Prologue Types to Consider
+- "Cold Open": Start in the middle of action, then flashback or continue
+- "Mysterious Setup": Begin with an intriguing event that will be explained later
+- "Character Introduction": Deep dive into the protagonist's normal world before change
+- "World Showcase": A day-in-the-life that reveals the unique setting
+- "Flash Forward": Show a glimpse of an exciting future moment
+
+Return ONLY a JSON object with the following structure:
+{{
+    "options": [
+        {{
+            "title": "Prologue Title",
+            "summary": "Detailed summary of the prologue events, focusing on what makes it a compelling opening.",
+            "reason": "Explanation of why this prologue works well for this story - what it establishes and how it hooks readers.",
+            "prologue_type": "Type of prologue (Cold Open / Mysterious Setup / etc.)"
+        }},
+        ...
+    ]
+}}
+"""
+        try:
+            print(f"DEBUG PROMPT [generate_prologue_ideas]: \n{prompt}")
+            response = self.client.models.generate_content(
+                model=self.model_config["director"],
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    system_instruction=system_instruction
+                )
+            )
+            cleaned_text = self._clean_json_text(response.text)
+            return json.loads(cleaned_text)
+        except Exception as e:
+            print(f"Prologue Idea Gen Failed: {e}")
+            raise e
+    
     def generate_initial_cuts(
         self, 
         episode_title: str, 

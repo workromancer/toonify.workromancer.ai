@@ -2,7 +2,7 @@
 
 import { cn, formatDate } from '@/lib/utils';
 import { Link, useRouter } from '@/navigation';
-import { Plus, Clapperboard, ChevronDown, Calendar, Film } from 'lucide-react';
+import { Plus, Clapperboard, ChevronDown, Calendar, Film, BookOpen } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import SectionTitle from '@/components/ui/SectionTitle';
 import ActionButton from '@/components/ui/ActionButton';
@@ -12,16 +12,20 @@ interface EpisodeSectionProps {
   episodes: Episode[];
   safeProjectId: string;
   onOpenEpisodeModal: () => void;
+  onOpenPrologueModal?: () => void;
 }
 
 export function EpisodeSection({
   episodes,
   safeProjectId,
   onOpenEpisodeModal,
+  onOpenPrologueModal,
 }: EpisodeSectionProps) {
   const router = useRouter();
   const t = useTranslations('Project.Home');
   const locale = useLocale();
+
+  const hasEpisodes = episodes && episodes.length > 0;
 
   return (
     <section>
@@ -29,19 +33,34 @@ export function EpisodeSection({
         color="indigo"
         action={
           <div className="flex items-center gap-2">
-            <ActionButton
-              variant="primary"
-              size="sm"
-              icon={Plus}
-              onClick={onOpenEpisodeModal}
-            >
-              {t('newEpisode')}
-            </ActionButton>
-            <Link href={`/project/${safeProjectId}/episodes`} className="hidden sm:block">
-              <button className="text-xs font-bold text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1">
-                {t('viewAll')} <ChevronDown size={12} className="-rotate-90" />
-              </button>
-            </Link>
+            {hasEpisodes ? (
+              // Show regular "New Episode" button when episodes exist
+              <ActionButton
+                variant="primary"
+                size="sm"
+                icon={Plus}
+                onClick={onOpenEpisodeModal}
+              >
+                {t('newEpisode')}
+              </ActionButton>
+            ) : onOpenPrologueModal ? (
+              // Show "Create Prologue" button when no episodes
+              <ActionButton
+                variant="primary"
+                size="sm"
+                icon={BookOpen}
+                onClick={onOpenPrologueModal}
+              >
+                {t('createPrologue')}
+              </ActionButton>
+            ) : null}
+            {hasEpisodes && (
+              <Link href={`/project/${safeProjectId}/episodes`} className="hidden sm:block">
+                <button className="text-xs font-bold text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1">
+                  {t('viewAll')} <ChevronDown size={12} className="-rotate-90" />
+                </button>
+              </Link>
+            )}
           </div>
         }
       >
@@ -49,7 +68,7 @@ export function EpisodeSection({
       </SectionTitle>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {episodes && episodes.length > 0 ? (
+        {hasEpisodes ? (
           episodes.map((ep) => (
             <div
               key={ep.id}
@@ -121,6 +140,7 @@ export function EpisodeSection({
               <Clapperboard size={24} />
             </div>
             <p className="text-sm text-slate-500">{t('noEpisodes')}</p>
+            <p className="text-xs text-slate-600">{t('createPrologueDesc')}</p>
           </div>
         )}
       </div>

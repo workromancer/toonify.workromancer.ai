@@ -17,6 +17,7 @@ interface GenerateEpisodeModalProps {
     projectId: string;
     onGenerate: (newEpisode: any) => void;
     nextOrder: number;
+    isPrologueMode?: boolean;
 }
 
 interface Idea {
@@ -27,7 +28,7 @@ interface Idea {
     created_at?: string;
 }
 
-export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGenerate, nextOrder }: GenerateEpisodeModalProps) {
+export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGenerate, nextOrder, isPrologueMode = false }: GenerateEpisodeModalProps) {
     const t = useTranslations('Modals.GenerateEpisode');
     const [mode, setMode] = useState<'form' | 'generating'>('form');
 
@@ -48,8 +49,18 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
     useEffect(() => {
         if (isOpen && projectId) {
             fetchSuggestions();
+            
+            // Set default prologue title and summary when in prologue mode
+            if (isPrologueMode) {
+                setFormData(prev => ({
+                    ...prev,
+                    title: t('prologueDefaultTitle'),
+                    story_summary: '',
+                }));
+                setIsDetailsOpen(true);
+            }
         }
-    }, [isOpen, projectId]);
+    }, [isOpen, projectId, isPrologueMode]);
 
     const fetchSuggestions = async () => {
         try {
@@ -74,7 +85,12 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
     const handleSuggestIdeas = async () => {
         setLoadingIdeas(true);
         try {
-            const res = await api.post('/episodes/generate-options', null, {
+            // Use prologue-specific API when in prologue mode
+            const endpoint = isPrologueMode 
+                ? '/episodes/generate-prologue-options' 
+                : '/episodes/generate-options';
+            
+            const res = await api.post(endpoint, null, {
                 params: {
                     project_id: projectId,
                     user_instruction: userInstruction || undefined
@@ -84,7 +100,7 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
                 // Refetch all suggestions to get updated list with IDs
                 await fetchSuggestions();
                 setUserInstruction('');
-                sendGAEvent('event', 'generate_episode_ideas', {
+                sendGAEvent('event', isPrologueMode ? 'generate_prologue_ideas' : 'generate_episode_ideas', {
                     project_id: projectId
                 });
             }
@@ -184,18 +200,20 @@ export default function GenerateEpisodeModal({ isOpen, onClose, projectId, onGen
         <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
             <DialogContent className="bg-[#0f0f16] border border-slate-700/50 p-0 overflow-hidden sm:max-w-[900px] gap-0 text-slate-200">
                 <VisuallyHidden>
-                    <DialogTitle>{mode === 'generating' ? t('titleGenerating') : t('title')}</DialogTitle>
+                    <DialogTitle>
+                        {mode === 'generating' ? t('titleGenerating') : (isPrologueMode ? t('prologueTitle') : t('title'))}
+                    </DialogTitle>
                 </VisuallyHidden>
 
                 {/* Modal Header */}
                 <div className="flex items-center justify-between px-6 py-5 border-b border-slate-800 bg-[#0f0f16] z-10">
                     <div>
                         <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                            {mode === 'generating' ? <RotateCw className="animate-spin text-purple-500" /> : <Sparkles className="text-purple-500" />}
-                            {mode === 'generating' ? t('titleGenerating') : t('title')}
+                            {mode === 'generating' ? <RotateCw className="animate-spin text-purple-500" /> : <Sparkles className={isPrologueMode ? "text-amber-500" : "text-purple-500"} />}
+                            {mode === 'generating' ? t('titleGenerating') : (isPrologueMode ? t('prologueTitle') : t('title'))}
                         </h2>
                         <p className="text-xs text-slate-500 mt-1">
-                            {mode === 'generating' ? t('descGenerating') : t('desc')}
+                            {mode === 'generating' ? t('descGenerating') : (isPrologueMode ? t('prologueDesc') : t('desc'))}
                         </p>
                     </div>
                     {/* Panel Toggle */}

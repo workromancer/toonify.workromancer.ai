@@ -323,6 +323,8 @@
       "episodes": "에피소드",
       "newEpisode": "새 에피소드",
       "noEpisodes": "아직 생성된 에피소드가 없습니다.",
+      "createPrologue": "프롤로그 에피소드 만들기",
+      "createPrologueDesc": "이야기의 시작을 알리는 특별한 프롤로그 에피소드를 만들어보세요.",
       "ready": "준비됨",
       "draft": "초안",
       "episode": "에피소드",
@@ -808,6 +810,8 @@
     "GenerateEpisode": {
       "title": "새 에피소드",
       "desc": "AI의 도움을 받아 새 에피소드를 만듭니다.",
+      "prologueTitle": "프롤로그 만들기",
+      "prologueDesc": "이야기의 시작을 알리는 특별한 프롤로그 에피소드를 만듭니다.",
       "titleGenerating": "에피소드 생성 중...",
       "descGenerating": "AI가 대본을 쓰고, 스토리보드를 그리고, 에셋을 준비하고 있습니다.",
       "thinking": "생각 중...",
@@ -856,7 +860,8 @@
       "titlePlaceholder": "예: 끝의 시작",
       "noSuggestionsDesc": "아이디어를 제안받으면 여기에 저장됩니다",
       "selected": "선택됨",
-      "delete": "삭제"
+      "delete": "삭제",
+      "prologueDefaultTitle": "프롤로그"
     },
     "DirectorCut": {
       "title": "감독의 수정 (Director's Cut)",

@@ -145,6 +145,18 @@ class AIService:
             project_title, worldview, recent_episodes, language, user_instruction
         )
     
+    def generate_prologue_ideas(
+        self, 
+        project_title: str, 
+        worldview: str, 
+        characters: str,
+        language: str = "en", 
+        user_instruction: str = None
+    ) -> dict:
+        return self._episode.generate_prologue_ideas(
+            project_title, worldview, characters, language, user_instruction
+        )
+    
     def generate_initial_cuts(
         self, 
         episode_title: str, 

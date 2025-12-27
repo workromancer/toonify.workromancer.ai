@@ -281,6 +281,90 @@ def generate_episode_options(
     
     return result
 
+@router.post("/generate-prologue-options")
+def generate_prologue_options(
+    *,
+    project_id: UUID,
+    user_instruction: str = None,
+    session: Session = Depends(deps.get_session),
+    current_user_id: str = Depends(deps.get_current_user_id),
+    accept_language: str = Header("en", alias="Accept-Language")
+):
+    """
+    Generate 3 prologue episode ideas based on project context and save to DB.
+    Prologue-specific prompts focus on:
+    - World introduction
+    - Tone/mood setting
+    - Character introduction
+    - Hook creation
+    """
+    project = session.get(Project, project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    # Fetch available characters for context
+    from app.models import Character
+    statement = select(Character).where(
+        Character.project_id == project_id
+    ).where(Character.deleted_at == None)
+    characters = session.exec(statement).all()
+    
+    characters_str = ""
+    if characters:
+        char_list = []
+        for char in characters:
+            char_info = f"- {char.name}"
+            if char.role:
+                char_info += f" ({char.role})"
+            if char.description:
+                char_info += f": {char.description[:100]}..."
+            char_list.append(char_info)
+        characters_str = "\n".join(char_list)
+
+    worldview_str = json.dumps(project.worldview) if project.worldview else ""
+
+    result = ai_service.generate_prologue_ideas(
+        project_title=project.title,
+        worldview=worldview_str,
+        characters=characters_str,
+        language=project.language or accept_language.split(',')[0].strip()[:2],
+        user_instruction=user_instruction
+    )
+    
+    # Save generated ideas to DB
+    saved_suggestions = []
+    if result and "options" in result:
+        for opt in result["options"]:
+            suggestion = EpisodeSuggestion(
+                project_id=project_id,
+                title=opt.get("title", ""),
+                summary=opt.get("summary", ""),
+                reason=opt.get("reason"),
+                user_instruction=user_instruction
+            )
+            session.add(suggestion)
+            saved_suggestions.append(suggestion)
+        session.commit()
+        
+        # Refresh to get IDs and created_at
+        for s in saved_suggestions:
+            session.refresh(s)
+        
+        # Return with IDs and prologue_type
+        result["options"] = [
+            {
+                "id": str(s.id),
+                "title": s.title,
+                "summary": s.summary,
+                "reason": s.reason,
+                "prologue_type": result["options"][i].get("prologue_type") if i < len(result["options"]) else None,
+                "created_at": s.created_at.isoformat()
+            }
+            for i, s in enumerate(saved_suggestions)
+        ]
+    
+    return result
+
 @router.post("/generate-cuts")
 def generate_episode_cuts(
     *,
