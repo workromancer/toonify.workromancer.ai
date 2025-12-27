@@ -6,7 +6,7 @@
 
 | 구분         | 기술 (Technology) | 버전/비고                           |
 | :----------- | :---------------- | :---------------------------------- |
-| **Frontend** | **Next.js**       | v16 (App Router 사용)               |
+| **Frontend** | **Next.js**       | v15 (App Router 사용)               |
 |              | **React**         | v19                                 |
 |              | **Language**      | TypeScript                          |
 |              | **Styling**       | Tailwind CSS v4, Framer Motion      |
@@ -29,7 +29,8 @@ toonify.workromancer.ai/
 │   │   ├── core/           # Config(settings), Security
 │   │   ├── db/             # Database Session & Init
 │   │   ├── models/         # SQLModel Database Models
-│   │   ├── services/       # 비즈니스 로직, AI Wrapper 등
+│   │   ├── schemas/        # Pydantic 스키마 (중앙화)
+│   │   ├── services/       # 비즈니스 로직 (ai/, billing, storage 등)
 │   │   └── main.py         # App Entry Point
 │   ├── scripts/            # 유틸리티 스크립트 (DB 초기화 등)
 │   └── requirements.txt    # Python 의존성

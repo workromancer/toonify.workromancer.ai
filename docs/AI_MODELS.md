@@ -4,7 +4,7 @@
 
 ## 헬퍼 모델 구성 (Helper Models Configuration)
 
-`AIService` (`backend/app/services/ai.py`)에 설정된 모델 목록입니다:
+`AIService` (`backend/app/services/ai/`)에 설정된 모델 목록입니다:
 
 | 키 (Key)    | 모델 ID (Model ID)           | 용도 (Purpose)                                             |
 | :---------- | :--------------------------- | :--------------------------------------------------------- |
