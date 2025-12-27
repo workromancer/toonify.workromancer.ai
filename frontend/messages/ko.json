@@ -272,7 +272,7 @@
     },
     "errors": {
       "noSuggestions": "제안이 생성되지 않았습니다.",
-      "augmentFailed": "제안 생성에 실패했습니다. API 키를 확인해주세요.",
+      "augmentFailed": "제안 생성에 실패했습니다.",
       "createFailed": "실패: "
     }
   },

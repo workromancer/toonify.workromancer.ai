@@ -272,7 +272,7 @@
     },
     "errors": {
       "noSuggestions": "No suggestions generated.",
-      "augmentFailed": "Failed to generate suggestions. Please check API Key.",
+      "augmentFailed": "Failed to generate suggestions.",
       "createFailed": "Failed: "
     }
   },

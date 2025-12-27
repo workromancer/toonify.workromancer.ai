@@ -147,8 +147,10 @@ def generate_suggestions_bg_task(project_id: str, context: str, language: str):
     try:
         from app.models import CharacterSuggestion
         with Session(engine) as session:
-            # Generate
-            result = ai_service.generate_character_batch_suggestions(context, count=10, language=language)
+            # Generate - 프로젝트 초기 생성이므로 주인공 포함
+            result = ai_service.generate_character_batch_suggestions(
+                context, count=10, language=language, include_protagonist=True
+            )
             items = result.get('suggestions', [])
             
             p_uuid = UUID(project_id)

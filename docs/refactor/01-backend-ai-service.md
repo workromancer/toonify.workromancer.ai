@@ -375,17 +375,17 @@ python -c "from app.services.ai import ai_service; print('OK')"
 
 ## ✅ 체크리스트
 
-- [ ] 디렉토리 구조 생성
-- [ ] `base.py` 작성 및 테스트
-- [ ] `character.py` 분리 및 테스트
-- [ ] `episode.py` 분리 및 테스트
-- [ ] `style.py` 분리 및 테스트
-- [ ] `worldview.py` 분리 및 테스트
-- [ ] `panel.py` 분리 및 테스트
-- [ ] `image.py` 분리 및 테스트
-- [ ] `__init__.py` Facade 완성
-- [ ] 기존 ai.py 백업 및 교체
-- [ ] 전체 테스트 통과
+- [x] 디렉토리 구조 생성
+- [x] `base.py` 작성 및 테스트
+- [x] `text/character.py` 분리 및 테스트
+- [x] `text/episode.py` 분리 및 테스트
+- [x] `text/style.py` 분리 및 테스트
+- [x] `text/worldview.py` 분리 및 테스트
+- [x] `generation/panel_service.py` 분리 및 테스트
+- [x] `generation/image_service.py` 분리 및 테스트
+- [x] `__init__.py` Facade 완성
+- [x] 기존 ai.py 백업 및 교체
+- [x] 전체 테스트 통과
 - [ ] 프로덕션 배포 전 스테이징 검증
 
 ---
