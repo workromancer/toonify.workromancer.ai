@@ -12,8 +12,12 @@ docs/ai-prompts/
 │   ├── [02-system-prompts.md](./01-draft/02-system-prompts.md)         # 권장 시스템 프롬프트
 │   ├── [03-implementation-guide.md](./01-draft/03-implementation-guide.md)   # 구현 가이드
 │   └── [04-prompt-templates.md](./01-draft/04-prompt-templates.md)       # 프롬프트 템플릿
-└── 02-draft-review/                   # Gemini 3 Pro 리뷰 문서
-    └── [01-review.md](./02-draft-review/01-review.md)                 # 초안 검토 및 제안
+├── 02-draft-review/                   # AI 리뷰 문서
+│   ├── [01-review-gemini-3-pro.md](./02-draft-review/01-review-gemini-3-pro.md)   # Gemini 3 Pro 리뷰
+│   └── [02-review-claude-opus-4-5.md](./02-draft-review/02-review-claude-opus-4-5.md) # Claude Opus 4.5 리뷰
+└── 03-execution-plans/                # 실행 계획 문서 (NEW)
+    ├── [01-implementation-checklist.md](./03-execution-plans/01-implementation-checklist.md) # 구현 체크리스트
+    └── [02-technical-implementation.md](./03-execution-plans/02-technical-implementation.md) # 기술 구현 상세
 ```
 
 ## 🎯 목적
