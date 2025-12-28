@@ -57,42 +57,42 @@
 
 ---
 
-## ⚡ Phase 2: High Priority - 시스템 프롬프트 구현 (Day 2)
+## ⚡ Phase 2: High Priority - 시스템 프롬프트 구현 (Day 2) ✅ COMPLETED
 
 ### 2.1 캐릭터 시스템 프롬프트
 
 - [x] `prompts/character.py` 생성
 - [x] `CHARACTER_SYSTEM_PROMPT` 상수 정의
-- [ ] 적용 대상 함수:
-  - [ ] `augment_character_text()` - 시스템 프롬프트 추가
-  - [ ] `get_character_suggestion()` - 시스템 프롬프트 추가
-  - [ ] `generate_character_batch_suggestions()` - 시스템 프롬프트 추가
-  - [ ] `analyze_character_concept()` - 시스템 프롬프트 추가
+- [x] 적용 대상 함수: (Phase 4에서 완료)
+  - [x] `augment_character_text()` - 시스템 프롬프트 추가
+  - [x] `get_character_suggestion()` - 시스템 프롬프트 추가
+  - [x] `generate_character_batch_suggestions()` - 시스템 프롬프트 추가
+  - [x] `analyze_character_concept()` - 시스템 프롬프트 추가
 
 ### 2.2 에피소드 시스템 프롬프트
 
 - [x] `prompts/episode.py` 생성
 - [x] `EPISODE_SYSTEM_PROMPT` 상수 정의
-- [ ] 적용 대상 함수:
-  - [ ] `generate_direction_options()` - 시스템 프롬프트 추가
-  - [ ] `generate_episode_ideas()` - 시스템 프롬프트 추가
-  - [ ] `generate_prologue_ideas()` - 기존 프롬프트 업그레이드
-  - [ ] `generate_initial_cuts()` - 시스템 프롬프트 추가
+- [x] 적용 대상 함수: (Phase 4에서 완료)
+  - [x] `generate_direction_options()` - 시스템 프롬프트 추가
+  - [x] `generate_episode_ideas()` - 시스템 프롬프트 추가
+  - [x] `generate_prologue_ideas()` - 시스템 프롬프트 업그레이드
+  - [x] `generate_initial_cuts()` - 시스템 프롬프트 추가
 
 ### 2.3 세계관 시스템 프롬프트
 
 - [x] `prompts/worldview.py` 생성
 - [x] `WORLDVIEW_SYSTEM_PROMPT` 상수 정의
-- [ ] 적용 대상 함수:
-  - [ ] `augment_worldview()` - 시스템 프롬프트 추가
+- [x] 적용 대상 함수: (Phase 4에서 완료)
+  - [x] `augment_worldview()` - 시스템 프롬프트 추가
 
 ### 2.4 스타일 시스템 프롬프트
 
 - [x] `prompts/style.py` 생성
 - [x] `STYLE_SYSTEM_PROMPT` 상수 정의
-- [ ] 적용 대상 함수:
-  - [ ] `recommend_style()` - 시스템 프롬프트 추가
-  - [ ] `augment_style_description()` - 시스템 프롬프트 추가
+- [x] 적용 대상 함수: (Phase 4에서 완료)
+  - [x] `recommend_style()` - 시스템 프롬프트 추가
+  - [x] `augment_style_description()` - 시스템 프롬프트 추가
 
 ### 2.5 패널 이미지 시스템 프롬프트 (개선)
 

@@ -200,6 +200,10 @@ class Episode(SQLModel, table=True):
     character_outfits: Optional[dict] = Field(sa_column=Column(JSON), default={}) # {CharacterName: Description}
     character_reference_board_urls: List[str] = Field(sa_column=Column(JSON), default=[])  # Cached reference board images (max 4 chars each)
     
+    # GenAI Context Caching for consistent style/character rendering
+    context_cache_name: Optional[str] = None  # GenAI cached content name (e.g., "cachedContents/xxx")
+    context_cache_expires_at: Optional[datetime] = None  # Cache expiration time
+    
     deleted_at: Optional[datetime] = Field(default=None)
 
     project: Project = Relationship(back_populates="episodes")

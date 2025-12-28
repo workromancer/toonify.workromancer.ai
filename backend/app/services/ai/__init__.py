@@ -277,12 +277,13 @@ class AIService:
         language: str = "en",
         art_style: str = None,
         reference_board_urls: List[str] = None,
-        reference_board_prompt: str = None
+        reference_board_prompt: str = None,
+        cached_content_name: str = None
     ) -> bytes:
         return self._panel.generate_panel_image(
             prompt, width, height, aspect_ratio, style_ref_url, 
             character_data, prev_scene_url, language, art_style,
-            reference_board_urls, reference_board_prompt
+            reference_board_urls, reference_board_prompt, cached_content_name
         )
 
 

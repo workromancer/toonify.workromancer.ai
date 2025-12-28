@@ -10,6 +10,7 @@ from app.core.logging import get_logger
 from app.db.engine import engine
 from app.models import Episode, Project, Character, StoryCut
 from app.services.ai import ai_service
+from app.services.ai.caching import context_cache_service
 from app.services.storage import storage
 from app.services.reference_board import (
     create_reference_boards, 
@@ -348,6 +349,41 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
                 for idx in range(len(reference_board_urls)):
                     prompt_lines.append(generate_board_prompt_description(board_characters, idx))
                 reference_board_prompt = "\n\n".join(prompt_lines)
+            
+            # A4. Context Caching - Get or create cache for style + reference boards
+            cached_content_name = None
+            from datetime import datetime
+            
+            # Check if existing cache is valid
+            if episode.context_cache_name and episode.context_cache_expires_at:
+                if episode.context_cache_expires_at > datetime.utcnow():
+                    cached_content_name = episode.context_cache_name
+                    logger.info(f"Using existing context cache: {cached_content_name}")
+                else:
+                    logger.info("Context cache expired, will create new one")
+            
+            # Create new cache if needed and we have content to cache
+            if not cached_content_name and (style_ref_url or reference_board_urls):
+                try:
+                    from app.services.ai.prompts import PANEL_IMAGE_SYSTEM_PROMPT
+                    
+                    cache_name, expires_at = context_cache_service.create_episode_cache(
+                        episode_id=episode.id,
+                        style_ref_url=style_ref_url,
+                        reference_board_urls=reference_board_urls,
+                        system_instruction=PANEL_IMAGE_SYSTEM_PROMPT
+                    )
+                    
+                    if cache_name:
+                        # Save cache info to episode
+                        episode.context_cache_name = cache_name
+                        episode.context_cache_expires_at = expires_at
+                        session.add(episode)
+                        session.commit()
+                        cached_content_name = cache_name
+                        logger.info(f"Created new context cache: {cache_name}")
+                except Exception as cache_err:
+                    logger.warning(f"Failed to create context cache: {cache_err}. Continuing without cache.")
 
             # B. Previous Scene (for continuity)
             prev_scene_url = prev_image_url_override # Priority to override
@@ -525,7 +561,16 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
             4. This scene has no dialogue. Focus on the visual action and emotion.
             """
 
+            # 스타일 참조 이미지가 있으면 강조
+            style_emphasis = ""
+            if style_ref_url:
+                style_emphasis = """
+            *** CRITICAL: The FIRST reference image is the ART STYLE you must replicate exactly. ***
+            Match its line work, coloring, shading, and overall aesthetic in this panel.
+            """
+
             prompt = f"""
+            {style_emphasis}
             Style: {project.style_preset} {f'({project.art_style})' if project.art_style else ''}
             {worldview_context}
             Setting: {setting_str}
@@ -537,7 +582,7 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
             {transition_str}
             
             IMPORTANT INSTRUCTIONS:
-            1. STRICTLY follow the specified art style ({project.style_preset}{f' - {project.art_style}' if project.art_style else ''}). Draw consistently in that visual style throughout.
+            1. STRICTLY follow the art style shown in the FIRST reference image. This is the most important requirement.
             2. Panel borders/frames should ONLY be included when dramatically necessary for storytelling effect. Otherwise, draw without borders.
             3. Do NOT include Name Tags, Character Labels, or Watermarks.
             {dialogue_instruction}
@@ -559,6 +604,7 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
                 combined_art_style = f"{project.style_preset} - {project.art_style}"
             
             # Use reference board if available, otherwise fallback to individual character data
+            # If cache is available, style_ref and reference_boards will be skipped
             img_bytes = ai_service.generate_panel_image(
                 prompt=prompt,
                 width=width,
@@ -570,7 +616,8 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
                 language=language,
                 art_style=combined_art_style,
                 reference_board_urls=reference_board_urls,
-                reference_board_prompt=reference_board_prompt
+                reference_board_prompt=reference_board_prompt,
+                cached_content_name=cached_content_name  # GenAI Context Cache
             )
             
             url = storage.upload_image(img_bytes, schema="cuts", identifier=str(cut_id))

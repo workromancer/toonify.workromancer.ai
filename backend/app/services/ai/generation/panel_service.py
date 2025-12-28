@@ -45,7 +45,8 @@ class PanelAIService(BaseAIService):
         language: str = "en",
         art_style: str = None,
         reference_board_urls: List[str] = None,
-        reference_board_prompt: str = None
+        reference_board_prompt: str = None,
+        cached_content_name: str = None  # GenAI Context Cache name for style/character refs
     ) -> bytes:
         """
         웹툰 패널 이미지 생성
@@ -61,6 +62,7 @@ class PanelAIService(BaseAIService):
             art_style: 아트 스타일 설명 텍스트
             reference_board_urls: 캐릭터 레퍼런스 보드 URL 리스트 (있으면 character_data 대신 사용)
             reference_board_prompt: 레퍼런스 보드 설명 프롬프트
+            cached_content_name: GenAI 캐시된 컨텐츠 이름 (있으면 style_ref, reference_boards 스킵)
         """
         self._ensure_client()
 
@@ -94,18 +96,39 @@ This style instruction takes precedence over all other visual directions.
             # Collect PIL Image objects for multimodal input
             image_parts = []
             
-            # 2. Add Style Reference (Priority 1 for style)
-            if style_ref_url:
-                logger.info(f"Adding Style Reference: {style_ref_url}")
-                style_img = self._download_image_as_pil(style_ref_url)
-                if style_img:
-                    image_parts.append(style_img)
-                    full_prompt += """
-## Reference Image 1: STYLE REFERENCE
-- Replicate the EXACT art style: brushwork, color palette, shading technique, overall aesthetic
-- Do NOT copy any people, characters, or figures from this image
-- Use this purely for style guidance
+            # If cached_content is provided, skip style/reference board download
+            # (they are already cached in GenAI)
+            use_cache = bool(cached_content_name)
+            
+            if use_cache:
+                logger.info(f"Using GenAI cached content: {cached_content_name}")
+                # Add cache reference instruction to prompt
+                full_prompt += """
+## Cached Context
+Style reference and character reference boards are provided via cached context.
+Follow the style and character appearances from the cached references.
 """
+            else:
+                # 2. Add Style Reference (Priority 1 for style)
+                if style_ref_url:
+                    logger.info(f"Adding Style Reference: {style_ref_url}")
+                    style_img = self._download_image_as_pil(style_ref_url)
+                    if style_img:
+                        image_parts.append(style_img)
+                        full_prompt += """
+## [Reference Image 1] - ART STYLE REFERENCE (HIGHEST PRIORITY)
+*** THIS IS THE STYLE YOU MUST REPLICATE ***
+- Copy the EXACT art style: line thickness, brushwork, coloring technique, shading method
+- Match the color palette: use the same tones, saturation levels, and color harmony
+- Apply the same rendering aesthetic: cell-shading, soft shading, or realistic style
+- This reference defines how the ENTIRE panel should look
+- Do NOT copy any people, characters, or figures from this image - ONLY the style
+"""
+                        logger.info("Style reference image added successfully")
+                    else:
+                        logger.warning(f"Failed to download style reference image: {style_ref_url}")
+                else:
+                    logger.warning("No style_ref_url provided for panel generation")
 
             # 3. Add Previous Scene (for continuity)
             if prev_scene_url:
@@ -119,14 +142,19 @@ This style instruction takes precedence over all other visual directions.
 - Ensure character positions make spatial sense
 """
 
-            # 4. Add Character References (Board or Individual)
-            if reference_board_urls:
+            # 4. Add Character References (Board or Individual) - Skip if using cache
+            if not use_cache and reference_board_urls:
                 # Use Reference Board(s) - preferred method for consistency
                 logger.info(f"Adding {len(reference_board_urls)} Reference Board(s)")
+                boards_added = 0
                 for idx, board_url in enumerate(reference_board_urls):
                     board_img = self._download_image_as_pil(board_url)
                     if board_img:
                         image_parts.append(board_img)
+                        boards_added += 1
+                    else:
+                        logger.warning(f"Failed to download reference board {idx + 1}: {board_url}")
+                logger.info(f"Reference boards added: {boards_added}/{len(reference_board_urls)}")
                 
                 # Add board description to prompt
                 if reference_board_prompt:
@@ -163,7 +191,11 @@ This style instruction takes precedence over all other visual directions.
                 final_ratio = self._get_aspect_ratio(width, height)
 
             # 6. Call API with PIL Images directly
-            logger.info(f"Generating Panel with {len(image_parts)} PIL images. Ratio: {final_ratio}")
+            logger.info(
+                f"Generating Panel: images={len(image_parts)}, ratio={final_ratio}, "
+                f"style_ref={'YES' if style_ref_url else 'NO'}, cache={'YES' if use_cache else 'NO'}, "
+                f"art_style={art_style[:50] if art_style else 'None'}..."
+            )
             
             contents = image_parts + [full_prompt]
             
@@ -172,11 +204,30 @@ This style instruction takes precedence over all other visual directions.
             if art_style:
                 system_instruction += f"\n\n## CURRENT TARGET STYLE\n{art_style}"
             
-            config = types.GenerateContentConfig(
-                system_instruction=system_instruction,
-                response_modalities=['IMAGE'], 
-                image_config=types.ImageConfig(aspect_ratio=final_ratio)
-            )
+            # Add stronger style instruction when style reference is provided (or cached)
+            if (style_ref_url and len(image_parts) > 0) or use_cache:
+                system_instruction += """
+
+## CRITICAL STYLE INSTRUCTION
+The FIRST image provided (or cached) is the ART STYLE REFERENCE. You MUST:
+1. Match its exact visual style in every aspect of this panel
+2. Use the same color palette, line work, and shading technique
+3. This style takes absolute precedence over any other visual direction
+"""
+            
+            # Build config with optional cached_content
+            config_params = {
+                "system_instruction": system_instruction,
+                "response_modalities": ['IMAGE'],
+                "image_config": types.ImageConfig(aspect_ratio=final_ratio)
+            }
+            
+            # Add cached_content if available
+            if use_cache and cached_content_name:
+                config_params["cached_content"] = cached_content_name
+                logger.info(f"Using cached_content in config: {cached_content_name}")
+            
+            config = types.GenerateContentConfig(**config_params)
 
             logger.debug(f"PROMPT [generate_panel_image]: {full_prompt[:500]}...")
             response = self.client.models.generate_content(
