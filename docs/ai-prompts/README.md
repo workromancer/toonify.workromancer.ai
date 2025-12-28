@@ -6,11 +6,14 @@
 
 ```
 docs/ai-prompts/
-├── README.md                    # 이 파일
-├── 01-current-analysis.md       # 현재 프롬프트 분석
-├── 02-system-prompts.md         # 권장 시스템 프롬프트
-├── 03-implementation-guide.md   # 구현 가이드
-└── 04-prompt-templates.md       # 프롬프트 템플릿
+├── README.md                          # 이 파일
+├── 01-draft/                          # Claude Opus 4.5 초안 문서
+│   ├── [01-current-analysis.md](./01-draft/01-current-analysis.md)       # 현재 프롬프트 분석
+│   ├── [02-system-prompts.md](./01-draft/02-system-prompts.md)         # 권장 시스템 프롬프트
+│   ├── [03-implementation-guide.md](./01-draft/03-implementation-guide.md)   # 구현 가이드
+│   └── [04-prompt-templates.md](./01-draft/04-prompt-templates.md)       # 프롬프트 템플릿
+└── 02-draft-review/                   # Gemini 3 Pro 리뷰 문서
+    └── [01-review.md](./02-draft-review/01-review.md)                 # 초안 검토 및 제안
 ```
 
 ## 🎯 목적

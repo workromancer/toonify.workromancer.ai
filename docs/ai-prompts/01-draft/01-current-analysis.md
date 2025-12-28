@@ -1,3 +1,5 @@
+> Model: Claude Opus 4.5
+
 # 📋 현재 AI 프롬프트 분석
 
 > 현재 Toonify 프로젝트의 AI 서비스 프롬프트 현황 및 문제점 분석
