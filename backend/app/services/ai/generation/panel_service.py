@@ -1,10 +1,16 @@
 """
 Panel Image Generation AI Service - 웹툰 패널 이미지 생성
+
+개선된 시스템 프롬프트 및 Multimodal Priority Rules 적용
 """
 from google.genai import types
+import logging
 from typing import List, Optional
 
 from app.services.ai.base import BaseAIService
+from app.services.ai.prompts import PANEL_IMAGE_SYSTEM_PROMPT
+
+logger = logging.getLogger(__name__)
 
 
 class PanelAIService(BaseAIService):
@@ -62,50 +68,61 @@ class PanelAIService(BaseAIService):
         style_instruction = ""
         if art_style:
             style_instruction = f"""
-        *** ART STYLE (HIGHEST PRIORITY) ***
-        You MUST draw this panel in the following art style: {art_style}
-        This style instruction takes precedence over all other visual directions.
-        """
+*** ART STYLE (HIGHEST PRIORITY) ***
+You MUST draw this panel in the following art style: {art_style}
+This style instruction takes precedence over all other visual directions.
+"""
         
         # 2. Base Prompt Construction
         full_prompt = f"""
-        Create a high-quality webtoon panel.
-        {style_instruction}
-        
-        Scene Description:
-        {prompt}
-        
-        Requirements:
-        - STRICTLY follow the specified art style{f': {art_style}' if art_style else ' of the provided Style Reference'}.
-        - Maintain visual consistency with the Previous Scene (if any).
-        - Include the specific characters provided (if mentioned in scene).
-        {f'- Any speech bubbles or text in the image MUST be in {language}.' if language and language.startswith('ko') else ''}
-        """
+## Panel Generation Request
+
+{style_instruction}
+
+## Scene Description
+{prompt}
+
+## Visual Requirements
+- STRICTLY follow the specified art style{f': {art_style}' if art_style else ' of the provided Style Reference'}.
+- Maintain visual consistency with the Previous Scene (if any).
+- Include the specific characters provided (if mentioned in scene).
+- Optimize for vertical scroll reading format.
+{f'- Any speech bubbles or text in the image MUST be in {language}.' if language and language.startswith('ko') else ''}
+"""
         
         try:
             # Collect PIL Image objects for multimodal input
             image_parts = []
             
-            # 2. Add Style Reference
+            # 2. Add Style Reference (Priority 1 for style)
             if style_ref_url:
-                print(f"Adding Style Reference: {style_ref_url}")
+                logger.info(f"Adding Style Reference: {style_ref_url}")
                 style_img = self._download_image_as_pil(style_ref_url)
                 if style_img:
                     image_parts.append(style_img)
-                    full_prompt += "\n[Reference Image 1] is the ART STYLE. Mimic it exactly."
+                    full_prompt += """
+## Reference Image 1: STYLE REFERENCE
+- Replicate the EXACT art style: brushwork, color palette, shading technique, overall aesthetic
+- Do NOT copy any people, characters, or figures from this image
+- Use this purely for style guidance
+"""
 
             # 3. Add Previous Scene (for continuity)
             if prev_scene_url:
-                print(f"Adding Previous Scene: {prev_scene_url}")
+                logger.info(f"Adding Previous Scene: {prev_scene_url}")
                 prev_img = self._download_image_as_pil(prev_scene_url)
                 if prev_img:
                     image_parts.append(prev_img)
-                    full_prompt += f"\n[Reference Image {len(image_parts)}] is the PREVIOUS SCENE. Maintain continuity (lighting, colors, environment)."
+                    full_prompt += f"""
+## Reference Image {len(image_parts)}: PREVIOUS SCENE
+- Maintain continuity: lighting direction, color temperature, environment details
+- Ensure character positions make spatial sense
+"""
 
             # 4. Add Character References (Board or Individual)
             if reference_board_urls:
                 # Use Reference Board(s) - preferred method for consistency
-                print(f"Adding {len(reference_board_urls)} Reference Board(s)")
+                logger.info(f"Adding {len(reference_board_urls)} Reference Board(s)")
                 for idx, board_url in enumerate(reference_board_urls):
                     board_img = self._download_image_as_pil(board_url)
                     if board_img:
@@ -115,10 +132,15 @@ class PanelAIService(BaseAIService):
                 if reference_board_prompt:
                     full_prompt += f"\n\n{reference_board_prompt}"
                 else:
-                    full_prompt += f"\n\n[Reference Image(s)] show the CHARACTER REFERENCE BOARD(s). Each character MUST wear their EXACT outfit as shown."
+                    full_prompt += """
+## Character Reference Board(s)
+- Each character MUST wear their EXACT outfit as shown
+- Maintain character facial features, hair, and body proportions
+- Do NOT improvise or modify established character appearances
+"""
             elif character_data:
                 # Fallback to individual character references
-                print(f"Adding {len(character_data)} Character References")
+                logger.info(f"Adding {len(character_data)} Character References")
                 for char in character_data:
                     c_url = char.get("url")
                     c_name = char.get("name")
@@ -126,7 +148,11 @@ class PanelAIService(BaseAIService):
                         c_img = self._download_image_as_pil(c_url)
                         if c_img:
                             image_parts.append(c_img)
-                            full_prompt += f"\n[Reference Image {len(image_parts)}] is character '{c_name}'. Include them if relevant to the scene."
+                            full_prompt += f"""
+## Reference Image {len(image_parts)}: Character '{c_name}'
+- Maintain exact visual features: face shape, hair style/color, eye color
+- Include in scene if mentioned in description
+"""
 
             # 5. Determine Aspect Ratio
             final_ratio = "1:1"
@@ -137,25 +163,14 @@ class PanelAIService(BaseAIService):
                 final_ratio = self._get_aspect_ratio(width, height)
 
             # 6. Call API with PIL Images directly
-            print(f"Generating Panel with {len(image_parts)} PIL images. Ratio: {final_ratio}")
+            logger.info(f"Generating Panel with {len(image_parts)} PIL images. Ratio: {final_ratio}")
             
             contents = image_parts + [full_prompt]
             
-            # Build System Instruction for style consistency
-            system_parts = [
-                "You are a professional webtoon artist. Your PRIMARY OBJECTIVE is visual consistency.",
-                "CRITICAL RULES:",
-                "1. If a STYLE REFERENCE IMAGE is provided, you MUST replicate its exact art style - brushwork, color palette, shading technique, and overall aesthetic.",
-                "2. IMPORTANT: The STYLE REFERENCE IMAGE is for STYLE ONLY. Do NOT copy or reproduce any people, characters, or figures shown in the style reference. Create NEW characters based on the scene description.",
-                "3. The specified art style takes ABSOLUTE PRECEDENCE over any other visual interpretation.",
-                "4. Maintain consistent character appearances across panels using the CHARACTER REFERENCE IMAGES (if provided).",
-                "5. Do NOT add text labels, character names, or watermarks to the image.",
-                "6. Panel borders should only be used when dramatically necessary."
-            ]
+            # Build enhanced System Instruction
+            system_instruction = PANEL_IMAGE_SYSTEM_PROMPT
             if art_style:
-                system_parts.append(f"7. TARGET ART STYLE: {art_style}")
-            
-            system_instruction = "\n".join(system_parts)
+                system_instruction += f"\n\n## CURRENT TARGET STYLE\n{art_style}"
             
             config = types.GenerateContentConfig(
                 system_instruction=system_instruction,
@@ -163,7 +178,7 @@ class PanelAIService(BaseAIService):
                 image_config=types.ImageConfig(aspect_ratio=final_ratio)
             )
 
-            print(f"DEBUG PROMPT [generate_panel_image]: \n{full_prompt}")
+            logger.debug(f"PROMPT [generate_panel_image]: {full_prompt[:500]}...")
             response = self.client.models.generate_content(
                 model=self.model_config["image"],
                 contents=contents,
@@ -178,7 +193,7 @@ class PanelAIService(BaseAIService):
             raise Exception("No image returned from Multimodal Generation")
 
         except Exception as e:
-            print(f"Panel Generation Error: {e}. Falling back to text-only.")
+            logger.error(f"Panel Generation Error: {e}. Falling back to text-only.")
             # Fallback to simple generation
             from app.services.ai.generation.image_service import ImageAIService
             image_service = ImageAIService()

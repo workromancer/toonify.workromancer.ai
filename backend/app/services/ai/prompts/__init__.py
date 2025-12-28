@@ -21,6 +21,7 @@ from .constants import (
     DialogueType,
     enum_to_prompt_options,
     enum_to_prompt_list,
+    get_role_descriptions_prompt,
 )
 from .character import CHARACTER_SYSTEM_PROMPT
 from .episode import EPISODE_SYSTEM_PROMPT
@@ -41,6 +42,7 @@ __all__ = [
     "build_context_string",
     "format_character_list",
     "get_genre_modifier",
+    "get_role_descriptions_prompt",
     # Constants/Enums
     "CharacterRole",
     "PersonalityTag",

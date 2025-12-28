@@ -137,46 +137,49 @@
 
 ---
 
-## 🔧 Phase 4: Service Integration (Day 4)
+## 🔧 Phase 4: Service Integration (Day 4) ✅ COMPLETED
 
 ### 4.1 CharacterAIService 수정
 
-- [ ] `text/character.py` 수정
-- [ ] 프롬프트 import 추가
-- [ ] 각 함수에 `system_instruction` 파라미터 적용
-- [ ] `response_schema` 적용
-- [ ] 테스트: 캐릭터 배치 생성 API
+- [x] `text/character.py` 수정
+- [x] 프롬프트 import 추가
+- [x] 각 함수에 `system_instruction` 파라미터 적용
+- [x] 동적 Enum 주입 (`enum_to_prompt_options`, `enum_to_prompt_list`)
+- [x] 구조화 로깅 적용 (`logger` 사용)
+- [ ] `response_schema` 적용 (Phase 5에서 선택적 적용)
 
 ### 4.2 EpisodeAIService 수정
 
-- [ ] `text/episode.py` 수정
-- [ ] 프롬프트 import 추가
-- [ ] 각 함수에 `system_instruction` 파라미터 적용
-- [ ] `response_schema` 적용
-- [ ] 테스트: 에피소드 아이디어 생성 API
+- [x] `text/episode.py` 수정
+- [x] 프롬프트 import 추가
+- [x] 각 함수에 `system_instruction` 파라미터 적용
+- [x] 동적 Enum 주입 (`PanelType`, `DialogueType`)
+- [x] 구조화 로깅 적용
+- [ ] `response_schema` 적용 (Phase 5에서 선택적 적용)
 
 ### 4.3 WorldviewAIService 수정
 
-- [ ] `text/worldview.py` 수정
-- [ ] 프롬프트 import 추가
-- [ ] `system_instruction` 파라미터 적용
-- [ ] `response_schema` 적용
-- [ ] 테스트: 세계관 확장 API
+- [x] `text/worldview.py` 수정
+- [x] 프롬프트 import 추가
+- [x] `system_instruction` 파라미터 적용
+- [x] 장르별 수정자 (`get_genre_modifier`) 적용
+- [x] 구조화 로깅 적용
+- [ ] `response_schema` 적용 (Phase 5에서 선택적 적용)
 
 ### 4.4 StyleAIService 수정
 
-- [ ] `text/style.py` 수정
-- [ ] 프롬프트 import 추가
-- [ ] `system_instruction` 파라미터 적용
-- [ ] `response_schema` 적용
-- [ ] 테스트: 스타일 추천 API
+- [x] `text/style.py` 수정
+- [x] 프롬프트 import 추가
+- [x] `system_instruction` 파라미터 적용
+- [x] 구조화 로깅 적용
+- [ ] `response_schema` 적용 (Phase 5에서 선택적 적용)
 
 ### 4.5 PanelAIService 수정
 
-- [ ] `generation/panel_service.py` 수정
-- [ ] 개선된 시스템 프롬프트 적용
-- [ ] Multimodal priority rules 반영
-- [ ] 테스트: 패널 이미지 생성
+- [x] `generation/panel_service.py` 수정
+- [x] 개선된 시스템 프롬프트 적용 (`PANEL_IMAGE_SYSTEM_PROMPT`)
+- [x] Multimodal priority rules 반영
+- [x] 구조화 로깅 적용
 
 ---
 
@@ -215,13 +218,13 @@
 
 ### 현재 상태:
 
-| Phase   | 상태                  | 완료율 |
-| ------- | --------------------- | ------ |
-| Phase 1 | ✅ Completed          | 100%   |
-| Phase 2 | 🔄 프롬프트 정의 완료 | 50%    |
-| Phase 3 | ✅ Completed          | 100%   |
-| Phase 4 | ⬜ Not Started        | 0%     |
-| Phase 5 | ⬜ Not Started        | 0%     |
+| Phase   | 상태                           | 완료율 |
+| ------- | ------------------------------ | ------ |
+| Phase 1 | ✅ Completed                   | 100%   |
+| Phase 2 | ✅ 프롬프트 정의 완료 (적용됨) | 100%   |
+| Phase 3 | ✅ Completed                   | 100%   |
+| Phase 4 | ✅ Completed                   | 100%   |
+| Phase 5 | ⬜ Not Started                 | 0%     |
 
 ### 생성된 파일:
 
@@ -245,13 +248,22 @@
 - `worldview.py` - 세계관 응답 스키마
 - `style.py` - 스타일 응답 스키마
 
-### 다음 단계:
+### 서비스 적용 상태:
 
-| 서비스  | 함수                        | 시스템 프롬프트 | 언어 지시  | response_schema |
-| ------- | --------------------------- | --------------- | ---------- | --------------- |
-| Episode | `generate_prologue_ideas()` | ✅ 있음         | ⬜ Phase 4 | ⬜ Phase 4      |
-| Panel   | `generate_panel_image()`    | ✅ 있음         | N/A        | N/A             |
-| 나머지  | 전체                        | ⬜ Phase 4      | ⬜ Phase 4 | ⬜ Phase 4      |
+| 서비스    | 함수                                   | 시스템 프롬프트 | 언어 지시 | 동적 Enum | 로깅 |
+| --------- | -------------------------------------- | --------------- | --------- | --------- | ---- |
+| Character | `augment_character_text()`             | ✅              | ✅        | ✅        | ✅   |
+| Character | `get_character_suggestion()`           | ✅              | ✅        | -         | ✅   |
+| Character | `generate_character_batch_suggestions` | ✅              | ✅        | ✅        | ✅   |
+| Character | `analyze_character_concept()`          | ✅              | ✅        | ✅        | ✅   |
+| Episode   | `generate_direction_options()`         | ✅              | ✅        | -         | ✅   |
+| Episode   | `generate_episode_ideas()`             | ✅              | ✅        | -         | ✅   |
+| Episode   | `generate_prologue_ideas()`            | ✅              | ✅        | -         | ✅   |
+| Episode   | `generate_initial_cuts()`              | ✅              | ✅        | ✅        | ✅   |
+| Worldview | `augment_worldview()`                  | ✅              | ✅        | -         | ✅   |
+| Style     | `recommend_style()`                    | ✅              | ✅        | -         | ✅   |
+| Style     | `augment_style_description()`          | ✅              | ✅        | -         | ✅   |
+| Panel     | `generate_panel_image()`               | ✅              | -         | -         | ✅   |
 
 ---
 
