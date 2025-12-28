@@ -12,45 +12,48 @@
 
 ---
 
-## 🚨 Phase 1: Critical - 기반 인프라 구축 (Day 1)
+## 🚨 Phase 1: Critical - 기반 인프라 구축 (Day 1) ✅ COMPLETED
 
 ### 1.1 프롬프트 모듈 디렉토리 생성
 
-- [ ] `backend/app/services/ai/prompts/` 디렉토리 생성
-- [ ] `__init__.py` - 중앙 export
-- [ ] `base.py` - 공통 유틸리티
+- [x] `backend/app/services/ai/prompts/` 디렉토리 생성
+- [x] `__init__.py` - 중앙 export
+- [x] `base.py` - 공통 유틸리티
 
 ### 1.2 response_schema 패턴 표준화 (Critical Issue #1)
 
 > 리뷰 피드백: 텍스트 기반 JSON 지시보다 **Pydantic 모델 + response_schema** 필수
 
-- [ ] `backend/app/schemas/ai_responses/` 디렉토리 생성
-- [ ] 캐릭터 응답 스키마 정의
-  - [ ] `CharacterSuggestion` 모델
-  - [ ] `CharacterBatchResponse` 모델
-  - [ ] `CharacterAnalysisResponse` 모델
-- [ ] 에피소드 응답 스키마 정의
-  - [ ] `EpisodeIdea` 모델
-  - [ ] `EpisodeCutsResponse` 모델
-  - [ ] `DirectionOptionResponse` 모델
-- [ ] 세계관 응답 스키마 정의
-  - [ ] `WorldviewOption` 모델
-  - [ ] `WorldviewAugmentResponse` 모델
-- [ ] 스타일 응답 스키마 정의
-  - [ ] `StyleRecommendation` 모델
-  - [ ] `StyleAugmentResponse` 모델
+- [x] `backend/app/schemas/ai_responses/` 디렉토리 생성
+- [x] 캐릭터 응답 스키마 정의
+  - [x] `CharacterSuggestion` 모델
+  - [x] `CharacterBatchResponse` 모델
+  - [x] `CharacterAnalysisResponse` 모델
+- [x] 에피소드 응답 스키마 정의
+  - [x] `EpisodeIdea` 모델
+  - [x] `CutsGenerationResponse` 모델
+  - [x] `DirectionOptionsResponse` 모델
+- [x] 세계관 응답 스키마 정의
+  - [x] `WorldviewOption` 모델
+  - [x] `WorldviewAugmentResponse` 모델
+- [x] 스타일 응답 스키마 정의
+  - [x] `StyleRecommendation` 모델
+  - [x] `StyleAugmentResponse` 모델
 
 ### 1.3 Enum 동적 주입 패턴 (Critical Issue #3)
 
 > 리뷰 피드백: 하드코딩된 `protagonist|antagonist|...` 제거
 
-- [ ] `prompts/constants.py` 생성
-- [ ] 기존 Enum 정의 위치 확인 및 통합
-  - [ ] `CharacterRole` enum
-  - [ ] `PanelType` enum
-  - [ ] `PersonalityTag` enum
-- [ ] `get_enum_validator_string()` 헬퍼 함수 구현
-- [ ] 프롬프트 템플릿에서 `{valid_roles}` 변수 주입 패턴 적용
+- [x] `prompts/constants.py` 생성
+- [x] Enum 정의 및 통합
+  - [x] `CharacterRole` enum
+  - [x] `PanelType` enum
+  - [x] `PersonalityTag` enum
+  - [x] `DialogueType` enum
+  - [x] `TimeOfDay` enum
+- [x] `enum_to_prompt_options()` 헬퍼 함수 구현
+- [x] `enum_to_prompt_list()` 헬퍼 함수 구현
+- [x] `get_role_descriptions_prompt()` 역할 설명 함수 구현
 
 ---
 
@@ -58,8 +61,8 @@
 
 ### 2.1 캐릭터 시스템 프롬프트
 
-- [ ] `prompts/character.py` 생성
-- [ ] `CHARACTER_SYSTEM_PROMPT` 상수 정의
+- [x] `prompts/character.py` 생성
+- [x] `CHARACTER_SYSTEM_PROMPT` 상수 정의
 - [ ] 적용 대상 함수:
   - [ ] `augment_character_text()` - 시스템 프롬프트 추가
   - [ ] `get_character_suggestion()` - 시스템 프롬프트 추가
@@ -68,8 +71,8 @@
 
 ### 2.2 에피소드 시스템 프롬프트
 
-- [ ] `prompts/episode.py` 생성
-- [ ] `EPISODE_SYSTEM_PROMPT` 상수 정의
+- [x] `prompts/episode.py` 생성
+- [x] `EPISODE_SYSTEM_PROMPT` 상수 정의
 - [ ] 적용 대상 함수:
   - [ ] `generate_direction_options()` - 시스템 프롬프트 추가
   - [ ] `generate_episode_ideas()` - 시스템 프롬프트 추가
@@ -78,27 +81,27 @@
 
 ### 2.3 세계관 시스템 프롬프트
 
-- [ ] `prompts/worldview.py` 생성
-- [ ] `WORLDVIEW_SYSTEM_PROMPT` 상수 정의
+- [x] `prompts/worldview.py` 생성
+- [x] `WORLDVIEW_SYSTEM_PROMPT` 상수 정의
 - [ ] 적용 대상 함수:
   - [ ] `augment_worldview()` - 시스템 프롬프트 추가
 
 ### 2.4 스타일 시스템 프롬프트
 
-- [ ] `prompts/style.py` 생성
-- [ ] `STYLE_SYSTEM_PROMPT` 상수 정의
+- [x] `prompts/style.py` 생성
+- [x] `STYLE_SYSTEM_PROMPT` 상수 정의
 - [ ] 적용 대상 함수:
   - [ ] `recommend_style()` - 시스템 프롬프트 추가
   - [ ] `augment_style_description()` - 시스템 프롬프트 추가
 
 ### 2.5 패널 이미지 시스템 프롬프트 (개선)
 
-- [ ] `prompts/image.py` 생성
-- [ ] `PANEL_IMAGE_SYSTEM_PROMPT` 상수 개선
-- [ ] **Multimodal Input Priority Rules** 섹션 추가 (Major Issue #4)
-  - [ ] 이미지 우선순위: style ref vs character ref
-  - [ ] 스타일 불일치 시 대응 전략
-  - [ ] 저품질 참조 이미지 fallback
+- [x] `prompts/image.py` 생성
+- [x] `PANEL_IMAGE_SYSTEM_PROMPT` 상수 개선
+- [x] **Multimodal Input Priority Rules** 섹션 추가 (Major Issue #4)
+  - [x] 이미지 우선순위: style ref vs character ref
+  - [x] 스타일 불일치 시 대응 전략
+  - [x] 저품질 참조 이미지 fallback
 
 ---
 
@@ -106,29 +109,31 @@
 
 ### 3.1 장르 충돌 해결 전략 (Critical Issue #2)
 
-- [ ] `prompts/genre.py` 생성
-- [ ] `GENRE_MODIFIERS` 딕셔너리 정의
-- [ ] **Primary/Secondary Genre 로직 구현**
-  - [ ] `get_genre_modifier(genres: List[str], primary_idx: int = 0)` 함수
-  - [ ] 충돌 해결 메타 프롬프트 추가
-- [ ] 충돌 시나리오 문서화:
-  - [ ] Romance + Thriller
-  - [ ] Fantasy + Romance
-  - [ ] Action + Comedy
-  - [ ] 여러 장르 조합 시 테스트
+- [x] `prompts/genre.py` 생성
+- [x] `GENRE_MODIFIERS` 딕셔너리 정의
+- [x] **Primary/Secondary Genre 로직 구현**
+  - [x] `get_genre_modifier(genres: List[str], primary_genre: str)` 함수
+  - [x] 충돌 해결 메타 프롬프트 추가 (`CONFLICT_RESOLUTION`)
+- [x] 충돌 시나리오 정의 완료:
+  - [x] Romance + Thriller
+  - [x] Fantasy + Romance
+  - [x] Action + Comedy
+  - [x] Thriller + Horror
+  - [x] Romance + Comedy
+  - [x] Fantasy + Action
 
 ### 3.2 언어 지시문 개선 (Minor Issue #6)
 
 > 리뷰 피드백: 한국어 지시문이 피상적
 
-- [ ] `prompts/language.py` 생성
-- [ ] 개선된 `get_language_instruction()` 구현
-- [ ] **한국 웹툰 특화 지시 추가:**
-  - [ ] 말풍선 텍스트 길이 제한 (버블당 ~15자)
-  - [ ] 존댓말('~요') vs 반말('~다') 선택 기준
-  - [ ] 의성어/의태어 표현법 (쾅!, 두근두근 등)
-  - [ ] 비속어/은어 수위 조절 가이드
-  - [ ] 캐릭터 이름 짓기 규칙 (운율, 의미 암시, 발음)
+- [x] `prompts/base.py`에 언어 지시문 통합 (별도 파일 불필요)
+- [x] 개선된 `get_language_instruction()` 구현
+- [x] **한국 웹툰 특화 지시 추가:**
+  - [x] 말풍선 텍스트 길이 제한 (버블당 ~15-20자)
+  - [x] 존댓말('~요') vs 반말('~다') 선택 기준
+  - [x] 의성어/의태어 표현법 (쾅!, 두근두근 등)
+  - [x] 호칭 사용 가이드 (형/오빠/누나/언니, 선배/후배)
+  - [x] 캐릭터 이름 짓기 규칙 (성+이름, 2-4 음절)
 
 ---
 
@@ -210,21 +215,43 @@
 
 ### 현재 상태:
 
-| Phase   | 상태           | 완료율 |
-| ------- | -------------- | ------ |
-| Phase 1 | ⬜ Not Started | 0%     |
-| Phase 2 | ⬜ Not Started | 0%     |
-| Phase 3 | ⬜ Not Started | 0%     |
-| Phase 4 | ⬜ Not Started | 0%     |
-| Phase 5 | ⬜ Not Started | 0%     |
+| Phase   | 상태                  | 완료율 |
+| ------- | --------------------- | ------ |
+| Phase 1 | ✅ Completed          | 100%   |
+| Phase 2 | 🔄 프롬프트 정의 완료 | 50%    |
+| Phase 3 | ✅ Completed          | 100%   |
+| Phase 4 | ⬜ Not Started        | 0%     |
+| Phase 5 | ⬜ Not Started        | 0%     |
 
-### 기존 구현 상태 참고:
+### 생성된 파일:
 
-| 서비스  | 함수                        | 시스템 프롬프트 | 언어 지시      | response_schema |
-| ------- | --------------------------- | --------------- | -------------- | --------------- |
-| Episode | `generate_prologue_ideas()` | ✅ 있음         | ⬜ 표준화 필요 | ⬜ 미적용       |
-| Panel   | `generate_panel_image()`    | ✅ 있음         | N/A            | N/A             |
-| 나머지  | 전체                        | ⬜ 없음         | ⬜ 불일치      | ⬜ 미적용       |
+**프롬프트 모듈** (`backend/app/services/ai/prompts/`)
+
+- `__init__.py` - 중앙 export
+- `base.py` - 언어 지시문, 컨텍스트 포맷팅
+- `constants.py` - Enum 정의 및 유틸리티
+- `character.py` - 캐릭터 시스템 프롬프트
+- `episode.py` - 에피소드 시스템 프롬프트
+- `worldview.py` - 세계관 시스템 프롬프트
+- `style.py` - 스타일 시스템 프롬프트
+- `image.py` - 이미지 생성 시스템 프롬프트
+- `genre.py` - 장르별 수정자 및 충돌 해결
+
+**AI 응답 스키마** (`backend/app/schemas/ai_responses/`)
+
+- `__init__.py` - 중앙 export
+- `character.py` - 캐릭터 응답 스키마
+- `episode.py` - 에피소드 응답 스키마
+- `worldview.py` - 세계관 응답 스키마
+- `style.py` - 스타일 응답 스키마
+
+### 다음 단계:
+
+| 서비스  | 함수                        | 시스템 프롬프트 | 언어 지시  | response_schema |
+| ------- | --------------------------- | --------------- | ---------- | --------------- |
+| Episode | `generate_prologue_ideas()` | ✅ 있음         | ⬜ Phase 4 | ⬜ Phase 4      |
+| Panel   | `generate_panel_image()`    | ✅ 있음         | N/A        | N/A             |
+| 나머지  | 전체                        | ⬜ Phase 4      | ⬜ Phase 4 | ⬜ Phase 4      |
 
 ---
 
