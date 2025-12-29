@@ -276,6 +276,8 @@ class ImageAIService(BaseAIService):
         - Style: {style} (High quality, professional concept art).
         
         NEGATIVE PROMPT: Do NOT include any text, logos, watermarks, signature, charts, buildings, scenery, trees, furniture, or complex background.
+        
+        CRITICAL: If a style reference image is provided, ONLY use it for the art style (line work, coloring, shading technique). Do NOT copy or reproduce any characters from the style reference image. Generate a completely NEW character based solely on the description above.
         """
         
         try:
@@ -296,8 +298,11 @@ class ImageAIService(BaseAIService):
                 sheet_system_instruction = (
                     "You are a professional character concept artist. "
                     "Your PRIMARY OBJECTIVE is to create a consistent character reference sheet. "
-                    "If a STYLE REFERENCE IMAGE is provided, replicate its exact visual aesthetic. "
+                    "If a STYLE REFERENCE IMAGE is provided, replicate its exact visual aesthetic (line work, coloring technique, shading style). "
                     f"TARGET ART STYLE: {style}. "
+                    "CRITICAL: Do NOT copy or reproduce any characters from the style reference image. "
+                    "The style reference is ONLY for art style, NOT for character design. "
+                    "Generate a completely NEW and UNIQUE character based solely on the character description provided. "
                     "IMPORTANT: Use a pure white background with NO scenery or complex elements."
                 )
                 
@@ -385,7 +390,7 @@ Requirements:
                     style_img = self._download_image_as_pil(style_ref_url)
                     if style_img:
                         parts.append(style_img)
-                        prompt += "\n[Reference Image 1] is the ART STYLE reference. Replicate this exact visual style."
+                        prompt += "\n[Reference Image 1] is the ART STYLE reference. Replicate this exact visual style (line work, coloring, shading). Do NOT copy any characters from this reference - only use it for art style."
                 
                 # Character profile reference
                 if profile_image_url:

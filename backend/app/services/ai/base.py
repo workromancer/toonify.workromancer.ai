@@ -148,7 +148,7 @@ class BaseAIService:
             ref_img_bytes = self._download_image(style_ref_url)
             if ref_img_bytes:
                 parts.append(types.Part.from_bytes(data=ref_img_bytes, mime_type="image/png"))
-                prompt += "\nIMPORTANT: Mimic the art style of the first provided image exactly."
+                prompt += "\nIMPORTANT: Mimic the art style (line work, coloring, shading technique) of the first provided image exactly. However, do NOT copy or reproduce any characters from the style reference image. Only use it for art style reference."
 
         # 2. Character Images
         if character_image_urls:
