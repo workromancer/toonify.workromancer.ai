@@ -58,6 +58,7 @@ def get_default_font(size: int = LABEL_FONT_SIZE) -> ImageFont.FreeTypeFont:
     # 한글 지원 폰트 우선순위 목록
     font_paths = [
         "/usr/share/fonts/truetype/nanum/NanumGothicBold.ttf",  # Linux (Nanum)
+        "/usr/share/fonts/truetype/nanum/NanumGothic.ttf",      # Linux (Nanum fallback)
         "/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc",  # Linux (Noto)
         "/System/Library/Fonts/AppleSDGothicNeo.ttc",  # macOS
         "/System/Library/Fonts/Supplemental/Arial Bold.ttf",  # macOS fallback
