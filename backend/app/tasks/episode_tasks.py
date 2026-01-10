@@ -137,6 +137,101 @@ def generate_episode_cuts_task(
             session.commit()
 
 
+
+def generate_outfit_images_task(episode_id: UUID):
+    """
+    에피소드에 등장하는 캐릭터들의 아웃핏 이미지만 생성하는 태스크.
+    레퍼런스 보드 생성 없이 순수하게 아웃핏 이미지만 생성합니다.
+    
+    Returns:
+        생성된 아웃핏 이미지 URL 맵 {character_name: image_url}
+    """
+    logger.info("Generating outfit images only", episode_id=str(episode_id))
+    
+    with Session(engine) as session:
+        try:
+            episode = session.get(Episode, episode_id)
+            if not episode:
+                logger.error("Episode not found", episode_id=str(episode_id))
+                return {}
+            
+            # 에피소드 의상 정보 확인
+            episode_outfits = episode.character_outfits or {}
+            if not episode_outfits:
+                logger.info("No character_outfits defined for episode", episode_id=str(episode_id))
+                return {}
+            
+            # 프로젝트 및 캐릭터 조회
+            project = session.get(Project, episode.project_id)
+            all_chars = session.exec(
+                select(Character)
+                .where(Character.project_id == project.id)
+                .where(Character.deleted_at == None)
+            ).all()
+            
+            # 캐릭터 이름 -> 캐릭터 객체 매핑
+            char_by_name = {c.name.lower(): c for c in all_chars}
+            
+            # 프로젝트 스타일 정보
+            art_style = project.art_style or project.style_preset or "Webtoon"
+            style_ref_url = project.style_reference_url
+            
+            # 기존 아웃핏 이미지 유지 (이미 생성된 것은 스킵)
+            outfit_images = episode.character_outfit_images or {}
+            
+            # 각 캐릭터별로 의상 이미지 AI 생성
+            for char_name_lower, outfit_desc in episode_outfits.items():
+                # 이미 생성된 이미지가 있으면 스킵
+                if char_name_lower in outfit_images and outfit_images[char_name_lower]:
+                    logger.info(f"Outfit image already exists for {char_name_lower}, skipping")
+                    continue
+                
+                if char_name_lower not in char_by_name:
+                    logger.warning(f"Character not found: {char_name_lower}")
+                    continue
+                
+                c = char_by_name[char_name_lower]
+                
+                logger.info(f"Generating outfit image for {c.name}: {outfit_desc[:50]}...")
+                
+                try:
+                    # AI로 의상 이미지 생성 (에피소드 줄거리 기반 포즈 포함)
+                    outfit_image_bytes = ai_service.generate_character_outfit_image(
+                        character_name=c.name,
+                        character_description=c.description or ", ".join(c.appearance_tags or []),
+                        outfit_description=outfit_desc,
+                        style=art_style,
+                        profile_image_url=c.profile_image_url,
+                        style_ref_url=style_ref_url,
+                        episode_context=episode.story_summary
+                    )
+                    
+                    # 생성된 이미지를 GCS에 업로드
+                    outfit_image_url = storage.upload_image(
+                        outfit_image_bytes,
+                        schema="outfit_refs",
+                        identifier=f"{episode_id}_{c.id}"
+                    )
+                    
+                    outfit_images[c.name.lower()] = outfit_image_url
+                    logger.info(f"Outfit image generated for {c.name}")
+                    
+                except Exception as e:
+                    logger.error(f"Failed to generate outfit image for {c.name}", error=str(e))
+            
+            # 에피소드에 저장
+            episode.character_outfit_images = outfit_images
+            session.add(episode)
+            session.commit()
+            
+            logger.info("Outfit images generation completed", episode_id=str(episode_id), count=len(outfit_images))
+            return outfit_images
+            
+        except Exception as e:
+            logger.error("Failed to generate outfit images", episode_id=str(episode_id), error=str(e))
+            return {}
+
+
 def generate_reference_boards_for_episode(
     episode_id: UUID,
     session: Session = None
@@ -144,10 +239,8 @@ def generate_reference_boards_for_episode(
     """
     에피소드에 등장하는 캐릭터들의 레퍼런스 보드를 생성하고 캐싱.
     
-    1. 에피소드에 등장하는 캐릭터만 추출 (character_outfits 기준)
-    2. 각 캐릭터별로 의상 반영 이미지 AI 생성
-    3. PIL로 레퍼런스 보드 합성
-    4. GCS 업로드 및 캐싱
+    이미 생성된 아웃핏 이미지가 있으면 재사용합니다.
+    아웃핏 이미지가 없으면 먼저 생성합니다.
     
     Returns:
         (board_urls, characters_info) - 보드 URL 리스트와 캐릭터 정보 리스트
@@ -204,47 +297,47 @@ def generate_reference_boards_for_episode(
         # 캐릭터 이름 -> 캐릭터 객체 매핑
         char_by_name = {c.name.lower(): c for c in all_chars}
         
-        # 에피소드에 등장하는 캐릭터만 추출
-        appearing_characters = []
-        for char_name_lower, outfit_desc in episode_outfits.items():
-            if char_name_lower in char_by_name:
-                c = char_by_name[char_name_lower]
-                appearing_characters.append({
-                    "character": c,
-                    "outfit": outfit_desc
-                })
-        
-        if not appearing_characters:
-            logger.info("No matching characters for episode outfits", episode_id=str(episode_id))
-            return [], []
-        
-        logger.info(
-            "Generating outfit images for episode characters", 
-            episode_id=str(episode_id), 
-            char_count=len(appearing_characters)
-        )
+        # 기존 아웃핏 이미지 확인 (이미 생성된 것이 있으면 재사용)
+        existing_outfit_images = episode.character_outfit_images or {}
         
         # 프로젝트 스타일 정보
         art_style = project.art_style or project.style_preset or "Webtoon"
         style_ref_url = project.style_reference_url
         
-        # 각 캐릭터별로 의상 이미지 AI 생성
+        # 레퍼런스 보드용 캐릭터 정보 수집
         characters_for_board = []
-        for item in appearing_characters:
-            c = item["character"]
-            outfit = item["outfit"]
+        new_outfit_images = existing_outfit_images.copy()
+        
+        for char_name_lower, outfit_desc in episode_outfits.items():
+            if char_name_lower not in char_by_name:
+                continue
+                
+            c = char_by_name[char_name_lower]
             
-            logger.info(f"Generating outfit image for {c.name}: {outfit[:50]}...")
+            # 이미 아웃핏 이미지가 있으면 재사용
+            if char_name_lower in existing_outfit_images and existing_outfit_images[char_name_lower]:
+                logger.info(f"Reusing existing outfit image for {c.name}")
+                characters_for_board.append({
+                    "name": c.name,
+                    "image_url": existing_outfit_images[char_name_lower],
+                    "description": c.description or "",
+                    "outfit": outfit_desc
+                })
+                continue
+            
+            # 아웃핏 이미지가 없으면 생성
+            logger.info(f"Generating outfit image for {c.name}: {outfit_desc[:50]}...")
             
             try:
-                # AI로 의상 이미지 생성
+                # AI로 의상 이미지 생성 (에피소드 줄거리 기반 포즈 포함)
                 outfit_image_bytes = ai_service.generate_character_outfit_image(
                     character_name=c.name,
                     character_description=c.description or ", ".join(c.appearance_tags or []),
-                    outfit_description=outfit,
+                    outfit_description=outfit_desc,
                     style=art_style,
                     profile_image_url=c.profile_image_url,
-                    style_ref_url=style_ref_url
+                    style_ref_url=style_ref_url,
+                    episode_context=episode.story_summary
                 )
                 
                 # 생성된 이미지를 임시로 GCS에 업로드
@@ -254,11 +347,13 @@ def generate_reference_boards_for_episode(
                     identifier=f"{episode_id}_{c.id}"
                 )
                 
+                new_outfit_images[c.name.lower()] = outfit_image_url
+                
                 characters_for_board.append({
                     "name": c.name,
                     "image_url": outfit_image_url,
                     "description": c.description or "",
-                    "outfit": outfit
+                    "outfit": outfit_desc
                 })
                 
                 logger.info(f"Outfit image generated for {c.name}")
@@ -271,7 +366,7 @@ def generate_reference_boards_for_episode(
                         "name": c.name,
                         "image_url": c.profile_image_url,
                         "description": c.description or "",
-                        "outfit": outfit
+                        "outfit": outfit_desc
                     })
         
         if not characters_for_board:
@@ -293,14 +388,9 @@ def generate_reference_boards_for_episode(
             )
             board_urls.append(url)
         
-        # 각 캐릭터별 아웃핏 이미지 URL 맵 생성
-        outfit_images_map = {}
-        for char_info in characters_for_board:
-            outfit_images_map[char_info["name"].lower()] = char_info["image_url"]
-        
         # 에피소드에 캐싱
         episode.character_reference_board_urls = board_urls
-        episode.character_outfit_images = outfit_images_map
+        episode.character_outfit_images = new_outfit_images
         session.add(episode)
         session.commit()
         
@@ -315,6 +405,7 @@ def generate_reference_boards_for_episode(
     finally:
         if close_session:
             session.close()
+
 
 def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: str = "en", use_previous_context: bool = True, prev_image_url_override: str = None) -> str | None:
     """Background task to generate image for a single story cut."""
@@ -765,14 +856,15 @@ def regenerate_single_outfit_image_task(episode_id: UUID, character_name: str):
             
             logger.info(f"Generating new outfit image for {char.name}: {outfit_desc[:50]}...")
             
-            # Generate new outfit image
+            # Generate new outfit image (에피소드 줄거리 기반 포즈 포함)
             outfit_image_bytes = ai_service.generate_character_outfit_image(
                 character_name=char.name,
                 character_description=char.description or ", ".join(char.appearance_tags or []),
                 outfit_description=outfit_desc,
                 style=art_style,
                 profile_image_url=char.profile_image_url,
-                style_ref_url=style_ref_url
+                style_ref_url=style_ref_url,
+                episode_context=episode.story_summary
             )
             
             # Upload to storage

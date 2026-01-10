@@ -122,6 +122,37 @@ const EpisodeContextEditor = ({ episodeId, projectId, characters, disabled, t }:
         }
     };
 
+    const handleGenerateOutfits = async () => {
+        if (!episodeId) return;
+        setRegeneratingAll(true);
+        try {
+            await api.post(`/episodes/${episodeId}/generate-outfit-images`);
+            // Poll for update - outfit generation takes time
+            const pollInterval = setInterval(async () => {
+                const res = await api.get(`/episodes/${episodeId}`);
+                const newOutfitImages = res.data.character_outfit_images || {};
+                setOutfitImages(newOutfitImages);
+                
+                // Check if all outfits are generated
+                const outfitKeys = Object.keys(outfits);
+                const generatedKeys = Object.keys(newOutfitImages);
+                if (outfitKeys.every(k => generatedKeys.includes(k.toLowerCase()))) {
+                    clearInterval(pollInterval);
+                    setRegeneratingAll(false);
+                }
+            }, 3000);
+
+            // Timeout after 60 seconds
+            setTimeout(() => {
+                clearInterval(pollInterval);
+                setRegeneratingAll(false);
+            }, 60000);
+        } catch (e) {
+            console.error("Failed to generate outfits", e);
+            setRegeneratingAll(false);
+        }
+    };
+
     const handleRegenerateAll = async () => {
         if (!episodeId) return;
         setRegeneratingAll(true);
@@ -280,6 +311,37 @@ const EpisodeContextEditor = ({ episodeId, projectId, characters, disabled, t }:
                                     {characters.length === 0 && <div className="text-xs text-slate-600 italic">{t('noCharactersAvailable')}</div>}
                                 </div>
                             </div>
+
+                            {/* Generate Outfits Button - Show when outfits defined but not yet generated */}
+                            {Object.keys(outfits).length > 0 && Object.keys(outfitImages).length === 0 && !hasReferenceBoard && (
+                                <button
+                                    onClick={handleGenerateOutfits}
+                                    disabled={loading || saving || disabled || regeneratingAll}
+                                    className="w-full py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded text-xs font-bold flex items-center justify-center gap-2 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed shadow-lg"
+                                >
+                                    {regeneratingAll ? (
+                                        <><span className="animate-spin">⏳</span> {t('generatingOutfits') || 'Generating Outfits...'}</>
+                                    ) : (
+                                        <><span>🎨</span> {t('generateOutfits') || 'Generate Outfit Images'}</>
+                                    )}
+                                </button>
+                            )}
+
+                            {/* Generate Outfits Button - Show when some outfits missing */}
+                            {Object.keys(outfits).length > 0 && Object.keys(outfitImages).length > 0 && 
+                             Object.keys(outfits).length !== Object.keys(outfitImages).length && !hasReferenceBoard && (
+                                <button
+                                    onClick={handleGenerateOutfits}
+                                    disabled={loading || saving || disabled || regeneratingAll}
+                                    className="w-full py-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white rounded text-xs font-bold flex items-center justify-center gap-2 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed"
+                                >
+                                    {regeneratingAll ? (
+                                        <><span className="animate-spin">⏳</span> {t('generatingOutfits') || 'Generating...'}</>
+                                    ) : (
+                                        <><span>🎨</span> {t('generateRemainingOutfits') || 'Generate Remaining Outfits'}</>
+                                    )}
+                                </button>
+                            )}
 
                             <button
                                 onClick={handleSave}

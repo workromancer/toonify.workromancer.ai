@@ -341,10 +341,15 @@ class ImageAIService(BaseAIService):
         outfit_description: str,
         style: str,
         profile_image_url: str = None,
-        style_ref_url: str = None
+        style_ref_url: str = None,
+        episode_context: str = None
     ) -> bytes:
         """
-        에피소드 특정 의상을 입은 캐릭터 이미지 생성
+        에피소드 특정 의상을 입은 캐릭터 이미지 생성 (5-panel composite layout)
+        
+        Layout (9:16 aspect ratio):
+        - Left (~40%): Full body standing pose
+        - Right (~60%): 2x2 grid of 4 action/pose shots based on episode context
         
         Args:
             character_name: 캐릭터 이름
@@ -353,28 +358,65 @@ class ImageAIService(BaseAIService):
             style: 아트 스타일
             profile_image_url: 기존 캐릭터 프로필 이미지 URL (참조용)
             style_ref_url: 스타일 참조 이미지 URL
+            episode_context: 에피소드 줄거리/내용 (포즈 및 장비 결정에 사용)
         
         Returns:
             생성된 이미지 바이트
         """
         self._ensure_client()
         
+        # Build episode-based pose suggestions
+        episode_pose_context = ""
+        if episode_context:
+            episode_pose_context = f"""
+Based on this episode story, create 4 relevant action poses:
+EPISODE CONTEXT: {episode_context}
+
+The 4 poses should show the character:
+1. Doing an action or holding equipment relevant to the story
+2. Showing an emotional expression from the episode
+3. In a dynamic pose relevant to the scene
+4. With props or in a situation from the story
+"""
+        else:
+            episode_pose_context = """
+Create 4 varied poses showing the character:
+1. Standing confidently or casually
+2. Showing an expressive emotion (happy, determined, etc.)
+3. In a dynamic action pose
+4. Holding an item or in an interesting situation
+"""
+        
         prompt = f"""
-Create a character portrait for a webtoon/manhwa.
+Create a CHARACTER REFERENCE SHEET for a webtoon/manhwa character.
 
 CHARACTER: {character_name}
 APPEARANCE: {character_description}
 OUTFIT: {outfit_description}
 ART STYLE: {style}
 
-Requirements:
-- Single character, upper body or full body portrait
-- Clean, simple background (white or light gradient)
+=== LAYOUT REQUIREMENTS (9:16 vertical aspect ratio) ===
+
+DIVIDE THE IMAGE INTO 2 SECTIONS:
+
+LEFT SECTION (approximately 40% of width):
+- Full body standing pose of the character
 - Character facing forward or slightly angled (3/4 view)
-- The character MUST be wearing the specified OUTFIT exactly
-- Maintain consistency with the reference image if provided
-- Do NOT include any text, labels, or watermarks
+- Show the complete outfit from head to toe
+- Clean, neutral pose to display the costume
+
+RIGHT SECTION (approximately 60% of width, divided into 2x2 grid = 4 small panels):
+{episode_pose_context}
+
+=== STYLE REQUIREMENTS ===
+- Clean, white or light gradient background
+- The character MUST wear the EXACT same outfit in ALL 5 views (1 full body + 4 poses)
+- Professional webtoon character sheet style
+- Do NOT include any text, labels, names, or watermarks
+- Maintain consistent character identity across all poses
 - High quality, professional webtoon art style
+
+CRITICAL: Generate this as a SINGLE combined image with the described layout.
 """
         
         try:
@@ -417,7 +459,7 @@ Requirements:
                     
                     if char_img:
                         parts.append(char_img)
-                        prompt += f"\n[Reference Image {len(parts)}] is the CHARACTER reference. This is {character_name}. Draw this same character but wearing the new outfit."
+                        prompt += f"\n[Reference Image {len(parts)}] is the CHARACTER reference. This is {character_name}. Draw this same character in the new outfit, maintaining their exact facial features and body proportions."
                     else:
                         # 캐릭터 프로필 없이 진행하면 캐릭터 일관성이 깨지므로 예외 발생
                         raise Exception(f"Character profile download FAILED for {character_name}. Cannot proceed without character reference.")
@@ -426,21 +468,23 @@ Requirements:
                     contents = parts + [prompt]
                     
                     system_instruction = (
-                        "You are a professional webtoon/manhwa character artist. "
-                        "Your task is to draw a character portrait with a SPECIFIC OUTFIT. "
-                        "Maintain character identity from the reference but apply the new outfit exactly. "
-                        "Use a clean, simple background. NO text or labels."
+                        "You are a professional webtoon/manhwa character concept artist. "
+                        "Your task is to create a CHARACTER REFERENCE SHEET with multiple views. "
+                        "The sheet must show: 1 full-body pose on the left side, and 4 smaller action/pose shots arranged in a 2x2 grid on the right side. "
+                        "All 5 views must show the SAME character wearing the EXACT same outfit. "
+                        "Maintain perfect character consistency across all poses. "
+                        "Use a clean, white background. NO text, labels, or names allowed."
                     )
                     
                     config = types.GenerateContentConfig(
                         system_instruction=system_instruction,
                         response_modalities=['IMAGE'],
                         image_config=types.ImageConfig(
-                            aspect_ratio="3:4",  # Portrait orientation
+                            aspect_ratio="9:16",  # Vertical orientation for character sheet
                         )
                     )
                     
-                    print(f"[OutfitGen] Generating outfit image for {character_name}...")
+                    print(f"[OutfitGen] Generating 5-panel outfit reference sheet for {character_name}...")
                     response = self.client.models.generate_content(
                         model=self.model_config["image"],
                         contents=contents,
@@ -450,7 +494,7 @@ Requirements:
                     if response.candidates and response.candidates[0].content and response.candidates[0].content.parts:
                         for part in response.candidates[0].content.parts:
                             if part.inline_data:
-                                print(f"[OutfitGen] Successfully generated outfit image for {character_name}")
+                                print(f"[OutfitGen] Successfully generated 5-panel outfit sheet for {character_name}")
                                 return part.inline_data.data
                     
                     print("[OutfitGen] Multimodal generation returned no image, falling back to text-only.")
@@ -458,8 +502,8 @@ Requirements:
         except Exception as e:
             print(f"[OutfitGen] Multimodal generation error: {e}. Falling back to text-only.")
         
-        # Fallback to text-only generation
-        return self.generate_image(prompt, width=768, height=1024)
+        # Fallback to text-only generation (9:16 ratio)
+        return self.generate_image(prompt, width=576, height=1024)
 
 
 # 인스턴스는 AIService Facade에서 관리됨

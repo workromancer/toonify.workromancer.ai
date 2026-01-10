@@ -25,6 +25,7 @@ from app.tasks.episode_tasks import (
     generate_cut_task,
     generate_episode_images_sequentially,
     regenerate_selected_cuts_task,
+    generate_outfit_images_task,
 )
 
 logger = get_logger(__name__)
@@ -535,6 +536,38 @@ def regenerate_selected_cuts(
     
     return {"message": f"Regenerating {len(valid_cut_ids)} cuts", "cut_ids": valid_cut_ids}
 
+
+@router.post("/{episode_id}/generate-outfit-images")
+def generate_outfit_images(
+    *,
+    session: Session = Depends(deps.get_session),
+    episode_id: UUID,
+    background_tasks: BackgroundTasks,
+    current_user_id: str = Depends(deps.get_current_user_id),
+) -> Any:
+    """
+    Generate outfit images for characters in the episode.
+    This generates outfit images separately from the reference board.
+    Each character will get a 5-panel outfit sheet (full body + 4 poses).
+    """
+    episode = session.get(Episode, episode_id)
+    if not episode or episode.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Episode not found")
+    
+    if not episode.character_outfits:
+        raise HTTPException(status_code=400, detail="No character outfits defined for this episode. Add outfits first.")
+    
+    # Start background task
+    background_tasks.add_task(
+        generate_outfit_images_task,
+        episode_id=episode_id
+    )
+    
+    return {
+        "message": "Generating outfit images", 
+        "episode_id": str(episode_id),
+        "character_count": len(episode.character_outfits)
+    }
 
 @router.post("/{episode_id}/regenerate-outfit-image/{character_name}")
 def regenerate_character_outfit_image(

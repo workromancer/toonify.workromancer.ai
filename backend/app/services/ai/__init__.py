@@ -233,12 +233,13 @@ class AIService:
         outfit_description: str,
         style: str,
         profile_image_url: str = None,
-        style_ref_url: str = None
+        style_ref_url: str = None,
+        episode_context: str = None
     ) -> bytes:
-        """에피소드 특정 의상을 입은 캐릭터 이미지 생성"""
+        """에피소드 특정 의상을 입은 캐릭터 이미지 생성 (5-panel layout with episode-contextual poses)"""
         return self._image.generate_character_outfit_image(
             character_name, character_description, outfit_description, 
-            style, profile_image_url, style_ref_url
+            style, profile_image_url, style_ref_url, episode_context
         )
     
     # Legacy async wrapper methods (for backward compatibility)
