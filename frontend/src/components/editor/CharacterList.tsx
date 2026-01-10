@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import api from '@/lib/api';
 import { User, RefreshCw, Image as ImageIcon, X } from 'lucide-react';
 import CharacterCreateModal from '@/components/editor/CharacterCreateModal';
+import CharacterDetailModal from '@/components/project/modals/CharacterDetailModal';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';
@@ -328,6 +329,31 @@ interface CharacterListProps {
     showHeader?: boolean;
 }
 
+// Extended character interface for modal
+interface FullCharacter {
+    id?: string;
+    name: string;
+    description?: string;
+    profile_image_url?: string;
+    default_mood?: string | string[];
+    sheet_status?: 'pending' | 'processing' | 'completed' | 'failed';
+    appearance_tags?: string[];
+    profile?: {
+        age?: string;
+        personality?: string;
+        pros?: string[];
+        cons?: string[];
+        background?: string;
+        features?: string[];
+        bio?: {
+            origin?: string;
+            goals?: string;
+            quirk?: string;
+        } | string;
+        stats?: Record<string, number>;
+    };
+}
+
 export default function CharacterList({ showHeader = true }: CharacterListProps) {
     const tl = useTranslations('Project.Editor.CharacterList');
     const params = useParams();
@@ -337,6 +363,10 @@ export default function CharacterList({ showHeader = true }: CharacterListProps)
     const [episodeCharacterNames, setEpisodeCharacterNames] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
     const { setActiveCharacter, activeCharacter, activeEpisodeId } = useCanvasStore();
+    
+    // Character detail modal state
+    const [selectedCharacter, setSelectedCharacter] = useState<FullCharacter | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     const fetchCharacters = async () => {
         if (!projectId) return;
@@ -348,6 +378,38 @@ export default function CharacterList({ showHeader = true }: CharacterListProps)
             console.error(err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleCharacterClick = async (char: Character) => {
+        // Set active character for canvas
+        setActiveCharacter({ name: char.name, tags: char.appearance_tags, profile_image_url: char.profile_image_url });
+        
+        // Fetch full character data for modal
+        try {
+            const res = await api.get(`/characters/${char.id}`);
+            setSelectedCharacter(res.data);
+            setIsModalOpen(true);
+        } catch (err) {
+            console.error('Failed to fetch character details', err);
+        }
+    };
+
+    const handleModalClose = () => {
+        setIsModalOpen(false);
+        setSelectedCharacter(null);
+    };
+
+    const handleCharacterDelete = (charId: string) => {
+        fetchCharacters();
+    };
+
+    const handleCharacterRetry = async (charId: string) => {
+        try {
+            await api.post(`/characters/${charId}/generate`);
+            fetchCharacters();
+        } catch (err) {
+            console.error('Failed to retry character generation', err);
         }
     };
 
@@ -412,7 +474,7 @@ export default function CharacterList({ showHeader = true }: CharacterListProps)
                                     ? 'bg-purple-900/20 border-purple-500/50'
                                     : 'bg-[#15151A] border-transparent hover:bg-slate-800 hover:border-slate-700'
                                     }`}
-                                onClick={() => setActiveCharacter({ name: char.name, tags: char.appearance_tags, profile_image_url: char.profile_image_url })}
+                                onClick={() => handleCharacterClick(char)}
                                 title={char.appearance_tags.join(', ')}
                             >
                                 <div className={`relative w-10 h-10 rounded-lg overflow-hidden shrink-0 border border-slate-700 ${!char.profile_image_url && 'bg-slate-800 flex items-center justify-center'}`}>
@@ -444,6 +506,15 @@ export default function CharacterList({ showHeader = true }: CharacterListProps)
             <div className="p-3 border-t border-slate-800 bg-[#0f0f16]">
                 <CharacterCreateModal onCharacterCreated={fetchCharacters} />
             </div>
+
+            {/* Character Detail Modal */}
+            <CharacterDetailModal
+                isOpen={isModalOpen}
+                onClose={handleModalClose}
+                character={selectedCharacter}
+                onDelete={handleCharacterDelete}
+                onRetry={handleCharacterRetry}
+            />
         </div>
     );
 }
