@@ -487,15 +487,22 @@ export default function CharacterList({ showHeader = true }: CharacterListProps)
         };
         
         try {
+            console.log(`[Outfit Regen] Starting for ${key}`, { hasReferenceBoard, previousImageUrl });
+            
             // Save first (only if reference board doesn't exist yet)
             if (!hasReferenceBoard) {
+                console.log(`[Outfit Regen] Saving outfits first...`);
                 await api.put(`/episodes/${activeEpisodeId}`, { 
                     character_outfits: outfits 
                 });
+            } else {
+                console.log(`[Outfit Regen] Skipping outfit save (reference board exists)`);
             }
             
             // Then regenerate outfit image
-            await api.post(`/episodes/${activeEpisodeId}/regenerate-outfit-image/${encodeURIComponent(key)}`);
+            console.log(`[Outfit Regen] Calling regenerate API for ${key}...`);
+            const regenResponse = await api.post(`/episodes/${activeEpisodeId}/regenerate-outfit-image/${encodeURIComponent(key)}`);
+            console.log(`[Outfit Regen] API response:`, regenResponse.data);
             
             // Poll for result - check every 3 seconds until image changes or timeout
             let attempts = 0;

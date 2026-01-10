@@ -395,6 +395,14 @@ APPEARANCE: {character_description}
 OUTFIT: {outfit_description}
 ART STYLE: {style}
 
+=== CRITICAL: ART STYLE CONSISTENCY ===
+You MUST replicate the EXACT art style from the reference image provided.
+- Match the line work thickness, style, and quality
+- Match the coloring technique (flat colors, gradients, cel-shading, etc.)
+- Match the shading style and lighting approach
+- Match the level of detail and rendering quality
+- The output should look like it was drawn by the SAME artist as the reference
+
 === LAYOUT REQUIREMENTS (16:9 horizontal aspect ratio) ===
 
 DIVIDE THE IMAGE INTO 2 SECTIONS (LEFT-TO-RIGHT):
@@ -414,7 +422,7 @@ RIGHT SECTION (approximately 70% of width, arranged as 4 panels in a row):
 - Professional webtoon character sheet style
 - Do NOT include any text, labels, names, or watermarks
 - Maintain consistent character identity across all poses
-- High quality, professional webtoon art style
+- MUST match the art style from the reference image exactly
 
 CRITICAL: Generate this as a SINGLE combined image with the described horizontal layout.
 """

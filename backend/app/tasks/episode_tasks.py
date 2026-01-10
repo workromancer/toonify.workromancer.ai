@@ -826,6 +826,8 @@ def regenerate_single_outfit_image_task(episode_id: UUID, character_name: str):
     """
     Regenerate outfit image for a single character and update the reference board.
     """
+    from sqlalchemy.orm.attributes import flag_modified
+    
     logger.info("Regenerating single outfit image", episode_id=str(episode_id), character_name=character_name)
     
     with Session(engine) as session:
@@ -839,7 +841,8 @@ def regenerate_single_outfit_image_task(episode_id: UUID, character_name: str):
             outfit_desc = episode.character_outfits.get(character_name)
             
             if not outfit_desc:
-                logger.error("Character outfit not found", character_name=character_name)
+                logger.error("Character outfit not found", character_name=character_name, 
+                           available_outfits=list(episode.character_outfits.keys()) if episode.character_outfits else [])
                 return
             
             # Find the character
@@ -851,14 +854,19 @@ def regenerate_single_outfit_image_task(episode_id: UUID, character_name: str):
             
             char = next((c for c in all_chars if c.name.lower() == character_name), None)
             if not char:
-                logger.error("Character not found in project", character_name=character_name)
+                logger.error("Character not found in project", character_name=character_name,
+                           available_chars=[c.name.lower() for c in all_chars])
                 return
             
             # Get style info
             art_style = project.art_style or project.style_preset or "Webtoon"
             style_ref_url = project.style_reference_url
             
-            logger.info(f"Generating new outfit image for {char.name}: {outfit_desc[:50]}...")
+            logger.info(f"[OutfitRegen] Generating new outfit image for {char.name}",
+                       outfit_desc=outfit_desc[:50],
+                       style=art_style,
+                       has_style_ref=bool(style_ref_url),
+                       has_profile=bool(char.profile_image_url))
             
             # Generate new outfit image (에피소드 줄거리 기반 포즈 포함)
             outfit_image_bytes = ai_service.generate_character_outfit_image(
@@ -871,6 +879,8 @@ def regenerate_single_outfit_image_task(episode_id: UUID, character_name: str):
                 episode_context=episode.story_summary
             )
             
+            logger.info(f"[OutfitRegen] Image generated, size={len(outfit_image_bytes)} bytes")
+            
             # Upload to storage (use timestamp to ensure unique URL and avoid browser caching)
             import time
             timestamp = int(time.time())
@@ -880,10 +890,15 @@ def regenerate_single_outfit_image_task(episode_id: UUID, character_name: str):
                 identifier=f"{episode_id}_{char.id}_{timestamp}"
             )
             
-            # Update character_outfit_images
-            outfit_images = episode.character_outfit_images or {}
+            logger.info(f"[OutfitRegen] Image uploaded: {outfit_image_url[:80]}...")
+            
+            # Update character_outfit_images - use copy and flag_modified for JSON field
+            outfit_images = dict(episode.character_outfit_images or {})
             outfit_images[character_name] = outfit_image_url
             episode.character_outfit_images = outfit_images
+            flag_modified(episode, "character_outfit_images")
+            
+            logger.info(f"[OutfitRegen] Updated outfit_images for {character_name}")
             
             # Now regenerate the reference board with updated image
             # Collect all character info for board generation
@@ -900,6 +915,7 @@ def regenerate_single_outfit_image_task(episode_id: UUID, character_name: str):
             
             if characters_for_board:
                 # Regenerate reference boards
+                logger.info(f"[OutfitRegen] Regenerating reference board with {len(characters_for_board)} characters")
                 board_bytes_list = create_reference_boards(characters_for_board)
                 
                 board_urls = []
@@ -912,6 +928,7 @@ def regenerate_single_outfit_image_task(episode_id: UUID, character_name: str):
                     board_urls.append(url)
                 
                 episode.character_reference_board_urls = board_urls
+                flag_modified(episode, "character_reference_board_urls")
             
             # Clear context cache so it gets regenerated with new images
             episode.context_cache_name = None
@@ -920,10 +937,13 @@ def regenerate_single_outfit_image_task(episode_id: UUID, character_name: str):
             session.add(episode)
             session.commit()
             
-            logger.info(f"Successfully regenerated outfit image for {char.name}")
+            logger.info(f"[OutfitRegen] SUCCESS - Regenerated outfit image for {char.name}", 
+                       new_url=outfit_image_url[:60])
             
         except Exception as e:
             logger.error("Failed to regenerate outfit image", episode_id=str(episode_id), character_name=character_name, error=str(e))
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
 
 
 def regenerate_reference_board_task(episode_id: UUID):
