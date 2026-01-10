@@ -374,7 +374,7 @@ export default function CharacterList({ showHeader = true }: CharacterListProps)
     const [outfitImages, setOutfitImages] = useState<Record<string, string>>({});
     const [hasReferenceBoard, setHasReferenceBoard] = useState(false);
     const [savingOutfit, setSavingOutfit] = useState<string | null>(null);
-    const [generatingOutfit, setGeneratingOutfit] = useState<string | null>(null);
+    const [generatingOutfits, setGeneratingOutfits] = useState<Set<string>>(new Set());  // Changed to Set for independent tracking
     const [generatingAll, setGeneratingAll] = useState(false);
     
     // Outfit image modal state (separate from character modal)
@@ -474,8 +474,17 @@ export default function CharacterList({ showHeader = true }: CharacterListProps)
         // First save the outfit if changed
         if (!outfits[key]) return;
         
-        setGeneratingOutfit(key);
+        // Add to generating set
+        setGeneratingOutfits(prev => new Set(prev).add(key));
         const previousImageUrl = outfitImages[key];
+        
+        const removeFromGenerating = () => {
+            setGeneratingOutfits(prev => {
+                const next = new Set(prev);
+                next.delete(key);
+                return next;
+            });
+        };
         
         try {
             // Save first (only if reference board doesn't exist yet)
@@ -502,7 +511,7 @@ export default function CharacterList({ showHeader = true }: CharacterListProps)
                     // Check if image URL changed (generation complete)
                     if (newImageUrl && newImageUrl !== previousImageUrl) {
                         setOutfitImages(newOutfitImages);
-                        setGeneratingOutfit(null);
+                        removeFromGenerating();
                         console.log(`[Outfit] Successfully generated outfit for ${key}`);
                         return;
                     }
@@ -510,7 +519,7 @@ export default function CharacterList({ showHeader = true }: CharacterListProps)
                     // Check if we got an image for the first time
                     if (newImageUrl && !previousImageUrl) {
                         setOutfitImages(newOutfitImages);
-                        setGeneratingOutfit(null);
+                        removeFromGenerating();
                         console.log(`[Outfit] First outfit generated for ${key}`);
                         return;
                     }
@@ -521,7 +530,7 @@ export default function CharacterList({ showHeader = true }: CharacterListProps)
                     } else {
                         // Timeout - update with whatever we have
                         setOutfitImages(newOutfitImages);
-                        setGeneratingOutfit(null);
+                        removeFromGenerating();
                         console.warn(`[Outfit] Timeout waiting for outfit generation for ${key}`);
                     }
                 } catch (pollErr) {
@@ -529,7 +538,7 @@ export default function CharacterList({ showHeader = true }: CharacterListProps)
                     if (attempts < maxAttempts) {
                         setTimeout(pollForResult, 3000);
                     } else {
-                        setGeneratingOutfit(null);
+                        removeFromGenerating();
                     }
                 }
             };
@@ -539,7 +548,7 @@ export default function CharacterList({ showHeader = true }: CharacterListProps)
             
         } catch (err) {
             console.error("Failed to generate outfit", err);
-            setGeneratingOutfit(null);
+            removeFromGenerating();
         }
     };
     
@@ -632,7 +641,7 @@ export default function CharacterList({ showHeader = true }: CharacterListProps)
                             const charKey = char.name.toLowerCase();
                             const outfit = outfits[charKey] || '';
                             const outfitImage = outfitImages[charKey];
-                            const isGenerating = generatingOutfit === charKey;
+                            const isGenerating = generatingOutfits.has(charKey);
                             const isSaving = savingOutfit === charKey;
                             
                             return (
@@ -819,7 +828,7 @@ export default function CharacterList({ showHeader = true }: CharacterListProps)
                     handleGenerateOutfit(outfitModalChar.displayName);
                     setOutfitModalChar(null);
                 } : undefined}
-                isRegenerating={outfitModalChar ? generatingOutfit === outfitModalChar.name : false}
+                isRegenerating={outfitModalChar ? generatingOutfits.has(outfitModalChar.name) : false}
             />
         </div>
     );

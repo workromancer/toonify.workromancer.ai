@@ -206,11 +206,13 @@ def generate_outfit_images_task(episode_id: UUID):
                         episode_context=episode.story_summary
                     )
                     
-                    # 생성된 이미지를 GCS에 업로드
+                    # 생성된 이미지를 GCS에 업로드 (타임스탬프로 캐시 방지)
+                    import time
+                    timestamp = int(time.time() * 1000)  # ms precision for batch
                     outfit_image_url = storage.upload_image(
                         outfit_image_bytes,
                         schema="outfit_refs",
-                        identifier=f"{episode_id}_{c.id}"
+                        identifier=f"{episode_id}_{c.id}_{timestamp}"
                     )
                     
                     outfit_images[c.name.lower()] = outfit_image_url
@@ -340,11 +342,13 @@ def generate_reference_boards_for_episode(
                     episode_context=episode.story_summary
                 )
                 
-                # 생성된 이미지를 임시로 GCS에 업로드
+                # 생성된 이미지를 GCS에 업로드 (타임스탬프로 캐시 방지)
+                import time
+                timestamp = int(time.time() * 1000)  # ms precision for batch
                 outfit_image_url = storage.upload_image(
                     outfit_image_bytes,
                     schema="outfit_refs",
-                    identifier=f"{episode_id}_{c.id}"
+                    identifier=f"{episode_id}_{c.id}_{timestamp}"
                 )
                 
                 new_outfit_images[c.name.lower()] = outfit_image_url
@@ -867,11 +871,13 @@ def regenerate_single_outfit_image_task(episode_id: UUID, character_name: str):
                 episode_context=episode.story_summary
             )
             
-            # Upload to storage
+            # Upload to storage (use timestamp to ensure unique URL and avoid browser caching)
+            import time
+            timestamp = int(time.time())
             outfit_image_url = storage.upload_image(
                 outfit_image_bytes,
                 schema="outfit_refs",
-                identifier=f"{episode_id}_{char.id}"
+                identifier=f"{episode_id}_{char.id}_{timestamp}"
             )
             
             # Update character_outfit_images
