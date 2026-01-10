@@ -42,13 +42,16 @@ interface CharacterDetailModalProps {
     character: Character | null;
     onRetry?: (characterId: string) => void;
     onDelete?: (characterId: string) => void;
+    outfitImageUrl?: string;
+    outfitDescription?: string;
 }
 
 import { useTranslations } from 'next-intl';
 
-export default function CharacterDetailModal({ isOpen, onClose, character, onRetry, onDelete }: CharacterDetailModalProps) {
+export default function CharacterDetailModal({ isOpen, onClose, character, onRetry, onDelete, outfitImageUrl, outfitDescription }: CharacterDetailModalProps) {
     const t = useTranslations('Modals.CharacterDetail');
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState<'profile' | 'outfit'>('profile');
 
     const handleRemove = () => {
         setIsDeleteConfirmOpen(true);
@@ -74,6 +77,8 @@ export default function CharacterDetailModal({ isOpen, onClose, character, onRet
     const moodDisplay = Array.isArray(character.default_mood)
         ? character.default_mood.join(", ")
         : (character.default_mood || "Neutral");
+    
+    const hasOutfit = !!outfitImageUrl;
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -84,47 +89,101 @@ export default function CharacterDetailModal({ isOpen, onClose, character, onRet
                 <div className="flex flex-col md:flex-row h-full overflow-hidden">
 
                     {/* Left: Image / Status Area */}
-                    <div className="w-full md:w-[45%] relative bg-black/40 flex items-center justify-center border-b md:border-b-0 md:border-r border-gray-800 overflow-hidden bg-[#13111C]">
-                        {character.profile_image_url && !isGenerating ? (
-                            <img
-                                src={character.profile_image_url}
-                                alt={character.name}
-                                className="w-full h-auto max-h-[85vh] object-contain"
-                            />
-                        ) : (
-                            <div className="flex flex-col items-center gap-4 p-8 text-center relative z-10 w-full min-h-[400px] justify-center">
-                                {isGenerating ? (
-                                    <>
-                                        <CustomLoader size={64} />
-                                        <div className="flex flex-col gap-1">
-                                            <h3 className="text-xl font-bold text-white animate-pulse">{t('designing', { name: character.name })}</h3>
-                                            <p className="text-sm text-gray-400">{t('designingDesc')}</p>
-                                        </div>
-                                    </>
-                                ) : isFailed ? (
-                                    <>
-                                        <div className="w-16 h-16 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center mb-2">
-                                            <X size={32} />
-                                        </div>
-                                        <h3 className="text-xl font-bold text-white">{t('failed')}</h3>
-                                        <p className="text-sm text-gray-400 max-w-xs mb-4">{t('failedDesc')}</p>
-                                        {onRetry && (
-                                            <Button
-                                                onClick={() => onRetry(character.id!)}
-                                                className="bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-900/20"
-                                            >
-                                                <Sparkles size={16} className="mr-2" /> {t('retry')}
-                                            </Button>
-                                        )}
-                                    </>
+                    <div className="w-full md:w-[45%] relative bg-black/40 flex flex-col border-b md:border-b-0 md:border-r border-gray-800 overflow-hidden bg-[#13111C]">
+                        {/* Tab buttons (only show if outfit exists) */}
+                        {hasOutfit && (
+                            <div className="flex border-b border-gray-800 bg-[#0f0f16]">
+                                <button
+                                    onClick={() => setActiveTab('profile')}
+                                    className={cn(
+                                        "flex-1 py-2.5 text-xs font-bold uppercase tracking-wider transition-all",
+                                        activeTab === 'profile'
+                                            ? "text-purple-400 border-b-2 border-purple-500 bg-purple-500/5"
+                                            : "text-gray-500 hover:text-gray-300"
+                                    )}
+                                >
+                                    <User size={12} className="inline mr-1.5" />
+                                    프로필
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('outfit')}
+                                    className={cn(
+                                        "flex-1 py-2.5 text-xs font-bold uppercase tracking-wider transition-all",
+                                        activeTab === 'outfit'
+                                            ? "text-purple-400 border-b-2 border-purple-500 bg-purple-500/5"
+                                            : "text-gray-500 hover:text-gray-300"
+                                    )}
+                                >
+                                    👔 아웃핏
+                                </button>
+                            </div>
+                        )}
+                        
+                        {/* Image display area */}
+                        <div className="flex-1 flex items-center justify-center overflow-hidden">
+                            {activeTab === 'profile' ? (
+                                // Profile Image
+                                character.profile_image_url && !isGenerating ? (
+                                    <img
+                                        src={character.profile_image_url}
+                                        alt={character.name}
+                                        className="w-full h-auto max-h-[75vh] object-contain"
+                                    />
                                 ) : (
-                                    // Fallback for no image but not generating (shouldn't happen often)
-                                    <div className="text-6xl font-bold text-white/10 select-none">
-                                        {character.name[0]}
+                                    <div className="flex flex-col items-center gap-4 p-8 text-center relative z-10 w-full min-h-[400px] justify-center">
+                                        {isGenerating ? (
+                                            <>
+                                                <CustomLoader size={64} />
+                                                <div className="flex flex-col gap-1">
+                                                    <h3 className="text-xl font-bold text-white animate-pulse">{t('designing', { name: character.name })}</h3>
+                                                    <p className="text-sm text-gray-400">{t('designingDesc')}</p>
+                                                </div>
+                                            </>
+                                        ) : isFailed ? (
+                                            <>
+                                                <div className="w-16 h-16 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center mb-2">
+                                                    <X size={32} />
+                                                </div>
+                                                <h3 className="text-xl font-bold text-white">{t('failed')}</h3>
+                                                <p className="text-sm text-gray-400 max-w-xs mb-4">{t('failedDesc')}</p>
+                                                {onRetry && (
+                                                    <Button
+                                                        onClick={() => onRetry(character.id!)}
+                                                        className="bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-900/20"
+                                                    >
+                                                        <Sparkles size={16} className="mr-2" /> {t('retry')}
+                                                    </Button>
+                                                )}
+                                            </>
+                                        ) : (
+                                            <div className="text-6xl font-bold text-white/10 select-none">
+                                                {character.name[0]}
+                                            </div>
+                                        )}
+                                        <div className="absolute inset-0 bg-gradient-to-t from-[#13111C] via-transparent to-transparent opacity-60 pointer-events-none" />
                                     </div>
-                                )}
-                                {/* Overlay Gradient for readability if needed (only for placeholder) */}
-                                <div className="absolute inset-0 bg-gradient-to-t from-[#13111C] via-transparent to-transparent opacity-60 pointer-events-none" />
+                                )
+                            ) : (
+                                // Outfit Image
+                                outfitImageUrl ? (
+                                    <img
+                                        src={outfitImageUrl}
+                                        alt={`${character.name} outfit`}
+                                        className="w-full h-auto max-h-[75vh] object-contain"
+                                    />
+                                ) : (
+                                    <div className="flex flex-col items-center gap-4 p-8 text-center w-full min-h-[400px] justify-center">
+                                        <div className="text-4xl opacity-30">👔</div>
+                                        <p className="text-sm text-gray-500">아웃핏 이미지가 없습니다</p>
+                                    </div>
+                                )
+                            )}
+                        </div>
+                        
+                        {/* Outfit description overlay (when viewing outfit) */}
+                        {activeTab === 'outfit' && outfitDescription && (
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/80 to-transparent p-4">
+                                <p className="text-xs text-gray-300 leading-relaxed">{outfitDescription}</p>
                             </div>
                         )}
                     </div>

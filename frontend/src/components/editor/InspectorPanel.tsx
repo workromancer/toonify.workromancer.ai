@@ -51,17 +51,11 @@ const AspectRatioSelector = ({ current, onChange }: { current: string, onChange:
     </div>
 );
 
-const EpisodeContextEditor = ({ episodeId, projectId, characters, disabled, t }: { episodeId: string | null, projectId: string, characters: Character[], disabled?: boolean, t: (key: string, values?: Record<string, string>) => string }) => {
+const EpisodeContextEditor = ({ episodeId, projectId, disabled, t }: { episodeId: string | null, projectId: string, disabled?: boolean, t: (key: string, values?: Record<string, string>) => string }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [bgInfo, setBgInfo] = useState('');
-    const [outfits, setOutfits] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
-    const [hasReferenceBoard, setHasReferenceBoard] = useState(false);
-    const [outfitImages, setOutfitImages] = useState<Record<string, string>>({});
-    const [referenceBoardUrls, setReferenceBoardUrls] = useState<string[]>([]);
-    const [regeneratingChar, setRegeneratingChar] = useState<string | null>(null);
-    const [regeneratingAll, setRegeneratingAll] = useState(false);
 
     // Fetch initial data
     useEffect(() => {
@@ -73,11 +67,6 @@ const EpisodeContextEditor = ({ episodeId, projectId, characters, disabled, t }:
                 const res = await api.get(`/episodes/${episodeId}`);
                 const ep = res.data;
                 setBgInfo(ep.background_info || '');
-                setOutfits(ep.character_outfits || {});
-                setOutfitImages(ep.character_outfit_images || {});
-                setReferenceBoardUrls(ep.character_reference_board_urls || []);
-                // Check if reference board exists (outfits are locked)
-                setHasReferenceBoard(!!(ep.character_reference_board_urls && ep.character_reference_board_urls.length > 0));
             } catch (e) {
                 console.error("Failed to load episode context", e);
             } finally {
@@ -92,91 +81,14 @@ const EpisodeContextEditor = ({ episodeId, projectId, characters, disabled, t }:
         setSaving(true);
         try {
             await api.put(`/episodes/${episodeId}`, {
-                background_info: bgInfo,
-                character_outfits: hasReferenceBoard ? undefined : outfits  // Don't send outfits if locked
+                background_info: bgInfo
             });
-            // Optional: Toast success
         } catch (e) {
             console.error("Failed to save context", e);
         } finally {
             setSaving(false);
             setIsOpen(false);
         }
-    };
-
-    const handleRegenerateOutfit = async (charName: string) => {
-        if (!episodeId) return;
-        setRegeneratingChar(charName.toLowerCase());
-        try {
-            await api.post(`/episodes/${episodeId}/regenerate-outfit-image/${encodeURIComponent(charName.toLowerCase())}`);
-            // Poll for update
-            setTimeout(async () => {
-                const res = await api.get(`/episodes/${episodeId}`);
-                setOutfitImages(res.data.character_outfit_images || {});
-                setReferenceBoardUrls(res.data.character_reference_board_urls || []);
-                setRegeneratingChar(null);
-            }, 5000);
-        } catch (e) {
-            console.error("Failed to regenerate outfit", e);
-            setRegeneratingChar(null);
-        }
-    };
-
-    const handleGenerateOutfits = async () => {
-        if (!episodeId) return;
-        setRegeneratingAll(true);
-        try {
-            await api.post(`/episodes/${episodeId}/generate-outfit-images`);
-            // Poll for update - outfit generation takes time
-            const pollInterval = setInterval(async () => {
-                const res = await api.get(`/episodes/${episodeId}`);
-                const newOutfitImages = res.data.character_outfit_images || {};
-                setOutfitImages(newOutfitImages);
-                
-                // Check if all outfits are generated
-                const outfitKeys = Object.keys(outfits);
-                const generatedKeys = Object.keys(newOutfitImages);
-                if (outfitKeys.every(k => generatedKeys.includes(k.toLowerCase()))) {
-                    clearInterval(pollInterval);
-                    setRegeneratingAll(false);
-                }
-            }, 3000);
-
-            // Timeout after 60 seconds
-            setTimeout(() => {
-                clearInterval(pollInterval);
-                setRegeneratingAll(false);
-            }, 60000);
-        } catch (e) {
-            console.error("Failed to generate outfits", e);
-            setRegeneratingAll(false);
-        }
-    };
-
-    const handleRegenerateAll = async () => {
-        if (!episodeId) return;
-        setRegeneratingAll(true);
-        try {
-            await api.post(`/episodes/${episodeId}/regenerate-reference-board`);
-            // Poll for update
-            setTimeout(async () => {
-                const res = await api.get(`/episodes/${episodeId}`);
-                setOutfitImages(res.data.character_outfit_images || {});
-                setReferenceBoardUrls(res.data.character_reference_board_urls || []);
-                setRegeneratingAll(false);
-            }, 8000);
-        } catch (e) {
-            console.error("Failed to regenerate reference board", e);
-            setRegeneratingAll(false);
-        }
-    };
-
-    const updateOutfit = (name: string, desc: string) => {
-        if (hasReferenceBoard) return; // Prevent updates if locked
-        setOutfits(prev => ({
-            ...prev,
-            [name.toLowerCase()]: desc
-        }));
     };
 
     if (!episodeId) return null;
@@ -207,69 +119,6 @@ const EpisodeContextEditor = ({ episodeId, projectId, characters, disabled, t }:
                         <div className="text-center text-xs text-slate-500 py-2">{t('loading')}</div>
                     ) : (
                         <>
-                            {/* Outfit Images Preview (only if reference board exists) */}
-                            {hasReferenceBoard && Object.keys(outfitImages).length > 0 && (
-                                <div>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <label className="text-xs text-slate-500 flex items-center gap-2">
-                                            🎨 {t('outfitPreview') || 'Outfit Images'}
-                                        </label>
-                                        <button
-                                            onClick={handleRegenerateAll}
-                                            disabled={regeneratingAll || disabled}
-                                            className="text-[10px] text-purple-400 hover:text-purple-300 disabled:text-slate-600 disabled:cursor-not-allowed flex items-center gap-1"
-                                        >
-                                            {regeneratingAll ? (
-                                                <>⏳ {t('regenerating') || 'Regenerating...'}</>
-                                            ) : (
-                                                <>🔄 {t('regenerateAll') || 'Regenerate All'}</>
-                                            )}
-                                        </button>
-                                    </div>
-                                    <div className="grid grid-cols-4 gap-2">
-                                        {Object.entries(outfitImages).map(([charName, imgUrl]) => (
-                                            <div 
-                                                key={charName} 
-                                                className="relative group aspect-[3/4] rounded-lg overflow-hidden border border-slate-700 bg-slate-900"
-                                            >
-                                                {imgUrl ? (
-                                                    <img 
-                                                        src={imgUrl} 
-                                                        alt={charName} 
-                                                        className="w-full h-full object-cover"
-                                                    />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center text-slate-600 text-[10px]">
-                                                        No Image
-                                                    </div>
-                                                )}
-                                                {/* Character name overlay */}
-                                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-1">
-                                                    <span className="text-[9px] text-white font-medium capitalize truncate block">
-                                                        {charName}
-                                                    </span>
-                                                </div>
-                                                {/* Regenerate button overlay */}
-                                                <button
-                                                    onClick={() => handleRegenerateOutfit(charName)}
-                                                    disabled={regeneratingChar === charName.toLowerCase() || regeneratingAll || disabled}
-                                                    className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center disabled:cursor-not-allowed"
-                                                >
-                                                    {regeneratingChar === charName.toLowerCase() ? (
-                                                        <span className="text-white text-[10px] animate-pulse">⏳</span>
-                                                    ) : (
-                                                        <span className="text-white text-xs">🔄</span>
-                                                    )}
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <p className="text-[9px] text-slate-600 mt-1 text-center">
-                                        {t('hoverToRegenerate') || 'Hover to regenerate individual images'}
-                                    </p>
-                                </div>
-                            )}
-
                             <div>
                                 <label className="text-xs text-slate-500 mb-1 block">{t('globalBackgroundInfo')}</label>
                                 <textarea
@@ -281,67 +130,9 @@ const EpisodeContextEditor = ({ episodeId, projectId, characters, disabled, t }:
                                 />
                             </div>
 
-                            <div>
-                                <label className="text-xs text-slate-500 mb-2 flex items-center gap-2">
-                                    {t('characterOutfits')}
-                                    {hasReferenceBoard && (
-                                        <span className="text-[10px] text-amber-400 flex items-center gap-1">
-                                            🔒 {t('outfitsLocked') || 'Locked'}
-                                        </span>
-                                    )}
-                                </label>
-                                {hasReferenceBoard && (
-                                    <div className="text-[10px] text-amber-500 bg-amber-900/20 p-2 rounded border border-amber-900/50 mb-2">
-                                        {t('outfitsLockedDesc') || 'Character outfits are locked after image generation. Create a new episode to use different outfits.'}
-                                    </div>
-                                )}
-                                <div className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar pr-1">
-                                    {characters.map(char => (
-                                        <div key={char.id} className="flex flex-col gap-1">
-                                            <span className="text-[10px] text-slate-400 font-bold">{char.name}</span>
-                                            <input
-                                                value={outfits[char.name.toLowerCase()] || ''}
-                                                onChange={(e) => updateOutfit(char.name, e.target.value)}
-                                                placeholder={t('outfitPlaceholder', { name: char.name })}
-                                                disabled={loading || saving || disabled || hasReferenceBoard}
-                                                className={`w-full bg-[#0f0f16] border rounded px-2 py-1 text-xs text-slate-300 focus:border-purple-500 outline-none disabled:opacity-50 disabled:cursor-not-allowed ${hasReferenceBoard ? 'border-amber-900/50' : 'border-slate-700'}`}
-                                            />
-                                        </div>
-                                    ))}
-                                    {characters.length === 0 && <div className="text-xs text-slate-600 italic">{t('noCharactersAvailable')}</div>}
-                                </div>
+                            <div className="text-[10px] text-slate-500 bg-slate-900/50 p-2 rounded border border-slate-800">
+                                💡 캐릭터 의상은 왼쪽 캐스팅 패널에서 설정하세요
                             </div>
-
-                            {/* Generate Outfits Button - Show when outfits defined but not yet generated */}
-                            {Object.keys(outfits).length > 0 && Object.keys(outfitImages).length === 0 && !hasReferenceBoard && (
-                                <button
-                                    onClick={handleGenerateOutfits}
-                                    disabled={loading || saving || disabled || regeneratingAll}
-                                    className="w-full py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded text-xs font-bold flex items-center justify-center gap-2 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed shadow-lg"
-                                >
-                                    {regeneratingAll ? (
-                                        <><span className="animate-spin">⏳</span> {t('generatingOutfits') || 'Generating Outfits...'}</>
-                                    ) : (
-                                        <><span>🎨</span> {t('generateOutfits') || 'Generate Outfit Images'}</>
-                                    )}
-                                </button>
-                            )}
-
-                            {/* Generate Outfits Button - Show when some outfits missing */}
-                            {Object.keys(outfits).length > 0 && Object.keys(outfitImages).length > 0 && 
-                             Object.keys(outfits).length !== Object.keys(outfitImages).length && !hasReferenceBoard && (
-                                <button
-                                    onClick={handleGenerateOutfits}
-                                    disabled={loading || saving || disabled || regeneratingAll}
-                                    className="w-full py-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white rounded text-xs font-bold flex items-center justify-center gap-2 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed"
-                                >
-                                    {regeneratingAll ? (
-                                        <><span className="animate-spin">⏳</span> {t('generatingOutfits') || 'Generating...'}</>
-                                    ) : (
-                                        <><span>🎨</span> {t('generateRemainingOutfits') || 'Generate Remaining Outfits'}</>
-                                    )}
-                                </button>
-                            )}
 
                             <button
                                 onClick={handleSave}
@@ -538,7 +329,6 @@ export default function InspectorPanel({ episodeId: propEpisodeId }: { episodeId
             <EpisodeContextEditor
                 episodeId={activeEpisodeId}
                 projectId={projectId}
-                characters={characters}
                 disabled={activeEpisodeStatus === 'generating' || activeEpisodeStatus === 'fetching'}
                 t={t}
             />

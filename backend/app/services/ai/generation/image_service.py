@@ -395,17 +395,17 @@ APPEARANCE: {character_description}
 OUTFIT: {outfit_description}
 ART STYLE: {style}
 
-=== LAYOUT REQUIREMENTS (9:16 vertical aspect ratio) ===
+=== LAYOUT REQUIREMENTS (16:9 horizontal aspect ratio) ===
 
-DIVIDE THE IMAGE INTO 2 SECTIONS:
+DIVIDE THE IMAGE INTO 2 SECTIONS (LEFT-TO-RIGHT):
 
-LEFT SECTION (approximately 40% of width):
+LEFT SECTION (approximately 30% of width):
 - Full body standing pose of the character
 - Character facing forward or slightly angled (3/4 view)
 - Show the complete outfit from head to toe
 - Clean, neutral pose to display the costume
 
-RIGHT SECTION (approximately 60% of width, divided into 2x2 grid = 4 small panels):
+RIGHT SECTION (approximately 70% of width, arranged as 4 panels in a row):
 {episode_pose_context}
 
 === STYLE REQUIREMENTS ===
@@ -416,7 +416,7 @@ RIGHT SECTION (approximately 60% of width, divided into 2x2 grid = 4 small panel
 - Maintain consistent character identity across all poses
 - High quality, professional webtoon art style
 
-CRITICAL: Generate this as a SINGLE combined image with the described layout.
+CRITICAL: Generate this as a SINGLE combined image with the described horizontal layout.
 """
         
         try:
@@ -480,7 +480,7 @@ CRITICAL: Generate this as a SINGLE combined image with the described layout.
                         system_instruction=system_instruction,
                         response_modalities=['IMAGE'],
                         image_config=types.ImageConfig(
-                            aspect_ratio="9:16",  # Vertical orientation for character sheet
+                            aspect_ratio="16:9",  # Horizontal orientation for character sheet
                         )
                     )
                     
@@ -502,8 +502,8 @@ CRITICAL: Generate this as a SINGLE combined image with the described layout.
         except Exception as e:
             print(f"[OutfitGen] Multimodal generation error: {e}. Falling back to text-only.")
         
-        # Fallback to text-only generation (9:16 ratio)
-        return self.generate_image(prompt, width=576, height=1024)
+        # Fallback to text-only generation (16:9 ratio)
+        return self.generate_image(prompt, width=1024, height=576)
 
 
 # 인스턴스는 AIService Facade에서 관리됨
