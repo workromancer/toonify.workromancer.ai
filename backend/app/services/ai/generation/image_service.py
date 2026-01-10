@@ -384,21 +384,43 @@ Requirements:
             if has_refs:
                 parts = []
                 
-                # Style reference first (highest priority)
+                # Style reference first (highest priority) - with retry
                 if style_ref_url:
                     print(f"[OutfitGen] Using style reference: {style_ref_url[:60]}...")
                     style_img = self._download_image_as_pil(style_ref_url)
+                    
+                    # Retry once if download failed
+                    if not style_img:
+                        print(f"[OutfitGen] Style reference download failed, retrying...")
+                        import time
+                        time.sleep(0.5)
+                        style_img = self._download_image_as_pil(style_ref_url)
+                    
                     if style_img:
                         parts.append(style_img)
                         prompt += "\n[Reference Image 1] is the ART STYLE reference. Replicate this exact visual style (line work, coloring, shading). Do NOT copy any characters from this reference - only use it for art style."
+                    else:
+                        # 스타일 레퍼런스 없이 진행하면 일관성이 깨지므로 예외 발생
+                        raise Exception(f"Style reference download FAILED for {character_name}. Cannot proceed without style reference.")
                 
-                # Character profile reference
+                # Character profile reference - with retry
                 if profile_image_url:
                     print(f"[OutfitGen] Using character profile: {profile_image_url[:60]}...")
                     char_img = self._download_image_as_pil(profile_image_url)
+                    
+                    # Retry once if download failed
+                    if not char_img:
+                        print(f"[OutfitGen] Character profile download failed, retrying...")
+                        import time
+                        time.sleep(0.5)
+                        char_img = self._download_image_as_pil(profile_image_url)
+                    
                     if char_img:
                         parts.append(char_img)
                         prompt += f"\n[Reference Image {len(parts)}] is the CHARACTER reference. This is {character_name}. Draw this same character but wearing the new outfit."
+                    else:
+                        # 캐릭터 프로필 없이 진행하면 캐릭터 일관성이 깨지므로 예외 발생
+                        raise Exception(f"Character profile download FAILED for {character_name}. Cannot proceed without character reference.")
                 
                 if parts:
                     contents = parts + [prompt]

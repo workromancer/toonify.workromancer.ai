@@ -293,8 +293,14 @@ def generate_reference_boards_for_episode(
             )
             board_urls.append(url)
         
+        # 각 캐릭터별 아웃핏 이미지 URL 맵 생성
+        outfit_images_map = {}
+        for char_info in characters_for_board:
+            outfit_images_map[char_info["name"].lower()] = char_info["image_url"]
+        
         # 에피소드에 캐싱
         episode.character_reference_board_urls = board_urls
+        episode.character_outfit_images = outfit_images_map
         session.add(episode)
         session.commit()
         
@@ -719,3 +725,124 @@ def regenerate_selected_cuts_task(episode_id: UUID, cut_ids: list[UUID], languag
                     cut.status = "failed"
                     session.add(cut)
             session.commit()
+
+
+def regenerate_single_outfit_image_task(episode_id: UUID, character_name: str):
+    """
+    Regenerate outfit image for a single character and update the reference board.
+    """
+    logger.info("Regenerating single outfit image", episode_id=str(episode_id), character_name=character_name)
+    
+    with Session(engine) as session:
+        try:
+            episode = session.get(Episode, episode_id)
+            if not episode:
+                logger.error("Episode not found", episode_id=str(episode_id))
+                return
+            
+            project = session.get(Project, episode.project_id)
+            outfit_desc = episode.character_outfits.get(character_name)
+            
+            if not outfit_desc:
+                logger.error("Character outfit not found", character_name=character_name)
+                return
+            
+            # Find the character
+            all_chars = session.exec(
+                select(Character)
+                .where(Character.project_id == project.id)
+                .where(Character.deleted_at == None)
+            ).all()
+            
+            char = next((c for c in all_chars if c.name.lower() == character_name), None)
+            if not char:
+                logger.error("Character not found in project", character_name=character_name)
+                return
+            
+            # Get style info
+            art_style = project.art_style or project.style_preset or "Webtoon"
+            style_ref_url = project.style_reference_url
+            
+            logger.info(f"Generating new outfit image for {char.name}: {outfit_desc[:50]}...")
+            
+            # Generate new outfit image
+            outfit_image_bytes = ai_service.generate_character_outfit_image(
+                character_name=char.name,
+                character_description=char.description or ", ".join(char.appearance_tags or []),
+                outfit_description=outfit_desc,
+                style=art_style,
+                profile_image_url=char.profile_image_url,
+                style_ref_url=style_ref_url
+            )
+            
+            # Upload to storage
+            outfit_image_url = storage.upload_image(
+                outfit_image_bytes,
+                schema="outfit_refs",
+                identifier=f"{episode_id}_{char.id}"
+            )
+            
+            # Update character_outfit_images
+            outfit_images = episode.character_outfit_images or {}
+            outfit_images[character_name] = outfit_image_url
+            episode.character_outfit_images = outfit_images
+            
+            # Now regenerate the reference board with updated image
+            # Collect all character info for board generation
+            characters_for_board = []
+            for char_name_lower, img_url in outfit_images.items():
+                c = next((c for c in all_chars if c.name.lower() == char_name_lower), None)
+                if c:
+                    characters_for_board.append({
+                        "name": c.name,
+                        "image_url": img_url,
+                        "description": c.description or "",
+                        "outfit": episode.character_outfits.get(char_name_lower, "")
+                    })
+            
+            if characters_for_board:
+                # Regenerate reference boards
+                board_bytes_list = create_reference_boards(characters_for_board)
+                
+                board_urls = []
+                for idx, board_bytes in enumerate(board_bytes_list):
+                    url = storage.upload_image(
+                        board_bytes,
+                        schema="reference_boards",
+                        identifier=f"{episode_id}_{idx}"
+                    )
+                    board_urls.append(url)
+                
+                episode.character_reference_board_urls = board_urls
+            
+            # Clear context cache so it gets regenerated with new images
+            episode.context_cache_name = None
+            episode.context_cache_expires_at = None
+            
+            session.add(episode)
+            session.commit()
+            
+            logger.info(f"Successfully regenerated outfit image for {char.name}")
+            
+        except Exception as e:
+            logger.error("Failed to regenerate outfit image", episode_id=str(episode_id), character_name=character_name, error=str(e))
+
+
+def regenerate_reference_board_task(episode_id: UUID):
+    """
+    Regenerate the entire reference board from scratch.
+    """
+    logger.info("Regenerating entire reference board", episode_id=str(episode_id))
+    
+    with Session(engine) as session:
+        try:
+            # Simply call the existing function which handles everything
+            board_urls, chars_info = generate_reference_boards_for_episode(episode_id, session)
+            
+            if board_urls:
+                logger.info("Reference board regeneration complete", episode_id=str(episode_id), board_count=len(board_urls))
+            else:
+                logger.warning("Reference board regeneration returned no boards", episode_id=str(episode_id))
+                
+        except Exception as e:
+            logger.error("Failed to regenerate reference board", episode_id=str(episode_id), error=str(e))

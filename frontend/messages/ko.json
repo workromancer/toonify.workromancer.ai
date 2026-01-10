@@ -429,6 +429,9 @@
       "scriptEditor": "대본 에디터 (읽기 전용)",
       "inspector": "인스펙터",
       "storyboardTitle": "스토리보드",
+      "characters": "캐릭터 & 아웃핏",
+      "images": "이미지",
+      "settings": "설정",
       "generateAll": "전체 생성",
       "resumeGeneration": "이어 생성하기",
       "review": "검토",
@@ -516,6 +519,7 @@
       "CharacterList": {
         "title": "캐스팅",
         "empty": "아직 캐스팅된 캐릭터가 없습니다.",
+        "episodeEmpty": "이 에피소드에 등장하는 캐릭터가 없습니다.",
         "generateImage": "프로필 이미지 생성",
         "deleteCharacter": "캐릭터 삭제"
       },

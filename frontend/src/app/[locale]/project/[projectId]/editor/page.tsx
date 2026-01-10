@@ -8,11 +8,15 @@ import { useState, useEffect } from 'react';
 
 import InspectorPanel from '@/components/editor/InspectorPanel';
 import StoryboardView from '@/components/editor/StoryboardView';
+import CharacterList from '@/components/editor/CharacterList';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import api from '@/lib/api';
 import { ArrowLeft, Save, Download, Cloud, Layers, Users, Image as ImageIcon, Settings, Loader2, Smartphone, Clapperboard, SlidersHorizontal } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslations } from 'next-intl';
+
+// Sidebar menu types
+type SidebarMenu = 'storyboard' | 'characters' | 'images' | 'settings';
 
 export default function EditorPage() {
     const params = useParams();
@@ -31,6 +35,14 @@ export default function EditorPage() {
     
     // Mobile view toggle
     const [mobileActiveView, setMobileActiveView] = useState<'storyboard' | 'inspector'>('storyboard');
+    
+    // Left sidebar menu state - controls which content is shown in main area
+    const [activeSidebarMenu, setActiveSidebarMenu] = useState<SidebarMenu>('storyboard');
+    
+    // Click handler for sidebar menu - just switches to the selected menu
+    const handleSidebarMenuClick = (menu: SidebarMenu) => {
+        setActiveSidebarMenu(menu);
+    };
 
     // URL-derived Episode ID (Primary Source of Truth)
     const epIdFromUrl = searchParams?.get('episode_id');
@@ -192,17 +204,49 @@ export default function EditorPage() {
             <div className="flex-1 overflow-hidden flex pb-14 md:pb-0">
                 {/* Left Sidebar: Navigation (Fixed Icon Bar) - Hidden on mobile */}
                 <aside className="hidden md:flex w-16 bg-[#0a0a10] border-r border-slate-800 flex-col items-center py-4 gap-4 z-40">
-                    <button className="p-3 bg-purple-600/20 text-purple-400 rounded-xl border border-purple-500/30 hover:bg-purple-600/30 transition-colors">
+                    <button 
+                        onClick={() => handleSidebarMenuClick('storyboard')}
+                        className={`p-3 rounded-xl transition-colors ${
+                            activeSidebarMenu === 'storyboard'
+                                ? 'bg-purple-600/20 text-purple-400 border border-purple-500/30'
+                                : 'text-slate-500 hover:text-white hover:bg-slate-800'
+                        }`}
+                        title={t('storyboard') || 'Storyboard'}
+                    >
                         <Layers size={20} />
                     </button>
-                    <button className="p-3 text-slate-500 hover:text-white hover:bg-slate-800 rounded-xl transition-colors">
+                    <button 
+                        onClick={() => handleSidebarMenuClick('characters')}
+                        className={`p-3 rounded-xl transition-colors ${
+                            activeSidebarMenu === 'characters'
+                                ? 'bg-purple-600/20 text-purple-400 border border-purple-500/30'
+                                : 'text-slate-500 hover:text-white hover:bg-slate-800'
+                        }`}
+                        title={t('characters') || 'Characters & Outfits'}
+                    >
                         <Users size={20} />
                     </button>
-                    <button className="p-3 text-slate-500 hover:text-white hover:bg-slate-800 rounded-xl transition-colors">
+                    <button 
+                        onClick={() => handleSidebarMenuClick('images')}
+                        className={`p-3 rounded-xl transition-colors ${
+                            activeSidebarMenu === 'images'
+                                ? 'bg-purple-600/20 text-purple-400 border border-purple-500/30'
+                                : 'text-slate-500 hover:text-white hover:bg-slate-800'
+                        }`}
+                        title={t('images') || 'Images'}
+                    >
                         <ImageIcon size={20} />
                     </button>
                     <div className="flex-1" />
-                    <button className="p-3 text-slate-500 hover:text-white hover:bg-slate-800 rounded-xl transition-colors">
+                    <button 
+                        onClick={() => handleSidebarMenuClick('settings')}
+                        className={`p-3 rounded-xl transition-colors ${
+                            activeSidebarMenu === 'settings'
+                                ? 'bg-purple-600/20 text-purple-400 border border-purple-500/30'
+                                : 'text-slate-500 hover:text-white hover:bg-slate-800'
+                        }`}
+                        title={t('settings') || 'Settings'}
+                    >
                         <Settings size={20} />
                     </button>
                 </aside>
@@ -210,15 +254,40 @@ export default function EditorPage() {
                 {/* Desktop: Panel Layout */}
                 <div className="hidden md:block flex-1 overflow-hidden">
                     <PanelGroup direction="horizontal">
-                        {/* Center: Canvas / Editor */}
+                        {/* Center: Canvas / Editor - Content changes based on selected menu */}
                         <Panel defaultSize={75} minSize={30}>
                             <div className="h-full flex flex-col bg-[#05050a]">
-                                {/* Content Area - Only Storyboard */}
+                                {/* Content Area - Switches based on sidebar menu selection */}
                                 <div className="flex-1 overflow-hidden relative">
-                                    <StoryboardView
-                                        projectId={projectId?.toString() || ''}
-                                        episodeId={epIdFromUrl || activeEpisodeId || ''}
-                                    />
+                                    {activeSidebarMenu === 'storyboard' && (
+                                        <StoryboardView
+                                            projectId={projectId?.toString() || ''}
+                                            episodeId={epIdFromUrl || activeEpisodeId || ''}
+                                        />
+                                    )}
+                                    {activeSidebarMenu === 'characters' && (
+                                        <div className="h-full bg-[#0f0f16]">
+                                            <CharacterList />
+                                        </div>
+                                    )}
+                                    {activeSidebarMenu === 'images' && (
+                                        <div className="h-full flex items-center justify-center text-slate-500">
+                                            <div className="text-center">
+                                                <ImageIcon size={48} className="mx-auto mb-4 opacity-50" />
+                                                <p className="text-sm">{t('images') || 'Images'}</p>
+                                                <p className="text-xs text-slate-600 mt-1">Coming soon...</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {activeSidebarMenu === 'settings' && (
+                                        <div className="h-full flex items-center justify-center text-slate-500">
+                                            <div className="text-center">
+                                                <Settings size={48} className="mx-auto mb-4 opacity-50" />
+                                                <p className="text-sm">{t('settings') || 'Settings'}</p>
+                                                <p className="text-xs text-slate-600 mt-1">Coming soon...</p>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </Panel>

@@ -2,9 +2,10 @@
 Episode-related Pydantic schemas.
 """
 from typing import Any, List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from datetime import datetime
 from uuid import UUID
+from app.core.config import settings
 
 
 # ========== Request Schemas ==========
@@ -61,8 +62,38 @@ class EpisodeOut(BaseModel):
     background_info: Optional[str] = None
     character_outfits: Optional[dict] = None
     
+    # Reference board data
+    character_reference_board_urls: Optional[List[str]] = None
+    character_outfit_images: Optional[dict] = None  # {character_name: outfit_image_url}
+    
     # First cut thumbnail
     first_cut_image: Optional[str] = None
+
+    @validator("character_reference_board_urls", pre=True, always=True)
+    def convert_board_urls(cls, v):
+        """Convert relative paths to full URLs."""
+        if not v:
+            return v
+        result = []
+        for url in v:
+            if url and not url.startswith("http"):
+                result.append(f"{settings.STORAGE_HOST}/{url}")
+            else:
+                result.append(url)
+        return result
+
+    @validator("character_outfit_images", pre=True, always=True)
+    def convert_outfit_image_urls(cls, v):
+        """Convert relative paths to full URLs for outfit images."""
+        if not v:
+            return v
+        result = {}
+        for char_name, url in v.items():
+            if url and not url.startswith("http"):
+                result[char_name] = f"{settings.STORAGE_HOST}/{url}"
+            else:
+                result[char_name] = url
+        return result
 
     class Config:
         from_attributes = True

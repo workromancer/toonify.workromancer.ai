@@ -58,6 +58,10 @@ const EpisodeContextEditor = ({ episodeId, projectId, characters, disabled, t }:
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [hasReferenceBoard, setHasReferenceBoard] = useState(false);
+    const [outfitImages, setOutfitImages] = useState<Record<string, string>>({});
+    const [referenceBoardUrls, setReferenceBoardUrls] = useState<string[]>([]);
+    const [regeneratingChar, setRegeneratingChar] = useState<string | null>(null);
+    const [regeneratingAll, setRegeneratingAll] = useState(false);
 
     // Fetch initial data
     useEffect(() => {
@@ -70,6 +74,8 @@ const EpisodeContextEditor = ({ episodeId, projectId, characters, disabled, t }:
                 const ep = res.data;
                 setBgInfo(ep.background_info || '');
                 setOutfits(ep.character_outfits || {});
+                setOutfitImages(ep.character_outfit_images || {});
+                setReferenceBoardUrls(ep.character_reference_board_urls || []);
                 // Check if reference board exists (outfits are locked)
                 setHasReferenceBoard(!!(ep.character_reference_board_urls && ep.character_reference_board_urls.length > 0));
             } catch (e) {
@@ -98,7 +104,41 @@ const EpisodeContextEditor = ({ episodeId, projectId, characters, disabled, t }:
         }
     };
 
+    const handleRegenerateOutfit = async (charName: string) => {
+        if (!episodeId) return;
+        setRegeneratingChar(charName.toLowerCase());
+        try {
+            await api.post(`/episodes/${episodeId}/regenerate-outfit-image/${encodeURIComponent(charName.toLowerCase())}`);
+            // Poll for update
+            setTimeout(async () => {
+                const res = await api.get(`/episodes/${episodeId}`);
+                setOutfitImages(res.data.character_outfit_images || {});
+                setReferenceBoardUrls(res.data.character_reference_board_urls || []);
+                setRegeneratingChar(null);
+            }, 5000);
+        } catch (e) {
+            console.error("Failed to regenerate outfit", e);
+            setRegeneratingChar(null);
+        }
+    };
 
+    const handleRegenerateAll = async () => {
+        if (!episodeId) return;
+        setRegeneratingAll(true);
+        try {
+            await api.post(`/episodes/${episodeId}/regenerate-reference-board`);
+            // Poll for update
+            setTimeout(async () => {
+                const res = await api.get(`/episodes/${episodeId}`);
+                setOutfitImages(res.data.character_outfit_images || {});
+                setReferenceBoardUrls(res.data.character_reference_board_urls || []);
+                setRegeneratingAll(false);
+            }, 8000);
+        } catch (e) {
+            console.error("Failed to regenerate reference board", e);
+            setRegeneratingAll(false);
+        }
+    };
 
     const updateOutfit = (name: string, desc: string) => {
         if (hasReferenceBoard) return; // Prevent updates if locked
@@ -136,6 +176,69 @@ const EpisodeContextEditor = ({ episodeId, projectId, characters, disabled, t }:
                         <div className="text-center text-xs text-slate-500 py-2">{t('loading')}</div>
                     ) : (
                         <>
+                            {/* Outfit Images Preview (only if reference board exists) */}
+                            {hasReferenceBoard && Object.keys(outfitImages).length > 0 && (
+                                <div>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <label className="text-xs text-slate-500 flex items-center gap-2">
+                                            🎨 {t('outfitPreview') || 'Outfit Images'}
+                                        </label>
+                                        <button
+                                            onClick={handleRegenerateAll}
+                                            disabled={regeneratingAll || disabled}
+                                            className="text-[10px] text-purple-400 hover:text-purple-300 disabled:text-slate-600 disabled:cursor-not-allowed flex items-center gap-1"
+                                        >
+                                            {regeneratingAll ? (
+                                                <>⏳ {t('regenerating') || 'Regenerating...'}</>
+                                            ) : (
+                                                <>🔄 {t('regenerateAll') || 'Regenerate All'}</>
+                                            )}
+                                        </button>
+                                    </div>
+                                    <div className="grid grid-cols-4 gap-2">
+                                        {Object.entries(outfitImages).map(([charName, imgUrl]) => (
+                                            <div 
+                                                key={charName} 
+                                                className="relative group aspect-[3/4] rounded-lg overflow-hidden border border-slate-700 bg-slate-900"
+                                            >
+                                                {imgUrl ? (
+                                                    <img 
+                                                        src={imgUrl} 
+                                                        alt={charName} 
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center text-slate-600 text-[10px]">
+                                                        No Image
+                                                    </div>
+                                                )}
+                                                {/* Character name overlay */}
+                                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-1">
+                                                    <span className="text-[9px] text-white font-medium capitalize truncate block">
+                                                        {charName}
+                                                    </span>
+                                                </div>
+                                                {/* Regenerate button overlay */}
+                                                <button
+                                                    onClick={() => handleRegenerateOutfit(charName)}
+                                                    disabled={regeneratingChar === charName.toLowerCase() || regeneratingAll || disabled}
+                                                    className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center disabled:cursor-not-allowed"
+                                                >
+                                                    {regeneratingChar === charName.toLowerCase() ? (
+                                                        <span className="text-white text-[10px] animate-pulse">⏳</span>
+                                                    ) : (
+                                                        <span className="text-white text-xs">🔄</span>
+                                                    )}
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <p className="text-[9px] text-slate-600 mt-1 text-center">
+                                        {t('hoverToRegenerate') || 'Hover to regenerate individual images'}
+                                    </p>
+                                </div>
+                            )}
+
                             <div>
                                 <label className="text-xs text-slate-500 mb-1 block">{t('globalBackgroundInfo')}</label>
                                 <textarea

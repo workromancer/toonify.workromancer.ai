@@ -199,6 +199,7 @@ class Episode(SQLModel, table=True):
     background_info: Optional[str] = Field(default=None, sa_column=Column(Text))
     character_outfits: Optional[dict] = Field(sa_column=Column(JSON), default={}) # {CharacterName: Description}
     character_reference_board_urls: List[str] = Field(sa_column=Column(JSON), default=[])  # Cached reference board images (max 4 chars each)
+    character_outfit_images: Optional[dict] = Field(sa_column=Column(JSON), default={})  # {character_name: outfit_image_url} - Individual outfit images for preview
     
     # GenAI Context Caching for consistent style/character rendering
     context_cache_name: Optional[str] = None  # GenAI cached content name (e.g., "cachedContents/xxx")

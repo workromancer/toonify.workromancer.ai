@@ -535,6 +535,78 @@ def regenerate_selected_cuts(
     
     return {"message": f"Regenerating {len(valid_cut_ids)} cuts", "cut_ids": valid_cut_ids}
 
+
+@router.post("/{episode_id}/regenerate-outfit-image/{character_name}")
+def regenerate_character_outfit_image(
+    *,
+    session: Session = Depends(deps.get_session),
+    episode_id: UUID,
+    character_name: str,
+    background_tasks: BackgroundTasks,
+    current_user_id: str = Depends(deps.get_current_user_id),
+) -> Any:
+    """
+    Regenerate outfit image for a specific character in the episode.
+    This updates both the individual outfit image and the reference board.
+    """
+    from app.tasks.episode_tasks import regenerate_single_outfit_image_task
+    
+    episode = session.get(Episode, episode_id)
+    if not episode or episode.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Episode not found")
+    
+    # Verify character exists in outfit list
+    character_name_lower = character_name.lower()
+    if not episode.character_outfits or character_name_lower not in episode.character_outfits:
+        raise HTTPException(status_code=400, detail=f"Character '{character_name}' not found in episode outfits")
+    
+    # Start background task
+    background_tasks.add_task(
+        regenerate_single_outfit_image_task,
+        episode_id=episode_id,
+        character_name=character_name_lower
+    )
+    
+    return {"message": f"Regenerating outfit image for {character_name}", "character_name": character_name}
+
+
+@router.post("/{episode_id}/regenerate-reference-board")
+def regenerate_reference_board(
+    *,
+    session: Session = Depends(deps.get_session),
+    episode_id: UUID,
+    background_tasks: BackgroundTasks,
+    current_user_id: str = Depends(deps.get_current_user_id),
+) -> Any:
+    """
+    Regenerate the entire reference board for an episode.
+    This clears the cache and regenerates all outfit images.
+    """
+    from app.tasks.episode_tasks import regenerate_reference_board_task
+    
+    episode = session.get(Episode, episode_id)
+    if not episode or episode.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Episode not found")
+    
+    if not episode.character_outfits:
+        raise HTTPException(status_code=400, detail="No character outfits defined for this episode")
+    
+    # Clear existing cache
+    episode.character_reference_board_urls = []
+    episode.character_outfit_images = {}
+    episode.context_cache_name = None
+    episode.context_cache_expires_at = None
+    session.add(episode)
+    session.commit()
+    
+    # Start background task
+    background_tasks.add_task(
+        regenerate_reference_board_task,
+        episode_id=episode_id
+    )
+    
+    return {"message": "Regenerating reference board", "episode_id": str(episode_id)}
+
 @router.post("/{episode_id}/export")
 def export_episode(
     *,

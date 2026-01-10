@@ -429,6 +429,9 @@
       "scriptEditor": "SCRIPT EDITOR (Read-Only)",
       "inspector": "Inspector",
       "storyboardTitle": "Storyboard",
+      "characters": "Characters & Outfits",
+      "images": "Images",
+      "settings": "Settings",
       "generateAll": "Generate All",
       "resumeGeneration": "Resume Generation",
       "review": "Review",
@@ -537,6 +540,7 @@
       "CharacterList": {
         "title": "Casting",
         "empty": "No characters casted yet.",
+        "episodeEmpty": "No characters appear in this episode.",
         "generateImage": "Generate Profile Image",
         "deleteCharacter": "Delete Character"
       },
