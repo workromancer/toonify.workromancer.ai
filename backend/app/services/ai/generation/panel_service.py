@@ -96,8 +96,7 @@ This style instruction takes precedence over all other visual directions.
             # Collect PIL Image objects for multimodal input
             image_parts = []
             
-            # If cached_content is provided, skip style/reference board download
-            # (they are already cached in GenAI)
+            # Use cached content if available (cache model must match image generation model)
             use_cache = bool(cached_content_name)
             
             if use_cache:
@@ -141,6 +140,11 @@ Follow the style and character appearances from the cached references.
 - Maintain continuity: lighting direction, color temperature, environment details
 - Ensure character positions make spatial sense
 """
+                    logger.info("Previous scene image added successfully")
+                else:
+                    logger.warning(f"Failed to download previous scene image: {prev_scene_url}")
+            else:
+                logger.debug("No prev_scene_url provided for this panel")
 
             # 4. Add Character References (Board or Individual) - Skip if using cache
             if not use_cache and reference_board_urls:

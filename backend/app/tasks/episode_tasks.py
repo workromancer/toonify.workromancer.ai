@@ -451,46 +451,18 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
                     prompt_lines.append(generate_board_prompt_description(board_characters, idx))
                 reference_board_prompt = "\n\n".join(prompt_lines)
             
-            # A4. Context Caching - Get or create cache for style + reference boards
+            # A4. Context Caching - DISABLED for style consistency
+            # 캐시 사용 시 그림체 불일치 문제가 발생하여 비활성화
+            # 항상 스타일/레퍼런스 이미지를 직접 전달하여 일관성 유지
             cached_content_name = None
-            from datetime import datetime
-            
-            # Check if existing cache is valid
-            if episode.context_cache_name and episode.context_cache_expires_at:
-                if episode.context_cache_expires_at > datetime.utcnow():
-                    cached_content_name = episode.context_cache_name
-                    logger.info(f"Using existing context cache: {cached_content_name}")
-                else:
-                    logger.info("Context cache expired, will create new one")
-            
-            # Create new cache if needed and we have content to cache
-            if not cached_content_name and (style_ref_url or reference_board_urls):
-                try:
-                    from app.services.ai.prompts import PANEL_IMAGE_SYSTEM_PROMPT
-                    
-                    cache_name, expires_at = context_cache_service.create_episode_cache(
-                        episode_id=episode.id,
-                        style_ref_url=style_ref_url,
-                        reference_board_urls=reference_board_urls,
-                        system_instruction=PANEL_IMAGE_SYSTEM_PROMPT
-                    )
-                    
-                    if cache_name:
-                        # Save cache info to episode
-                        episode.context_cache_name = cache_name
-                        episode.context_cache_expires_at = expires_at
-                        session.add(episode)
-                        session.commit()
-                        cached_content_name = cache_name
-                        logger.info(f"Created new context cache: {cache_name}")
-                except Exception as cache_err:
-                    logger.warning(f"Failed to create context cache: {cache_err}. Continuing without cache.")
+            logger.info("Context caching disabled - using direct image passing for style consistency")
 
             # B. Previous Scene (for continuity)
             prev_scene_url = prev_image_url_override # Priority to override
             
             # Check if reference logic is enabled
             should_refer = use_previous_context and cut.refer_prev_cut
+            logger.debug(f"Cut {cut.cut_order}: use_previous_context={use_previous_context}, refer_prev_cut={cut.refer_prev_cut}, should_refer={should_refer}")
             
             # If no override provided, look up in DB
             if not prev_scene_url and should_refer and cut.cut_order > 1:
@@ -501,6 +473,13 @@ def generate_cut_task(cut_id: UUID, prompt_override: Optional[str], language: st
                 ).first()
                 if prev_cut and prev_cut.image_path:
                     prev_scene_url = prev_cut.image_path
+                    logger.info(f"Cut {cut.cut_order}: Using previous cut ({prev_cut.cut_order}) image: {prev_scene_url[:60]}...")
+                elif prev_cut:
+                    logger.warning(f"Cut {cut.cut_order}: Previous cut ({prev_cut.cut_order}) has no image_path")
+                else:
+                    logger.warning(f"Cut {cut.cut_order}: Previous cut not found in DB")
+            elif cut.cut_order == 1:
+                logger.debug(f"Cut {cut.cut_order}: First cut, no previous reference needed")
             
             # C. Characters (Max 6)
             # 1. Start with characters explicitly listed for this cut

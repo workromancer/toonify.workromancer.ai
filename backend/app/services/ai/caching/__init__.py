@@ -82,7 +82,8 @@ class ContextCacheService(BaseAIService):
             # 3. 컨텍스트 캐시 생성
             # 모델은 이미지 생성 모델과 동일하게 사용 (버전 명시 필요)
             # gemini-2.0-flash-001 처럼 명시적 버전 필요
-            cache_model = "models/gemini-2.0-flash-001"  # Context caching 지원 모델
+            # Must match the image generation model for caching to work
+            cache_model = "models/gemini-3-pro-image-preview"
             
             logger.info(f"[ContextCache] Creating cache with {len(contents)} images, TTL={ttl_seconds}s")
             
