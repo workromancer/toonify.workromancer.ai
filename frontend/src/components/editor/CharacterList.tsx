@@ -552,7 +552,8 @@ export default function CharacterList({ showHeader = true }: CharacterListProps)
                     
                     // Check if image URL changed (generation complete)
                     if (newImageUrl && newImageUrl !== previousImageUrl) {
-                        setOutfitImages(newOutfitImages);
+                        // Only update THIS character's image to avoid overwriting other ongoing generations
+                        setOutfitImages(prev => ({ ...prev, [key]: newImageUrl }));
                         removeFromGenerating();
                         console.log(`[Outfit] Successfully generated outfit for ${key}`);
                         return;
@@ -560,7 +561,8 @@ export default function CharacterList({ showHeader = true }: CharacterListProps)
                     
                     // Check if we got an image for the first time
                     if (newImageUrl && !previousImageUrl) {
-                        setOutfitImages(newOutfitImages);
+                        // Only update THIS character's image
+                        setOutfitImages(prev => ({ ...prev, [key]: newImageUrl }));
                         removeFromGenerating();
                         console.log(`[Outfit] First outfit generated for ${key}`);
                         return;
@@ -570,8 +572,10 @@ export default function CharacterList({ showHeader = true }: CharacterListProps)
                     if (attempts < maxAttempts) {
                         setTimeout(pollForResult, 3000);
                     } else {
-                        // Timeout - update with whatever we have
-                        setOutfitImages(newOutfitImages);
+                        // Timeout - only update this character if we have a new image
+                        if (newImageUrl) {
+                            setOutfitImages(prev => ({ ...prev, [key]: newImageUrl }));
+                        }
                         removeFromGenerating();
                         console.warn(`[Outfit] Timeout waiting for outfit generation for ${key}`);
                     }
