@@ -31,6 +31,41 @@ interface OutfitModalState {
     outfit: string;
 }
 
+// Independent outfit input component - each character has its own local state
+interface OutfitInputProps {
+    charKey: string;
+    initialValue: string;
+    hasReferenceBoard: boolean;
+    isGenerating: boolean;
+    onSave: (charName: string, value: string) => void;
+}
+
+function OutfitInput({ charKey, initialValue, hasReferenceBoard, isGenerating, onSave }: OutfitInputProps) {
+    const [localValue, setLocalValue] = useState(initialValue);
+    
+    // Sync with external value only when initialValue changes (e.g., episode switch)
+    useEffect(() => {
+        setLocalValue(initialValue);
+    }, [initialValue]);
+    
+    const handleBlur = () => {
+        if (localValue !== initialValue && localValue.trim()) {
+            onSave(charKey, localValue);
+        }
+    };
+    
+    return (
+        <input
+            value={localValue}
+            onChange={(e) => setLocalValue(e.target.value)}
+            onBlur={handleBlur}
+            placeholder="의상 설명... (예: 검은 정장, 흰 셔츠)"
+            disabled={hasReferenceBoard || isGenerating}
+            className={`flex-1 px-2 py-1.5 bg-slate-900/50 border rounded text-xs text-slate-300 placeholder:text-slate-600 focus:outline-none focus:border-purple-500 disabled:opacity-50 disabled:cursor-not-allowed ${hasReferenceBoard ? 'border-amber-900/50' : 'border-slate-700'}`}
+        />
+    );
+}
+
 function OutfitImagesPanel({ episodeId, characters }: OutfitImagesProps) {
     const [outfitImages, setOutfitImages] = useState<Record<string, string>>({});
     const [outfits, setOutfits] = useState<Record<string, string>>({});
@@ -736,13 +771,16 @@ export default function CharacterList({ showHeader = true }: CharacterListProps)
                                     {activeEpisodeId && (
                                         <div className="px-2 pb-2 pt-0">
                                             <div className="flex gap-1.5">
-                                                <input
-                                                    value={outfit}
-                                                    onChange={(e) => handleOutfitChange(char.name, e.target.value)}
-                                                    onBlur={() => outfit && handleOutfitSave(char.name)}
-                                                    placeholder="의상 설명... (예: 검은 정장, 흰 셔츠)"
-                                                    disabled={hasReferenceBoard || isGenerating}
-                                                    className={`flex-1 px-2 py-1.5 bg-slate-900/50 border rounded text-xs text-slate-300 placeholder:text-slate-600 focus:outline-none focus:border-purple-500 disabled:opacity-50 disabled:cursor-not-allowed ${hasReferenceBoard ? 'border-amber-900/50' : 'border-slate-700'}`}
+                                                <OutfitInput
+                                                    charKey={charKey}
+                                                    initialValue={outfit}
+                                                    hasReferenceBoard={hasReferenceBoard}
+                                                    isGenerating={isGenerating}
+                                                    onSave={(key, value) => {
+                                                        handleOutfitChange(char.name, value);
+                                                        // Save after state update
+                                                        setTimeout(() => handleOutfitSave(char.name), 0);
+                                                    }}
                                                 />
                                                 {outfit && (
                                                     <button
