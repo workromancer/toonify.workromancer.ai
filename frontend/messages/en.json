@@ -450,6 +450,8 @@
       "selectAll": "Select All",
       "waiting": "Waiting...",
       "ready": "Ready",
+      "renderFailed": "Render Failed",
+      "retry": "Retry",
       "noEpisodeSelected": "No Episode Selected",
       "selectEpisodeToExport": "Select an episode to export.",
       "exportStarted": "Export Started",

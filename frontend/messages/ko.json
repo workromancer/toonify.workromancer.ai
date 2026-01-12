@@ -449,6 +449,8 @@
       "regenerateSelected": "선택 컷 다시 생성",
       "selectAll": "전체 선택",
       "ready": "준비됨",
+      "renderFailed": "렌더링 실패",
+      "retry": "재시도",
       "waiting": "대기 중...",
       "noEpisodeSelected": "에피소드 선택 안됨",
       "selectEpisodeToExport": "내보낼 에피소드를 선택하세요.",

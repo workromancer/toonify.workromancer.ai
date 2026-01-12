@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Image as ImageIcon, Trash2, Sparkles, RefreshCw, Wand2, CheckCircle2, Circle } from 'lucide-react';
+import { Image as ImageIcon, Trash2, Sparkles, RefreshCw, Wand2, CheckCircle2, Circle, AlertTriangle } from 'lucide-react';
 import { CustomLoader } from '@/components/ui/custom-loader';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useTranslations } from 'next-intl';
@@ -45,6 +45,7 @@ export function CutCard({
   const tc = useTranslations('Common');
 
   const isCurrentlyGenerating = isGenerating || cut.status === 'generating';
+  const isFailed = cut.status === 'failed';
   const isDisabledForGeneration = isBatchGenerating || episodeStatus === 'generating';
 
   // In regenerate mode, only cuts with images can be selected
@@ -154,6 +155,23 @@ export function CutCard({
                       ? t('waiting') 
                       : t('rendering')}
                   </span>
+                </>
+              ) : isFailed ? (
+                <>
+                  <AlertTriangle size={32} className="text-red-500 opacity-80" />
+                  <span className="text-[10px] text-red-400 font-medium">{t('renderFailed') || 'Render Failed'}</span>
+                  {!isRegenerateMode && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={isDisabledForGeneration}
+                      onClick={(e) => { e.stopPropagation(); onGenerate(); }}
+                      className={`h-6 text-[10px] mt-1 border border-red-700 ${isDisabledForGeneration ? 'bg-slate-900 text-slate-600 cursor-not-allowed' : 'bg-red-900/30 hover:bg-red-800/50 text-red-400 hover:text-white'}`}
+                    >
+                      <RefreshCw size={10} className="mr-1" />
+                      {t('retry') || 'Retry'}
+                    </Button>
+                  )}
                 </>
               ) : (
                 <>
