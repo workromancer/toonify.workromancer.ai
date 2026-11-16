@@ -4,7 +4,7 @@
 
 **Turn a story idea into characters, episodes, and webtoon panels with AI.**
 
-Toonify (툰이파이) is an AI-assisted webtoon creation platform. It brings worldbuilding, art direction, character design, storyboard editing, image generation, and episode export into one workflow.
+Toonify (투니파이) is an AI-assisted webtoon creation platform. It brings worldbuilding, art direction, character design, storyboard editing, image generation, and episode export into one workflow.
 
 Developed as an **AI Native project with Antigravity + Gemini 3 Pro**.
 

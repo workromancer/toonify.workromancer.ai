@@ -14,7 +14,7 @@ SUBNET_NAME="backend-subnet"
 CONNECTOR_NAME="vpc-connector"
 
 echo "==================================================="
-echo "   툰이파이(Toonify) 프로덕션 환경 설정 스크립트"
+echo "   투니파이(Toonify) 프로덕션 환경 설정 스크립트"
 echo "==================================================="
 echo "프로젝트 ID: $PROJECT_ID"
 echo "리전: $REGION"

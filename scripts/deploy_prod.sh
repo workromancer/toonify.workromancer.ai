@@ -10,7 +10,7 @@ FRONTEND_SERVICE="toonify-frontend"
 ENV_FILE=".env.prod"
 
 echo "==================================================="
-echo "   툰이파이(Toonify) 프로덕션 배포 스크립트"
+echo "   투니파이(Toonify) 프로덕션 배포 스크립트"
 echo "==================================================="
 echo "프로젝트 ID: $PROJECT_ID"
 echo "리전: $REGION"

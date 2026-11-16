@@ -1,6 +1,6 @@
 #!/bin/bash
 # scripts/deploy_frontend.sh
-# 툰이파이(Toonify) 프론트엔드 전용 배포 스크립트
+# 투니파이(Toonify) 프론트엔드 전용 배포 스크립트
 
 set -e
 
@@ -13,7 +13,7 @@ BACKEND_SERVICE="toonify-backend"
 ENV_FILE=".env.prod"
 
 echo "==================================================="
-echo "   툰이파이(Toonify) 프론트엔드 배포"
+echo "   투니파이(Toonify) 프론트엔드 배포"
 echo "==================================================="
 echo "프로젝트 ID: $PROJECT_ID"
 echo "리전: $REGION"

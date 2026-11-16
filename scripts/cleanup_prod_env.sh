@@ -1,6 +1,6 @@
 #!/bin/bash
 # scripts/cleanup_prod_env.sh
-# 툰이파이(Toonify) 프로덕션 환경 리소스 정리(삭제) 스크립트
+# 투니파이(Toonify) 프로덕션 환경 리소스 정리(삭제) 스크립트
 
 set -e
 
@@ -17,7 +17,7 @@ BACKEND_SA="toonify-backend-sa"
 FRONTEND_SA="toonify-frontend-sa"
 
 echo "==================================================="
-echo "   ⚠️  툰이파이(Toonify) 리소스 정리/초기화 경고  ⚠️"
+echo "   ⚠️  투니파이(Toonify) 리소스 정리/초기화 경고  ⚠️"
 echo "==================================================="
 echo "프로젝트 ID: $PROJECT_ID"
 echo "리전: $REGION"
