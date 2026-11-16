@@ -66,7 +66,7 @@ Toonify(툰이파이)는 세계관 설정부터 화풍 선택, 캐릭터 디자�
 | 백엔드 | Python, FastAPI, SQLModel, Pydantic, Alembic, Google Gen AI SDK |
 | 데이터·저장소 | PostgreSQL 16 + pgvector, MinIO, Google Cloud Storage |
 | 인증 | Clerk 연동 및 기존 이메일·비밀번호 인증 |
-| 배포 | Docker, Google Cloud Run, Cloud SQL, Artifact Registry, GitHub Actions |
+| 배포 | Docker, Google Cloud Run, Cloud SQL, Artifact Registry |
 
 ## 로컬 실행
 
@@ -108,7 +108,7 @@ npm run dev
 
 선택적으로 `./dev.sh`를 사용할 수 있습니다. 의존성 설치, Compose 재시작, 샘플 데이터 입력, 앱 서버 실행을 수행하며 **3000·8000 포트의 기존 프로세스를 종료**하므로 전용 로컬 환경에서 실행하세요.
 
-Vertex AI를 사용하려면 Google Cloud 프로젝트·리전·Application Default Credentials를 설정합니다. [인증 워크플로](.agent/workflows/gcloud-auth.md)를 참고하세요. 운영 배포 스크립트에는 본인의 클라우드 리소스와 비밀값이 필요하며, 환경별 설정값을 검토한 뒤 사용해야 합니다.
+Vertex AI를 사용하려면 Google Cloud 프로젝트·리전·Application Default Credentials를 설정합니다. [인증 워크플로](.agent/workflows/gcloud-auth.md)를 참고하세요. GitHub Actions 자동 배포는 제거했습니다. 남아 있는 수동 배포 스크립트에는 본인의 클라우드 리소스와 비밀값이 필요하며, 환경별 설정값을 검토한 뒤 사용해야 합니다.
 
 ## 저장소 구조
 

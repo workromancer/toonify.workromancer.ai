@@ -66,7 +66,7 @@ Browser → Next.js frontend / API proxy → FastAPI backend
 | Backend | Python, FastAPI, SQLModel, Pydantic, Alembic, Google Gen AI SDK |
 | Data and storage | PostgreSQL 16 + pgvector, MinIO, Google Cloud Storage |
 | Authentication | Clerk integration and legacy email/password authentication |
-| Deployment | Docker, Google Cloud Run, Cloud SQL, Artifact Registry, GitHub Actions |
+| Deployment | Docker, Google Cloud Run, Cloud SQL, Artifact Registry |
 
 ## Local development
 
@@ -108,7 +108,7 @@ The backend initializes tables on startup. The existing development bootstrap al
 
 The optional `./dev.sh` helper installs dependencies, restarts Compose, seeds sample data, and starts both servers. It also terminates processes using ports 3000 and 8000; use it only in a dedicated local environment.
 
-For Vertex AI, configure your Google Cloud project, location, and Application Default Credentials. See [the authentication workflow](.agent/workflows/gcloud-auth.md). Production deployment scripts require your own cloud resources and secrets; audit environment-specific values before use.
+For Vertex AI, configure your Google Cloud project, location, and Application Default Credentials. See [the authentication workflow](.agent/workflows/gcloud-auth.md). GitHub Actions deployment has been removed. The remaining manual deployment scripts require your own cloud resources and secrets; audit environment-specific values before use.
 
 ## Repository guide
 
