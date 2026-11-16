@@ -8,7 +8,50 @@ Toonify (툰이파이) is an AI-assisted webtoon creation platform. It brings wo
 
 Developed as an **AI Native project with Antigravity + Gemini 3 Pro**.
 
-![Toonify project preview](frontend/public/og.png)
+![Toonify project preview](docs/media/dashboard.png)
+
+## UI walkthroughs
+
+These GIFs show the actual frontend with **mock data and existing sample illustrations**. Authentication and AI responses are simulated in a local sandbox; they do not show live Gemini generation or production performance.
+
+### 1. Create a project and build its world
+
+Name the story, choose genres, expand a world concept, and apply an art style.
+
+![Project and worldbuilding workflow](docs/media/01-project-worldbuilding.gif)
+
+### 2. Cast a character
+
+Set a name and age, add visual and personality traits, choose a role, and inspect the resulting character profile.
+
+![Character casting workflow](docs/media/02-character-casting.gif)
+
+### 3. Edit the storyboard
+
+Select a scene, edit its visual prompt, request regeneration, and select panels for batch regeneration.
+
+![Storyboard editing workflow](docs/media/03-storyboard-editing.gif)
+
+### 4. Review and export an episode
+
+Check the mobile reading layout, scroll through panels, and download the sample images as a ZIP archive.
+
+![Mobile review and ZIP export workflow](docs/media/04-review-export.gif)
+
+## Quick UI demo
+
+Install Node.js 20.9+ and npm. No API keys, Clerk account, database, or Docker are needed for the local UI demo. Python 3 is needed only for the sample ZIP export.
+
+```bash
+git clone https://github.com/workromancer/toonify.workromancer.ai.git
+cd toonify.workromancer.ai/frontend
+npm ci --legacy-peer-deps
+npm run demo
+```
+
+Open **[the English demo](http://127.0.0.1:3100/en/dashboard)** or **[한국어 데모](http://127.0.0.1:3100/ko/dashboard)**. Changes are kept in memory and reset when the demo restarts. The sandbox runs a temporary copy of the frontend and leaves the application's authentication code intact. It calls no AI services.
+
+For the complete application, continue with [local development](#local-development). See the [running guide](docs/RUNNING.md) for setup, troubleshooting, demo limitations, and GIF recording instructions.
 
 ## What you can do
 
@@ -70,6 +113,8 @@ Browser → Next.js frontend / API proxy → FastAPI backend
 
 ## Local development
 
+This runs the complete application with your own credentials. To browse the UI without external services, use the local demo above. Detailed instructions: [Running Toonify](docs/RUNNING.md).
+
 Use **Node.js 20.9+** (the Docker build uses Node 20), **Python 3.11**, and **Docker Compose**. You also need your own Gemini API credentials and Clerk development keys. Clerk is initialized by the frontend even when using legacy email/password login.
 
 ```bash
@@ -122,6 +167,7 @@ For Vertex AI, configure your Google Cloud project, location, and Application De
 
 ## Documentation
 
+- [Running guide and troubleshooting — English / 한국어](docs/RUNNING.md)
 - [Product manual](docs/PRODUCT_MANUAL.md)
 - [Webtoon creation workflow](docs/WEBTOON_CREATION_PROCESS.md)
 - [API reference](docs/API_REFERENCE.md)

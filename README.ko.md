@@ -8,7 +8,50 @@ Toonify(툰이파이)는 세계관 설정부터 화풍 선택, 캐릭터 디자�
 
 **Antigravity + Gemini 3 Pro로 개발한 AI Native 프로젝트**입니다.
 
-![Toonify 프로젝트 미리보기](frontend/public/og.png)
+![Toonify 프로젝트 미리보기](docs/media/dashboard.png)
+
+## 시나리오별 UI 둘러보기
+
+아래 GIF는 **실제 프론트엔드에 데모 데이터와 기존 샘플 일러스트**를 넣어 녹화했습니다. 인증과 AI 응답은 로컬 환경에서 대체했으며, 실제 Gemini 생성 결과나 운영 성능을 보여주는 영상은 아닙니다.
+
+### 1. 프로젝트 생성과 세계관 설정
+
+제목과 장르를 정하고, 세계관 아이디어를 확장한 뒤 화풍을 적용합니다.
+
+![프로젝트·세계관 설정 흐름](docs/media/01-project-worldbuilding.gif)
+
+### 2. 캐릭터 캐스팅
+
+이름·나이·외형 키워드·성격을 입력하고, 역할을 선택한 뒤 완성된 프로필을 확인합니다.
+
+![캐릭터 캐스팅 흐름](docs/media/02-character-casting.gif)
+
+### 3. 스토리보드 편집
+
+장면을 선택해 이미지 프롬프트를 수정하고 재생성을 요청합니다. 여러 컷을 선택해 다시 생성하는 화면도 확인할 수 있습니다.
+
+![스토리보드 편집 흐름](docs/media/03-storyboard-editing.gif)
+
+### 4. 모바일 검토와 내보내기
+
+모바일 읽기 화면에서 컷을 스크롤하고, 샘플 이미지가 담긴 ZIP 파일을 내려받습니다.
+
+![모바일 검토·ZIP 내보내기 흐름](docs/media/04-review-export.gif)
+
+## 빠르게 UI 실행하기
+
+Node.js 20.9 이상과 npm만 있으면 로컬 UI 데모를 실행할 수 있습니다. API 키·Clerk 계정·DB·Docker는 필요하지 않습니다. 샘플 ZIP 내보내기를 사용하려면 Python 3도 필요합니다.
+
+```bash
+git clone https://github.com/workromancer/toonify.workromancer.ai.git
+cd toonify.workromancer.ai/frontend
+npm ci --legacy-peer-deps
+npm run demo
+```
+
+**[한국어 데모](http://127.0.0.1:3100/ko/dashboard)** 또는 **[English demo](http://127.0.0.1:3100/en/dashboard)**에 접속합니다. 변경 내용은 메모리에만 저장되며 재시작하면 초기화됩니다. 임시 복사본에서 실행하므로 원본 앱의 인증 코드는 유지되고, AI 서비스 호출도 없습니다.
+
+실제 AI 기능까지 사용하려면 아래 [로컬 실행](#로컬-실행)을 참고하세요. 준비물·문제 해결·데모의 범위·GIF 재녹화 방법은 [실행 가이드](docs/RUNNING.md)에 정리했습니다.
 
 ## 주요 기능
 
@@ -70,6 +113,8 @@ Toonify(툰이파이)는 세계관 설정부터 화풍 선택, 캐릭터 디자�
 
 ## 로컬 실행
 
+본인의 인증 정보로 실제 기능을 실행하는 방법입니다. 외부 서비스 없이 화면만 확인하려면 위의 UI 데모를 사용하세요. 자세한 설명은 [실행 가이드](docs/RUNNING.md)를 참고하세요.
+
 **Node.js 20.9 이상**(Docker 빌드는 Node 20 사용), **Python 3.11**, **Docker Compose**가 필요합니다. 본인의 Gemini API 인증 정보와 Clerk 개발용 키도 준비해야 합니다. 기존 이메일·비밀번호 로그인을 사용하더라도 프론트엔드에서 Clerk를 초기화합니다.
 
 ```bash
@@ -122,6 +167,7 @@ Vertex AI를 사용하려면 Google Cloud 프로젝트·리전·Application Defa
 
 ## 관련 문서
 
+- [실행·문제 해결 가이드 — 한국어 / English](docs/RUNNING.md)
 - [제품 사용 설명서](docs/PRODUCT_MANUAL.md)
 - [웹툰 제작 과정](docs/WEBTOON_CREATION_PROCESS.md)
 - [API 레퍼런스](docs/API_REFERENCE.md)
