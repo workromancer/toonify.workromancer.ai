@@ -30,3 +30,6 @@ build/
 
 infra
 **/.infra_output
+
+# Share templates, never local credentials or infrastructure output.
+!**/.env.example
